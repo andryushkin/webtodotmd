@@ -1,0 +1,209 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Menlo', 'Consolas', monospace;
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e0e0e0;
+  --accent: #0066cc;
+  --accent-hover: #0052a3;
+  --btn-secondary-bg: #efefef;
+  --btn-secondary-hover: #e0e0e0;
+  --radius: 6px;
+  --gap: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --bg-secondary: #2a2a2a;
+    --text: #e8e8e8;
+    --text-muted: #9a9a9a;
+    --border: #3a3a3a;
+    --accent: #4d9fec;
+    --accent-hover: #6bb3f0;
+    --btn-secondary-bg: #2a2a2a;
+    --btn-secondary-hover: #3a3a3a;
+  }
+}
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 12px;
+  gap: var(--gap);
+}
+
+.app-header {
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--gap);
+  overflow: hidden;
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+  padding: 9px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--btn-secondary-bg);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--btn-secondary-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+/* Status */
+
+.status {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-height: 16px;
+  flex-shrink: 0;
+}
+
+.status.error {
+  color: #cc3333;
+}
+
+.status.success {
+  color: #229922;
+}
+
+/* Append/Replace dialog */
+
+.dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  flex-shrink: 0;
+}
+
+.dialog[hidden] {
+  display: none;
+}
+
+.dialog-prompt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: var(--gap);
+}
+
+/* Preview textarea */
+
+.preview {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  line-height: 1.5;
+}
+
+.preview::placeholder {
+  color: var(--text-muted);
+}
+
+/* Toolbar */
+
+.toolbar {
+  display: flex;
+  gap: var(--gap);
+  flex-shrink: 0;
+}
+
+/* Footer */
+
+.app-footer {
+  flex-shrink: 0;
+  padding-top: var(--gap);
+  border-top: 1px solid var(--border);
+}
+
+.counter {
+  font-size: 11px;
+  color: var(--text-muted);
+}

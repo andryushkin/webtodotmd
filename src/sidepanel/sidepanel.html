@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>select2md</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1 class="app-title">select2md</h1>
+    </header>
+
+    <main class="app-main">
+      <button id="btn-capture" class="btn btn-primary">Capture selection</button>
+
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <div id="dialog-append-replace" class="dialog" hidden>
+        <p class="dialog-prompt">Preview already has content. What would you like to do?</p>
+        <div class="dialog-actions">
+          <button id="btn-append" class="btn btn-secondary">Append</button>
+          <button id="btn-replace" class="btn btn-secondary">Replace</button>
+          <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
+        </div>
+      </div>
+
+      <textarea id="preview" class="preview" placeholder="Markdown preview will appear here…" readonly></textarea>
+
+      <div class="toolbar">
+        <button id="btn-copy" class="btn btn-secondary" disabled>Copy</button>
+        <button id="btn-clear" class="btn btn-ghost" disabled>Clear</button>
+        <button id="btn-metadata" class="btn btn-ghost" disabled>Add Metadata</button>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <span class="counter">Copied today: <span id="counter-value">0</span></span>
+    </footer>
+  </div>
+
+  <script type="module" src="sidepanel.ts"></script>
+</body>
+</html>
