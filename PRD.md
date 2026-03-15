@@ -147,7 +147,7 @@ select2md — расширение для Chrome, которое конверт�
 - Если `rangeCount === 1` — поведение не меняется (обычный capture)
 - Работает в Firefox-стиле (множественные ranges); в Chrome множественный selection ограничен — фиксируем ограничение в документации
 
-### US-9: Rendered Markdown Preview (v0.1)
+### US-9: Rendered Markdown Preview (v0.1) ✅
 
 **As a** пользователь,
 **I want to** видеть rendered Markdown в панели вместо сырого текста,

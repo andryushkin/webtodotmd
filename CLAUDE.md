@@ -21,6 +21,15 @@ Chrome Extension для захвата выделений со страниц в
 - `marked` + `DOMPurify` — rendered Markdown preview в Side Panel
 - Manifest V3
 
+## Side Panel — ключевые паттерны
+
+- State `rawMd: string` — единый источник истины для содержимого (не `textarea.value`)
+- `setContent(md)` — всегда использовать для обновления: обновляет rawMd, rendered div и source textarea
+- `setViewMode('preview'|'source')` — управляет видимостью и aria-pressed
+- Copy всегда читает `rawMd` (сырой Markdown, не HTML)
+- `DOMPurify.sanitize()` обязателен перед присвоением `innerHTML`
+- Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
+
 ## Документация
 
 - `PRD.md` — основной источник истины по требованиям и архитектуре; читать перед реализацией
