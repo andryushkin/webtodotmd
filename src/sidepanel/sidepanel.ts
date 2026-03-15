@@ -1,3 +1,5 @@
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { isRestrictedUrl } from '../shared/restricted';
 import { incrementCounter, getCounterToday } from '../shared/counter';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
@@ -8,6 +10,8 @@ function isCaptureError(r: CaptureResponse): r is CaptureErrorResponse {
   return 'error' in r;
 }
 
+marked.setOptions({ breaks: true, gfm: true });
+
 // ---- DOM refs ----
 
 const btnCapture = document.getElementById('btn-capture') as HTMLButtonElement;
@@ -17,15 +21,20 @@ const btnMetadata = document.getElementById('btn-metadata') as HTMLButtonElement
 const btnAppend = document.getElementById('btn-append') as HTMLButtonElement;
 const btnReplace = document.getElementById('btn-replace') as HTMLButtonElement;
 const btnCancel = document.getElementById('btn-cancel') as HTMLButtonElement;
-const preview = document.getElementById('preview') as HTMLTextAreaElement;
+const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
+const previewSource = document.getElementById('preview-source') as HTMLTextAreaElement;
+const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElement;
+const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const dialogEl = document.getElementById('dialog-append-replace') as HTMLDivElement;
 const counterValue = document.getElementById('counter-value') as HTMLSpanElement;
 
 // ---- State ----
 
+let rawMd = '';
 let pendingMd = '';
 let lastMeta: PageMeta | null = null;
+let viewMode: 'preview' | 'source' = 'preview';
 
 // ---- Utilities ----
 
@@ -34,8 +43,30 @@ function setStatus(msg: string, type: 'default' | 'error' | 'success' = 'default
   statusEl.className = `status${type !== 'default' ? ` ${type}` : ''}`;
 }
 
+function renderMarkdown(md: string) {
+  const dirty = marked.parse(md) as string;
+  previewRendered.innerHTML = DOMPurify.sanitize(dirty);
+}
+
+function setContent(md: string) {
+  rawMd = md;
+  renderMarkdown(md);
+  previewSource.value = md;
+  updateButtonStates();
+}
+
+function setViewMode(mode: 'preview' | 'source') {
+  viewMode = mode;
+  previewRendered.hidden = mode !== 'preview';
+  previewSource.hidden = mode !== 'source';
+  btnPreviewTab.classList.toggle('active', mode === 'preview');
+  btnSourceTab.classList.toggle('active', mode === 'source');
+  btnPreviewTab.setAttribute('aria-pressed', String(mode === 'preview'));
+  btnSourceTab.setAttribute('aria-pressed', String(mode === 'source'));
+}
+
 function updateButtonStates() {
-  const hasContent = preview.value.trim().length > 0;
+  const hasContent = rawMd.trim().length > 0;
   btnCopy.disabled = !hasContent;
   btnClear.disabled = !hasContent;
   btnMetadata.disabled = !hasContent || lastMeta === null;
@@ -74,6 +105,9 @@ function sendMessageWithTimeout(
 }
 
 // ---- Event handlers ----
+
+btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
+btnSourceTab.addEventListener('click', () => setViewMode('source'));
 
 btnCapture.addEventListener('click', async () => {
   setStatus('');
@@ -115,10 +149,9 @@ btnCapture.addEventListener('click', async () => {
   const { md, meta } = response;
   lastMeta = meta;
 
-  if (preview.value.trim().length === 0) {
-    preview.value = md;
+  if (rawMd.trim().length === 0) {
+    setContent(md);
     setStatus('Captured.', 'success');
-    updateButtonStates();
   } else {
     pendingMd = md;
     showDialog();
@@ -126,17 +159,15 @@ btnCapture.addEventListener('click', async () => {
 });
 
 btnAppend.addEventListener('click', () => {
-  preview.value += '\n\n---\n\n' + pendingMd;
+  setContent(rawMd + '\n\n---\n\n' + pendingMd);
   hideDialog();
   setStatus('Appended.', 'success');
-  updateButtonStates();
 });
 
 btnReplace.addEventListener('click', () => {
-  preview.value = pendingMd;
+  setContent(pendingMd);
   hideDialog();
   setStatus('Replaced.', 'success');
-  updateButtonStates();
 });
 
 btnCancel.addEventListener('click', () => {
@@ -145,8 +176,8 @@ btnCancel.addEventListener('click', () => {
 });
 
 btnCopy.addEventListener('click', async () => {
-  if (!preview.value) return;
-  await navigator.clipboard.writeText(preview.value);
+  if (!rawMd) return;
+  await navigator.clipboard.writeText(rawMd);
   await incrementCounter();
   await updateCounter();
   const original = btnCopy.textContent;
@@ -157,7 +188,9 @@ btnCopy.addEventListener('click', async () => {
 });
 
 btnClear.addEventListener('click', () => {
-  preview.value = '';
+  rawMd = '';
+  previewRendered.innerHTML = '';
+  previewSource.value = '';
   lastMeta = null;
   setStatus('');
   updateButtonStates();
@@ -169,24 +202,25 @@ btnMetadata.addEventListener('click', () => {
   const escapedTitle = lastMeta.title.replace(/"/g, '\\"');
   const frontmatter = `---\ntitle: "${escapedTitle}"\nurl: ${lastMeta.url}\ndate: ${lastMeta.date}\n---\n\n`;
 
-  if (preview.value.startsWith('---\n')) {
-    // Replace existing frontmatter block
-    const endIdx = preview.value.indexOf('\n---\n', 4);
+  let newValue: string;
+  if (rawMd.startsWith('---\n')) {
+    const endIdx = rawMd.indexOf('\n---\n', 4);
     if (endIdx !== -1) {
-      const body = preview.value.slice(endIdx + 5).replace(/^\n+/, '');
-      preview.value = frontmatter + body;
+      const body = rawMd.slice(endIdx + 5).replace(/^\n+/, '');
+      newValue = frontmatter + body;
     } else {
-      preview.value = frontmatter + preview.value;
+      newValue = frontmatter + rawMd;
     }
   } else {
-    preview.value = frontmatter + preview.value;
+    newValue = frontmatter + rawMd;
   }
 
+  setContent(newValue);
   setStatus('Metadata added.', 'success');
-  updateButtonStates();
 });
 
 // ---- Init ----
 
+setViewMode('preview');
 updateCounter();
 updateButtonStates();

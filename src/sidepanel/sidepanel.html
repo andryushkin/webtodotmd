@@ -10,6 +10,10 @@
   <div class="app">
     <header class="app-header">
       <h1 class="app-title">select2md</h1>
+      <div class="view-toggle">
+        <button id="btn-preview" class="toggle active" aria-pressed="true">Preview</button>
+        <button id="btn-source" class="toggle" aria-pressed="false">Source</button>
+      </div>
     </header>
 
     <main class="app-main">
@@ -26,7 +30,8 @@
         </div>
       </div>
 
-      <textarea id="preview" class="preview" placeholder="Markdown preview will appear here…" readonly></textarea>
+      <div id="preview-rendered" class="preview preview-rendered" aria-label="Rendered preview"></div>
+      <textarea id="preview-source" class="preview preview-source" placeholder="Markdown will appear here…" readonly hidden></textarea>
 
       <div class="toolbar">
         <button id="btn-copy" class="btn btn-secondary" disabled>Copy</button>
