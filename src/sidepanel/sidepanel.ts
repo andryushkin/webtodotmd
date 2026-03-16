@@ -104,23 +104,20 @@ function sendMessageWithTimeout(
   });
 }
 
-// ---- Event handlers ----
+// ---- Capture logic ----
 
-btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
-btnSourceTab.addEventListener('click', () => setViewMode('source'));
-
-btnCapture.addEventListener('click', async () => {
-  setStatus('');
+async function captureSelection(silent = false) {
+  if (!silent) setStatus('');
   hideDialog();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id || !tab.url) {
-    setStatus('Cannot access this tab.', 'error');
+    if (!silent) setStatus('Cannot access this tab.', 'error');
     return;
   }
 
   if (isRestrictedUrl(tab.url)) {
-    setStatus('Cannot capture from this page (restricted URL).', 'error');
+    if (!silent) setStatus('Cannot capture from this page (restricted URL).', 'error');
     return;
   }
 
@@ -128,6 +125,7 @@ btnCapture.addEventListener('click', async () => {
   try {
     response = await sendMessageWithTimeout(tab.id, { type: 'CAPTURE_SELECTION' }, 3000);
   } catch (err) {
+    if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
     if (msg === 'TIMEOUT') {
       setStatus('Request timed out. Try again.', 'error');
@@ -139,9 +137,9 @@ btnCapture.addEventListener('click', async () => {
 
   if (isCaptureError(response)) {
     if (response.error === 'NO_SELECTION') {
-      setStatus('No text selected. Select text on the page first.', 'error');
+      if (!silent) setStatus('No text selected. Select text on the page first.', 'error');
     } else {
-      setStatus('Could not convert selection.', 'error');
+      if (!silent) setStatus('Could not convert selection.', 'error');
     }
     return;
   }
@@ -155,6 +153,20 @@ btnCapture.addEventListener('click', async () => {
   } else {
     pendingMd = md;
     showDialog();
+  }
+}
+
+// ---- Event handlers ----
+
+btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
+btnSourceTab.addEventListener('click', () => setViewMode('source'));
+
+btnCapture.addEventListener('click', () => captureSelection(false));
+
+// Auto-capture when icon is clicked (signal from service worker)
+chrome.storage.session.onChanged.addListener((changes) => {
+  if ('captureSignal' in changes) {
+    captureSelection(true);
   }
 });
 

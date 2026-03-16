@@ -8,6 +8,8 @@ chrome.action.onClicked.addListener((tab) => {
   if (tab.id) {
     chrome.sidePanel.open({ tabId: tab.id }).catch(console.error);
   }
+  // Signal sidepanel to auto-capture after opening
+  chrome.storage.session.set({ captureSignal: Date.now() }).catch(console.error);
 });
 
 chrome.runtime.onInstalled.addListener(async () => {

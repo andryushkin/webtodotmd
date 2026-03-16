@@ -9,9 +9,9 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Архитектура
 
-- **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`
-- **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview
-- **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + trigger capture
+- **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`)
+- **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview; слушает `chrome.storage.session.onChanged` для auto-capture
+- **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + пишет `captureSignal: Date.now()` в `chrome.storage.session`
 
 Подробности интеграции с библиотекой: [docs/CHROME_EXTENSION.md]
 
@@ -29,6 +29,13 @@ Chrome Extension для захвата выделений со страниц в
 - Copy всегда читает `rawMd` (сырой Markdown, не HTML)
 - `DOMPurify.sanitize()` обязателен перед присвоением `innerHTML`
 - Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
+- `captureSelection(silent: boolean)` — единая функция capture для кнопки и auto-capture; `silent=true` подавляет NO_SELECTION ошибку
+
+## Auto-capture паттерн (US-1)
+
+- Service worker пишет `{ captureSignal: Date.now() }` в `chrome.storage.session` при клике на иконку
+- Side panel слушает `chrome.storage.session.onChanged` и вызывает `captureSelection(true)`
+- При `silent=true`: NO_SELECTION → молчим (панель просто пустая), прочие ошибки тоже подавляются
 
 ## Документация
 
