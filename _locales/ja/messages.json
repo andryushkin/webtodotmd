@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "選択したテキストをクリーンなMarkdownに変換 — ワンクリックでクリップボードへ。",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

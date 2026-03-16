@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "Alakítsd át a kijelölt szöveget tiszta Markdown-ná — egy kattintással a kijelöléstől a vágólapig.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

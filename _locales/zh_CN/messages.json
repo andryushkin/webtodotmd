@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "将选中文字转换为整洁的 Markdown — 一键从选择到剪贴板。",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

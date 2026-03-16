@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "પસંદ કરેલ ટેક્સ્ટને ક્લીન Markdown માં કન્વર્ટ કરો — ક્લિપબોર્ડ માટે એક ક્લિક.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

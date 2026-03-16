@@ -573,14 +573,14 @@ interface PageMeta {
 
 **Задачи:**
 
-1. Иконки расширения: 16px, 48px, 128px (+ toolbar icon)
-2. Промо-материалы: Store tile (440×280), скриншоты (1280×800) × 3-5 шт
-3. Store listing: локализация на все 54 языка CWS (см. Приложение A)
-4. Privacy Policy (hosted page) — данные не покидают браузер
-5. Финальное тестирование на Chrome 114+, Windows / macOS / Linux
-6. E2E тест: 10 популярных сайтов (GitHub, SO, MDN, Wikipedia, Medium, Dev.to, Habr, arXiv, Docs.\*, Notion public pages)
-7. Минимизация permissions: проверить justification для каждого permission
-8. Публикация в Chrome Web Store
+1. ✅ Иконки расширения: 16px, 48px, 128px (+ toolbar icon) — `icon16.png`, `icon48.png`, `icon128.png`
+2. ⏳ Промо-материалы: Store tile (440×280), скриншоты (1280×800) × 3-5 шт
+3. ✅ Store listing: `_locales/` с 52 языками CWS; CWS dashboard переводы — отдельно
+4. ✅ Privacy Policy — `privacy-policy.html` (хостить перед сабмитом)
+5. ⏳ Финальное тестирование на Chrome 114+, Windows / macOS / Linux
+6. ⏳ E2E тест: 10 популярных сайтов (GitHub, SO, MDN, Wikipedia, Medium, Dev.to, Habr, arXiv, Docs.\*, Notion public pages)
+7. ✅ Минимизация permissions: `docs/permissions-justification.md`
+8. ⏳ Публикация в Chrome Web Store
 
 **Definition of Done:**
 

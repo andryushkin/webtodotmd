@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "선택한 텍스트를 깔끔한 Markdown으로 변환 — 클립보드로 한 번의 클릭.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

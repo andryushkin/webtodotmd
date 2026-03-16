@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "ఎంచుకున్న వచనాన్ని శుభ్రమైన Markdown కి మార్చండి — క్లిప్‌బోర్డ్‌కు ఒక క్లిక్.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

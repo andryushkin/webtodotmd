@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "የተመረጠ ጽሑፍ ወደ ንፁህ Markdown ቀይር — ከምርጫ እስከ ቅንጥብ ሰሌዳ አንድ ጠቅ።",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

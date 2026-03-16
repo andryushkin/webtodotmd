@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "Converta o texto selecionado para Markdown limpo — um clique da seleção para a área de transferência.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}

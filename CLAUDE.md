@@ -37,6 +37,21 @@ Chrome Extension для захвата выделений со страниц в
 - Side panel слушает `chrome.storage.session.onChanged` и вызывает `captureSelection(true)`
 - При `silent=true`: NO_SELECTION → молчим (панель просто пустая), прочие ошибки тоже подавляются
 
+## i18n (v1.0)
+
+- `_locales/<code>/messages.json` — 52 языка; ключи `appName` + `appDescription`
+- `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
+- **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
+- `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
+- При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
+
+## Публикация (v1.0)
+
+- `privacy-policy.html` — Privacy Policy страница; хостить публично перед сабмитом в CWS
+- `docs/permissions-justification.md` — обоснование каждого permission для Google review
+- Версия `1.0.0` в `manifest.json`
+- Иконки: `icon16.png`, `icon48.png`, `icon128.png` в корне + `public/`
+
 ## Документация
 
 - `PRD.md` — основной источник истины по требованиям и архитектуре; читать перед реализацией

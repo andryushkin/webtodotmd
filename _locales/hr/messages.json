@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "select2md",
+    "description": "Extension name — brand name, do not translate"
+  },
+  "appDescription": {
+    "message": "Pretvorite odabrani tekst u čisti Markdown — jedan klik od odabira do međuspremnika.",
+    "description": "Short description shown in Chrome extensions page"
+  }
+}
