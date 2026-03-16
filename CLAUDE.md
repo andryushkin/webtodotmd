@@ -3,9 +3,15 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Разработка
 
-- **Пакетный менеджер:** Bun (`bun install`, `bun run build`)
-- **Сборщик:** Vite (`vite.config.ts` — три точки входа: background, content, sidepanel)
+- **Сборка:** `bash build.sh` — без `bun install`, без `node_modules`
+- **Транспайлер:** Bun (встроенный, глобально установлен) — компилирует `.ts` без npm-пакетов
 - **GitHub:** https://github.com/andryushkin/select2md (private), ветка `main`
+
+### Vendored зависимости (нет node_modules)
+- `vendor/marked.esm.js` — ESM бандл marked (скопирован из node_modules)
+- `vendor/purify.esm.mjs` — ESM бандл DOMPurify
+- `types/chrome/` — типы Chrome API (скопированы из @types/chrome)
+- `@markitdown/core` — импортируется напрямую: `../../../markitdown/src/browser.ts`
 
 ## Архитектура
 
@@ -36,12 +42,20 @@ Chrome Extension для захвата выделений со страниц в
 - Service worker пишет `{ captureSignal: Date.now() }` в `chrome.storage.session` при клике на иконку
 - Side panel слушает `chrome.storage.session.onChanged` и вызывает `captureSelection(true)`
 - При `silent=true`: NO_SELECTION → молчим (панель просто пустая), прочие ошибки тоже подавляются
+- Side panel при старте читает `captureSignal` (startup check) — нужен для race condition когда панель только открылась
+
+## ⚠️ Chrome Side Panel: setPanelBehavior кешируется
+
+- `openPanelOnActionClick: true` передаёт клик Chrome-у → `chrome.action.onClicked` **не срабатывает**
+- Chrome **сохраняет** это значение между перезагрузками расширения
+- **Правило:** всегда явно вызывать `setPanelBehavior({ openPanelOnActionClick: false })` при старте service worker
+- Без явного `false` старое `true` останется активным даже если убрать вызов из кода
 
 ## i18n (v1.0)
 
 - `public/_locales/<code>/messages.json` — 52 языка; ключи `appName` + `appDescription`
 - `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
-- **`_locales/` ДОЛЖЕН быть в `public/`** — Vite копирует только `public/` в `dist/`; корневой `_locales/` даёт ошибку "Default locale was specified, but _locales subtree is missing"
+- **`_locales/` ДОЛЖЕН быть в `public/`** — `build.sh` делает `cp -r public/* dist/`; корневой `_locales/` не попадёт в dist
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
 - `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
 - При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
