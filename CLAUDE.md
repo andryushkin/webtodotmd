@@ -39,8 +39,9 @@ Chrome Extension для захвата выделений со страниц в
 
 ## i18n (v1.0)
 
-- `_locales/<code>/messages.json` — 52 языка; ключи `appName` + `appDescription`
+- `public/_locales/<code>/messages.json` — 52 языка; ключи `appName` + `appDescription`
 - `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
+- **`_locales/` ДОЛЖЕН быть в `public/`** — Vite копирует только `public/` в `dist/`; корневой `_locales/` даёт ошибку "Default locale was specified, but _locales subtree is missing"
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
 - `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
 - При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
