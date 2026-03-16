@@ -17,5 +17,9 @@ export interface CaptureErrorResponse {
   error: 'NO_SELECTION' | 'CONVERSION_ERROR';
 }
 
-export type RequestMessage = CaptureSelectionRequest;
+export interface CaptureAndCopyRequest {
+  type: 'CAPTURE_AND_COPY';
+}
+
+export type RequestMessage = CaptureSelectionRequest | CaptureAndCopyRequest;
 export type ResponseMessage = CaptureSelectionResponse | CaptureErrorResponse;

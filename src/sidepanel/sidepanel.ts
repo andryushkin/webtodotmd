@@ -16,6 +16,7 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const btnCapture = document.getElementById('btn-capture') as HTMLButtonElement;
 const btnCopy = document.getElementById('btn-copy') as HTMLButtonElement;
+const btnDownload = document.getElementById('btn-download') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnMetadata = document.getElementById('btn-metadata') as HTMLButtonElement;
 const btnAppend = document.getElementById('btn-append') as HTMLButtonElement;
@@ -68,6 +69,7 @@ function setViewMode(mode: 'preview' | 'source') {
 function updateButtonStates() {
   const hasContent = rawMd.trim().length > 0;
   btnCopy.disabled = !hasContent;
+  btnDownload.disabled = !hasContent;
   btnClear.disabled = !hasContent;
   btnMetadata.disabled = !hasContent || lastMeta === null;
 }
@@ -197,6 +199,18 @@ btnCopy.addEventListener('click', async () => {
   setTimeout(() => {
     btnCopy.textContent = original;
   }, 1500);
+});
+
+btnDownload.addEventListener('click', async () => {
+  if (!rawMd) return;
+  const filename = (lastMeta?.title ?? 'selection')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .slice(0, 80) + '.md';
+  const url = URL.createObjectURL(new Blob([rawMd], { type: 'text/markdown' }));
+  await chrome.downloads.download({ url, filename, saveAs: false });
+  URL.revokeObjectURL(url);
+  await incrementCounter();
+  await updateCounter();
 });
 
 btnClear.addEventListener('click', () => {

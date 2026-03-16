@@ -12,8 +12,39 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.storage.session.set({ captureSignal: Date.now() }).catch(console.error);
 });
 
+function createContextMenu() {
+  chrome.contextMenus.create({
+    id: 'capture-and-copy',
+    title: 'Copy as Markdown',
+    contexts: ['selection'],
+  });
+}
+
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureInstallId();
+  createContextMenu();
 });
+
+chrome.runtime.onStartup.addListener(() => {
+  createContextMenu();
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'capture-and-copy' && tab?.id) {
+    captureAndCopy(tab.id);
+  }
+});
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'capture-and-copy') {
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      if (tab?.id) captureAndCopy(tab.id);
+    });
+  }
+});
+
+function captureAndCopy(tabId: number) {
+  chrome.tabs.sendMessage(tabId, { type: 'CAPTURE_AND_COPY' });
+}
 
 export {};
