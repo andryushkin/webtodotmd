@@ -341,6 +341,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         url: window.location.href,
         date: new Date().toISOString(),
       };
+      window.getSelection()?.removeAllRanges();
       sendResponse({ md, meta } satisfies CaptureSelectionResponse);
     } catch {
       sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);

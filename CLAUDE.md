@@ -15,7 +15,7 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Архитектура
 
-- **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`); Shadow DOM flattening перед конвертацией
+- **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`); Shadow DOM flattening перед конвертацией; после успешного `CAPTURE_SELECTION` вызывает `removeAllRanges()` чтобы повторный capture без выделения давал NO_SELECTION
 - **Content script injection** — **lazy** (on-demand): `content_scripts` убран из manifest; скрипт инжектится через `chrome.scripting.executeScript()` только при capture; `ensureContentScript()` сначала шлёт PING, и только при отсутствии ответа инжектит
 - **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview; слушает `chrome.storage.session.onChanged` для auto-capture; Lucide-style SVG-иконки на всех кнопках
 - **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + пишет `captureSignal: Date.now()` в `chrome.storage.session`
