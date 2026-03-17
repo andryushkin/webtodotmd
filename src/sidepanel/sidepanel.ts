@@ -46,6 +46,8 @@ let viewMode: 'preview' | 'source' = 'preview';
 let highlighterEnabled = false;
 let highlightCount = 0;
 let autoMetadata = false;
+let currentTabId: number | null = null;
+let highlighterPort: chrome.runtime.Port | null = null;
 
 // ---- Utilities ----
 
@@ -190,6 +192,7 @@ function updateHighlighterUI() {
 async function getActiveTabId(): Promise<number | null> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !tab.url || isRestrictedUrl(tab.url)) return null;
+  currentTabId = tab.id;
   return tab.id;
 }
 
@@ -208,6 +211,16 @@ async function toggleHighlighter() {
 
   highlighterEnabled = !highlighterEnabled;
   const settings = await getSettings();
+
+  if (highlighterEnabled) {
+    highlighterPort = chrome.tabs.connect(tabId, { name: 'highlighter' });
+    highlighterPort.onDisconnect.addListener(() => {
+      highlighterPort = null;
+    });
+  } else {
+    highlighterPort?.disconnect();
+    highlighterPort = null;
+  }
 
   chrome.tabs.sendMessage(tabId, {
     type: 'TOGGLE_HIGHLIGHTER',

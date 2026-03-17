@@ -221,6 +221,24 @@ function onHighlighterClick(e: MouseEvent) {
     highlights.delete(target);
     target.classList.remove('s2md-highlighted');
   } else {
+    // Убрать любого предка, если он уже в highlights
+    let ancestor: Element | null = target.parentElement;
+    while (ancestor && ancestor !== document.body) {
+      if (highlights.has(ancestor)) {
+        highlights.delete(ancestor);
+        ancestor.classList.remove('s2md-highlighted');
+      }
+      ancestor = ancestor.parentElement;
+    }
+
+    // Убрать всех потомков, покрытых новым элементом
+    for (const el of [...highlights]) {
+      if (target.contains(el)) {
+        highlights.delete(el);
+        el.classList.remove('s2md-highlighted');
+      }
+    }
+
     highlights.add(target);
     target.classList.add('s2md-highlighted');
   }
@@ -245,6 +263,7 @@ function enableHighlighter(color = '#2563eb') {
 function disableHighlighter() {
   if (!highlighterActive) return;
   highlighterActive = false;
+  clearHighlights();
   document.removeEventListener('mouseover', onHighlighterHover);
   document.removeEventListener('mouseout', onHighlighterOut);
   document.removeEventListener('click', onHighlighterClick, true);
@@ -280,6 +299,13 @@ function captureHighlightsMd(): string {
 }
 
 // ---- Message listener ----
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'highlighter') return;
+  port.onDisconnect.addListener(() => {
+    disableHighlighter();
+  });
+});
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'PING') {
@@ -329,7 +355,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === 'CAPTURE_SELECTION') {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       sendResponse({ error: 'NO_SELECTION' } satisfies CaptureErrorResponse);
       return true;
     }
@@ -352,7 +378,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === 'CAPTURE_AND_COPY') {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       showToast('No text selected', 'error');
       sendResponse({});
       return true;
