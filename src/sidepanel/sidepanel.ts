@@ -1,7 +1,10 @@
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { marked } from '../../vendor/marked.esm.js';
+import DOMPurify from '../../vendor/purify.esm.mjs';
 import { isRestrictedUrl } from '../shared/restricted';
 import { incrementCounter, getCounterToday } from '../shared/counter';
+import { ensureContentScript } from '../shared/inject';
+import { icon, setButtonContent } from '../shared/icons';
+import { getSettings } from '../shared/settings-store';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
@@ -15,27 +18,34 @@ marked.setOptions({ breaks: true, gfm: true });
 // ---- DOM refs ----
 
 const btnCapture = document.getElementById('btn-capture') as HTMLButtonElement;
+const btnHighlighter = document.getElementById('btn-highlighter') as HTMLButtonElement;
+const highlighterInfo = document.getElementById('highlighter-info') as HTMLDivElement;
+const highlightCountLabel = document.getElementById('highlight-count') as HTMLSpanElement;
+const btnClearHighlights = document.getElementById('btn-clear-highlights') as HTMLButtonElement;
+const btnUndo = document.getElementById('btn-undo') as HTMLButtonElement;
+const btnRedo = document.getElementById('btn-redo') as HTMLButtonElement;
 const btnCopy = document.getElementById('btn-copy') as HTMLButtonElement;
 const btnDownload = document.getElementById('btn-download') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
-const btnMetadata = document.getElementById('btn-metadata') as HTMLButtonElement;
-const btnAppend = document.getElementById('btn-append') as HTMLButtonElement;
-const btnReplace = document.getElementById('btn-replace') as HTMLButtonElement;
-const btnCancel = document.getElementById('btn-cancel') as HTMLButtonElement;
+const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
 const previewSource = document.getElementById('preview-source') as HTMLTextAreaElement;
 const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElement;
 const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
-const dialogEl = document.getElementById('dialog-append-replace') as HTMLDivElement;
 const counterValue = document.getElementById('counter-value') as HTMLSpanElement;
 
 // ---- State ----
 
 let rawMd = '';
-let pendingMd = '';
 let lastMeta: PageMeta | null = null;
+const MAX_HISTORY = 50;
+let undoStack: string[] = [];
+let redoStack: string[] = [];
 let viewMode: 'preview' | 'source' = 'preview';
+let highlighterEnabled = false;
+let highlightCount = 0;
+let autoMetadata = false;
 
 // ---- Utilities ----
 
@@ -44,16 +54,66 @@ function setStatus(msg: string, type: 'default' | 'error' | 'success' = 'default
   statusEl.className = `status${type !== 'default' ? ` ${type}` : ''}`;
 }
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function shortUrl(url: string, maxLen = 55): string {
+  try {
+    const u = new URL(url);
+    const display = u.hostname + u.pathname.replace(/\/$/, '');
+    return display.length > maxLen ? display.slice(0, maxLen - 1) + '…' : display;
+  } catch {
+    return url.length > maxLen ? url.slice(0, maxLen - 1) + '…' : url;
+  }
+}
+
+const METADATA_RE = /---\ntitle: "([^"]*)"\nsource: ([^\n]+)\ndate: ([^\n]+)\n---/g;
+
+function buildMetadata(meta: PageMeta): string {
+  const escapedTitle = meta.title.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const dateStr = meta.date.slice(0, 10);
+  return `---\ntitle: "${escapedTitle}"\nsource: ${meta.url}\ndate: ${dateStr}\n---`;
+}
+
 function renderMarkdown(md: string) {
-  const dirty = marked.parse(md) as string;
+  const processed = md
+    .replace(METADATA_RE, (_, title, source, date) => {
+      const safeTitle = title.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">📄</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">🔗</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">📅</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;
+    })
+    .replace(/\n{3,}/g, '\n\n<div class="content-gap"></div>\n\n');
+  const dirty = marked.parse(processed) as string;
   previewRendered.innerHTML = DOMPurify.sanitize(dirty);
 }
 
-function setContent(md: string) {
+function applyContent(md: string) {
   rawMd = md;
   renderMarkdown(md);
   previewSource.value = md;
   updateButtonStates();
+  updateUndoRedoButtons();
+}
+
+function setContent(md: string) {
+  if (rawMd !== md) {
+    undoStack.push(rawMd);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+  }
+  applyContent(md);
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  redoStack.push(rawMd);
+  applyContent(undoStack.pop()!);
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  undoStack.push(rawMd);
+  applyContent(redoStack.pop()!);
 }
 
 function setViewMode(mode: 'preview' | 'source') {
@@ -66,21 +126,16 @@ function setViewMode(mode: 'preview' | 'source') {
   btnSourceTab.setAttribute('aria-pressed', String(mode === 'source'));
 }
 
+function updateUndoRedoButtons() {
+  btnUndo.disabled = undoStack.length === 0;
+  btnRedo.disabled = redoStack.length === 0;
+}
+
 function updateButtonStates() {
   const hasContent = rawMd.trim().length > 0;
   btnCopy.disabled = !hasContent;
   btnDownload.disabled = !hasContent;
   btnClear.disabled = !hasContent;
-  btnMetadata.disabled = !hasContent || lastMeta === null;
-}
-
-function showDialog() {
-  dialogEl.hidden = false;
-}
-
-function hideDialog() {
-  dialogEl.hidden = true;
-  pendingMd = '';
 }
 
 async function updateCounter() {
@@ -106,11 +161,83 @@ function sendMessageWithTimeout(
   });
 }
 
+// ---- Highlighter logic ----
+
+function updateHighlighterUI() {
+  btnHighlighter.classList.toggle('btn-highlighter-active', highlighterEnabled);
+  if (highlighterEnabled) {
+    setButtonContent(btnHighlighter, 'highlighter', 'ON');
+  } else {
+    setButtonContent(btnHighlighter, 'highlighter', 'OFF');
+  }
+
+  if (highlighterEnabled && highlightCount > 0) {
+    highlighterInfo.hidden = false;
+    highlightCountLabel.textContent = `${highlightCount} highlight${highlightCount !== 1 ? 's' : ''}`;
+    btnClearHighlights.hidden = false;
+  } else {
+    highlighterInfo.hidden = true;
+  }
+
+  // Update capture button label
+  if (highlighterEnabled && highlightCount > 0) {
+    setButtonContent(btnCapture, 'crosshair', `Capture highlights (${highlightCount})`, 16);
+  } else {
+    setButtonContent(btnCapture, 'crosshair', 'Capture selection', 16);
+  }
+}
+
+async function getActiveTabId(): Promise<number | null> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !tab.url || isRestrictedUrl(tab.url)) return null;
+  return tab.id;
+}
+
+async function toggleHighlighter() {
+  const tabId = await getActiveTabId();
+  if (!tabId) {
+    setStatus('Cannot access this tab.', 'error');
+    return;
+  }
+
+  const injected = await ensureContentScript(tabId);
+  if (!injected) {
+    setStatus('Could not inject into this page.', 'error');
+    return;
+  }
+
+  highlighterEnabled = !highlighterEnabled;
+  const settings = await getSettings();
+
+  chrome.tabs.sendMessage(tabId, {
+    type: 'TOGGLE_HIGHLIGHTER',
+    active: highlighterEnabled,
+    color: settings.highlighterColor,
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      highlighterEnabled = false;
+    } else if (response) {
+      highlighterEnabled = response.active;
+      highlightCount = response.count;
+    }
+    updateHighlighterUI();
+  });
+}
+
+async function clearHighlights() {
+  const tabId = await getActiveTabId();
+  if (!tabId) return;
+
+  chrome.tabs.sendMessage(tabId, { type: 'CLEAR_HIGHLIGHTS' }, () => {
+    highlightCount = 0;
+    updateHighlighterUI();
+  });
+}
+
 // ---- Capture logic ----
 
 async function captureSelection(silent = false) {
   if (!silent) setStatus('');
-  hideDialog();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id || !tab.url) {
@@ -123,9 +250,20 @@ async function captureSelection(silent = false) {
     return;
   }
 
+  const injected = await ensureContentScript(tab.id);
+  if (!injected) {
+    if (!silent) setStatus('Could not inject into this page.', 'error');
+    return;
+  }
+
+  // If highlighter has captures, use those instead
+  const messageType = (highlighterEnabled && highlightCount > 0)
+    ? 'CAPTURE_HIGHLIGHTS'
+    : 'CAPTURE_SELECTION';
+
   let response: CaptureResponse;
   try {
-    response = await sendMessageWithTimeout(tab.id, { type: 'CAPTURE_SELECTION' }, 3000);
+    response = await sendMessageWithTimeout(tab.id, { type: messageType }, 3000);
   } catch (err) {
     if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -139,31 +277,87 @@ async function captureSelection(silent = false) {
 
   if (isCaptureError(response)) {
     if (response.error === 'NO_SELECTION') {
-      if (!silent) setStatus('No text selected. Select text on the page first.', 'error');
+      if (!silent) {
+        const hint = messageType === 'CAPTURE_HIGHLIGHTS'
+          ? 'No highlights. Click elements on the page to highlight them.'
+          : 'No text selected. Select text on the page first.';
+        setStatus(hint, 'error');
+      }
     } else {
       if (!silent) setStatus('Could not convert selection.', 'error');
     }
     return;
   }
 
-  const { md, meta } = response;
+  const { meta, md } = response;
+  const prevUrl = lastMeta?.url ?? null;
   lastMeta = meta;
 
   if (rawMd.trim().length === 0) {
-    setContent(md);
-    setStatus('Captured.', 'success');
+    const content = autoMetadata ? buildMetadata(meta) + '\n\n' + md : md;
+    setContent(content);
+  } else if (prevUrl === meta.url) {
+    setContent(rawMd + '\n\n' + md);
   } else {
-    pendingMd = md;
-    showDialog();
+    if (autoMetadata) {
+      setContent(rawMd + '\n\n' + buildMetadata(meta) + '\n\n' + md);
+    } else {
+      setContent(rawMd + '\n\n---\n\n' + md);
+    }
+  }
+  setStatus('Captured.', 'success');
+  if (messageType === 'CAPTURE_HIGHLIGHTS') {
+    clearHighlights();
   }
 }
 
+// ---- Textarea editor ----
+
+let sourceValueOnFocus = '';
+
+previewSource.addEventListener('focus', () => {
+  sourceValueOnFocus = rawMd;
+});
+
+previewSource.addEventListener('input', () => {
+  rawMd = previewSource.value;
+  renderMarkdown(rawMd);
+  updateButtonStates();
+  updateUndoRedoButtons();
+});
+
+previewSource.addEventListener('blur', () => {
+  if (rawMd !== sourceValueOnFocus) {
+    undoStack.push(sourceValueOnFocus);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+});
+
 // ---- Event handlers ----
+
+btnUndo.addEventListener('click', undo);
+btnRedo.addEventListener('click', redo);
 
 btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
 btnSourceTab.addEventListener('click', () => setViewMode('source'));
 
 btnCapture.addEventListener('click', () => captureSelection(false));
+btnHighlighter.addEventListener('click', () => toggleHighlighter());
+btnClearHighlights.addEventListener('click', () => clearHighlights());
+
+btnSettings.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+});
+
+// Listen for highlight count updates from content script
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'HIGHLIGHT_COUNT') {
+    highlightCount = msg.count;
+    updateHighlighterUI();
+  }
+});
 
 // Auto-capture when icon is clicked (signal from service worker)
 chrome.storage.session.onChanged.addListener((changes) => {
@@ -172,32 +366,14 @@ chrome.storage.session.onChanged.addListener((changes) => {
   }
 });
 
-btnAppend.addEventListener('click', () => {
-  setContent(rawMd + '\n\n---\n\n' + pendingMd);
-  hideDialog();
-  setStatus('Appended.', 'success');
-});
-
-btnReplace.addEventListener('click', () => {
-  setContent(pendingMd);
-  hideDialog();
-  setStatus('Replaced.', 'success');
-});
-
-btnCancel.addEventListener('click', () => {
-  hideDialog();
-  setStatus('');
-});
-
 btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
   await navigator.clipboard.writeText(rawMd);
   await incrementCounter();
   await updateCounter();
-  const original = btnCopy.textContent;
-  btnCopy.textContent = 'Copied ✓';
+  setButtonContent(btnCopy, 'check', 'Copied');
   setTimeout(() => {
-    btnCopy.textContent = original;
+    setButtonContent(btnCopy, 'copy', 'Copy');
   }, 1500);
 });
 
@@ -214,39 +390,53 @@ btnDownload.addEventListener('click', async () => {
 });
 
 btnClear.addEventListener('click', () => {
-  rawMd = '';
+  setContent('');
   previewRendered.innerHTML = '';
-  previewSource.value = '';
   lastMeta = null;
   setStatus('');
-  updateButtonStates();
 });
 
-btnMetadata.addEventListener('click', () => {
-  if (!lastMeta) return;
+// ---- Init icons ----
 
-  const escapedTitle = lastMeta.title.replace(/"/g, '\\"');
-  const frontmatter = `---\ntitle: "${escapedTitle}"\nurl: ${lastMeta.url}\ndate: ${lastMeta.date}\n---\n\n`;
-
-  let newValue: string;
-  if (rawMd.startsWith('---\n')) {
-    const endIdx = rawMd.indexOf('\n---\n', 4);
-    if (endIdx !== -1) {
-      const body = rawMd.slice(endIdx + 5).replace(/^\n+/, '');
-      newValue = frontmatter + body;
-    } else {
-      newValue = frontmatter + rawMd;
-    }
-  } else {
-    newValue = frontmatter + rawMd;
-  }
-
-  setContent(newValue);
-  setStatus('Metadata added.', 'success');
-});
+btnUndo.innerHTML = icon('undo', 14);
+btnRedo.innerHTML = icon('redo', 14);
+setButtonContent(btnCapture, 'crosshair', 'Capture selection', 16);
+setButtonContent(btnHighlighter, 'highlighter', 'OFF');
+setButtonContent(btnClearHighlights, 'eraser', 'Clear');
+setButtonContent(btnCopy, 'copy', 'Copy');
+setButtonContent(btnDownload, 'download', 'Download');
+setButtonContent(btnClear, 'trash', 'Clear');
+btnPreviewTab.innerHTML = icon('eye', 12) + '<span class="btn-label">Preview</span>';
+btnSourceTab.innerHTML = icon('code', 12) + '<span class="btn-label">Source</span>';
+btnSettings.innerHTML = icon('settings', 14);
 
 // ---- Init ----
 
-setViewMode('preview');
-updateCounter();
-updateButtonStates();
+async function init() {
+  const settings = await getSettings();
+  autoMetadata = settings.autoMetadata;
+  setViewMode(settings.defaultViewMode);
+  await updateCounter();
+  updateButtonStates();
+  updateUndoRedoButtons();
+  updateHighlighterUI();
+
+  // Check for a fresh captureSignal on startup (handles timing race when panel just opened)
+  chrome.storage.session.get('captureSignal', ({ captureSignal }) => {
+    if (captureSignal && Date.now() - captureSignal < 3000) {
+      captureSelection(true);
+    }
+  });
+}
+
+// React to settings changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.settings) {
+    const s = changes.settings.newValue;
+    if (s) {
+      autoMetadata = s.autoMetadata ?? false;
+    }
+  }
+});
+
+init();

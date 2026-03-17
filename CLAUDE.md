@@ -75,6 +75,7 @@ Chrome Extension для захвата выделений со страниц в
 - `captureHighlightsMd()` — создаёт fake Selection для каждого highlighted-элемента, конвертирует через markitdown, объединяет через `\n\n`
 - `HIGHLIGHT_COUNT` сообщения из content script → side panel для обновления badge
 - Clear highlights: удаляет CSS-классы и сбрасывает Set
+- **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
 - `findHighlightTarget(el)` — поднимается по DOM до ближайшего блочного элемента
 
 ## Settings Page
