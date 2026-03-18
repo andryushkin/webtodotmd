@@ -12,16 +12,6 @@
 </head>
 <body>
   <div class="app">
-    <header class="app-header">
-<div class="header-actions">
-        <div class="view-toggle">
-          <button id="btn-preview" class="toggle active" aria-pressed="true" title="Preview"></button>
-          <button id="btn-source" class="toggle" aria-pressed="false" title="Source"></button>
-        </div>
-        <button id="btn-settings" class="btn-icon" title="Settings"></button>
-      </div>
-    </header>
-
     <main class="app-main">
       <div class="capture-row">
         <button id="btn-capture" class="btn btn-primary"></button>
@@ -35,6 +25,14 @@
 
       <div id="status" class="status" aria-live="polite"></div>
 
+      <div class="header-actions">
+        <div class="view-toggle">
+          <button id="btn-preview" class="toggle active" aria-pressed="true" title="Preview"></button>
+          <button id="btn-source" class="toggle" aria-pressed="false" title="Source"></button>
+        </div>
+        <button id="btn-settings" class="btn-icon" title="Settings"></button>
+      </div>
+
       <div id="preview-rendered" class="preview preview-rendered" aria-label="Rendered preview"></div>
       <textarea id="preview-source" class="preview preview-source" placeholder="Markdown will appear here…" hidden></textarea>
 
@@ -46,7 +44,6 @@
         <button id="btn-clear" class="btn btn-ghost" disabled></button>
       </div>
     </main>
-
     <footer class="app-footer">
       <span class="counter">Copied today: <span id="counter-value">0</span></span>
     </footer>

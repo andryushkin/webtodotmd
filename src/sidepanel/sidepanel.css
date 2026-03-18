@@ -234,10 +234,10 @@ body {
 
 .status {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #e0e0e0;
   min-height: 20px;
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.04);
+  background: #222222;
   border-radius: var(--radius);
   padding: 4px 8px;
   display: flex;
@@ -245,9 +245,9 @@ body {
   gap: 5px;
 }
 
-.status.error   { color: #cc3333; }
-.status.success { color: #229922; }
-.status.warning { color: #b07000; }
+.status.error   { color: #ff7070; }
+.status.success { color: #6bcb77; }
+.status.warning { color: #ffd93d; }
 
 /* Preview area */
 
@@ -406,7 +406,7 @@ body {
 }
 .metadata-field {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
 }
 .metadata-icon { flex-shrink: 0; }

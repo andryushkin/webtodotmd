@@ -52,6 +52,7 @@ let highlightCount = 0;
 let autoMetadata = false;
 let currentTabId: number | null = null;
 let highlighterPort: chrome.runtime.Port | null = null;
+let tabRestricted = false;
 
 // ---- Status state ----
 
@@ -102,13 +103,15 @@ function getTabReadiness(tab: chrome.tabs.Tab): { type: 'default' | 'warning'; i
   if (/\.pdf(\?|#|$)/i.test(url)) {
     return { type: 'warning', icon: 'alertTriangle', message: 'PDF — cannot capture' };
   }
-  return { type: 'default', icon: 'crosshair', message: 'Ready to capture' };
+  return { type: 'default', icon: 'crosshair', message: 'Ready to capture — select text and click Capture' };
 }
 
 async function updateReadinessStatus() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
   const r = getTabReadiness(tab);
+  tabRestricted = r.type === 'warning';
+  btnCapture.disabled = tabRestricted;
   setBaseStatus(r.message, r.type, r.icon);
 }
 
@@ -191,7 +194,7 @@ function renderMarkdown(md: string) {
   const processed = preprocessMath(escapeHtmlTagsInMarkdown(md))
     .replace(METADATA_RE, (_, title, source, date) => {
       const safeTitle = title.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-      return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">📄</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">🔗</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">📅</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;
+      return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">${icon('fileText', 12)}</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">${icon('link', 12)}</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">${icon('calendar', 12)}</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;
     })
     .replace(/\n{3,}/g, '\n\n<div class="content-gap"></div>\n\n');
   const dirty = marked.parse(processed) as string;
@@ -309,13 +312,13 @@ async function getActiveTabId(): Promise<number | null> {
 async function toggleHighlighter() {
   const tabId = await getActiveTabId();
   if (!tabId) {
-    setTempStatus('Cannot access this tab.', 'error');
+    setTempStatus('Cannot access this tab.', 'error', 'x');
     return;
   }
 
   const injected = await ensureContentScript(tabId);
   if (!injected) {
-    setTempStatus('Could not inject into this page.', 'error');
+    setTempStatus('Could not inject into this page.', 'error', 'x');
     return;
   }
 
@@ -362,18 +365,18 @@ async function clearHighlights() {
 async function captureSelection(silent = false) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id || !tab.url) {
-    if (!silent) setTempStatus('Cannot access this tab.', 'error');
+    if (!silent) setTempStatus('Cannot access this tab.', 'error', 'x');
     return;
   }
 
   if (isRestrictedUrl(tab.url)) {
-    if (!silent) setTempStatus('Cannot capture from this page (restricted URL).', 'error');
+    if (!silent) setTempStatus('Cannot capture from this page (restricted URL).', 'error', 'x');
     return;
   }
 
   const injected = await ensureContentScript(tab.id);
   if (!injected) {
-    if (!silent) setTempStatus('Could not inject into this page.', 'error');
+    if (!silent) setTempStatus('Could not inject into this page.', 'error', 'x');
     return;
   }
 
@@ -389,9 +392,9 @@ async function captureSelection(silent = false) {
     if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
     if (msg === 'TIMEOUT') {
-      setTempStatus('Request timed out. Try again.', 'error');
+      setTempStatus('Request timed out. Try again.', 'error', 'x');
     } else {
-      setTempStatus('Could not connect to page. Reload and try again.', 'error');
+      setTempStatus('Could not connect to page. Reload and try again.', 'error', 'x');
     }
     return;
   }
@@ -402,10 +405,10 @@ async function captureSelection(silent = false) {
         const hint = messageType === 'CAPTURE_HIGHLIGHTS'
           ? 'No highlights. Click elements on the page to highlight them.'
           : 'No text selected. Select text on the page first.';
-        setTempStatus(hint, 'error');
+        setTempStatus(hint, 'error', 'x');
       }
     } else {
-      if (!silent) setTempStatus('Could not convert selection.', 'error');
+      if (!silent) setTempStatus('Could not convert selection.', 'error', 'x');
     }
     return;
   }

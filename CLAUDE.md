@@ -51,6 +51,7 @@ Chrome Extension для захвата выделений со страниц в
 - `setButtonContent(btn, iconName, label)` — устанавливает иконку + текст в кнопку
 - Иконки инициализируются в JS при старте панели (не в HTML)
 - При смене состояния кнопки (Copy → Copied) — вызывать `setButtonContent` с новой иконкой
+- **Метаданные используют `icon(name, 12)`** — `fileText`, `link`, `calendar`; `.metadata-field` требует `align-items: center` (не baseline) для правильного выравнивания SVG
 
 ## Floating Bubble
 
