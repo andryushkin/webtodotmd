@@ -2,6 +2,7 @@ import { selectionToMarkdown } from '../../../markitdown/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
+import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 
 // ---- Shadow DOM flattening ----
 
@@ -168,19 +169,6 @@ const highlights = new Set<Element>();
 let hoverOverlay: HTMLElement | null = null;
 let highlighterStyleEl: HTMLStyleElement | null = null;
 
-const BLOCK_TAGS = new Set([
-  'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE',
-  'PRE', 'TABLE', 'FIGURE', 'TR', 'SECTION', 'ARTICLE', 'DETAILS',
-]);
-
-function findHighlightTarget(el: Element): Element {
-  let current: Element | null = el;
-  while (current && current !== document.body && current !== document.documentElement) {
-    if (BLOCK_TAGS.has(current.tagName)) return current;
-    current = current.parentElement;
-  }
-  return el;
-}
 
 function injectHighlighterStyles(color: string) {
   if (highlighterStyleEl) return;

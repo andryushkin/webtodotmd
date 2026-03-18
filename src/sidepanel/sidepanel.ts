@@ -14,7 +14,7 @@ function isCaptureError(r: CaptureResponse): r is CaptureErrorResponse {
   return 'error' in r;
 }
 
-marked.setOptions({ breaks: true, gfm: true });
+marked.setOptions({ breaks: true, gfm: true, html: false });
 
 // ---- DOM refs ----
 
