@@ -79,6 +79,11 @@ const PATHS: Record<string, string> = {
   redo:
     '<path d="m15 14 5-5-5-5"/>' +
     '<path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/>',
+
+  alertTriangle:
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
+    '<path d="M12 9v4"/>' +
+    '<path d="M12 17h.01"/>',
 };
 
 export function icon(name: string, size = 14): string {

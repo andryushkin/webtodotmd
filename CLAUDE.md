@@ -38,6 +38,9 @@ Chrome Extension для захвата выделений со страниц в
 - `DOMPurify.sanitize()` обязателен перед присвоением `innerHTML`
 - Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
 - `captureSelection(silent: boolean)` — единая функция capture для кнопки и auto-capture; `silent=true` подавляет NO_SELECTION ошибку
+- **Status bar — базовый + временный статус:** `setBaseStatus(msg, type, icon)` — постоянный (readiness), `setTempStatus(msg, type, icon, ms)` — временный (ошибки, успех) с откатом к базовому. Ошибки → `setTempStatus`. `setStatus` — низкоуровневый, напрямую не вызывать.
+- **Readiness status:** `getTabReadiness(tab)` определяет тип вкладки; `updateReadinessStatus()` вызывается при `onActivated`, `onUpdated` и в конце `init()`. PDF/file/chrome/пустая → `warning`; обычная → `default + crosshair + "Ready to capture"`
+- **`setStatus` использует `innerHTML`** (иконка + `<span>${escHtml(msg)}</span>`) — сообщение всегда экранировать через `escHtml`
 - **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
 - **marked: `html: true` + `escapeHtmlTagsInMarkdown()`:** marked настроен с `html: true` чтобы рендерились injected div'ы (KaTeX, metadata-block, content-gap, sub, sup). Чтобы literal HTML-теги в тексте страниц не рендерились как HTML — `escapeHtmlTagsInMarkdown()` вызывается первым шагом в `renderMarkdown()`, экранирует теги в non-code частях (исключения: sub, sup, br). DOMPurify sanitize — XSS-защита поверх.
 

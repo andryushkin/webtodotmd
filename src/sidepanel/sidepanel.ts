@@ -9,6 +9,7 @@ import { getSettings } from '../shared/settings-store';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
+type StatusType = 'default' | 'error' | 'success' | 'warning';
 
 function isCaptureError(r: CaptureResponse): r is CaptureErrorResponse {
   return 'error' in r;
@@ -52,15 +53,63 @@ let autoMetadata = false;
 let currentTabId: number | null = null;
 let highlighterPort: chrome.runtime.Port | null = null;
 
+// ---- Status state ----
+
+let baseStatusMsg = '';
+let baseStatusType: 'default' | 'warning' = 'default';
+let baseStatusIcon: string | undefined;
+let revertTimer: ReturnType<typeof setTimeout> | null = null;
+
 // ---- Utilities ----
 
-function setStatus(msg: string, type: 'default' | 'error' | 'success' = 'default') {
-  statusEl.textContent = msg;
+function setStatus(msg: string, type: StatusType = 'default', iconName?: string) {
+  const iconHtml = iconName ? icon(iconName, 12) : '';
+  statusEl.innerHTML = iconHtml + (msg ? `<span>${escHtml(msg)}</span>` : '');
   statusEl.className = `status${type !== 'default' ? ` ${type}` : ''}`;
 }
 
 function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function setBaseStatus(msg: string, type: 'default' | 'warning' = 'default', iconName?: string) {
+  baseStatusMsg = msg;
+  baseStatusType = type;
+  baseStatusIcon = iconName;
+  if (revertTimer === null) setStatus(msg, type, iconName);
+}
+
+function setTempStatus(msg: string, type: 'error' | 'success', iconName?: string, ms = 3000) {
+  if (revertTimer) clearTimeout(revertTimer);
+  setStatus(msg, type, iconName);
+  revertTimer = setTimeout(() => {
+    revertTimer = null;
+    setStatus(baseStatusMsg, baseStatusType, baseStatusIcon);
+  }, ms);
+}
+
+function getTabReadiness(tab: chrome.tabs.Tab): { type: 'default' | 'warning'; icon: string; message: string } {
+  const url = tab.url ?? '';
+  if (!url || url === 'about:blank' || url.startsWith('chrome://newtab')) {
+    return { type: 'warning', icon: 'alertTriangle', message: 'Empty tab' };
+  }
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('devtools://') || url.startsWith('about:')) {
+    return { type: 'warning', icon: 'alertTriangle', message: 'Restricted page' };
+  }
+  if (url.startsWith('file://')) {
+    return { type: 'warning', icon: 'alertTriangle', message: 'Local file' };
+  }
+  if (/\.pdf(\?|#|$)/i.test(url)) {
+    return { type: 'warning', icon: 'alertTriangle', message: 'PDF — cannot capture' };
+  }
+  return { type: 'default', icon: 'crosshair', message: 'Ready to capture' };
+}
+
+async function updateReadinessStatus() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab) return;
+  const r = getTabReadiness(tab);
+  setBaseStatus(r.message, r.type, r.icon);
 }
 
 function shortUrl(url: string, maxLen = 55): string {
@@ -260,13 +309,13 @@ async function getActiveTabId(): Promise<number | null> {
 async function toggleHighlighter() {
   const tabId = await getActiveTabId();
   if (!tabId) {
-    setStatus('Cannot access this tab.', 'error');
+    setTempStatus('Cannot access this tab.', 'error');
     return;
   }
 
   const injected = await ensureContentScript(tabId);
   if (!injected) {
-    setStatus('Could not inject into this page.', 'error');
+    setTempStatus('Could not inject into this page.', 'error');
     return;
   }
 
@@ -311,22 +360,20 @@ async function clearHighlights() {
 // ---- Capture logic ----
 
 async function captureSelection(silent = false) {
-  if (!silent) setStatus('');
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id || !tab.url) {
-    if (!silent) setStatus('Cannot access this tab.', 'error');
+    if (!silent) setTempStatus('Cannot access this tab.', 'error');
     return;
   }
 
   if (isRestrictedUrl(tab.url)) {
-    if (!silent) setStatus('Cannot capture from this page (restricted URL).', 'error');
+    if (!silent) setTempStatus('Cannot capture from this page (restricted URL).', 'error');
     return;
   }
 
   const injected = await ensureContentScript(tab.id);
   if (!injected) {
-    if (!silent) setStatus('Could not inject into this page.', 'error');
+    if (!silent) setTempStatus('Could not inject into this page.', 'error');
     return;
   }
 
@@ -342,9 +389,9 @@ async function captureSelection(silent = false) {
     if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
     if (msg === 'TIMEOUT') {
-      setStatus('Request timed out. Try again.', 'error');
+      setTempStatus('Request timed out. Try again.', 'error');
     } else {
-      setStatus('Could not connect to page. Reload and try again.', 'error');
+      setTempStatus('Could not connect to page. Reload and try again.', 'error');
     }
     return;
   }
@@ -355,10 +402,10 @@ async function captureSelection(silent = false) {
         const hint = messageType === 'CAPTURE_HIGHLIGHTS'
           ? 'No highlights. Click elements on the page to highlight them.'
           : 'No text selected. Select text on the page first.';
-        setStatus(hint, 'error');
+        setTempStatus(hint, 'error');
       }
     } else {
-      if (!silent) setStatus('Could not convert selection.', 'error');
+      if (!silent) setTempStatus('Could not convert selection.', 'error');
     }
     return;
   }
@@ -379,7 +426,7 @@ async function captureSelection(silent = false) {
       setContent(rawMd + '\n\n---\n\n' + md);
     }
   }
-  setStatus('Captured.', 'success');
+  setTempStatus('Captured.', 'success', 'check', 2000);
   if (messageType === 'CAPTURE_HIGHLIGHTS') {
     clearHighlights();
   }
@@ -440,6 +487,12 @@ chrome.storage.session.onChanged.addListener((changes) => {
   }
 });
 
+// Update readiness status on tab switch / navigation
+chrome.tabs.onActivated.addListener(() => updateReadinessStatus());
+chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
+  if (changeInfo.status === 'complete' || changeInfo.url) updateReadinessStatus();
+});
+
 btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
   await navigator.clipboard.writeText(rawMd);
@@ -467,7 +520,6 @@ btnClear.addEventListener('click', () => {
   setContent('');
   previewRendered.innerHTML = '';
   lastMeta = null;
-  setStatus('');
 });
 
 // ---- Init icons ----
@@ -501,6 +553,8 @@ async function init() {
       captureSelection(true);
     }
   });
+
+  await updateReadinessStatus();
 }
 
 // React to settings changes

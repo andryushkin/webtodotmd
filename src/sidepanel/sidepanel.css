@@ -53,17 +53,12 @@ body {
   gap: var(--gap);
 }
 
-.app-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .btn-icon {
@@ -240,17 +235,19 @@ body {
 .status {
   font-size: 12px;
   color: var(--text-muted);
-  min-height: 16px;
+  min-height: 20px;
   flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.status.error {
-  color: #cc3333;
-}
-
-.status.success {
-  color: #229922;
-}
+.status.error   { color: #cc3333; }
+.status.success { color: #229922; }
+.status.warning { color: #b07000; }
 
 /* Preview area */
 
