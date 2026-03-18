@@ -37,6 +37,7 @@ Chrome Extension для захвата выделений со страниц в
 - `DOMPurify.sanitize()` обязателен перед присвоением `innerHTML`
 - Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
 - `captureSelection(silent: boolean)` — единая функция capture для кнопки и auto-capture; `silent=true` подавляет NO_SELECTION ошибку
+- **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
 
 ## Иконки (Lucide-style SVG)
 

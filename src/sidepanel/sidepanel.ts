@@ -77,17 +77,20 @@ function preprocessMath(text: string): string {
   mathMap.clear();
   mathCounter = 0;
 
+  // Invisible Unicode math operators from MathML (U+2061–U+2064) — strip before KaTeX
+  const INVISIBLE_MATH_CHARS = /[\u2061-\u2064]/g;
+
   // Block math: $$...$$ → placeholder div
   text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
     const id = String(mathCounter++);
-    mathMap.set(id, { latex: latex.trim(), display: true });
+    mathMap.set(id, { latex: latex.trim().replace(INVISIBLE_MATH_CHARS, ''), display: true });
     return `\n\n<div data-katex="${id}" data-display="1"></div>\n\n`;
   });
 
   // Inline math: $...$ → placeholder span
   text = text.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (_, latex) => {
     const id = String(mathCounter++);
-    mathMap.set(id, { latex: latex.trim(), display: false });
+    mathMap.set(id, { latex: latex.trim().replace(INVISIBLE_MATH_CHARS, ''), display: false });
     return `<span data-katex="${id}" data-display="0"></span>`;
   });
 
