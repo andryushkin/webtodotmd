@@ -77,6 +77,7 @@ Chrome Extension для захвата выделений со страниц в
 - Clear highlights: удаляет CSS-классы и сбрасывает Set
 - **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
 - `findHighlightTarget(el)` — поднимается по DOM до ближайшего блочного элемента
+- **Auto-disable при закрытии панели (port-based):** Side Panel открывает `chrome.runtime.connect()` порт при старте; Content Script получает `port.onDisconnect` событие и автоматически деактивирует highlighter mode — без явного сообщения от панели
 
 ## Settings Page
 

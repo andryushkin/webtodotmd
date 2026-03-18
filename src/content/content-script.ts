@@ -1,6 +1,7 @@
 import { selectionToMarkdown } from '../../../markitdown/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
+import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
 
 // ---- Shadow DOM flattening ----
 
@@ -17,6 +18,26 @@ function expandShadowRoots(): () => void {
   return () => cleanups.forEach(fn => fn());
 }
 
+const rawMathmlRule = {
+  name: 'raw-mathml',
+  filter: (el: Element) => {
+    if (el.tagName.toLowerCase() !== 'math') return false;
+    if (el.getAttribute('alttext')) return false; // Wikipedia handled by MATH_RULES
+    if (el.querySelector('annotation[encoding="application/x-tex"]')) return false;
+    return true;
+  },
+  replacement: (el: Element) => {
+    try {
+      const latex = MathMLToLaTeX.convert(el.outerHTML);
+      if (!latex) return '';
+      const display = el.getAttribute('display') === 'block';
+      return display ? `\n\n$$${latex}$$\n\n` : `$${latex}$`;
+    } catch {
+      return '';
+    }
+  },
+};
+
 function selectionToMd(selection: Selection): string {
   const cleanup = expandShadowRoots();
   try {
@@ -25,11 +46,11 @@ function selectionToMd(selection: Selection): string {
       for (let i = 0; i < selection.rangeCount; i++) {
         const range = selection.getRangeAt(i);
         const sel = { rangeCount: 1, getRangeAt: () => range } as unknown as Selection;
-        fragments.push(selectionToMarkdown(sel, { baseUrl: window.location.href, headingOffset: 1 }));
+        fragments.push(selectionToMarkdown(sel, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] }));
       }
       return fragments.join('\n\n');
     }
-    return selectionToMarkdown(selection, { baseUrl: window.location.href, headingOffset: 1 });
+    return selectionToMarkdown(selection, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] });
   } finally {
     cleanup();
   }
@@ -290,7 +311,7 @@ function captureHighlightsMd(): string {
       const range = document.createRange();
       range.selectNodeContents(el);
       const fakeSel = { rangeCount: 1, getRangeAt: () => range } as unknown as Selection;
-      return selectionToMarkdown(fakeSel, { baseUrl: window.location.href, headingOffset: 1 });
+      return selectionToMarkdown(fakeSel, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] });
     });
     return fragments.join('\n\n');
   } finally {

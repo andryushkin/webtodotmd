@@ -1,4 +1,4 @@
-# PRD: select2md — Chrome Extension
+# PRD: to .md — Chrome Extension
 
 ## 1. Overview
 
@@ -8,7 +8,7 @@
 
 ### Решение
 
-select2md — расширение для Chrome, которое конвертирует HTML-выделение в Markdown одним кликом. Пользователь выделяет текст на любой странице, нажимает кнопку в боковой панели (или пункт контекстного меню, или горячую клавишу) — и получает чистый Markdown в буфере обмена или как `.md`-файл.
+to .md — расширение для Chrome, которое конвертирует HTML-выделение в Markdown одним кликом. Пользователь выделяет текст на любой странице, нажимает кнопку в боковой панели (или пункт контекстного меню, или горячую клавишу) — и получает чистый Markdown в буфере обмена или как `.md`-файл.
 
 ### Vision
 
@@ -204,7 +204,7 @@ select2md — расширение для Chrome, которое конверт�
 
 ```
 ┌───────────────────────────────────────┐
-│  select2md       [◻ Preview] [≡ Source] │
+│  to .md       [◻ Preview] [≡ Source] │
 ├───────────────────────────────────────┤
 │                                       │
 │  [ 📋 Capture Selection ]             │  ← основная кнопка
@@ -403,7 +403,7 @@ Content script на предыдущей вкладке недоступен.
 ### Структура файлов
 
 ```
-select2md/
+to .md/
 ├── src/
 │   ├── background/
 │   │   └── service-worker.ts       # onInstalled, context menu, commands, sidePanel config
@@ -432,7 +432,7 @@ select2md/
 ```json
 {
   "manifest_version": 3,
-  "name": "select2md",
+  "name": "to .md",
   "version": "0.1.0",
   "description": "Convert selected text to clean Markdown",
   "permissions": ["sidePanel", "activeTab", "scripting", "storage"],
@@ -450,7 +450,7 @@ select2md/
     }
   ],
   "action": {
-    "default_title": "select2md"
+    "default_title": "to .md"
   },
   "icons": {
     "16": "icons/icon-16.png",
@@ -573,14 +573,16 @@ interface PageMeta {
 
 **Задачи:**
 
-1. ✅ Иконки расширения: 16px, 48px, 128px (+ toolbar icon) — `icon16.png`, `icon48.png`, `icon128.png`
+1. ✅ Иконки расширения: 16px, 48px, 128px (+ toolbar icon) — в `icons/` и `public/icons/`
 2. ⏳ Промо-материалы: Store tile (440×280), скриншоты (1280×800) × 3-5 шт
 3. ✅ Store listing: `_locales/` с 52 языками CWS; CWS dashboard переводы — отдельно
 4. ✅ Privacy Policy — `privacy-policy.html` (хостить перед сабмитом)
 5. ⏳ Финальное тестирование на Chrome 114+, Windows / macOS / Linux
 6. ⏳ E2E тест: 10 популярных сайтов (GitHub, SO, MDN, Wikipedia, Medium, Dev.to, Habr, arXiv, Docs.\*, Notion public pages)
 7. ✅ Минимизация permissions: `docs/permissions-justification.md`
-8. ⏳ Публикация в Chrome Web Store
+8. ✅ Settings Page: `src/settings/` — options_page с настройками highlighter, bubble, viewMode, metadata
+9. ✅ Build system: `build.sh` (Bun transpiler, vendored deps, без node_modules)
+10. ⏳ Публикация в Chrome Web Store
 
 **Definition of Done:**
 

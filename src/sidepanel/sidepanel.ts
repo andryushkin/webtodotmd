@@ -1,5 +1,6 @@
 import { marked } from '../../vendor/marked.esm.js';
 import DOMPurify from '../../vendor/purify.esm.mjs';
+import katex from '../../vendor/katex.mjs';
 import { isRestrictedUrl } from '../shared/restricted';
 import { incrementCounter, getCounterToday } from '../shared/counter';
 import { ensureContentScript } from '../shared/inject';
@@ -39,6 +40,8 @@ const counterValue = document.getElementById('counter-value') as HTMLSpanElement
 
 let rawMd = '';
 let lastMeta: PageMeta | null = null;
+const mathMap = new Map<string, { latex: string; display: boolean }>();
+let mathCounter = 0;
 const MAX_HISTORY = 50;
 let undoStack: string[] = [];
 let redoStack: string[] = [];
@@ -70,6 +73,45 @@ function shortUrl(url: string, maxLen = 55): string {
   }
 }
 
+function preprocessMath(text: string): string {
+  mathMap.clear();
+  mathCounter = 0;
+
+  // Block math: $$...$$ → placeholder div
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
+    const id = String(mathCounter++);
+    mathMap.set(id, { latex: latex.trim(), display: true });
+    return `\n\n<div data-katex="${id}" data-display="1"></div>\n\n`;
+  });
+
+  // Inline math: $...$ → placeholder span
+  text = text.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (_, latex) => {
+    const id = String(mathCounter++);
+    mathMap.set(id, { latex: latex.trim(), display: false });
+    return `<span data-katex="${id}" data-display="0"></span>`;
+  });
+
+  return text;
+}
+
+function renderMathInDOM(container: HTMLElement) {
+  container.querySelectorAll<HTMLElement>('[data-katex]').forEach(el => {
+    const id = el.getAttribute('data-katex')!;
+    const entry = mathMap.get(id);
+    if (!entry) return;
+    try {
+      el.innerHTML = katex.renderToString(entry.latex, {
+        displayMode: entry.display,
+        throwOnError: false,
+        output: 'html',
+      });
+      el.removeAttribute('data-katex');
+    } catch {
+      el.textContent = entry.display ? `$$${entry.latex}$$` : `$${entry.latex}$`;
+    }
+  });
+}
+
 const METADATA_RE = /---\ntitle: "([^"]*)"\nsource: ([^\n]+)\ndate: ([^\n]+)\n---/g;
 
 function buildMetadata(meta: PageMeta): string {
@@ -79,7 +121,7 @@ function buildMetadata(meta: PageMeta): string {
 }
 
 function renderMarkdown(md: string) {
-  const processed = md
+  const processed = preprocessMath(md)
     .replace(METADATA_RE, (_, title, source, date) => {
       const safeTitle = title.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
       return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">📄</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">🔗</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">📅</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;
@@ -87,6 +129,7 @@ function renderMarkdown(md: string) {
     .replace(/\n{3,}/g, '\n\n<div class="content-gap"></div>\n\n');
   const dirty = marked.parse(processed) as string;
   previewRendered.innerHTML = DOMPurify.sanitize(dirty);
+  renderMathInDOM(previewRendered);
 }
 
 function applyContent(md: string) {

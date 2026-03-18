@@ -1,4 +1,5 @@
 import { ensureInstallId } from '../shared/identity';
+import { ensureContentScript } from '../shared/inject';
 
 // Explicitly disable Chrome's built-in toggle so onClicked fires on every click
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(console.error);
@@ -14,7 +15,7 @@ chrome.action.onClicked.addListener((tab) => {
 function createContextMenu() {
   chrome.contextMenus.create({
     id: 'capture-and-copy',
-    title: 'Add to Side Panel',
+    title: 'add to .md',
     contexts: ['selection'],
   });
 }
@@ -43,7 +44,9 @@ chrome.commands.onCommand.addListener((command) => {
   }
 });
 
-function captureAndCopy(tabId: number) {
+async function captureAndCopy(tabId: number) {
+  const ok = await ensureContentScript(tabId);
+  if (!ok) return;
   chrome.tabs.sendMessage(tabId, { type: 'CAPTURE_AND_COPY' });
 }
 

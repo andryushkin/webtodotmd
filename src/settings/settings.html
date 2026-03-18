@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>to .md — Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="settings">
+    <h1>to .md Settings</h1>
+
+    <section class="group">
+      <h2>Capture</h2>
+
+      <label class="setting">
+        <input type="checkbox" id="auto-metadata">
+        <span>Auto-add metadata on capture</span>
+      </label>
+
+      <label class="setting">
+        <input type="checkbox" id="show-bubble">
+        <span>Show floating bubble on selection</span>
+      </label>
+    </section>
+
+    <section class="group">
+      <h2>Display</h2>
+
+      <div class="setting">
+        <label for="default-view">Default view mode</label>
+        <select id="default-view">
+          <option value="preview">Preview</option>
+          <option value="source">Source</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Highlighter</h2>
+
+      <div class="setting">
+        <label for="highlighter-color">Highlight color</label>
+        <input type="color" id="highlighter-color" value="#2563eb">
+      </div>
+    </section>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script type="module" src="settings.ts"></script>
+</body>
+</html>

@@ -7,8 +7,9 @@
     "lib": ["ES2022", "DOM"],
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": ["./types"]
   },
-  "include": ["src"],
+  "include": ["src", "vendor", "types"],
   "exclude": ["src/**/__tests__/**"]
 }
