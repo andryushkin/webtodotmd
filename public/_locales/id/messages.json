@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konversi teks yang dipilih ke Markdown bersih \u2014 satu klik dari seleksi ke clipboard.",
+    "message": "Konversi teks yang dipilih ke Markdown bersih — satu klik dari seleksi ke clipboard.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Tangkap pilihan" },
-  "clear": { "message": "Hapus" },
-  "copy": { "message": "Salin" },
-  "copied": { "message": "Disalin" },
-  "download": { "message": "Unduh" },
-  "preview": { "message": "Pratinjau" },
-  "source": { "message": "Sumber" },
-  "highlighterOn": { "message": "ON" },
-  "highlighterOff": { "message": "OFF" },
-  "highlights": { "message": "{1} sorotan" },
-  "markdownPlaceholder": { "message": "Markdown akan muncul di sini\u2026" },
-  "copiedToday": { "message": "Disalin hari ini:" },
-  "statusEmpty": { "message": "Tab kosong" },
-  "statusRestricted": { "message": "Halaman terbatas" },
-  "statusLocalFile": { "message": "File lokal" },
-  "statusPdf": { "message": "PDF \u2014 tidak dapat ditangkap" },
-  "statusReady": { "message": "Siap menangkap \u2014 pilih teks dan klik Tangkap" },
-  "errCannotAccess": { "message": "Tidak dapat mengakses tab ini." },
-  "errCannotInject": { "message": "Tidak dapat menyuntikkan ke halaman ini." },
-  "errRestrictedUrl": { "message": "Tidak dapat menangkap dari halaman ini (URL terbatas)." },
-  "errTimeout": { "message": "Permintaan habis waktu. Coba lagi." },
-  "errConnect": { "message": "Tidak dapat terhubung ke halaman. Muat ulang dan coba lagi." },
-  "errNoHighlights": { "message": "Tidak ada sorotan. Klik elemen di halaman." },
-  "errNoSelection": { "message": "Tidak ada teks dipilih. Pilih teks di halaman terlebih dahulu." },
-  "errConvertFailed": { "message": "Tidak dapat mengonversi pilihan." },
-  "successCaptured": { "message": "Ditangkap." },
-  "captureHighlights": { "message": "Tangkap sorotan ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Pengaturan" },
-  "settingsH1": { "message": "Pengaturan to .md" },
-  "sectionCapture": { "message": "Tangkap" },
-  "sectionDisplay": { "message": "Tampilan" },
-  "sectionHighlighter": { "message": "Penyorot" },
-  "sectionLanguage": { "message": "Bahasa" },
-  "labelAutoMetadata": { "message": "Tambahkan metadata secara otomatis" },
-  "labelShowBubble": { "message": "Tampilkan gelembung mengambang saat memilih" },
-  "labelDefaultView": { "message": "Mode tampilan default" },
-  "labelHighlightColor": { "message": "Warna sorotan" },
-  "labelLanguage": { "message": "Bahasa" },
-  "optPreview": { "message": "Pratinjau" },
-  "optSource": { "message": "Sumber" },
-  "optAuto": { "message": "Otomatis (bahasa browser)" },
-  "savedSettings": { "message": "Tersimpan." },
-  "bubbleText": { "message": "tambahkan ke .md" },
-  "toastNoSelection": { "message": "Tidak ada teks dipilih" },
-  "toastCopied": { "message": "Disalin sebagai Markdown \u2713" },
-  "toastCouldNotCopy": { "message": "Tidak dapat menyalin" },
-  "contextMenuTitle": { "message": "tambahkan ke .md" }
+  "captureSelection": {
+    "message": "Tangkap pilihan"
+  },
+  "clear": {
+    "message": "Hapus"
+  },
+  "copy": {
+    "message": "Salin"
+  },
+  "copied": {
+    "message": "Disalin"
+  },
+  "download": {
+    "message": "Unduh"
+  },
+  "preview": {
+    "message": "Pratinjau"
+  },
+  "source": {
+    "message": "Sumber"
+  },
+  "highlighterOn": {
+    "message": "ON"
+  },
+  "highlighterOff": {
+    "message": "OFF"
+  },
+  "highlights": {
+    "message": "{1} sorotan"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown akan muncul di sini…"
+  },
+  "copiedToday": {
+    "message": "Disalin hari ini:"
+  },
+  "statusEmpty": {
+    "message": "Tab kosong"
+  },
+  "statusRestricted": {
+    "message": "Halaman terbatas"
+  },
+  "statusLocalFile": {
+    "message": "File lokal"
+  },
+  "statusPdf": {
+    "message": "PDF — tidak dapat ditangkap"
+  },
+  "statusReady": {
+    "message": "Siap menangkap — pilih teks dan klik Tangkap"
+  },
+  "errCannotAccess": {
+    "message": "Tidak dapat mengakses tab ini."
+  },
+  "errCannotInject": {
+    "message": "Tidak dapat menyuntikkan ke halaman ini."
+  },
+  "errRestrictedUrl": {
+    "message": "Tidak dapat menangkap dari halaman ini (URL terbatas)."
+  },
+  "errTimeout": {
+    "message": "Permintaan habis waktu. Coba lagi."
+  },
+  "errConnect": {
+    "message": "Tidak dapat terhubung ke halaman. Muat ulang dan coba lagi."
+  },
+  "errNoHighlights": {
+    "message": "Tidak ada sorotan. Klik elemen di halaman."
+  },
+  "errNoSelection": {
+    "message": "Tidak ada teks dipilih. Pilih teks di halaman terlebih dahulu."
+  },
+  "errConvertFailed": {
+    "message": "Tidak dapat mengonversi pilihan."
+  },
+  "successCaptured": {
+    "message": "Ditangkap."
+  },
+  "captureHighlights": {
+    "message": "Tangkap sorotan ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Pengaturan"
+  },
+  "settingsH1": {
+    "message": "Pengaturan to .md"
+  },
+  "sectionCapture": {
+    "message": "Tangkap"
+  },
+  "sectionDisplay": {
+    "message": "Tampilan"
+  },
+  "sectionHighlighter": {
+    "message": "Penyorot"
+  },
+  "sectionLanguage": {
+    "message": "Bahasa"
+  },
+  "labelAutoMetadata": {
+    "message": "Tambahkan metadata secara otomatis"
+  },
+  "labelShowBubble": {
+    "message": "Tampilkan gelembung mengambang saat memilih"
+  },
+  "labelDefaultView": {
+    "message": "Mode tampilan default"
+  },
+  "labelHighlightColor": {
+    "message": "Warna sorotan"
+  },
+  "labelLanguage": {
+    "message": "Bahasa"
+  },
+  "optPreview": {
+    "message": "Pratinjau"
+  },
+  "optSource": {
+    "message": "Sumber"
+  },
+  "optAuto": {
+    "message": "Otomatis (bahasa browser)"
+  },
+  "savedSettings": {
+    "message": "Tersimpan."
+  },
+  "bubbleText": {
+    "message": "tambahkan ke .md"
+  },
+  "toastNoSelection": {
+    "message": "Tidak ada teks dipilih"
+  },
+  "toastCopied": {
+    "message": "Disalin sebagai Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Tidak dapat menyalin"
+  },
+  "contextMenuTitle": {
+    "message": "tambahkan ke .md"
+  }
 }

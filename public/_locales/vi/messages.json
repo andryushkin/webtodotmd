@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Chuy\u1ec3n \u0111\u1ed5i v\u0103n b\u1ea3n \u0111\u00e3 ch\u1ecdn th\u00e0nh Markdown s\u1ea1ch \u2014 m\u1ed9t c\u00fa nh\u1ea5p t\u1eeb l\u1ef1a ch\u1ecdn \u0111\u1ebfn clipboard.",
+    "message": "Chuyển đổi văn bản đã chọn thành Markdown sạch — một cú nhấp từ lựa chọn đến clipboard.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Ch\u1ee5p v\u00f9ng ch\u1ecdn" },
-  "clear": { "message": "X\u00f3a" },
-  "copy": { "message": "Sao ch\u00e9p" },
-  "copied": { "message": "\u0110\u00e3 sao ch\u00e9p" },
-  "download": { "message": "T\u1ea3i xu\u1ed1ng" },
-  "preview": { "message": "Xem tr\u01b0\u1edbc" },
-  "source": { "message": "Ngu\u1ed3n" },
-  "highlighterOn": { "message": "B\u1eacT" },
-  "highlighterOff": { "message": "T\u1eafT" },
-  "highlights": { "message": "{1} \u0111\u00e1nh d\u1ea5u" },
-  "markdownPlaceholder": { "message": "Markdown s\u1ebd xu\u1ea5t hi\u1ec7n \u1edf \u0111\u00e2y\u2026" },
-  "copiedToday": { "message": "\u0110\u00e3 sao ch\u00e9p h\u00f4m nay:" },
-  "statusEmpty": { "message": "Tab tr\u1ed1ng" },
-  "statusRestricted": { "message": "Trang b\u1ecb h\u1ea1n ch\u1ebf" },
-  "statusLocalFile": { "message": "T\u1ec7p c\u1ee5c b\u1ed9" },
-  "statusPdf": { "message": "PDF \u2014 kh\u00f4ng th\u1ec3 ch\u1ee5p" },
-  "statusReady": { "message": "S\u1eb5n s\u00e0ng ch\u1ee5p \u2014 ch\u1ecdn v\u0103n b\u1ea3n v\u00e0 nh\u1ea5p Ch\u1ee5p" },
-  "errCannotAccess": { "message": "Kh\u00f4ng th\u1ec3 truy c\u1eadp tab n\u00e0y." },
-  "errCannotInject": { "message": "Kh\u00f4ng th\u1ec3 ti\u00eam v\u00e0o trang n\u00e0y." },
-  "errRestrictedUrl": { "message": "Kh\u00f4ng th\u1ec3 ch\u1ee5p t\u1eeb trang n\u00e0y (URL b\u1ecb h\u1ea1n ch\u1ebf)." },
-  "errTimeout": { "message": "Y\u00eau c\u1ea7u h\u1ebft th\u1eddi gian. Th\u1eed l\u1ea1i." },
-  "errConnect": { "message": "Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i v\u1edbi trang. T\u1ea3i l\u1ea1i v\u00e0 th\u1eed l\u1ea1i." },
-  "errNoHighlights": { "message": "Kh\u00f4ng c\u00f3 \u0111i\u1ec3m \u0111\u00e1nh d\u1ea5u. Nh\u1ea5p v\u00e0o c\u00e1c ph\u1ea7n t\u1eed tr\u00ean trang." },
-  "errNoSelection": { "message": "Ch\u01b0a ch\u1ecdn v\u0103n b\u1ea3n. H\u00e3y ch\u1ecdn v\u0103n b\u1ea3n tr\u01b0\u1edbc." },
-  "errConvertFailed": { "message": "Kh\u00f4ng th\u1ec3 chuy\u1ec3n \u0111\u1ed5i v\u00f9ng ch\u1ecdn." },
-  "successCaptured": { "message": "\u0110\u00e3 ch\u1ee5p." },
-  "captureHighlights": { "message": "Ch\u1ee5p c\u00e1c \u0111\u00e1nh d\u1ea5u ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 C\u00e0i \u0111\u1eb7t" },
-  "settingsH1": { "message": "C\u00e0i \u0111\u1eb7t to .md" },
-  "sectionCapture": { "message": "Ch\u1ee5p" },
-  "sectionDisplay": { "message": "Hi\u1ec3n th\u1ecb" },
-  "sectionHighlighter": { "message": "B\u00fat \u0111\u00e1nh d\u1ea5u" },
-  "sectionLanguage": { "message": "Ng\u00f4n ng\u1eef" },
-  "labelAutoMetadata": { "message": "T\u1ef1 \u0111\u1ed9ng th\u00eam si\u00eau d\u1eef li\u1ec7u" },
-  "labelShowBubble": { "message": "Hi\u1ec3n th\u1ecb b\u00f3ng n\u1ed5i khi ch\u1ecdn" },
-  "labelDefaultView": { "message": "Ch\u1ebf \u0111\u1ed9 xem m\u1eb7c \u0111\u1ecbnh" },
-  "labelHighlightColor": { "message": "M\u00e0u \u0111\u00e1nh d\u1ea5u" },
-  "labelLanguage": { "message": "Ng\u00f4n ng\u1eef" },
-  "optPreview": { "message": "Xem tr\u01b0\u1edbc" },
-  "optSource": { "message": "Ngu\u1ed3n" },
-  "optAuto": { "message": "T\u1ef1 \u0111\u1ed9ng (ng\u00f4n ng\u1eef tr\u00ecnh duy\u1ec7t)" },
-  "savedSettings": { "message": "\u0110\u00e3 l\u01b0u." },
-  "bubbleText": { "message": "th\u00eam v\u00e0o .md" },
-  "toastNoSelection": { "message": "Ch\u01b0a ch\u1ecdn v\u0103n b\u1ea3n" },
-  "toastCopied": { "message": "\u0110\u00e3 sao ch\u00e9p d\u01b0\u1edbi d\u1ea1ng Markdown \u2713" },
-  "toastCouldNotCopy": { "message": "Kh\u00f4ng th\u1ec3 sao ch\u00e9p" },
-  "contextMenuTitle": { "message": "th\u00eam v\u00e0o .md" }
+  "captureSelection": {
+    "message": "Chụp vùng chọn"
+  },
+  "clear": {
+    "message": "Xóa"
+  },
+  "copy": {
+    "message": "Sao chép"
+  },
+  "copied": {
+    "message": "Đã sao chép"
+  },
+  "download": {
+    "message": "Tải xuống"
+  },
+  "preview": {
+    "message": "Xem trước"
+  },
+  "source": {
+    "message": "Nguồn"
+  },
+  "highlighterOn": {
+    "message": "BẬT"
+  },
+  "highlighterOff": {
+    "message": "TắT"
+  },
+  "highlights": {
+    "message": "{1} đánh dấu"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown sẽ xuất hiện ở đây…"
+  },
+  "copiedToday": {
+    "message": "Đã sao chép hôm nay:"
+  },
+  "statusEmpty": {
+    "message": "Tab trống"
+  },
+  "statusRestricted": {
+    "message": "Trang bị hạn chế"
+  },
+  "statusLocalFile": {
+    "message": "Tệp cục bộ"
+  },
+  "statusPdf": {
+    "message": "PDF — không thể chụp"
+  },
+  "statusReady": {
+    "message": "Sẵn sàng chụp — chọn văn bản và nhấp Chụp"
+  },
+  "errCannotAccess": {
+    "message": "Không thể truy cập tab này."
+  },
+  "errCannotInject": {
+    "message": "Không thể tiêm vào trang này."
+  },
+  "errRestrictedUrl": {
+    "message": "Không thể chụp từ trang này (URL bị hạn chế)."
+  },
+  "errTimeout": {
+    "message": "Yêu cầu hết thời gian. Thử lại."
+  },
+  "errConnect": {
+    "message": "Không thể kết nối với trang. Tải lại và thử lại."
+  },
+  "errNoHighlights": {
+    "message": "Không có điểm đánh dấu. Nhấp vào các phần tử trên trang."
+  },
+  "errNoSelection": {
+    "message": "Chưa chọn văn bản. Hãy chọn văn bản trước."
+  },
+  "errConvertFailed": {
+    "message": "Không thể chuyển đổi vùng chọn."
+  },
+  "successCaptured": {
+    "message": "Đã chụp."
+  },
+  "captureHighlights": {
+    "message": "Chụp các đánh dấu ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Cài đặt"
+  },
+  "settingsH1": {
+    "message": "Cài đặt to .md"
+  },
+  "sectionCapture": {
+    "message": "Chụp"
+  },
+  "sectionDisplay": {
+    "message": "Hiển thị"
+  },
+  "sectionHighlighter": {
+    "message": "Bút đánh dấu"
+  },
+  "sectionLanguage": {
+    "message": "Ngôn ngữ"
+  },
+  "labelAutoMetadata": {
+    "message": "Tự động thêm siêu dữ liệu"
+  },
+  "labelShowBubble": {
+    "message": "Hiển thị bóng nổi khi chọn"
+  },
+  "labelDefaultView": {
+    "message": "Chế độ xem mặc định"
+  },
+  "labelHighlightColor": {
+    "message": "Màu đánh dấu"
+  },
+  "labelLanguage": {
+    "message": "Ngôn ngữ"
+  },
+  "optPreview": {
+    "message": "Xem trước"
+  },
+  "optSource": {
+    "message": "Nguồn"
+  },
+  "optAuto": {
+    "message": "Tự động (ngôn ngữ trình duyệt)"
+  },
+  "savedSettings": {
+    "message": "Đã lưu."
+  },
+  "bubbleText": {
+    "message": "thêm vào .md"
+  },
+  "toastNoSelection": {
+    "message": "Chưa chọn văn bản"
+  },
+  "toastCopied": {
+    "message": "Đã sao chép dưới dạng Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Không thể sao chép"
+  },
+  "contextMenuTitle": {
+    "message": "thêm vào .md"
+  }
 }

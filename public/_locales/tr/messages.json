@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Se\u00e7ili metni temiz Markdown\u2019a d\u00f6n\u00fc\u015ft\u00fcr\u00fcn \u2014 se\u00e7imden panoya tek t\u0131kla.",
+    "message": "Seçili metni temiz Markdown’a dönüştürün — seçimden panoya tek tıkla.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Se\u00e7imi yakala" },
-  "clear": { "message": "Temizle" },
-  "copy": { "message": "Kopyala" },
-  "copied": { "message": "Kopyaland\u0131" },
-  "download": { "message": "\u0130ndir" },
-  "preview": { "message": "\u00d6nizleme" },
-  "source": { "message": "Kaynak" },
-  "highlighterOn": { "message": "A\u00c7IK" },
-  "highlighterOff": { "message": "KAPALI" },
-  "highlights": { "message": "{1} vurgu" },
-  "markdownPlaceholder": { "message": "Markdown burada g\u00f6r\u00fcnecek\u2026" },
-  "copiedToday": { "message": "Bug\u00fcn kopyaland\u0131:" },
-  "statusEmpty": { "message": "Bo\u015f sekme" },
-  "statusRestricted": { "message": "K\u0131s\u0131tl\u0131 sayfa" },
-  "statusLocalFile": { "message": "Yerel dosya" },
-  "statusPdf": { "message": "PDF \u2014 yakalanam\u0131yor" },
-  "statusReady": { "message": "Yakalamaya haz\u0131r \u2014 metin se\u00e7in ve Yakala\u2019ya t\u0131klay\u0131n" },
-  "errCannotAccess": { "message": "Bu sekmeye eri\u015filemiyor." },
-  "errCannotInject": { "message": "Bu sayfaya enjekte edilemedi." },
-  "errRestrictedUrl": { "message": "Bu sayfadan yakalanam\u0131yor (k\u0131s\u0131tl\u0131 URL)." },
-  "errTimeout": { "message": "\u0130stek zaman a\u015f\u0131m\u0131na u\u011frad\u0131. Tekrar deneyin." },
-  "errConnect": { "message": "Sayfaya ba\u011flan\u0131lamad\u0131. Yeniden y\u00fckleyin ve tekrar deneyin." },
-  "errNoHighlights": { "message": "Vurgu yok. Sayfadaki \u00f6\u011felere t\u0131klay\u0131n." },
-  "errNoSelection": { "message": "Metin se\u00e7ilmedi. \u00d6nce sayfada metin se\u00e7in." },
-  "errConvertFailed": { "message": "Se\u00e7im d\u00f6n\u00fc\u015ft\u00fcr\u00fclemedi." },
-  "successCaptured": { "message": "Yakaland\u0131." },
-  "captureHighlights": { "message": "Vurgular\u0131 yakala ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Ayarlar" },
-  "settingsH1": { "message": "to .md Ayarlar\u0131" },
-  "sectionCapture": { "message": "Yakalama" },
-  "sectionDisplay": { "message": "G\u00f6r\u00fcnt\u00fc" },
-  "sectionHighlighter": { "message": "Vurgulay\u0131c\u0131" },
-  "sectionLanguage": { "message": "Dil" },
-  "labelAutoMetadata": { "message": "Yakalamada meta veri otomatik ekle" },
-  "labelShowBubble": { "message": "Se\u00e7imde kayan balon g\u00f6ster" },
-  "labelDefaultView": { "message": "Varsay\u0131lan g\u00f6r\u00fcn\u00fcm modu" },
-  "labelHighlightColor": { "message": "Vurgu rengi" },
-  "labelLanguage": { "message": "Dil" },
-  "optPreview": { "message": "\u00d6nizleme" },
-  "optSource": { "message": "Kaynak" },
-  "optAuto": { "message": "Otomatik (taray\u0131c\u0131 dili)" },
-  "savedSettings": { "message": "Kaydedildi." },
-  "bubbleText": { "message": ".md\u2019ye ekle" },
-  "toastNoSelection": { "message": "Metin se\u00e7ilmedi" },
-  "toastCopied": { "message": "Markdown olarak kopyaland\u0131 \u2713" },
-  "toastCouldNotCopy": { "message": "Kopyalanamad\u0131" },
-  "contextMenuTitle": { "message": ".md\u2019ye ekle" }
+  "captureSelection": {
+    "message": "Seçimi yakala"
+  },
+  "clear": {
+    "message": "Temizle"
+  },
+  "copy": {
+    "message": "Kopyala"
+  },
+  "copied": {
+    "message": "Kopyalandı"
+  },
+  "download": {
+    "message": "İndir"
+  },
+  "preview": {
+    "message": "Önizleme"
+  },
+  "source": {
+    "message": "Kaynak"
+  },
+  "highlighterOn": {
+    "message": "AÇIK"
+  },
+  "highlighterOff": {
+    "message": "KAPALI"
+  },
+  "highlights": {
+    "message": "{1} vurgu"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown burada görünecek…"
+  },
+  "copiedToday": {
+    "message": "Bugün kopyalandı:"
+  },
+  "statusEmpty": {
+    "message": "Boş sekme"
+  },
+  "statusRestricted": {
+    "message": "Kısıtlı sayfa"
+  },
+  "statusLocalFile": {
+    "message": "Yerel dosya"
+  },
+  "statusPdf": {
+    "message": "PDF — yakalanamıyor"
+  },
+  "statusReady": {
+    "message": "Yakalamaya hazır — metin seçin ve Yakala’ya tıklayın"
+  },
+  "errCannotAccess": {
+    "message": "Bu sekmeye erişilemiyor."
+  },
+  "errCannotInject": {
+    "message": "Bu sayfaya enjekte edilemedi."
+  },
+  "errRestrictedUrl": {
+    "message": "Bu sayfadan yakalanamıyor (kısıtlı URL)."
+  },
+  "errTimeout": {
+    "message": "İstek zaman aşımına uğradı. Tekrar deneyin."
+  },
+  "errConnect": {
+    "message": "Sayfaya bağlanılamadı. Yeniden yükleyin ve tekrar deneyin."
+  },
+  "errNoHighlights": {
+    "message": "Vurgu yok. Sayfadaki öğelere tıklayın."
+  },
+  "errNoSelection": {
+    "message": "Metin seçilmedi. Önce sayfada metin seçin."
+  },
+  "errConvertFailed": {
+    "message": "Seçim dönüştürülemedi."
+  },
+  "successCaptured": {
+    "message": "Yakalandı."
+  },
+  "captureHighlights": {
+    "message": "Vurguları yakala ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Ayarlar"
+  },
+  "settingsH1": {
+    "message": "to .md Ayarları"
+  },
+  "sectionCapture": {
+    "message": "Yakalama"
+  },
+  "sectionDisplay": {
+    "message": "Görüntü"
+  },
+  "sectionHighlighter": {
+    "message": "Vurgulayıcı"
+  },
+  "sectionLanguage": {
+    "message": "Dil"
+  },
+  "labelAutoMetadata": {
+    "message": "Yakalamada meta veri otomatik ekle"
+  },
+  "labelShowBubble": {
+    "message": "Seçimde kayan balon göster"
+  },
+  "labelDefaultView": {
+    "message": "Varsayılan görünüm modu"
+  },
+  "labelHighlightColor": {
+    "message": "Vurgu rengi"
+  },
+  "labelLanguage": {
+    "message": "Dil"
+  },
+  "optPreview": {
+    "message": "Önizleme"
+  },
+  "optSource": {
+    "message": "Kaynak"
+  },
+  "optAuto": {
+    "message": "Otomatik (tarayıcı dili)"
+  },
+  "savedSettings": {
+    "message": "Kaydedildi."
+  },
+  "bubbleText": {
+    "message": ".md’ye ekle"
+  },
+  "toastNoSelection": {
+    "message": "Metin seçilmedi"
+  },
+  "toastCopied": {
+    "message": "Markdown olarak kopyalandı ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kopyalanamadı"
+  },
+  "contextMenuTitle": {
+    "message": ".md’ye ekle"
+  }
 }

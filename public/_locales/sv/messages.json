@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konvertera markerad text till ren Markdown \u2014 ett klick fr\u00e5n markering till urklipp.",
+    "message": "Konvertera markerad text till ren Markdown — ett klick från markering till urklipp.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "F\u00e5nga urval" },
-  "clear": { "message": "Rensa" },
-  "copy": { "message": "Kopiera" },
-  "copied": { "message": "Kopierat" },
-  "download": { "message": "Ladda ned" },
-  "preview": { "message": "F\u00f6rhandsvisning" },
-  "source": { "message": "K\u00e4llkod" },
-  "highlighterOn": { "message": "P\u00c5" },
-  "highlighterOff": { "message": "AV" },
-  "highlights": { "message": "{1} markeringar" },
-  "markdownPlaceholder": { "message": "Markdown visas h\u00e4r\u2026" },
-  "copiedToday": { "message": "Kopierat idag:" },
-  "statusEmpty": { "message": "Tom flik" },
-  "statusRestricted": { "message": "Begr\u00e4nsad sida" },
-  "statusLocalFile": { "message": "Lokal fil" },
-  "statusPdf": { "message": "PDF \u2014 kan inte f\u00e5ngas" },
-  "statusReady": { "message": "Redo att f\u00e5nga \u2014 markera text och klicka F\u00e5nga" },
-  "errCannotAccess": { "message": "Kan inte komma \u00e5t den h\u00e4r fliken." },
-  "errCannotInject": { "message": "Kunde inte injicera i den h\u00e4r sidan." },
-  "errRestrictedUrl": { "message": "Kan inte f\u00e5nga fr\u00e5n den h\u00e4r sidan (begr\u00e4nsad URL)." },
-  "errTimeout": { "message": "Beg\u00e4ran tog f\u00f6r l\u00e5ng tid. F\u00f6rs\u00f6k igen." },
-  "errConnect": { "message": "Kunde inte ansluta till sidan. Ladda om och f\u00f6rs\u00f6k igen." },
-  "errNoHighlights": { "message": "Inga markeringar. Klicka p\u00e5 element p\u00e5 sidan." },
-  "errNoSelection": { "message": "Ingen text markerad. Markera text p\u00e5 sidan f\u00f6rst." },
-  "errConvertFailed": { "message": "Kunde inte konvertera markeringen." },
-  "successCaptured": { "message": "F\u00e5ngat." },
-  "captureHighlights": { "message": "F\u00e5nga markeringar ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Inst\u00e4llningar" },
-  "settingsH1": { "message": "to .md Inst\u00e4llningar" },
-  "sectionCapture": { "message": "F\u00e5ngning" },
-  "sectionDisplay": { "message": "Visning" },
-  "sectionHighlighter": { "message": "Textmark\u00f6r" },
-  "sectionLanguage": { "message": "Spr\u00e5k" },
-  "labelAutoMetadata": { "message": "L\u00e4gg till metadata automatiskt" },
-  "labelShowBubble": { "message": "Visa flytande bubbla vid markering" },
-  "labelDefaultView": { "message": "Standardvisningsl\u00e4ge" },
-  "labelHighlightColor": { "message": "Markeringsf\u00e4rg" },
-  "labelLanguage": { "message": "Spr\u00e5k" },
-  "optPreview": { "message": "F\u00f6rhandsvisning" },
-  "optSource": { "message": "K\u00e4llkod" },
-  "optAuto": { "message": "Auto (webbl\u00e4sarspr\u00e5k)" },
-  "savedSettings": { "message": "Sparat." },
-  "bubbleText": { "message": "l\u00e4gg till i .md" },
-  "toastNoSelection": { "message": "Ingen text markerad" },
-  "toastCopied": { "message": "Kopierat som Markdown \u2713" },
-  "toastCouldNotCopy": { "message": "Kunde inte kopiera" },
-  "contextMenuTitle": { "message": "l\u00e4gg till i .md" }
+  "captureSelection": {
+    "message": "Fånga urval"
+  },
+  "clear": {
+    "message": "Rensa"
+  },
+  "copy": {
+    "message": "Kopiera"
+  },
+  "copied": {
+    "message": "Kopierat"
+  },
+  "download": {
+    "message": "Ladda ned"
+  },
+  "preview": {
+    "message": "Förhandsvisning"
+  },
+  "source": {
+    "message": "Källkod"
+  },
+  "highlighterOn": {
+    "message": "PÅ"
+  },
+  "highlighterOff": {
+    "message": "AV"
+  },
+  "highlights": {
+    "message": "{1} markeringar"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown visas här…"
+  },
+  "copiedToday": {
+    "message": "Kopierat idag:"
+  },
+  "statusEmpty": {
+    "message": "Tom flik"
+  },
+  "statusRestricted": {
+    "message": "Begränsad sida"
+  },
+  "statusLocalFile": {
+    "message": "Lokal fil"
+  },
+  "statusPdf": {
+    "message": "PDF — kan inte fångas"
+  },
+  "statusReady": {
+    "message": "Redo att fånga — markera text och klicka Fånga"
+  },
+  "errCannotAccess": {
+    "message": "Kan inte komma åt den här fliken."
+  },
+  "errCannotInject": {
+    "message": "Kunde inte injicera i den här sidan."
+  },
+  "errRestrictedUrl": {
+    "message": "Kan inte fånga från den här sidan (begränsad URL)."
+  },
+  "errTimeout": {
+    "message": "Begäran tog för lång tid. Försök igen."
+  },
+  "errConnect": {
+    "message": "Kunde inte ansluta till sidan. Ladda om och försök igen."
+  },
+  "errNoHighlights": {
+    "message": "Inga markeringar. Klicka på element på sidan."
+  },
+  "errNoSelection": {
+    "message": "Ingen text markerad. Markera text på sidan först."
+  },
+  "errConvertFailed": {
+    "message": "Kunde inte konvertera markeringen."
+  },
+  "successCaptured": {
+    "message": "Fångat."
+  },
+  "captureHighlights": {
+    "message": "Fånga markeringar ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Inställningar"
+  },
+  "settingsH1": {
+    "message": "to .md Inställningar"
+  },
+  "sectionCapture": {
+    "message": "Fångning"
+  },
+  "sectionDisplay": {
+    "message": "Visning"
+  },
+  "sectionHighlighter": {
+    "message": "Textmarkör"
+  },
+  "sectionLanguage": {
+    "message": "Språk"
+  },
+  "labelAutoMetadata": {
+    "message": "Lägg till metadata automatiskt"
+  },
+  "labelShowBubble": {
+    "message": "Visa flytande bubbla vid markering"
+  },
+  "labelDefaultView": {
+    "message": "Standardvisningsläge"
+  },
+  "labelHighlightColor": {
+    "message": "Markeringsfärg"
+  },
+  "labelLanguage": {
+    "message": "Språk"
+  },
+  "optPreview": {
+    "message": "Förhandsvisning"
+  },
+  "optSource": {
+    "message": "Källkod"
+  },
+  "optAuto": {
+    "message": "Auto (webbläsarspråk)"
+  },
+  "savedSettings": {
+    "message": "Sparat."
+  },
+  "bubbleText": {
+    "message": "lägg till i .md"
+  },
+  "toastNoSelection": {
+    "message": "Ingen text markerad"
+  },
+  "toastCopied": {
+    "message": "Kopierat som Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kunde inte kopiera"
+  },
+  "contextMenuTitle": {
+    "message": "lägg till i .md"
+  }
 }

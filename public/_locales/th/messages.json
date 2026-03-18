@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "\u0e41\u0e1b\u0e25\u0e07\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e1b\u0e47\u0e19 Markdown \u0e17\u0e35\u0e48\u0e2a\u0e30\u0e2d\u0e32\u0e14 \u2014 \u0e04\u0e25\u0e34\u0e01\u0e40\u0e14\u0e35\u0e22\u0e27\u0e08\u0e32\u0e01\u0e01\u0e32\u0e23\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e1b\u0e22\u0e31\u0e07\u0e04\u0e25\u0e34\u0e1b\u0e1a\u0e2d\u0e23\u0e4c\u0e14",
+    "message": "แปลงข้อความที่เลือกเป็น Markdown ที่สะอาด — คลิกเดียวจากการเลือกไปยังคลิปบอร์ด",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01" },
-  "clear": { "message": "\u0e25\u0e49\u0e32\u0e07" },
-  "copy": { "message": "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01" },
-  "copied": { "message": "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e41\u0e25\u0e49\u0e27" },
-  "download": { "message": "\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14" },
-  "preview": { "message": "\u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07" },
-  "source": { "message": "\u0e15\u0e49\u0e19\u0e09\u0e1a\u0e31\u0e1a" },
-  "highlighterOn": { "message": "\u0e40\u0e1b\u0e34\u0e14" },
-  "highlighterOff": { "message": "\u0e1b\u0e34\u0e14" },
-  "highlights": { "message": "{1} \u0e44\u0e2e\u0e44\u0e25\u0e15\u0e4c" },
-  "markdownPlaceholder": { "message": "Markdown \u0e08\u0e30\u0e1b\u0e23\u0e32\u0e01\u0e0f\u0e17\u0e35\u0e48\u0e19\u0e35\u0e48\u2026" },
-  "copiedToday": { "message": "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e27\u0e31\u0e19\u0e19\u0e35\u0e49:" },
-  "statusEmpty": { "message": "\u0e41\u0e17\u0e47\u0e1a\u0e27\u0e48\u0e32\u0e07" },
-  "statusRestricted": { "message": "\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e08\u0e33\u0e01\u0e31\u0e14" },
-  "statusLocalFile": { "message": "\u0e44\u0e1f\u0e25\u0e4c\u0e43\u0e19\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07" },
-  "statusPdf": { "message": "PDF \u2014 \u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e44\u0e14\u0e49" },
-  "statusReady": { "message": "\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e \u2014 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e41\u0e25\u0e49\u0e27\u0e04\u0e25\u0e34\u0e01 \u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e" },
-  "errCannotAccess": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e40\u0e02\u0e49\u0e32\u0e16\u0e36\u0e07\u0e41\u0e17\u0e47\u0e1a\u0e19\u0e35\u0e49\u0e44\u0e14\u0e49" },
-  "errCannotInject": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e41\u0e17\u0e23\u0e01\u0e43\u0e19\u0e2b\u0e19\u0e49\u0e32\u0e19\u0e35\u0e49\u0e44\u0e14\u0e49" },
-  "errRestrictedUrl": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32\u0e19\u0e35\u0e49 (URL \u0e16\u0e39\u0e01\u0e08\u0e33\u0e01\u0e31\u0e14)" },
-  "errTimeout": { "message": "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07" },
-  "errConnect": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e01\u0e31\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e44\u0e14\u0e49 \u0e42\u0e2b\u0e25\u0e14\u0e43\u0e2b\u0e21\u0e48\u0e41\u0e25\u0e30\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07" },
-  "errNoHighlights": { "message": "\u0e44\u0e21\u0e48\u0e21\u0e35\u0e01\u0e32\u0e23\u0e44\u0e2e\u0e44\u0e25\u0e15\u0e4c \u0e04\u0e25\u0e34\u0e01\u0e17\u0e35\u0e48\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e43\u0e19\u0e2b\u0e19\u0e49\u0e32" },
-  "errNoSelection": { "message": "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e43\u0e19\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e48\u0e2d\u0e19" },
-  "errConvertFailed": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e41\u0e1b\u0e25\u0e07\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e14\u0e49" },
-  "successCaptured": { "message": "\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e41\u0e25\u0e49\u0e27" },
-  "captureHighlights": { "message": "\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e44\u0e2e\u0e44\u0e25\u0e15\u0e4c ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 \u0e01\u0e32\u0e23\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32" },
-  "settingsH1": { "message": "\u0e01\u0e32\u0e23\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32 to .md" },
-  "sectionCapture": { "message": "\u0e01\u0e32\u0e23\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e" },
-  "sectionDisplay": { "message": "\u0e01\u0e32\u0e23\u0e41\u0e2a\u0e14\u0e07\u0e1c\u0e25" },
-  "sectionHighlighter": { "message": "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d\u0e44\u0e2e\u0e44\u0e25\u0e15\u0e4c" },
-  "sectionLanguage": { "message": "\u0e20\u0e32\u0e29\u0e32" },
-  "labelAutoMetadata": { "message": "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e40\u0e21\u0e15\u0e32\u0e42\u0e14\u0e22\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34" },
-  "labelShowBubble": { "message": "\u0e41\u0e2a\u0e14\u0e07\u0e1f\u0e2d\u0e07\u0e25\u0e2d\u0e22\u0e40\u0e21\u0e37\u0e48\u0e2d\u0e40\u0e25\u0e37\u0e2d\u0e01" },
-  "labelDefaultView": { "message": "\u0e42\u0e2b\u0e21\u0e14\u0e01\u0e32\u0e23\u0e41\u0e2a\u0e14\u0e07\u0e1c\u0e25\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19" },
-  "labelHighlightColor": { "message": "\u0e2a\u0e35\u0e44\u0e2e\u0e44\u0e25\u0e15\u0e4c" },
-  "labelLanguage": { "message": "\u0e20\u0e32\u0e29\u0e32" },
-  "optPreview": { "message": "\u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07" },
-  "optSource": { "message": "\u0e15\u0e49\u0e19\u0e09\u0e1a\u0e31\u0e1a" },
-  "optAuto": { "message": "\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e20\u0e32\u0e29\u0e32\u0e40\u0e1a\u0e23\u0e32\u0e27\u0e4c\u0e40\u0e0b\u0e2d\u0e23\u0e4c)" },
-  "savedSettings": { "message": "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e41\u0e25\u0e49\u0e27" },
-  "bubbleText": { "message": "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e43\u0e19 .md" },
-  "toastNoSelection": { "message": "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21" },
-  "toastCopied": { "message": "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e40\u0e1b\u0e47\u0e19 Markdown \u0e41\u0e25\u0e49\u0e27 \u2713" },
-  "toastCouldNotCopy": { "message": "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e44\u0e14\u0e49" },
-  "contextMenuTitle": { "message": "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e43\u0e19 .md" }
+  "captureSelection": {
+    "message": "จับภาพที่เลือก"
+  },
+  "clear": {
+    "message": "ล้าง"
+  },
+  "copy": {
+    "message": "คัดลอก"
+  },
+  "copied": {
+    "message": "คัดลอกแล้ว"
+  },
+  "download": {
+    "message": "ดาวน์โหลด"
+  },
+  "preview": {
+    "message": "ดูตัวอย่าง"
+  },
+  "source": {
+    "message": "ต้นฉบับ"
+  },
+  "highlighterOn": {
+    "message": "เปิด"
+  },
+  "highlighterOff": {
+    "message": "ปิด"
+  },
+  "highlights": {
+    "message": "{1} ไฮไลต์"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown จะปรากฏที่นี่…"
+  },
+  "copiedToday": {
+    "message": "คัดลอกวันนี้:"
+  },
+  "statusEmpty": {
+    "message": "แท็บว่าง"
+  },
+  "statusRestricted": {
+    "message": "หน้าที่ถูกจำกัด"
+  },
+  "statusLocalFile": {
+    "message": "ไฟล์ในเครื่อง"
+  },
+  "statusPdf": {
+    "message": "PDF — ไม่สามารถจับภาพได้"
+  },
+  "statusReady": {
+    "message": "พร้อมจับภาพ — เลือกข้อความแล้วคลิก จับภาพ"
+  },
+  "errCannotAccess": {
+    "message": "ไม่สามารถเข้าถึงแท็บนี้ได้"
+  },
+  "errCannotInject": {
+    "message": "ไม่สามารถแทรกในหน้านี้ได้"
+  },
+  "errRestrictedUrl": {
+    "message": "ไม่สามารถจับภาพจากหน้านี้ (URL ถูกจำกัด)"
+  },
+  "errTimeout": {
+    "message": "คำขอหมดเวลา ลองอีกครั้ง"
+  },
+  "errConnect": {
+    "message": "ไม่สามารถเชื่อมต่อกับหน้าได้ โหลดใหม่และลองอีกครั้ง"
+  },
+  "errNoHighlights": {
+    "message": "ไม่มีการไฮไลต์ คลิกที่องค์ประกอบในหน้า"
+  },
+  "errNoSelection": {
+    "message": "ไม่ได้เลือกข้อความ เลือกข้อความในหน้าก่อน"
+  },
+  "errConvertFailed": {
+    "message": "ไม่สามารถแปลงที่เลือกได้"
+  },
+  "successCaptured": {
+    "message": "จับภาพแล้ว"
+  },
+  "captureHighlights": {
+    "message": "จับภาพไฮไลต์ ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — การตั้งค่า"
+  },
+  "settingsH1": {
+    "message": "การตั้งค่า to .md"
+  },
+  "sectionCapture": {
+    "message": "การจับภาพ"
+  },
+  "sectionDisplay": {
+    "message": "การแสดงผล"
+  },
+  "sectionHighlighter": {
+    "message": "เครื่องมือไฮไลต์"
+  },
+  "sectionLanguage": {
+    "message": "ภาษา"
+  },
+  "labelAutoMetadata": {
+    "message": "เพิ่มข้อมูลเมตาโดยอัตโนมัติ"
+  },
+  "labelShowBubble": {
+    "message": "แสดงฟองลอยเมื่อเลือก"
+  },
+  "labelDefaultView": {
+    "message": "โหมดการแสดงผลเริ่มต้น"
+  },
+  "labelHighlightColor": {
+    "message": "สีไฮไลต์"
+  },
+  "labelLanguage": {
+    "message": "ภาษา"
+  },
+  "optPreview": {
+    "message": "ดูตัวอย่าง"
+  },
+  "optSource": {
+    "message": "ต้นฉบับ"
+  },
+  "optAuto": {
+    "message": "อัตโนมัติ (ภาษาเบราว์เซอร์)"
+  },
+  "savedSettings": {
+    "message": "บันทึกแล้ว"
+  },
+  "bubbleText": {
+    "message": "เพิ่มใน .md"
+  },
+  "toastNoSelection": {
+    "message": "ไม่ได้เลือกข้อความ"
+  },
+  "toastCopied": {
+    "message": "คัดลอกเป็น Markdown แล้ว ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "ไม่สามารถคัดลอกได้"
+  },
+  "contextMenuTitle": {
+    "message": "เพิ่มใน .md"
+  }
 }

@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "\uc120\ud0dd\ud55c \ud14d\uc2a4\ud2b8\ub97c \uae54\ub054\ud55c Markdown\uc73c\ub85c \ubcc0\ud658 \u2014 \ud074\ub9bd\ubcf4\ub4dc\ub85c \ud55c \ubc88\uc758 \ud074\ub9ad.",
+    "message": "선택한 텍스트를 깔끔한 Markdown으로 변환 — 클립보드로 한 번의 클릭.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "\uc120\ud0dd \uc601\uc5ed \uce90\uce58" },
-  "clear": { "message": "\uc9c0\uc6b0\uae30" },
-  "copy": { "message": "\ubcf5\uc0ac" },
-  "copied": { "message": "\ubcf5\uc0ac\ub428" },
-  "download": { "message": "\ub2e4\uc6b4\ub85c\ub4dc" },
-  "preview": { "message": "\ubbf8\ub9ac\ubcf4\uae30" },
-  "source": { "message": "\uc18c\uc2a4" },
-  "highlighterOn": { "message": "\ucf1c\uae30" },
-  "highlighterOff": { "message": "\ub044\uae30" },
-  "highlights": { "message": "{1}\uac1c \ud558\uc774\ub77c\uc774\ud2b8" },
-  "markdownPlaceholder": { "message": "Markdown\uc774 \uc5ec\uae30\uc5d0 \ud45c\uc2dc\ub429\ub2c8\ub2e4\u2026" },
-  "copiedToday": { "message": "\uc624\ub298 \ubcf5\uc0ac\ub428:" },
-  "statusEmpty": { "message": "\ube48 \ud0ed" },
-  "statusRestricted": { "message": "\uc81c\ud55c\ub41c \ud398\uc774\uc9c0" },
-  "statusLocalFile": { "message": "\ub85c\ucec8 \ud30c\uc77c" },
-  "statusPdf": { "message": "PDF \u2014 \uce90\uce58 \ubd88\uac00" },
-  "statusReady": { "message": "\uce90\uce58 \uc900\ube44 \uc644\ub8cc \u2014 \ud14d\uc2a4\ud2b8\ub97c \uc120\ud0dd\ud558\uace0 \uce90\uce58\ub97c \ud074\ub9ad\ud558\uc138\uc694" },
-  "errCannotAccess": { "message": "\uc774 \ud0ed\uc5d0 \uc811\uadfc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." },
-  "errCannotInject": { "message": "\uc774 \ud398\uc774\uc9c0\uc5d0 \uc0bd\uc785\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." },
-  "errRestrictedUrl": { "message": "\uc774 \ud398\uc774\uc9c0\uc5d0\uc11c \uce90\uce58\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4 (\uc81c\ud55c\ub41c URL)." },
-  "errTimeout": { "message": "\uc694\uccad \uc2dc\uac04\uc774 \ucd08\uacfc\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694." },
-  "errConnect": { "message": "\ud398\uc774\uc9c0\uc5d0 \uc5f0\uacb0\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68 \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694." },
-  "errNoHighlights": { "message": "\ud558\uc774\ub77c\uc774\ud2b8\uac00 \uc5c6\uc2b5\ub2c8\ub2e4. \ud398\uc774\uc9c0\uc758 \uc694\uc18c\ub97c \ud074\ub9ad\ud558\uc138\uc694." },
-  "errNoSelection": { "message": "\ud14d\uc2a4\ud2b8\uac00 \uc120\ud0dd\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uba3c\uc800 \ud398\uc774\uc9c0\uc5d0\uc11c \ud14d\uc2a4\ud2b8\ub97c \uc120\ud0dd\ud558\uc138\uc694." },
-  "errConvertFailed": { "message": "\uc120\ud0dd \uc601\uc5ed\uc744 \ubcc0\ud658\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." },
-  "successCaptured": { "message": "\uce90\uce58\ub418\uc5c8\uc2b5\ub2c8\ub2e4." },
-  "captureHighlights": { "message": "\ud558\uc774\ub77c\uc774\ud2b8 \uce90\uce58 ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 \uc124\uc815" },
-  "settingsH1": { "message": "to .md \uc124\uc815" },
-  "sectionCapture": { "message": "\uce90\uce58" },
-  "sectionDisplay": { "message": "\ud45c\uc2dc" },
-  "sectionHighlighter": { "message": "\ud615\uad11\ud39c" },
-  "sectionLanguage": { "message": "\uc5b8\uc5b4" },
-  "labelAutoMetadata": { "message": "\uce90\uce58 \uc2dc \uba54\ud0c0\ub370\uc774\ud130 \uc790\ub3d9 \ucd94\uac00" },
-  "labelShowBubble": { "message": "\uc120\ud0dd \uc2dc \ud50c\ub85c\ud305 \ubc84\ube14 \ud45c\uc2dc" },
-  "labelDefaultView": { "message": "\uae30\ubcf8 \ubcf4\uae30 \ubaa8\ub4dc" },
-  "labelHighlightColor": { "message": "\ud558\uc774\ub77c\uc774\ud2b8 \uc0c9\uc0c1" },
-  "labelLanguage": { "message": "\uc5b8\uc5b4" },
-  "optPreview": { "message": "\ubbf8\ub9ac\ubcf4\uae30" },
-  "optSource": { "message": "\uc18c\uc2a4" },
-  "optAuto": { "message": "\uc790\ub3d9 (\ube0c\ub77c\uc6b0\uc800 \uc5b8\uc5b4)" },
-  "savedSettings": { "message": "\uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4." },
-  "bubbleText": { "message": ".md\uc5d0 \ucd94\uac00" },
-  "toastNoSelection": { "message": "\ud14d\uc2a4\ud2b8\uac00 \uc120\ud0dd\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4" },
-  "toastCopied": { "message": "Markdown\uc73c\ub85c \ubcf5\uc0ac\ub418\uc5c8\uc2b5\ub2c8\ub2e4 \u2713" },
-  "toastCouldNotCopy": { "message": "\ubcf5\uc0ac\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4" },
-  "contextMenuTitle": { "message": ".md\uc5d0 \ucd94\uac00" }
+  "captureSelection": {
+    "message": "선택 영역 캐치"
+  },
+  "clear": {
+    "message": "지우기"
+  },
+  "copy": {
+    "message": "복사"
+  },
+  "copied": {
+    "message": "복사됨"
+  },
+  "download": {
+    "message": "다운로드"
+  },
+  "preview": {
+    "message": "미리보기"
+  },
+  "source": {
+    "message": "소스"
+  },
+  "highlighterOn": {
+    "message": "켜기"
+  },
+  "highlighterOff": {
+    "message": "끄기"
+  },
+  "highlights": {
+    "message": "{1}개 하이라이트"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown이 여기에 표시됩니다…"
+  },
+  "copiedToday": {
+    "message": "오늘 복사됨:"
+  },
+  "statusEmpty": {
+    "message": "빈 탭"
+  },
+  "statusRestricted": {
+    "message": "제한된 페이지"
+  },
+  "statusLocalFile": {
+    "message": "로컈 파일"
+  },
+  "statusPdf": {
+    "message": "PDF — 캐치 불가"
+  },
+  "statusReady": {
+    "message": "캐치 준비 완료 — 텍스트를 선택하고 캐치를 클릭하세요"
+  },
+  "errCannotAccess": {
+    "message": "이 탭에 접근할 수 없습니다."
+  },
+  "errCannotInject": {
+    "message": "이 페이지에 삽입할 수 없습니다."
+  },
+  "errRestrictedUrl": {
+    "message": "이 페이지에서 캐치할 수 없습니다 (제한된 URL)."
+  },
+  "errTimeout": {
+    "message": "요청 시간이 초과되었습니다. 다시 시도하세요."
+  },
+  "errConnect": {
+    "message": "페이지에 연결할 수 없습니다. 새로고침 후 다시 시도하세요."
+  },
+  "errNoHighlights": {
+    "message": "하이라이트가 없습니다. 페이지의 요소를 클릭하세요."
+  },
+  "errNoSelection": {
+    "message": "텍스트가 선택되지 않았습니다. 먼저 페이지에서 텍스트를 선택하세요."
+  },
+  "errConvertFailed": {
+    "message": "선택 영역을 변환할 수 없습니다."
+  },
+  "successCaptured": {
+    "message": "캐치되었습니다."
+  },
+  "captureHighlights": {
+    "message": "하이라이트 캐치 ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — 설정"
+  },
+  "settingsH1": {
+    "message": "to .md 설정"
+  },
+  "sectionCapture": {
+    "message": "캐치"
+  },
+  "sectionDisplay": {
+    "message": "표시"
+  },
+  "sectionHighlighter": {
+    "message": "형광펜"
+  },
+  "sectionLanguage": {
+    "message": "언어"
+  },
+  "labelAutoMetadata": {
+    "message": "캐치 시 메타데이터 자동 추가"
+  },
+  "labelShowBubble": {
+    "message": "선택 시 플로팅 버블 표시"
+  },
+  "labelDefaultView": {
+    "message": "기본 보기 모드"
+  },
+  "labelHighlightColor": {
+    "message": "하이라이트 색상"
+  },
+  "labelLanguage": {
+    "message": "언어"
+  },
+  "optPreview": {
+    "message": "미리보기"
+  },
+  "optSource": {
+    "message": "소스"
+  },
+  "optAuto": {
+    "message": "자동 (브라우저 언어)"
+  },
+  "savedSettings": {
+    "message": "저장되었습니다."
+  },
+  "bubbleText": {
+    "message": ".md에 추가"
+  },
+  "toastNoSelection": {
+    "message": "텍스트가 선택되지 않았습니다"
+  },
+  "toastCopied": {
+    "message": "Markdown으로 복사되었습니다 ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "복사할 수 없습니다"
+  },
+  "contextMenuTitle": {
+    "message": ".md에 추가"
+  }
 }

@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konverter markert tekst til rent Markdown \u2014 ett klikk fra markering til utklippstavle.",
+    "message": "Konverter markert tekst til rent Markdown — ett klikk fra markering til utklippstavle.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Fang utvalg" },
-  "clear": { "message": "T\u00f8m" },
-  "copy": { "message": "Kopier" },
-  "copied": { "message": "Kopiert" },
-  "download": { "message": "Last ned" },
-  "preview": { "message": "Forh\u00e5ndsvisning" },
-  "source": { "message": "Kildekode" },
-  "highlighterOn": { "message": "P\u00c5" },
-  "highlighterOff": { "message": "AV" },
-  "highlights": { "message": "{1} markeringer" },
-  "markdownPlaceholder": { "message": "Markdown vises her\u2026" },
-  "copiedToday": { "message": "Kopiert i dag:" },
-  "statusEmpty": { "message": "Tom fane" },
-  "statusRestricted": { "message": "Begrenset side" },
-  "statusLocalFile": { "message": "Lokal fil" },
-  "statusPdf": { "message": "PDF \u2014 kan ikke fanges" },
-  "statusReady": { "message": "Klar til \u00e5 fange \u2014 velg tekst og klikk Fang" },
-  "errCannotAccess": { "message": "Kan ikke f\u00e5 tilgang til denne fanen." },
-  "errCannotInject": { "message": "Kunne ikke injisere i denne siden." },
-  "errRestrictedUrl": { "message": "Kan ikke fange fra denne siden (begrenset URL)." },
-  "errTimeout": { "message": "Foresp\u00f8rselen gikk ut p\u00e5 tid. Pr\u00f8v igjen." },
-  "errConnect": { "message": "Kunne ikke koble til siden. Last inn p\u00e5 nytt og pr\u00f8v igjen." },
-  "errNoHighlights": { "message": "Ingen markeringer. Klikk p\u00e5 elementer p\u00e5 siden." },
-  "errNoSelection": { "message": "Ingen tekst valgt. Velg tekst p\u00e5 siden f\u00f8rst." },
-  "errConvertFailed": { "message": "Kunne ikke konvertere utvalget." },
-  "successCaptured": { "message": "Fanget." },
-  "captureHighlights": { "message": "Fang markeringer ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Innstillinger" },
-  "settingsH1": { "message": "to .md Innstillinger" },
-  "sectionCapture": { "message": "Fangst" },
-  "sectionDisplay": { "message": "Visning" },
-  "sectionHighlighter": { "message": "Uthever" },
-  "sectionLanguage": { "message": "Spr\u00e5k" },
-  "labelAutoMetadata": { "message": "Legg til metadata automatisk" },
-  "labelShowBubble": { "message": "Vis flytende boble ved markering" },
-  "labelDefaultView": { "message": "Standard visningsmodus" },
-  "labelHighlightColor": { "message": "Markeringsfarge" },
-  "labelLanguage": { "message": "Spr\u00e5k" },
-  "optPreview": { "message": "Forh\u00e5ndsvisning" },
-  "optSource": { "message": "Kildekode" },
-  "optAuto": { "message": "Auto (nettleserspr\u00e5k)" },
-  "savedSettings": { "message": "Lagret." },
-  "bubbleText": { "message": "legg til i .md" },
-  "toastNoSelection": { "message": "Ingen tekst valgt" },
-  "toastCopied": { "message": "Kopiert som Markdown \u2713" },
-  "toastCouldNotCopy": { "message": "Kunne ikke kopiere" },
-  "contextMenuTitle": { "message": "legg til i .md" }
+  "captureSelection": {
+    "message": "Fang utvalg"
+  },
+  "clear": {
+    "message": "Tøm"
+  },
+  "copy": {
+    "message": "Kopier"
+  },
+  "copied": {
+    "message": "Kopiert"
+  },
+  "download": {
+    "message": "Last ned"
+  },
+  "preview": {
+    "message": "Forhåndsvisning"
+  },
+  "source": {
+    "message": "Kildekode"
+  },
+  "highlighterOn": {
+    "message": "PÅ"
+  },
+  "highlighterOff": {
+    "message": "AV"
+  },
+  "highlights": {
+    "message": "{1} markeringer"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown vises her…"
+  },
+  "copiedToday": {
+    "message": "Kopiert i dag:"
+  },
+  "statusEmpty": {
+    "message": "Tom fane"
+  },
+  "statusRestricted": {
+    "message": "Begrenset side"
+  },
+  "statusLocalFile": {
+    "message": "Lokal fil"
+  },
+  "statusPdf": {
+    "message": "PDF — kan ikke fanges"
+  },
+  "statusReady": {
+    "message": "Klar til å fange — velg tekst og klikk Fang"
+  },
+  "errCannotAccess": {
+    "message": "Kan ikke få tilgang til denne fanen."
+  },
+  "errCannotInject": {
+    "message": "Kunne ikke injisere i denne siden."
+  },
+  "errRestrictedUrl": {
+    "message": "Kan ikke fange fra denne siden (begrenset URL)."
+  },
+  "errTimeout": {
+    "message": "Forespørselen gikk ut på tid. Prøv igjen."
+  },
+  "errConnect": {
+    "message": "Kunne ikke koble til siden. Last inn på nytt og prøv igjen."
+  },
+  "errNoHighlights": {
+    "message": "Ingen markeringer. Klikk på elementer på siden."
+  },
+  "errNoSelection": {
+    "message": "Ingen tekst valgt. Velg tekst på siden først."
+  },
+  "errConvertFailed": {
+    "message": "Kunne ikke konvertere utvalget."
+  },
+  "successCaptured": {
+    "message": "Fanget."
+  },
+  "captureHighlights": {
+    "message": "Fang markeringer ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Innstillinger"
+  },
+  "settingsH1": {
+    "message": "to .md Innstillinger"
+  },
+  "sectionCapture": {
+    "message": "Fangst"
+  },
+  "sectionDisplay": {
+    "message": "Visning"
+  },
+  "sectionHighlighter": {
+    "message": "Uthever"
+  },
+  "sectionLanguage": {
+    "message": "Språk"
+  },
+  "labelAutoMetadata": {
+    "message": "Legg til metadata automatisk"
+  },
+  "labelShowBubble": {
+    "message": "Vis flytende boble ved markering"
+  },
+  "labelDefaultView": {
+    "message": "Standard visningsmodus"
+  },
+  "labelHighlightColor": {
+    "message": "Markeringsfarge"
+  },
+  "labelLanguage": {
+    "message": "Språk"
+  },
+  "optPreview": {
+    "message": "Forhåndsvisning"
+  },
+  "optSource": {
+    "message": "Kildekode"
+  },
+  "optAuto": {
+    "message": "Auto (nettleserspråk)"
+  },
+  "savedSettings": {
+    "message": "Lagret."
+  },
+  "bubbleText": {
+    "message": "legg til i .md"
+  },
+  "toastNoSelection": {
+    "message": "Ingen tekst valgt"
+  },
+  "toastCopied": {
+    "message": "Kopiert som Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kunne ikke kopiere"
+  },
+  "contextMenuTitle": {
+    "message": "legg til i .md"
+  }
 }

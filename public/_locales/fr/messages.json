@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Convertissez le texte s\u00e9lectionn\u00e9 en Markdown propre \u2014 un clic de la s\u00e9lection au presse-papiers.",
+    "message": "Convertissez le texte sélectionné en Markdown propre — un clic de la sélection au presse-papiers.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Capturer la s\u00e9lection" },
-  "clear": { "message": "Effacer" },
-  "copy": { "message": "Copier" },
-  "copied": { "message": "Copi\u00e9" },
-  "download": { "message": "T\u00e9l\u00e9charger" },
-  "preview": { "message": "Aper\u00e7u" },
-  "source": { "message": "Source" },
-  "highlighterOn": { "message": "ON" },
-  "highlighterOff": { "message": "OFF" },
-  "highlights": { "message": "{1} s\u00e9lections" },
-  "markdownPlaceholder": { "message": "Le Markdown appara\u00eatra ici\u2026" },
-  "copiedToday": { "message": "Copi\u00e9 aujourd\u2019hui\u00a0:" },
-  "statusEmpty": { "message": "Onglet vide" },
-  "statusRestricted": { "message": "Page restreinte" },
-  "statusLocalFile": { "message": "Fichier local" },
-  "statusPdf": { "message": "PDF \u2014 impossible de capturer" },
-  "statusReady": { "message": "Pr\u00eat \u00e0 capturer \u2014 s\u00e9lectionnez du texte et cliquez sur Capturer" },
-  "errCannotAccess": { "message": "Impossible d\u2019acc\u00e9der \u00e0 cet onglet." },
-  "errCannotInject": { "message": "Impossible d\u2019injecter dans cette page." },
-  "errRestrictedUrl": { "message": "Impossible de capturer depuis cette page (URL restreinte)." },
-  "errTimeout": { "message": "D\u00e9lai d\u2019attente d\u00e9pass\u00e9. R\u00e9essayez." },
-  "errConnect": { "message": "Connexion \u00e0 la page impossible. Rechargez et r\u00e9essayez." },
-  "errNoHighlights": { "message": "Aucune s\u00e9lection. Cliquez sur des \u00e9l\u00e9ments de la page." },
-  "errNoSelection": { "message": "Aucun texte s\u00e9lectionn\u00e9. S\u00e9lectionnez d\u2019abord du texte." },
-  "errConvertFailed": { "message": "Impossible de convertir la s\u00e9lection." },
-  "successCaptured": { "message": "Captur\u00e9." },
-  "captureHighlights": { "message": "Capturer les s\u00e9lections ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Param\u00e8tres" },
-  "settingsH1": { "message": "Param\u00e8tres to .md" },
-  "sectionCapture": { "message": "Capture" },
-  "sectionDisplay": { "message": "Affichage" },
-  "sectionHighlighter": { "message": "Surligneur" },
-  "sectionLanguage": { "message": "Langue" },
-  "labelAutoMetadata": { "message": "Ajouter les m\u00e9tadonn\u00e9es automatiquement" },
-  "labelShowBubble": { "message": "Afficher la bulle flottante lors de la s\u00e9lection" },
-  "labelDefaultView": { "message": "Mode d\u2019affichage par d\u00e9faut" },
-  "labelHighlightColor": { "message": "Couleur de surlignage" },
-  "labelLanguage": { "message": "Langue" },
-  "optPreview": { "message": "Aper\u00e7u" },
-  "optSource": { "message": "Source" },
-  "optAuto": { "message": "Auto (langue du navigateur)" },
-  "savedSettings": { "message": "Enregistr\u00e9." },
-  "bubbleText": { "message": "ajouter au .md" },
-  "toastNoSelection": { "message": "Aucun texte s\u00e9lectionn\u00e9" },
-  "toastCopied": { "message": "Copi\u00e9 en Markdown \u2713" },
-  "toastCouldNotCopy": { "message": "Impossible de copier" },
-  "contextMenuTitle": { "message": "ajouter au .md" }
+  "captureSelection": {
+    "message": "Capturer la sélection"
+  },
+  "clear": {
+    "message": "Effacer"
+  },
+  "copy": {
+    "message": "Copier"
+  },
+  "copied": {
+    "message": "Copié"
+  },
+  "download": {
+    "message": "Télécharger"
+  },
+  "preview": {
+    "message": "Aperçu"
+  },
+  "source": {
+    "message": "Source"
+  },
+  "highlighterOn": {
+    "message": "ON"
+  },
+  "highlighterOff": {
+    "message": "OFF"
+  },
+  "highlights": {
+    "message": "{1} sélections"
+  },
+  "markdownPlaceholder": {
+    "message": "Le Markdown apparaêtra ici…"
+  },
+  "copiedToday": {
+    "message": "Copié aujourd’hui :"
+  },
+  "statusEmpty": {
+    "message": "Onglet vide"
+  },
+  "statusRestricted": {
+    "message": "Page restreinte"
+  },
+  "statusLocalFile": {
+    "message": "Fichier local"
+  },
+  "statusPdf": {
+    "message": "PDF — impossible de capturer"
+  },
+  "statusReady": {
+    "message": "Prêt à capturer — sélectionnez du texte et cliquez sur Capturer"
+  },
+  "errCannotAccess": {
+    "message": "Impossible d’accéder à cet onglet."
+  },
+  "errCannotInject": {
+    "message": "Impossible d’injecter dans cette page."
+  },
+  "errRestrictedUrl": {
+    "message": "Impossible de capturer depuis cette page (URL restreinte)."
+  },
+  "errTimeout": {
+    "message": "Délai d’attente dépassé. Réessayez."
+  },
+  "errConnect": {
+    "message": "Connexion à la page impossible. Rechargez et réessayez."
+  },
+  "errNoHighlights": {
+    "message": "Aucune sélection. Cliquez sur des éléments de la page."
+  },
+  "errNoSelection": {
+    "message": "Aucun texte sélectionné. Sélectionnez d’abord du texte."
+  },
+  "errConvertFailed": {
+    "message": "Impossible de convertir la sélection."
+  },
+  "successCaptured": {
+    "message": "Capturé."
+  },
+  "captureHighlights": {
+    "message": "Capturer les sélections ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Paramètres"
+  },
+  "settingsH1": {
+    "message": "Paramètres to .md"
+  },
+  "sectionCapture": {
+    "message": "Capture"
+  },
+  "sectionDisplay": {
+    "message": "Affichage"
+  },
+  "sectionHighlighter": {
+    "message": "Surligneur"
+  },
+  "sectionLanguage": {
+    "message": "Langue"
+  },
+  "labelAutoMetadata": {
+    "message": "Ajouter les métadonnées automatiquement"
+  },
+  "labelShowBubble": {
+    "message": "Afficher la bulle flottante lors de la sélection"
+  },
+  "labelDefaultView": {
+    "message": "Mode d’affichage par défaut"
+  },
+  "labelHighlightColor": {
+    "message": "Couleur de surlignage"
+  },
+  "labelLanguage": {
+    "message": "Langue"
+  },
+  "optPreview": {
+    "message": "Aperçu"
+  },
+  "optSource": {
+    "message": "Source"
+  },
+  "optAuto": {
+    "message": "Auto (langue du navigateur)"
+  },
+  "savedSettings": {
+    "message": "Enregistré."
+  },
+  "bubbleText": {
+    "message": "ajouter au .md"
+  },
+  "toastNoSelection": {
+    "message": "Aucun texte sélectionné"
+  },
+  "toastCopied": {
+    "message": "Copié en Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Impossible de copier"
+  },
+  "contextMenuTitle": {
+    "message": "ajouter au .md"
+  }
 }

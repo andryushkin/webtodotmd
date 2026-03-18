@@ -4,54 +4,148 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Muunna valittu teksti puhtaaksi Markdowniksi \u2014 yksi napsautus valinnasta leikep\u00f6yd\u00e4lle.",
+    "message": "Muunna valittu teksti puhtaaksi Markdowniksi — yksi napsautus valinnasta leikepöydälle.",
     "description": "Short description shown in Chrome extensions page"
   },
-  "captureSelection": { "message": "Kaappaa valinta" },
-  "clear": { "message": "Tyhjenm\u00e4\u00e4" },
-  "copy": { "message": "Kopioi" },
-  "copied": { "message": "Kopioitu" },
-  "download": { "message": "Lataa" },
-  "preview": { "message": "Esikatselu" },
-  "source": { "message": "L\u00e4hdekoodi" },
-  "highlighterOn": { "message": "P\u00c4\u00c4LL\u00c4" },
-  "highlighterOff": { "message": "POIS" },
-  "highlights": { "message": "{1} korostusta" },
-  "markdownPlaceholder": { "message": "Markdown n\u00e4kyy t\u00e4\u00e4ll\u00e4\u2026" },
-  "copiedToday": { "message": "Kopioitu t\u00e4n\u00e4\u00e4n:" },
-  "statusEmpty": { "message": "Tyhj\u00e4 v\u00e4lilehti" },
-  "statusRestricted": { "message": "Rajoitettu sivu" },
-  "statusLocalFile": { "message": "Paikallinen tiedosto" },
-  "statusPdf": { "message": "PDF \u2014 ei voi kaapata" },
-  "statusReady": { "message": "Valmis kaapaukseen \u2014 valitse teksti ja napsauta Kaappaa" },
-  "errCannotAccess": { "message": "T\u00e4h\u00e4n v\u00e4lilehteen ei p\u00e4\u00e4se k\u00e4siksi." },
-  "errCannotInject": { "message": "T\u00e4h\u00e4n sivuun ei voitu lis\u00e4t\u00e4 skripti\u00e4." },
-  "errRestrictedUrl": { "message": "T\u00e4lt\u00e4 sivulta ei voi kaapata (rajoitettu URL)." },
-  "errTimeout": { "message": "Pyynth\u00f6 aikakatkaistiin. Yrit\u00e4 uudelleen." },
-  "errConnect": { "message": "Sivuun ei saatu yhteytt\u00e4. Lataa sivu uudelleen ja yrit\u00e4 uudelleen." },
-  "errNoHighlights": { "message": "Ei korostuksia. Napsauta sivun elementtej\u00e4." },
-  "errNoSelection": { "message": "Ei valittua teksti\u00e4. Valitse ensin teksti sivulta." },
-  "errConvertFailed": { "message": "Valintaa ei voitu muuntaa." },
-  "successCaptured": { "message": "Kaapattu." },
-  "captureHighlights": { "message": "Kaappaa korostukset ({1})" },
-  "settingsTitle": { "message": "to .md \u2014 Asetukset" },
-  "settingsH1": { "message": "to .md Asetukset" },
-  "sectionCapture": { "message": "Kaappaus" },
-  "sectionDisplay": { "message": "N\u00e4ytt\u00f6" },
-  "sectionHighlighter": { "message": "Korostin" },
-  "sectionLanguage": { "message": "Kieli" },
-  "labelAutoMetadata": { "message": "Lis\u00e4\u00e4 metatiedot automaattisesti" },
-  "labelShowBubble": { "message": "N\u00e4yt\u00e4 kelluva kupla valinnan yhteydess\u00e4" },
-  "labelDefaultView": { "message": "Oletusnäkymätila" },
-  "labelHighlightColor": { "message": "Korosteväri" },
-  "labelLanguage": { "message": "Kieli" },
-  "optPreview": { "message": "Esikatselu" },
-  "optSource": { "message": "L\u00e4hdekoodi" },
-  "optAuto": { "message": "Auto (selaimen kieli)" },
-  "savedSettings": { "message": "Tallennettu." },
-  "bubbleText": { "message": "lis\u00e4\u00e4 .md-tiedostoon" },
-  "toastNoSelection": { "message": "Ei valittua teksti\u00e4" },
-  "toastCopied": { "message": "Kopioitu Markdownina \u2713" },
-  "toastCouldNotCopy": { "message": "Kopioiminen ep\u00e4onnistui" },
-  "contextMenuTitle": { "message": "lis\u00e4\u00e4 .md-tiedostoon" }
+  "captureSelection": {
+    "message": "Kaappaa valinta"
+  },
+  "clear": {
+    "message": "Tyhjenmää"
+  },
+  "copy": {
+    "message": "Kopioi"
+  },
+  "copied": {
+    "message": "Kopioitu"
+  },
+  "download": {
+    "message": "Lataa"
+  },
+  "preview": {
+    "message": "Esikatselu"
+  },
+  "source": {
+    "message": "Lähdekoodi"
+  },
+  "highlighterOn": {
+    "message": "PÄÄLLÄ"
+  },
+  "highlighterOff": {
+    "message": "POIS"
+  },
+  "highlights": {
+    "message": "{1} korostusta"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown näkyy täällä…"
+  },
+  "copiedToday": {
+    "message": "Kopioitu tänään:"
+  },
+  "statusEmpty": {
+    "message": "Tyhjä välilehti"
+  },
+  "statusRestricted": {
+    "message": "Rajoitettu sivu"
+  },
+  "statusLocalFile": {
+    "message": "Paikallinen tiedosto"
+  },
+  "statusPdf": {
+    "message": "PDF — ei voi kaapata"
+  },
+  "statusReady": {
+    "message": "Valmis kaapaukseen — valitse teksti ja napsauta Kaappaa"
+  },
+  "errCannotAccess": {
+    "message": "Tähän välilehteen ei pääse käsiksi."
+  },
+  "errCannotInject": {
+    "message": "Tähän sivuun ei voitu lisätä skriptiä."
+  },
+  "errRestrictedUrl": {
+    "message": "Tältä sivulta ei voi kaapata (rajoitettu URL)."
+  },
+  "errTimeout": {
+    "message": "Pyynthö aikakatkaistiin. Yritä uudelleen."
+  },
+  "errConnect": {
+    "message": "Sivuun ei saatu yhteyttä. Lataa sivu uudelleen ja yritä uudelleen."
+  },
+  "errNoHighlights": {
+    "message": "Ei korostuksia. Napsauta sivun elementtejä."
+  },
+  "errNoSelection": {
+    "message": "Ei valittua tekstiä. Valitse ensin teksti sivulta."
+  },
+  "errConvertFailed": {
+    "message": "Valintaa ei voitu muuntaa."
+  },
+  "successCaptured": {
+    "message": "Kaapattu."
+  },
+  "captureHighlights": {
+    "message": "Kaappaa korostukset ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Asetukset"
+  },
+  "settingsH1": {
+    "message": "to .md Asetukset"
+  },
+  "sectionCapture": {
+    "message": "Kaappaus"
+  },
+  "sectionDisplay": {
+    "message": "Näyttö"
+  },
+  "sectionHighlighter": {
+    "message": "Korostin"
+  },
+  "sectionLanguage": {
+    "message": "Kieli"
+  },
+  "labelAutoMetadata": {
+    "message": "Lisää metatiedot automaattisesti"
+  },
+  "labelShowBubble": {
+    "message": "Näytä kelluva kupla valinnan yhteydessä"
+  },
+  "labelDefaultView": {
+    "message": "Oletusnäkymätila"
+  },
+  "labelHighlightColor": {
+    "message": "Korosteväri"
+  },
+  "labelLanguage": {
+    "message": "Kieli"
+  },
+  "optPreview": {
+    "message": "Esikatselu"
+  },
+  "optSource": {
+    "message": "Lähdekoodi"
+  },
+  "optAuto": {
+    "message": "Auto (selaimen kieli)"
+  },
+  "savedSettings": {
+    "message": "Tallennettu."
+  },
+  "bubbleText": {
+    "message": "lisää .md-tiedostoon"
+  },
+  "toastNoSelection": {
+    "message": "Ei valittua tekstiä"
+  },
+  "toastCopied": {
+    "message": "Kopioitu Markdownina ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kopioiminen epäonnistui"
+  },
+  "contextMenuTitle": {
+    "message": "lisää .md-tiedostoon"
+  }
 }
