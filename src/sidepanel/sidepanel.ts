@@ -6,6 +6,7 @@ import { incrementCounter, getCounterToday } from '../shared/counter';
 import { ensureContentScript } from '../shared/inject';
 import { icon, setButtonContent } from '../shared/icons';
 import { getSettings } from '../shared/settings-store';
+import { initI18n, t, applyI18n } from '../shared/i18n';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
@@ -92,18 +93,18 @@ function setTempStatus(msg: string, type: 'error' | 'success', iconName?: string
 function getTabReadiness(tab: chrome.tabs.Tab): { type: 'default' | 'warning'; icon: string; message: string } {
   const url = tab.url ?? '';
   if (!url || url === 'about:blank' || url.startsWith('chrome://newtab')) {
-    return { type: 'warning', icon: 'alertTriangle', message: 'Empty tab' };
+    return { type: 'warning', icon: 'alertTriangle', message: t('statusEmpty') };
   }
   if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('devtools://') || url.startsWith('about:')) {
-    return { type: 'warning', icon: 'alertTriangle', message: 'Restricted page' };
+    return { type: 'warning', icon: 'alertTriangle', message: t('statusRestricted') };
   }
   if (url.startsWith('file://')) {
-    return { type: 'warning', icon: 'alertTriangle', message: 'Local file' };
+    return { type: 'warning', icon: 'alertTriangle', message: t('statusLocalFile') };
   }
   if (/\.pdf(\?|#|$)/i.test(url)) {
-    return { type: 'warning', icon: 'alertTriangle', message: 'PDF — cannot capture' };
+    return { type: 'warning', icon: 'alertTriangle', message: t('statusPdf') };
   }
-  return { type: 'default', icon: 'crosshair', message: 'Ready to capture — select text and click Capture' };
+  return { type: 'default', icon: 'crosshair', message: t('statusReady') };
 }
 
 async function updateReadinessStatus() {
@@ -281,14 +282,14 @@ function sendMessageWithTimeout(
 function updateHighlighterUI() {
   btnHighlighter.classList.toggle('btn-highlighter-active', highlighterEnabled);
   if (highlighterEnabled) {
-    setButtonContent(btnHighlighter, 'highlighter', 'ON');
+    setButtonContent(btnHighlighter, 'highlighter', t('highlighterOn'));
   } else {
-    setButtonContent(btnHighlighter, 'highlighter', 'OFF');
+    setButtonContent(btnHighlighter, 'highlighter', t('highlighterOff'));
   }
 
   if (highlighterEnabled && highlightCount > 0) {
     highlighterInfo.hidden = false;
-    highlightCountLabel.textContent = `${highlightCount} highlight${highlightCount !== 1 ? 's' : ''}`;
+    highlightCountLabel.textContent = t('highlights', highlightCount);
     btnClearHighlights.hidden = false;
   } else {
     highlighterInfo.hidden = true;
@@ -296,9 +297,9 @@ function updateHighlighterUI() {
 
   // Update capture button label
   if (highlighterEnabled && highlightCount > 0) {
-    setButtonContent(btnCapture, 'crosshair', `Capture highlights (${highlightCount})`, 16);
+    setButtonContent(btnCapture, 'crosshair', t('captureHighlights', highlightCount), 16);
   } else {
-    setButtonContent(btnCapture, 'crosshair', 'Capture selection', 16);
+    setButtonContent(btnCapture, 'crosshair', t('captureSelection'), 16);
   }
 }
 
@@ -312,13 +313,13 @@ async function getActiveTabId(): Promise<number | null> {
 async function toggleHighlighter() {
   const tabId = await getActiveTabId();
   if (!tabId) {
-    setTempStatus('Cannot access this tab.', 'error', 'x');
+    setTempStatus(t('errCannotAccess'), 'error', 'x');
     return;
   }
 
   const injected = await ensureContentScript(tabId);
   if (!injected) {
-    setTempStatus('Could not inject into this page.', 'error', 'x');
+    setTempStatus(t('errCannotInject'), 'error', 'x');
     return;
   }
 
@@ -365,18 +366,18 @@ async function clearHighlights() {
 async function captureSelection(silent = false) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id || !tab.url) {
-    if (!silent) setTempStatus('Cannot access this tab.', 'error', 'x');
+    if (!silent) setTempStatus(t('errCannotAccess'), 'error', 'x');
     return;
   }
 
   if (isRestrictedUrl(tab.url)) {
-    if (!silent) setTempStatus('Cannot capture from this page (restricted URL).', 'error', 'x');
+    if (!silent) setTempStatus(t('errRestrictedUrl'), 'error', 'x');
     return;
   }
 
   const injected = await ensureContentScript(tab.id);
   if (!injected) {
-    if (!silent) setTempStatus('Could not inject into this page.', 'error', 'x');
+    if (!silent) setTempStatus(t('errCannotInject'), 'error', 'x');
     return;
   }
 
@@ -392,9 +393,9 @@ async function captureSelection(silent = false) {
     if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
     if (msg === 'TIMEOUT') {
-      setTempStatus('Request timed out. Try again.', 'error', 'x');
+      setTempStatus(t('errTimeout'), 'error', 'x');
     } else {
-      setTempStatus('Could not connect to page. Reload and try again.', 'error', 'x');
+      setTempStatus(t('errConnect'), 'error', 'x');
     }
     return;
   }
@@ -403,12 +404,12 @@ async function captureSelection(silent = false) {
     if (response.error === 'NO_SELECTION') {
       if (!silent) {
         const hint = messageType === 'CAPTURE_HIGHLIGHTS'
-          ? 'No highlights. Click elements on the page to highlight them.'
-          : 'No text selected. Select text on the page first.';
+          ? t('errNoHighlights')
+          : t('errNoSelection');
         setTempStatus(hint, 'error', 'x');
       }
     } else {
-      if (!silent) setTempStatus('Could not convert selection.', 'error', 'x');
+      if (!silent) setTempStatus(t('errConvertFailed'), 'error', 'x');
     }
     return;
   }
@@ -429,7 +430,7 @@ async function captureSelection(silent = false) {
       setContent(rawMd + '\n\n---\n\n' + md);
     }
   }
-  setTempStatus('Captured.', 'success', 'check', 2000);
+  setTempStatus(t('successCaptured'), 'success', 'check', 2000);
   if (messageType === 'CAPTURE_HIGHLIGHTS') {
     clearHighlights();
   }
@@ -501,9 +502,9 @@ btnCopy.addEventListener('click', async () => {
   await navigator.clipboard.writeText(rawMd);
   await incrementCounter();
   await updateCounter();
-  setButtonContent(btnCopy, 'check', 'Copied');
+  setButtonContent(btnCopy, 'check', t('copied'));
   setTimeout(() => {
-    setButtonContent(btnCopy, 'copy', 'Copy');
+    setButtonContent(btnCopy, 'copy', t('copy'));
   }, 1500);
 });
 
@@ -525,24 +526,26 @@ btnClear.addEventListener('click', () => {
   lastMeta = null;
 });
 
-// ---- Init icons ----
-
-btnUndo.innerHTML = icon('undo', 14);
-btnRedo.innerHTML = icon('redo', 14);
-setButtonContent(btnCapture, 'crosshair', 'Capture selection', 16);
-setButtonContent(btnHighlighter, 'highlighter', 'OFF');
-setButtonContent(btnClearHighlights, 'eraser', 'Clear');
-setButtonContent(btnCopy, 'copy', 'Copy');
-setButtonContent(btnDownload, 'download', 'Download');
-setButtonContent(btnClear, 'trash', 'Clear');
-btnPreviewTab.innerHTML = icon('eye', 12) + '<span class="btn-label">Preview</span>';
-btnSourceTab.innerHTML = icon('code', 12) + '<span class="btn-label">Source</span>';
-btnSettings.innerHTML = icon('settings', 14);
-
 // ---- Init ----
 
 async function init() {
   const settings = await getSettings();
+  await initI18n(settings.uiLanguage);
+  applyI18n();
+
+  // Init icons with translations
+  btnUndo.innerHTML = icon('undo', 14);
+  btnRedo.innerHTML = icon('redo', 14);
+  setButtonContent(btnCapture, 'crosshair', t('captureSelection'), 16);
+  setButtonContent(btnHighlighter, 'highlighter', t('highlighterOff'));
+  setButtonContent(btnClearHighlights, 'eraser', t('clear'));
+  setButtonContent(btnCopy, 'copy', t('copy'));
+  setButtonContent(btnDownload, 'download', t('download'));
+  setButtonContent(btnClear, 'trash', t('clear'));
+  btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
+  btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
+  btnSettings.innerHTML = icon('settings', 14);
+
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);
   await updateCounter();

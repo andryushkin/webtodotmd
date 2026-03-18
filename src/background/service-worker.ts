@@ -15,7 +15,7 @@ chrome.action.onClicked.addListener((tab) => {
 function createContextMenu() {
   chrome.contextMenus.create({
     id: 'capture-and-copy',
-    title: 'add to .md',
+    title: chrome.i18n.getMessage('contextMenuTitle') || 'add to .md',
     contexts: ['selection'],
   });
 }

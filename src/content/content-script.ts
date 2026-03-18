@@ -137,7 +137,7 @@ function showBubble(sel: Selection) {
       'user-select:none',
       '-webkit-font-smoothing:antialiased',
     ].join(';');
-    bubble.innerHTML = icon('crosshair', 12) + ' add to .md';
+    bubble.innerHTML = icon('crosshair', 12) + ' ' + chrome.i18n.getMessage('bubbleText');
     bubble.addEventListener('mousedown', (e) => {
       e.preventDefault(); // preserve selection for capture
       bubbleClicked = true;
@@ -388,7 +388,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'CAPTURE_AND_COPY') {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-      showToast('No text selected', 'error');
+      showToast(chrome.i18n.getMessage('toastNoSelection'), 'error');
       sendResponse({});
       return true;
     }
@@ -397,9 +397,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       try {
         const md = selectionToMd(selection);
         await navigator.clipboard.writeText(md);
-        showToast('Copied as Markdown ✓');
+        showToast(chrome.i18n.getMessage('toastCopied'));
       } catch {
-        showToast('Could not copy', 'error');
+        showToast(chrome.i18n.getMessage('toastCouldNotCopy'), 'error');
       }
       sendResponse({});
     })();

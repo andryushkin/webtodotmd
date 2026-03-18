@@ -3,6 +3,7 @@ export interface Settings {
   defaultViewMode: 'preview' | 'source';
   highlighterColor: string;
   showBubble: boolean;
+  uiLanguage: string;
 }
 
 const DEFAULTS: Settings = {
@@ -10,6 +11,7 @@ const DEFAULTS: Settings = {
   defaultViewMode: 'preview',
   highlighterColor: '#2563eb',
   showBubble: true,
+  uiLanguage: 'auto',
 };
 
 export async function getSettings(): Promise<Settings> {

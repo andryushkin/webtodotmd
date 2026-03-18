@@ -8,40 +8,71 @@
 </head>
 <body>
   <div class="settings">
-    <h1>to .md Settings</h1>
+    <h1 data-i18n="settingsH1">to .md Settings</h1>
 
     <section class="group">
-      <h2>Capture</h2>
+      <h2 data-i18n="sectionCapture">Capture</h2>
 
       <label class="setting">
         <input type="checkbox" id="auto-metadata">
-        <span>Auto-add metadata on capture</span>
+        <span data-i18n="labelAutoMetadata">Auto-add metadata on capture</span>
       </label>
 
       <label class="setting">
         <input type="checkbox" id="show-bubble">
-        <span>Show floating bubble on selection</span>
+        <span data-i18n="labelShowBubble">Show floating bubble on selection</span>
       </label>
     </section>
 
     <section class="group">
-      <h2>Display</h2>
+      <h2 data-i18n="sectionDisplay">Display</h2>
 
       <div class="setting">
-        <label for="default-view">Default view mode</label>
+        <label for="default-view" data-i18n="labelDefaultView">Default view mode</label>
         <select id="default-view">
-          <option value="preview">Preview</option>
-          <option value="source">Source</option>
+          <option value="preview" data-i18n="optPreview">Preview</option>
+          <option value="source" data-i18n="optSource">Source</option>
         </select>
       </div>
     </section>
 
     <section class="group">
-      <h2>Highlighter</h2>
+      <h2 data-i18n="sectionHighlighter">Highlighter</h2>
 
       <div class="setting">
-        <label for="highlighter-color">Highlight color</label>
+        <label for="highlighter-color" data-i18n="labelHighlightColor">Highlight color</label>
         <input type="color" id="highlighter-color" value="#2563eb">
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 data-i18n="sectionLanguage">Language</h2>
+
+      <div class="setting">
+        <label for="ui-language" data-i18n="labelLanguage">Language</label>
+        <select id="ui-language">
+          <option value="auto" data-i18n="optAuto">Auto (browser language)</option>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="nl">Nederlands</option>
+          <option value="sv">Svenska</option>
+          <option value="da">Dansk</option>
+          <option value="no">Norsk</option>
+          <option value="fi">Suomi</option>
+          <option value="ar">العربية</option>
+          <option value="id">Bahasa Indonesia</option>
+          <option value="ru">Русский</option>
+          <option value="pt_PT">Português (PT)</option>
+          <option value="ja">日本語</option>
+          <option value="fil">Filipino</option>
+          <option value="vi">Tiếng Việt</option>
+          <option value="tr">Türkçe</option>
+          <option value="th">ภาษาไทย</option>
+          <option value="ko">한국어</option>
+        </select>
       </div>
     </section>
 
