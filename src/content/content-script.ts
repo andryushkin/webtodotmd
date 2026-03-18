@@ -287,6 +287,27 @@ function clearHighlights() {
   sendHighlightCount();
 }
 
+function findPageTitle(): string {
+  const getMeta = (attr: string, val: string) =>
+    document.querySelector(`meta[${attr}="${val}"]`)?.getAttribute('content')?.trim() || '';
+
+  let schemaHeadline = '';
+  for (const el of document.querySelectorAll('script[type="application/ld+json"]')) {
+    try {
+      const data = JSON.parse(el.textContent || '');
+      if (data.headline) { schemaHeadline = String(data.headline).trim(); break; }
+    } catch { /* ignore */ }
+  }
+
+  return (
+    getMeta('property', 'og:title') ||
+    getMeta('name', 'twitter:title') ||
+    schemaHeadline ||
+    getMeta('name', 'title') ||
+    document.title
+  );
+}
+
 function captureHighlightsMd(): string {
   const sorted = [...highlights].sort((a, b) => {
     const pos = a.compareDocumentPosition(b);
@@ -340,7 +361,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     try {
       const md = captureHighlightsMd();
       const meta: PageMeta = {
-        title: document.title,
+        title: findPageTitle(),
         url: window.location.href,
         date: new Date().toISOString(),
       };
@@ -372,7 +393,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     try {
       const md = selectionToMd(selection);
       const meta: PageMeta = {
-        title: document.title,
+        title: findPageTitle(),
         url: window.location.href,
         date: new Date().toISOString(),
       };
