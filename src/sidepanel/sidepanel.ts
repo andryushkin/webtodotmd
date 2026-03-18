@@ -14,7 +14,7 @@ function isCaptureError(r: CaptureResponse): r is CaptureErrorResponse {
   return 'error' in r;
 }
 
-marked.setOptions({ breaks: true, gfm: true, html: false });
+marked.setOptions({ breaks: true, gfm: true, html: true });
 
 // ---- DOM refs ----
 
@@ -123,8 +123,23 @@ function buildMetadata(meta: PageMeta): string {
   return `---\ntitle: "${escapedTitle}"\nsource: ${meta.url}\ndate: ${dateStr}\n---`;
 }
 
+const ALLOWED_HTML_TAGS = new Set(['sub', 'sup', 'br']);
+
+function escapeHtmlTagsInMarkdown(md: string): string {
+  const parts = md.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g);
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part; // code block — не трогать
+      return part.replace(/<(\/?)(([a-zA-Z][a-zA-Z0-9]*))([^>]*)>/g, (_match, slash, tagName, _tn, attrs) => {
+        if (ALLOWED_HTML_TAGS.has(tagName.toLowerCase())) return _match;
+        return `&lt;${slash}${tagName}${attrs}&gt;`;
+      });
+    })
+    .join('');
+}
+
 function renderMarkdown(md: string) {
-  const processed = preprocessMath(md)
+  const processed = preprocessMath(escapeHtmlTagsInMarkdown(md))
     .replace(METADATA_RE, (_, title, source, date) => {
       const safeTitle = title.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
       return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">📄</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">🔗</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">📅</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;

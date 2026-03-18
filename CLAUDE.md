@@ -5,6 +5,7 @@ Chrome Extension для захвата выделений со страниц в
 
 - **Сборка:** `bash build.sh` — без `bun install`, без `node_modules`
 - **Транспайлер:** Bun (встроенный, глобально установлен) — компилирует `.ts` без npm-пакетов
+- **Тесты:** `bun test` — Bun test + linkedom (из `~/Server/markitdown/node_modules/linkedom`)
 - **GitHub:** https://github.com/andryushkin/todotmd (private), ветка `main`
 
 ### Vendored зависимости (нет node_modules)
@@ -38,6 +39,7 @@ Chrome Extension для захвата выделений со страниц в
 - Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
 - `captureSelection(silent: boolean)` — единая функция capture для кнопки и auto-capture; `silent=true` подавляет NO_SELECTION ошибку
 - **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
+- **marked: `html: true` + `escapeHtmlTagsInMarkdown()`:** marked настроен с `html: true` чтобы рендерились injected div'ы (KaTeX, metadata-block, content-gap, sub, sup). Чтобы literal HTML-теги в тексте страниц не рендерились как HTML — `escapeHtmlTagsInMarkdown()` вызывается первым шагом в `renderMarkdown()`, экранирует теги в non-code частях (исключения: sub, sup, br). DOMPurify sanitize — XSS-защита поверх.
 
 ## Иконки (Lucide-style SVG)
 
@@ -69,7 +71,7 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Highlighter Mode
 
-- Альтернативный режим захвата: кликами выделяются блочные элементы страницы (P, H1-H6, LI, BLOCKQUOTE, PRE, TABLE и др.)
+- Альтернативный режим захвата: кликами выделяются блочные элементы страницы (P, H1-H6, LI, UL, OL, BLOCKQUOTE, PRE, TABLE и др.)
 - Toggle-кнопка в Side Panel рядом с Capture; при включении — блокирует обычные клики на странице
 - Hover: dashed-overlay на элементе под курсором; Click: фиксирует/снимает highlight (outline + background)
 - Capture button автоматически переключается на `CAPTURE_HIGHLIGHTS` при наличии highlights
@@ -77,7 +79,7 @@ Chrome Extension для захвата выделений со страниц в
 - `HIGHLIGHT_COUNT` сообщения из content script → side panel для обновления badge
 - Clear highlights: удаляет CSS-классы и сбрасывает Set
 - **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
-- `findHighlightTarget(el)` — поднимается по DOM до ближайшего блочного элемента
+- `findHighlightTarget(el)` в `src/content/highlight-target.ts` — поднимается по DOM до ближайшего блочного элемента; остановка по `tagName === 'BODY'|'HTML'` (не через `=== document.body`)
 - **Auto-disable при закрытии панели (port-based):** Side Panel открывает `chrome.runtime.connect()` порт при старте; Content Script получает `port.onDisconnect` событие и автоматически деактивирует highlighter mode — без явного сообщения от панели
 
 ## Settings Page
@@ -117,6 +119,14 @@ Chrome Extension для захвата выделений со страниц в
 - `docs/permissions-justification.md` — обоснование каждого permission для Google review
 - Версия `1.0.0` в `manifest.json`
 - Иконки: `icon16.png`, `icon48.png`, `icon128.png` в корне + `public/`
+
+## Тесты
+
+- `src/content/__tests__/find-highlight-target.test.ts` — тесты для `findHighlightTarget` (8 тестов)
+- `src/content/__tests__/conversion.test.ts` — тесты HTML→Markdown через `toMarkdown()` с linkedom (31 тест)
+- `src/shared/__tests__/` — тесты утилит (restricted, counter, gate, identity)
+- **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
+- **DOM в тестах:** linkedom из `~/Server/markitdown/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
 
 ## Документация
 
