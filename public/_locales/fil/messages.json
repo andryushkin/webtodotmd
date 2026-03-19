@@ -29,13 +29,13 @@
     "message": "Pinagmulan"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Naka-on ang highlighter"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Naka-off ang highlighter"
   },
   "highlights": {
-    "message": "{1} highlight"
+    "message": "{1} highlights — handa nang i-capture"
   },
   "markdownPlaceholder": {
     "message": "Lilitaw ang Markdown dito…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "idagdag sa .md"
+  },
+  "statusHighlighterReady": {
+    "message": "I-click ang mga elemento sa pahina para i-highlight"
   }
 }

@@ -29,13 +29,13 @@
     "message": "소스"
   },
   "highlighterOn": {
-    "message": "켜기"
+    "message": "형광펜 켜짐"
   },
   "highlighterOff": {
-    "message": "끄기"
+    "message": "형광펜 꺼짐"
   },
   "highlights": {
-    "message": "{1}개 하이라이트"
+    "message": "{1}개 선택됨 — 캡처 준비됨"
   },
   "markdownPlaceholder": {
     "message": "Markdown이 여기에 표시됩니다…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": ".md에 추가"
+  },
+  "statusHighlighterReady": {
+    "message": "페이지의 요소를 클릭하여 강조"
   }
 }

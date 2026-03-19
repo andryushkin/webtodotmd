@@ -22,9 +22,6 @@ marked.setOptions({ breaks: true, gfm: true, html: true });
 
 const btnCapture = document.getElementById('btn-capture') as HTMLButtonElement;
 const btnHighlighter = document.getElementById('btn-highlighter') as HTMLButtonElement;
-const highlighterInfo = document.getElementById('highlighter-info') as HTMLDivElement;
-const highlightCountLabel = document.getElementById('highlight-count') as HTMLSpanElement;
-const btnClearHighlights = document.getElementById('btn-clear-highlights') as HTMLButtonElement;
 const btnUndo = document.getElementById('btn-undo') as HTMLButtonElement;
 const btnRedo = document.getElementById('btn-redo') as HTMLButtonElement;
 const btnCopy = document.getElementById('btn-copy') as HTMLButtonElement;
@@ -279,20 +276,17 @@ function sendMessageWithTimeout(
 
 // ---- Highlighter logic ----
 
-function updateHighlighterUI() {
+async function updateHighlighterUI() {
   btnHighlighter.classList.toggle('btn-highlighter-active', highlighterEnabled);
-  if (highlighterEnabled) {
-    setButtonContent(btnHighlighter, 'highlighter', t('highlighterOn'));
-  } else {
-    setButtonContent(btnHighlighter, 'highlighter', t('highlighterOff'));
-  }
+  setButtonContent(btnHighlighter, 'highlighter',
+    t(highlighterEnabled ? 'highlighterOn' : 'highlighterOff'));
 
   if (highlighterEnabled && highlightCount > 0) {
-    highlighterInfo.hidden = false;
-    highlightCountLabel.textContent = t('highlights', highlightCount);
-    btnClearHighlights.hidden = false;
+    setBaseStatus(t('highlights', highlightCount), 'default', 'highlighter');
+  } else if (highlighterEnabled) {
+    setBaseStatus(t('statusHighlighterReady'), 'default', 'highlighter');
   } else {
-    highlighterInfo.hidden = true;
+    await updateReadinessStatus();
   }
 
   // Update capture button label
@@ -470,7 +464,6 @@ btnSourceTab.addEventListener('click', () => setViewMode('source'));
 
 btnCapture.addEventListener('click', () => captureSelection(false));
 btnHighlighter.addEventListener('click', () => toggleHighlighter());
-btnClearHighlights.addEventListener('click', () => clearHighlights());
 
 btnSettings.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
@@ -538,7 +531,6 @@ async function init() {
   btnRedo.innerHTML = icon('redo', 14);
   setButtonContent(btnCapture, 'crosshair', t('captureSelection'), 16);
   setButtonContent(btnHighlighter, 'highlighter', t('highlighterOff'));
-  setButtonContent(btnClearHighlights, 'eraser', t('clear'));
   setButtonContent(btnCopy, 'copy', t('copy'));
   setButtonContent(btnDownload, 'download', t('download'));
   setButtonContent(btnClear, 'trash', t('clear'));

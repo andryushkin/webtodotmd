@@ -29,13 +29,13 @@
     "message": "Lähdekoodi"
   },
   "highlighterOn": {
-    "message": "PÄÄLLÄ"
+    "message": "Korostus päällä"
   },
   "highlighterOff": {
-    "message": "POIS"
+    "message": "Korostus pois"
   },
   "highlights": {
-    "message": "{1} korostusta"
+    "message": "{1} korostusta — valmis tallentamaan"
   },
   "markdownPlaceholder": {
     "message": "Markdown näkyy täällä…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "lisää .md-tiedostoon"
+  },
+  "statusHighlighterReady": {
+    "message": "Napsauta sivun elementtejä korostaaksesi niitä"
   }
 }

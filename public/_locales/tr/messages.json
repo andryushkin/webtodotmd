@@ -29,13 +29,13 @@
     "message": "Kaynak"
   },
   "highlighterOn": {
-    "message": "AÇIK"
+    "message": "Vurgulayıcı açık"
   },
   "highlighterOff": {
-    "message": "KAPALI"
+    "message": "Vurgulayıcı kapalı"
   },
   "highlights": {
-    "message": "{1} vurgu"
+    "message": "{1} vurgulama — yakalamaya hazır"
   },
   "markdownPlaceholder": {
     "message": "Markdown burada görünecek…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": ".md’ye ekle"
+  },
+  "statusHighlighterReady": {
+    "message": "Vurgulamak için sayfadaki öğelere tıklayın"
   }
 }

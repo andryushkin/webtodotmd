@@ -19,6 +19,11 @@
   --btn-secondary-hover: #e0e0e0;
   --radius: 6px;
   --gap: 8px;
+  --status-bg: #fafafa;
+  --status-text: #333333;
+  --status-error: #c0392b;
+  --status-success: #1e8449;
+  --status-warning: #9a6700;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +38,11 @@
     --accent-hover: #6bb3f0;
     --btn-secondary-bg: #2a2a2a;
     --btn-secondary-hover: #3a3a3a;
+    --status-bg: #222222;
+    --status-text: #e0e0e0;
+    --status-error: #ff7070;
+    --status-success: #6bcb77;
+    --status-warning: #ffd93d;
   }
 }
 
@@ -207,37 +217,14 @@ body {
   color: #fff !important;
 }
 
-/* Highlighter info */
-
-.highlighter-info {
-  display: flex;
-  align-items: center;
-  gap: var(--gap);
-  flex-shrink: 0;
-}
-
-.highlighter-info[hidden] {
-  display: none;
-}
-
-.highlight-count-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.btn-sm {
-  padding: 3px 8px;
-  font-size: 11px;
-}
-
 /* Status */
 
 .status {
   font-size: 12px;
-  color: #e0e0e0;
+  color: var(--status-text);
   min-height: 20px;
   flex-shrink: 0;
-  background: #222222;
+  background: var(--status-bg);
   border-radius: var(--radius);
   padding: 4px 8px;
   display: flex;
@@ -245,9 +232,9 @@ body {
   gap: 5px;
 }
 
-.status.error   { color: #ff7070; }
-.status.success { color: #6bcb77; }
-.status.warning { color: #ffd93d; }
+.status.error   { color: var(--status-error); }
+.status.success { color: var(--status-success); }
+.status.warning { color: var(--status-warning); }
 
 /* Preview area */
 

@@ -29,13 +29,13 @@
     "message": "Kildekode"
   },
   "highlighterOn": {
-    "message": "TIL"
+    "message": "Fremhæver til"
   },
   "highlighterOff": {
-    "message": "FRA"
+    "message": "Fremhæver fra"
   },
   "highlights": {
-    "message": "{1} markeringer"
+    "message": "{1} fremhævninger — klar til hentning"
   },
   "markdownPlaceholder": {
     "message": "Markdown vises her…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "tilføj til .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klik på elementer på siden for at fremhæve dem"
   }
 }

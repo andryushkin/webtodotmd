@@ -29,13 +29,13 @@
     "message": "ソース"
   },
   "highlighterOn": {
-    "message": "オン"
+    "message": "ハイライト ON"
   },
   "highlighterOff": {
-    "message": "オフ"
+    "message": "ハイライト OFF"
   },
   "highlights": {
-    "message": "{1}件のハイライト"
+    "message": "{1} 件選択済み — キャプチャ可能"
   },
   "markdownPlaceholder": {
     "message": "Markdownがここに表示されます…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": ".mdに追加"
+  },
+  "statusHighlighterReady": {
+    "message": "ページの要素をクリックしてハイライト"
   }
 }

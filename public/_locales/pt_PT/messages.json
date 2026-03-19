@@ -29,13 +29,13 @@
     "message": "Fonte"
   },
   "highlighterOn": {
-    "message": "ATIVO"
+    "message": "Realçador ativo"
   },
   "highlighterOff": {
-    "message": "INATIVO"
+    "message": "Realçador inativo"
   },
   "highlights": {
-    "message": "{1} realces"
+    "message": "{1} destaques — pronto para capturar"
   },
   "markdownPlaceholder": {
     "message": "O Markdown aparecerá aqui…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "adicionar ao .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Clique nos elementos da página para realçar"
   }
 }

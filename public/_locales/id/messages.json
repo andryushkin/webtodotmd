@@ -29,13 +29,13 @@
     "message": "Sumber"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Penyorot aktif"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Penyorot nonaktif"
   },
   "highlights": {
-    "message": "{1} sorotan"
+    "message": "{1} sorotan — siap diambil"
   },
   "markdownPlaceholder": {
     "message": "Markdown akan muncul di sini…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "tambahkan ke .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klik elemen di halaman untuk menyorot"
   }
 }

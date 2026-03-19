@@ -29,13 +29,13 @@
     "message": "المصدر"
   },
   "highlighterOn": {
-    "message": "تشغيل"
+    "message": "التمييز قيد التشغيل"
   },
   "highlighterOff": {
-    "message": "إيقاف"
+    "message": "التمييز معطل"
   },
   "highlights": {
-    "message": "{1} تمييزات"
+    "message": "{1} تمييزات — جاهز للاستخراج"
   },
   "markdownPlaceholder": {
     "message": "سيظهر Markdown هنا…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "أضف إلى .md"
+  },
+  "statusHighlighterReady": {
+    "message": "انقر على عناصر الصفحة للتمييز"
   }
 }

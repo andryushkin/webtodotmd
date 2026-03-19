@@ -29,13 +29,13 @@
     "message": "Sorgente"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Evidenziatore attivo"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Evidenziatore disattivo"
   },
   "highlights": {
-    "message": "{1} evidenziazioni"
+    "message": "{1} evidenziazioni — pronto per acquisire"
   },
   "markdownPlaceholder": {
     "message": "Il Markdown apparirà qui…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "aggiungi al .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Fai clic sugli elementi della pagina per evidenziarli"
   }
 }

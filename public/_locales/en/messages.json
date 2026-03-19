@@ -29,13 +29,13 @@
     "message": "Source"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Highlighter on"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Highlighter off"
   },
   "highlights": {
-    "message": "{1} highlights"
+    "message": "{1} highlights — ready to capture"
   },
   "markdownPlaceholder": {
     "message": "Markdown will appear here…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "add to .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Click elements on the page to highlight"
   }
 }

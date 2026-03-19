@@ -29,13 +29,13 @@
     "message": "Nguồn"
   },
   "highlighterOn": {
-    "message": "BẬT"
+    "message": "Bật đánh dấu"
   },
   "highlighterOff": {
-    "message": "TắT"
+    "message": "Tắt đánh dấu"
   },
   "highlights": {
-    "message": "{1} đánh dấu"
+    "message": "{1} mục đã chọn — sẵn sàng chụp"
   },
   "markdownPlaceholder": {
     "message": "Markdown sẽ xuất hiện ở đây…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "thêm vào .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Nhấp vào các phần tử trên trang để đánh dấu"
   }
 }

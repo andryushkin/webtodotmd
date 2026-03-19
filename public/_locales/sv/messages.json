@@ -29,13 +29,13 @@
     "message": "Källkod"
   },
   "highlighterOn": {
-    "message": "PÅ"
+    "message": "Markering på"
   },
   "highlighterOff": {
-    "message": "AV"
+    "message": "Markering av"
   },
   "highlights": {
-    "message": "{1} markeringar"
+    "message": "{1} markeringar — redo att hämta"
   },
   "markdownPlaceholder": {
     "message": "Markdown visas här…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "lägg till i .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klicka på element på sidan för att markera dem"
   }
 }

@@ -29,13 +29,13 @@
     "message": "Source"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Surligneur activé"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Surligneur désactivé"
   },
   "highlights": {
-    "message": "{1} sélections"
+    "message": "{1} surlignages — prêt à capturer"
   },
   "markdownPlaceholder": {
     "message": "Le Markdown apparaêtra ici…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "ajouter au .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Cliquez sur des éléments de la page pour les surligner"
   }
 }

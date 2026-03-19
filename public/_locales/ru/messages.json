@@ -29,13 +29,13 @@
     "message": "Исходник"
   },
   "highlighterOn": {
-    "message": "ВКЛ"
+    "message": "Маркер включён"
   },
   "highlighterOff": {
-    "message": "ВЫКЛ"
+    "message": "Маркер выключен"
   },
   "highlights": {
-    "message": "{1} выделений"
+    "message": "{1} элемент(ов) — готово к захвату"
   },
   "markdownPlaceholder": {
     "message": "Здесь появится Markdown…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "добавить в .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Кликайте по элементам страницы для выделения"
   }
 }

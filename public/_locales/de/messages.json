@@ -29,13 +29,13 @@
     "message": "Quelltext"
   },
   "highlighterOn": {
-    "message": "AN"
+    "message": "Marker ein"
   },
   "highlighterOff": {
-    "message": "AUS"
+    "message": "Marker aus"
   },
   "highlights": {
-    "message": "{1} Markierungen"
+    "message": "{1} Markierungen — bereit zum Erfassen"
   },
   "markdownPlaceholder": {
     "message": "Markdown erscheint hier…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "zu .md hinzufügen"
+  },
+  "statusHighlighterReady": {
+    "message": "Elemente auf der Seite zum Markieren anklicken"
   }
 }

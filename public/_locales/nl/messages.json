@@ -29,13 +29,13 @@
     "message": "Bron"
   },
   "highlighterOn": {
-    "message": "AAN"
+    "message": "Markeerstift aan"
   },
   "highlighterOff": {
-    "message": "UIT"
+    "message": "Markeerstift uit"
   },
   "highlights": {
-    "message": "{1} markeringen"
+    "message": "{1} markeringen — klaar om te kopiëren"
   },
   "markdownPlaceholder": {
     "message": "Markdown verschijnt hier…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "toevoegen aan .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klik op elementen op de pagina om ze te markeren"
   }
 }

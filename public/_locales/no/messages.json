@@ -29,13 +29,13 @@
     "message": "Kildekode"
   },
   "highlighterOn": {
-    "message": "PÅ"
+    "message": "Markering på"
   },
   "highlighterOff": {
-    "message": "AV"
+    "message": "Markering av"
   },
   "highlights": {
-    "message": "{1} markeringer"
+    "message": "{1} markeringer — klar til henting"
   },
   "markdownPlaceholder": {
     "message": "Markdown vises her…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "legg til i .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klikk på elementer på siden for å markere dem"
   }
 }

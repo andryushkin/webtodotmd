@@ -29,13 +29,13 @@
     "message": "ต้นฉบับ"
   },
   "highlighterOn": {
-    "message": "เปิด"
+    "message": "ไฮไลต์เปิด"
   },
   "highlighterOff": {
-    "message": "ปิด"
+    "message": "ไฮไลต์ปิด"
   },
   "highlights": {
-    "message": "{1} ไฮไลต์"
+    "message": "{1} รายการ — พร้อมบันทึก"
   },
   "markdownPlaceholder": {
     "message": "Markdown จะปรากฏที่นี่…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "เพิ่มใน .md"
+  },
+  "statusHighlighterReady": {
+    "message": "คลิกองค์ประกอบบนหน้าเพื่อไฮไลต์"
   }
 }

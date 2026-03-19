@@ -29,13 +29,13 @@
     "message": "Fuente"
   },
   "highlighterOn": {
-    "message": "ON"
+    "message": "Marcador activado"
   },
   "highlighterOff": {
-    "message": "OFF"
+    "message": "Marcador desactivado"
   },
   "highlights": {
-    "message": "{1} resaltados"
+    "message": "{1} elementos marcados — listo para capturar"
   },
   "markdownPlaceholder": {
     "message": "El Markdown aparecerá aquí…"
@@ -147,5 +147,8 @@
   },
   "contextMenuTitle": {
     "message": "agregar al .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Haz clic en los elementos de la página para resaltarlos"
   }
 }
