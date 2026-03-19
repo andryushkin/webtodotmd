@@ -118,6 +118,13 @@ Chrome Extension для захвата выделений со страниц в
 - `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
 - При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
 
+## Welcome & Changelog pages
+
+- При установке (`reason === 'install'`) → `https://dotmd.tools/<locale>/welcome`
+- При обновлении → `https://dotmd.tools/<locale>/changelog` (только если `SHOW_CHANGELOG_ON_UPDATE = true` в `service-worker.ts`)
+- Локаль: `chrome.i18n.getUILanguage()` с нормализацией; fallback → `en`; спец-кейсы: `pt-*→pt-PT`, `nb/nn→no`
+- Документация для сайта: `docs/website-welcome-changelog.md`
+
 ## Публикация (v1.0)
 
 - `privacy-policy.html` — Privacy Policy страница; хостить публично перед сабмитом в CWS
