@@ -85,6 +85,7 @@ Chrome Extension для захвата выделений со страниц в
 - **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
 - `findHighlightTarget(el)` в `src/content/highlight-target.ts` — поднимается по DOM до ближайшего блочного элемента; остановка по `tagName === 'BODY'|'HTML'` (не через `=== document.body`)
 - **Auto-disable при закрытии панели (port-based):** Side Panel открывает `chrome.runtime.connect()` порт при старте; Content Script получает `port.onDisconnect` событие и автоматически деактивирует highlighter mode — без явного сообщения от панели
+- **Auto-disable при смене вкладки:** `chrome.tabs.onActivated` в Side Panel проверяет `highlighterEnabled`; при смене вкладки вызывает `highlighterPort?.disconnect()` (→ content script получает `port.onDisconnect` → `disableHighlighter()`), затем сбрасывает `highlighterEnabled`, `highlightCount`, вызывает `updateHighlighterUI()`
 
 ## Settings Page
 

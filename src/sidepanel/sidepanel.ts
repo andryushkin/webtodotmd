@@ -485,7 +485,16 @@ chrome.storage.session.onChanged.addListener((changes) => {
 });
 
 // Update readiness status on tab switch / navigation
-chrome.tabs.onActivated.addListener(() => updateReadinessStatus());
+chrome.tabs.onActivated.addListener(() => {
+  if (highlighterEnabled) {
+    highlighterPort?.disconnect();
+    highlighterPort = null;
+    highlighterEnabled = false;
+    highlightCount = 0;
+    updateHighlighterUI();
+  }
+  updateReadinessStatus();
+});
 chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
   if (changeInfo.status === 'complete' || changeInfo.url) updateReadinessStatus();
 });
