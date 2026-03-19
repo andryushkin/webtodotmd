@@ -8,7 +8,7 @@
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
-    "message": "선택 영역 캐치"
+    "message": "선택 영역 캡처"
   },
   "clear": {
     "message": "지우기"
@@ -50,13 +50,13 @@
     "message": "제한된 페이지"
   },
   "statusLocalFile": {
-    "message": "로컈 파일"
+    "message": "로컬 파일"
   },
   "statusPdf": {
-    "message": "PDF — 캐치 불가"
+    "message": "PDF — 캡처 불가"
   },
   "statusReady": {
-    "message": "캐치 준비 완료 — 텍스트를 선택하고 캐치를 클릭하세요"
+    "message": "캡처 준비 완료 — 텍스트를 선택하고 캡처를 클릭하세요"
   },
   "errCannotAccess": {
     "message": "이 탭에 접근할 수 없습니다."
@@ -65,7 +65,7 @@
     "message": "이 페이지에 삽입할 수 없습니다."
   },
   "errRestrictedUrl": {
-    "message": "이 페이지에서 캐치할 수 없습니다 (제한된 URL)."
+    "message": "이 페이지에서 캡처할 수 없습니다 (제한된 URL)."
   },
   "errTimeout": {
     "message": "요청 시간이 초과되었습니다. 다시 시도하세요."
@@ -83,10 +83,10 @@
     "message": "선택 영역을 변환할 수 없습니다."
   },
   "successCaptured": {
-    "message": "캐치되었습니다."
+    "message": "캡처되었습니다."
   },
   "captureHighlights": {
-    "message": "하이라이트 캐치 ({1})"
+    "message": "하이라이트 캡처 ({1})"
   },
   "settingsTitle": {
     "message": "to .md — 설정"
@@ -95,7 +95,7 @@
     "message": "to .md 설정"
   },
   "sectionCapture": {
-    "message": "캐치"
+    "message": "캡처"
   },
   "sectionDisplay": {
     "message": "표시"
@@ -107,7 +107,7 @@
     "message": "언어"
   },
   "labelAutoMetadata": {
-    "message": "캐치 시 메타데이터 자동 추가"
+    "message": "캡처 시 메타데이터 자동 추가"
   },
   "labelShowBubble": {
     "message": "선택 시 플로팅 버블 표시"

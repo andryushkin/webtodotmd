@@ -68,7 +68,7 @@
     "message": "Erfassung von dieser Seite nicht möglich (eingeschränkte URL)."
   },
   "errTimeout": {
-    "message": "Überschreitung. Erneut versuchen."
+    "message": "Zeitüberschreitung. Erneut versuchen."
   },
   "errConnect": {
     "message": "Verbindung zur Seite fehlgeschlagen. Seite neu laden und erneut versuchen."

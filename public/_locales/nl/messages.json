@@ -17,7 +17,7 @@
     "message": "Kopiëren"
   },
   "copied": {
-    "message": "Gekopiëerd"
+    "message": "Gekopieerd"
   },
   "download": {
     "message": "Downloaden"
@@ -140,7 +140,7 @@
     "message": "Geen tekst geselecteerd"
   },
   "toastCopied": {
-    "message": "Gekopiëerd als Markdown ✓"
+    "message": "Gekopieerd als Markdown ✓"
   },
   "toastCouldNotCopy": {
     "message": "Kon niet kopiëren"

@@ -11,7 +11,7 @@
     "message": "Kaappaa valinta"
   },
   "clear": {
-    "message": "Tyhjenmää"
+    "message": "Tyhjennä"
   },
   "copy": {
     "message": "Kopioi"
@@ -68,7 +68,7 @@
     "message": "Tältä sivulta ei voi kaapata (rajoitettu URL)."
   },
   "errTimeout": {
-    "message": "Pyynthö aikakatkaistiin. Yritä uudelleen."
+    "message": "Pyyntö aikakatkaistiin. Yritä uudelleen."
   },
   "errConnect": {
     "message": "Sivuun ei saatu yhteyttä. Lataa sivu uudelleen ja yritä uudelleen."
