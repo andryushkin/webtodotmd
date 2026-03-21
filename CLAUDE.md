@@ -17,7 +17,7 @@ Chrome Extension для захвата выделений со страниц в
 ## Архитектура
 
 - **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`); Shadow DOM flattening перед конвертацией; после успешного `CAPTURE_SELECTION` вызывает `removeAllRanges()` чтобы повторный capture без выделения давал NO_SELECTION
-- **Content script injection** — **lazy** (on-demand): `content_scripts` убран из manifest; скрипт инжектится через `chrome.scripting.executeScript()` только при capture; `ensureContentScript()` сначала шлёт PING, и только при отсутствии ответа инжектит
+- **Content script injection** — `content_scripts` в manifest (авто-инъекция на `*://*/*`); `ensureContentScript()` шлёт PING, и при отсутствии ответа переинъецирует через `scripting.executeScript()`
 - **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview; слушает `chrome.storage.session.onChanged` для auto-capture; Lucide-style SVG-иконки на всех кнопках
 - **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + пишет `captureSignal: Date.now()` в `chrome.storage.session`
 
@@ -60,7 +60,7 @@ Chrome Extension для захвата выделений со страниц в
 - `bubble.innerHTML` (текст + иконка) устанавливается **каждый раз** при вызове `showBubble()` — не только при первом создании; это позволяет подхватить смену языка
 - После клика: `hideBubble()` + `removeAllRanges()` через 400ms (очищает выделение после отправки capture-сигнала)
 - `mousedown` listener проверяет `bubble.style.display !== 'none'` (не `!bubble.hidden`)
-- ⚠️ **i18n в bubble не работает** (статус 2026-03-21): bubble использует `i18n()` → `t()` из shared/i18n, но обновление языка не применяется — см. memory project_i18n_content_script_bug
+- **i18n в bubble:** переводы приходят из `chrome.storage.local` (ключ `contentI18n`), записываются service worker-ом после `initI18n()`; content script читает на старте + слушает `storage.onChanged`; `i18n(key, fallback)` — проверяет `translations[key]`, фоллбэк на `chrome.i18n.getMessage()`
 
 ## Shadow DOM Flattening
 
@@ -118,8 +118,10 @@ Chrome Extension для захвата выделений со страниц в
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
 - `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
 - При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
-- **Side Panel / Settings** используют `src/shared/i18n.ts` → `initI18n(uiLanguage)` + `t(key)` (уважает `uiLanguage` настройку)
-- **Content Script / Service Worker** импортируют те же `t, initI18n` — но ⚠️ корректность не подтверждена (2026-03-21, см. memory)
+- **Side Panel / Settings** используют `src/shared/i18n.ts` → `initI18n(uiLanguage)` + `t(key)` (уважает `uiLanguage` настройку); Side Panel реактивно обновляет UI при смене языка через `storage.onChanged` → `applyI18n()` + `applyButtonLabels()`
+- **Service Worker** импортирует `t, initI18n`; при смене языка пересоздаёт context menu (`removeAll` + `create`) и пишет переводы в `chrome.storage.local` (ключ `contentI18n`)
+- **Content Script** НЕ импортирует `i18n.ts` (fetch locale файлов ненадёжен в content scripts); получает переводы из `chrome.storage.local` → `contentI18n`, записанные service worker-ом
+- ⚠️ **Не использовать `chrome.runtime.sendMessage` для передачи данных service worker → content script** — `onMessage` listeners в side panel и service worker конфликтуют; использовать `chrome.storage.local`
 
 ## Welcome & Changelog pages
 
