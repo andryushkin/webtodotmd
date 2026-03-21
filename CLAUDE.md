@@ -57,9 +57,10 @@ Chrome Extension для захвата выделений со страниц в
 
 - `showBubble()` / `hideBubble()` в `content-script.ts` — управление видимостью только через `style.display`
 - ⚠️ **Не использовать `element.hidden`** — `style.cssText` с `display:inline-flex` перебивает UA-стиль `[hidden]{display:none}`, элемент остаётся видимым
-- Иконка crosshair через `icon('crosshair', 12)` из `src/shared/icons.ts`; `bubble.innerHTML = icon(...) + ' add to .md'`
+- `bubble.innerHTML` (текст + иконка) устанавливается **каждый раз** при вызове `showBubble()` — не только при первом создании; это позволяет подхватить смену языка
 - После клика: `hideBubble()` + `removeAllRanges()` через 400ms (очищает выделение после отправки capture-сигнала)
 - `mousedown` listener проверяет `bubble.style.display !== 'none'` (не `!bubble.hidden`)
+- ⚠️ **i18n в bubble не работает** (статус 2026-03-21): bubble использует `i18n()` → `t()` из shared/i18n, но обновление языка не применяется — см. memory project_i18n_content_script_bug
 
 ## Shadow DOM Flattening
 
@@ -117,6 +118,8 @@ Chrome Extension для захвата выделений со страниц в
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
 - `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
 - При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
+- **Side Panel / Settings** используют `src/shared/i18n.ts` → `initI18n(uiLanguage)` + `t(key)` (уважает `uiLanguage` настройку)
+- **Content Script / Service Worker** импортируют те же `t, initI18n` — но ⚠️ корректность не подтверждена (2026-03-21, см. memory)
 
 ## Welcome & Changelog pages
 
