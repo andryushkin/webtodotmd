@@ -1,5 +1,6 @@
 import { ensureInstallId } from '../shared/identity';
 import { ensureContentScript } from '../shared/inject';
+import { t, initI18n } from '../shared/i18n';
 
 // Set to true for releases where changelog page should open on update
 const SHOW_CHANGELOG_ON_UPDATE = false;
@@ -36,13 +37,42 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.storage.session.set({ captureSignal: Date.now() }).catch(console.error);
 });
 
-function createContextMenu() {
+const CONTENT_I18N_KEYS = ['bubbleText', 'toastNoSelection', 'toastCopied', 'toastCouldNotCopy'];
+
+async function writeContentTranslations() {
+  const result: Record<string, string> = {};
+  for (const key of CONTENT_I18N_KEYS) result[key] = t(key);
+  await chrome.storage.local.set({ contentI18n: result });
+}
+
+async function createContextMenu() {
+  const { settings } = await chrome.storage.local.get('settings');
+  await initI18n(settings?.uiLanguage ?? 'auto');
+  await writeContentTranslations();
   chrome.contextMenus.create({
     id: 'capture-and-copy',
-    title: chrome.i18n.getMessage('contextMenuTitle') || 'add to .md',
+    title: t('contextMenuTitle') || 'add to .md',
     contexts: ['selection'],
   });
 }
+
+chrome.storage.onChanged.addListener(async (changes, area) => {
+  if (area === 'local' && changes.settings) {
+    const newLang = changes.settings.newValue?.uiLanguage ?? 'auto';
+    const oldLang = changes.settings.oldValue?.uiLanguage ?? 'auto';
+    if (newLang !== oldLang) {
+      await initI18n(newLang);
+      await writeContentTranslations();
+      chrome.contextMenus.removeAll(() => {
+        chrome.contextMenus.create({
+          id: 'capture-and-copy',
+          title: t('contextMenuTitle') || 'add to .md',
+          contexts: ['selection'],
+        });
+      });
+    }
+  }
+});
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   await ensureInstallId();

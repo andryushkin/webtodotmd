@@ -3,6 +3,8 @@ import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndC
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
+// i18n: translations loaded from service worker via message passing
+// (content scripts cannot reliably fetch extension _locales files)
 
 // ---- Shadow DOM flattening ----
 
@@ -70,19 +72,51 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
   setTimeout(() => el.remove(), 2000);
 }
 
-// ---- Settings ----
+// ---- Settings & i18n ----
 
 let showBubbleSetting = true;
+let translations: Record<string, string> = {};
 
-chrome.storage.local.get('settings', ({ settings }) => {
+chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
   if (settings?.showBubble === false) showBubbleSetting = false;
+  if (contentI18n) translations = contentI18n;
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.settings) {
+  if (area !== 'local') return;
+  if (changes.settings) {
     showBubbleSetting = changes.settings.newValue?.showBubble !== false;
   }
+  if (changes.contentI18n) {
+    translations = changes.contentI18n.newValue ?? {};
+    bubble?.remove();
+    bubble = null;
+    const sel = window.getSelection();
+    if (sel && sel.toString().trim() && sel.rangeCount > 0) {
+      showBubble(sel);
+    }
+  }
 });
+
+// ---- Context validity ----
+
+function isContextValid(): boolean {
+  try { return !!chrome.runtime?.id; } catch { return false; }
+}
+
+function selfDestruct(): void {
+  document.removeEventListener('mousedown', onMouseDown);
+  document.removeEventListener('mouseup', onMouseUp);
+  document.removeEventListener('selectionchange', onSelectionChange);
+  if (highlighterActive) {
+    document.removeEventListener('mouseover', onHighlighterHover);
+    document.removeEventListener('mouseout', onHighlighterOut);
+    document.removeEventListener('click', onHighlighterClick, true);
+  }
+  hoverOverlay?.remove();
+  bubble?.remove();
+  bubble = null;
+}
 
 // ---- Floating bubble ----
 
@@ -90,18 +124,19 @@ let bubble: HTMLElement | null = null;
 let bubbleClicked = false;
 let mouseDownHiding = false;
 
-document.addEventListener('mousedown', (e) => {
+function onMouseDown(e: MouseEvent) {
   if (bubble && bubble.style.display !== 'none' && e.target !== bubble) {
     hideBubble();
     mouseDownHiding = true;
   }
-});
+}
 
-document.addEventListener('mouseup', () => {
+function onMouseUp() {
   mouseDownHiding = false;
-});
+}
 
-document.addEventListener('selectionchange', () => {
+function onSelectionChange() {
+  if (!isContextValid()) { selfDestruct(); return; }
   if (highlighterActive || !showBubbleSetting || bubbleClicked || mouseDownHiding) return;
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
@@ -109,7 +144,11 @@ document.addEventListener('selectionchange', () => {
   } else {
     hideBubble();
   }
-});
+}
+
+document.addEventListener('mousedown', onMouseDown);
+document.addEventListener('mouseup', onMouseUp);
+document.addEventListener('selectionchange', onSelectionChange);
 
 function showBubble(sel: Selection) {
   if (!bubble) {
@@ -137,11 +176,12 @@ function showBubble(sel: Selection) {
       'user-select:none',
       '-webkit-font-smoothing:antialiased',
     ].join(';');
-    bubble.innerHTML = icon('crosshair', 12) + ' ' + chrome.i18n.getMessage('bubbleText');
     bubble.addEventListener('mousedown', (e) => {
       e.preventDefault(); // preserve selection for capture
       bubbleClicked = true;
-      chrome.runtime.sendMessage({ type: 'OPEN_AND_CAPTURE' } satisfies OpenAndCaptureRequest);
+      try {
+        chrome.runtime.sendMessage({ type: 'OPEN_AND_CAPTURE' } satisfies OpenAndCaptureRequest);
+      } catch { /* context invalidated — ignore */ }
       hideBubble();
       setTimeout(() => {
         window.getSelection()?.removeAllRanges(); // clear selection after capture signal sent
@@ -150,6 +190,7 @@ function showBubble(sel: Selection) {
     });
     document.body.appendChild(bubble);
   }
+  bubble.innerHTML = icon('crosshair', 12) + ' ' + i18n('bubbleText', 'add to .md');
   const range = sel.getRangeAt(sel.rangeCount - 1);
   const rects = range.getClientRects();
   const rect = rects.length > 0 ? rects[rects.length - 1] : range.getBoundingClientRect();
@@ -337,10 +378,19 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
+function i18n(key: string, fallback = ''): string {
+  if (translations[key]) return translations[key];
+  try { return chrome.i18n.getMessage(key) || fallback; } catch { return fallback; }
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'PING') {
+    if (!isContextValid()) {
+      selfDestruct();
+      return false; // no response → inject.ts catches error → re-injects fresh script
+    }
     sendResponse({ pong: true });
-    return true;
+    return false;
   }
 
   if (msg.type === 'TOGGLE_HIGHLIGHTER') {
@@ -409,7 +459,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'CAPTURE_AND_COPY') {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-      showToast(chrome.i18n.getMessage('toastNoSelection'), 'error');
+      showToast(i18n('toastNoSelection', 'Nothing selected'), 'error');
       sendResponse({});
       return true;
     }
@@ -418,9 +468,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       try {
         const md = selectionToMd(selection);
         await navigator.clipboard.writeText(md);
-        showToast(chrome.i18n.getMessage('toastCopied'));
+        showToast(i18n('toastCopied', 'Copied!'));
       } catch {
-        showToast(chrome.i18n.getMessage('toastCouldNotCopy'), 'error');
+        showToast(i18n('toastCouldNotCopy', 'Could not copy'), 'error');
       }
       sendResponse({});
     })();

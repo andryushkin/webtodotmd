@@ -530,22 +530,26 @@ btnClear.addEventListener('click', () => {
 
 // ---- Init ----
 
-async function init() {
-  const settings = await getSettings();
-  await initI18n(settings.uiLanguage);
-  applyI18n();
-
-  // Init icons with translations
-  btnUndo.innerHTML = icon('undo', 14);
-  btnRedo.innerHTML = icon('redo', 14);
+function applyButtonLabels() {
   setButtonContent(btnCapture, 'crosshair', t('captureSelection'), 16);
-  setButtonContent(btnHighlighter, 'highlighter', t('highlighterOff'));
+  setButtonContent(btnHighlighter, 'highlighter',
+    t(highlighterEnabled ? 'highlighterOn' : 'highlighterOff'));
   setButtonContent(btnCopy, 'copy', t('copy'));
   setButtonContent(btnDownload, 'download', t('download'));
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
+}
+
+async function init() {
+  const settings = await getSettings();
+  await initI18n(settings.uiLanguage);
+  applyI18n();
+
+  btnUndo.innerHTML = icon('undo', 14);
+  btnRedo.innerHTML = icon('redo', 14);
   btnSettings.innerHTML = icon('settings', 14);
+  applyButtonLabels();
 
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);
@@ -565,11 +569,19 @@ async function init() {
 }
 
 // React to settings changes
-chrome.storage.onChanged.addListener((changes, area) => {
+chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area === 'local' && changes.settings) {
     const s = changes.settings.newValue;
     if (s) {
       autoMetadata = s.autoMetadata ?? false;
+      const newLang = s.uiLanguage ?? 'auto';
+      const oldLang = changes.settings.oldValue?.uiLanguage ?? 'auto';
+      if (newLang !== oldLang) {
+        await initI18n(newLang);
+        applyI18n();
+        applyButtonLabels();
+        await updateReadinessStatus();
+      }
     }
   }
 });
