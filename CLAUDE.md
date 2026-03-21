@@ -122,6 +122,7 @@ Chrome Extension для захвата выделений со страниц в
 - **Service Worker** импортирует `t, initI18n`; при смене языка пересоздаёт context menu (`removeAll` + `create`) и пишет переводы в `chrome.storage.local` (ключ `contentI18n`)
 - **Content Script** НЕ импортирует `i18n.ts` (fetch locale файлов ненадёжен в content scripts); получает переводы из `chrome.storage.local` → `contentI18n`, записанные service worker-ом
 - ⚠️ **Не использовать `chrome.runtime.sendMessage` для передачи данных service worker → content script** — `onMessage` listeners в side panel и service worker конфликтуют; использовать `chrome.storage.local`
+- **RTL-поддержка:** `RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])` в `i18n.ts`; `applyI18n()` ставит `dir="rtl"` на `<html>` для любой RTL-локали; контентные области (`#preview-rendered`, `#preview-source`) имеют `dir="auto"` — браузер автоопределяет направление захваченного текста; в CSS использовать logical properties (`border-inline-start`, `padding-inline-start`, `text-align: start`) вместо `left`/`right`
 
 ## Welcome & Changelog pages
 
