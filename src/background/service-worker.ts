@@ -22,7 +22,7 @@ function getUrlLocale(): string {
 
 function openPage(path: string): void {
   const locale = getUrlLocale();
-  chrome.tabs.create({ url: `https://dotmd.tools/${locale}/${path}` });
+  chrome.tabs.create({ url: `https://2md.site/${locale}/${path}` });
 }
 
 // Explicitly disable Chrome's built-in toggle so onClicked fires on every click
@@ -83,6 +83,13 @@ chrome.commands.onCommand.addListener((command) => {
   if (command === 'capture-and-copy') {
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       if (tab?.id) captureAndCopy(tab.id);
+    });
+  }
+  if (command === 'capture-and-append') {
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      if (!tab?.id || !tab.windowId) return;
+      chrome.sidePanel.open({ windowId: tab.windowId }).catch(console.error);
+      chrome.storage.session.set({ captureSignal: Date.now() }).catch(console.error);
     });
   }
 });

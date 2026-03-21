@@ -17,6 +17,10 @@
     "capture-and-copy": {
       "suggested_key": { "default": "Alt+M", "mac": "Alt+M" },
       "description": "Copy selection as Markdown"
+    },
+    "capture-and-append": {
+      "suggested_key": { "default": "Alt+Shift+M", "mac": "Alt+Shift+M" },
+      "description": "Capture selection and append to side panel"
     }
   },
   "icons": {

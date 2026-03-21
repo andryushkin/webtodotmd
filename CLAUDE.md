@@ -120,8 +120,8 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Welcome & Changelog pages
 
-- При установке (`reason === 'install'`) → `https://dotmd.tools/<locale>/welcome`
-- При обновлении → `https://dotmd.tools/<locale>/changelog` (только если `SHOW_CHANGELOG_ON_UPDATE = true` в `service-worker.ts`)
+- При установке (`reason === 'install'`) → `https://2md.site/<locale>/welcome`
+- При обновлении → `https://2md.site/<locale>/changelog` (только если `SHOW_CHANGELOG_ON_UPDATE = true` в `service-worker.ts`)
 - Локаль: `chrome.i18n.getUILanguage()` с нормализацией; fallback → `en`; спец-кейсы: `pt-*→pt-PT`, `nb/nn→no`
 - Документация для сайта: `docs/website-welcome-changelog.md`
 
@@ -140,6 +140,12 @@ Chrome Extension для захвата выделений со страниц в
 - **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
 - **DOM в тестах:** linkedom из `~/Server/markitdown/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
 
-## Документация
+## Keyboard Shortcuts
 
-- `PRD.md` — основной источник истины по требованиям и архитектуре; читать перед реализацией
+- **Alt+M** (`capture-and-copy`) — захватить выделение → clipboard, toast на странице, панель не открывается
+- **Alt+Shift+M** (`capture-and-append`) — захватить выделение → открыть Side Panel + append к содержимому
+- Команды регистрируются в `manifest.json` → `commands`; обрабатываются в `service-worker.ts` → `chrome.commands.onCommand`
+- Для открытия панели из команды использовать `chrome.sidePanel.open({ windowId: tab.windowId })` (не `tabId`)
+- Паттерн append: открыть панель + `chrome.storage.session.set({ captureSignal: Date.now() })` → side panel auto-captures через `storage.session.onChanged`
+
+## Документация
