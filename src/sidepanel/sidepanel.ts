@@ -8,6 +8,7 @@ import { icon, setButtonContent } from '../shared/icons';
 import { getSettings } from '../shared/settings-store';
 import { initI18n, t, applyI18n } from '../shared/i18n';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
+import { trackEvent } from '../shared/telemetry';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -502,6 +503,7 @@ chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
 btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
   await navigator.clipboard.writeText(rawMd);
+  trackEvent('copy');
   await incrementCounter();
   await updateCounter();
   setButtonContent(btnCopy, 'check', t('copied'));
@@ -518,6 +520,7 @@ btnDownload.addEventListener('click', async () => {
   const url = URL.createObjectURL(new Blob([rawMd], { type: 'text/markdown' }));
   await chrome.downloads.download({ url, filename, saveAs: false });
   URL.revokeObjectURL(url);
+  trackEvent('download_md');
   await incrementCounter();
   await updateCounter();
 });

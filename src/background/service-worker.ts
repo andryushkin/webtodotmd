@@ -1,6 +1,7 @@
 import { ensureInstallId } from '../shared/identity';
 import { ensureContentScript } from '../shared/inject';
 import { t, initI18n } from '../shared/i18n';
+import { trackEvent } from '../shared/telemetry';
 
 // Set to true for releases where changelog page should open on update
 const SHOW_CHANGELOG_ON_UPDATE = false;
@@ -79,6 +80,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   createContextMenu();
 
   if (details.reason === 'install') {
+    trackEvent('install');
     openPage('welcome');
   } else if (details.reason === 'update' && SHOW_CHANGELOG_ON_UPDATE) {
     openPage('changelog');

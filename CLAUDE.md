@@ -154,4 +154,13 @@ Chrome Extension для захвата выделений со страниц в
 - Для открытия панели из команды использовать `chrome.sidePanel.open({ windowId: tab.windowId })` (не `tabId`)
 - Паттерн append: открыть панель + `chrome.storage.session.set({ captureSignal: Date.now() })` → side panel auto-captures через `storage.session.onChanged`
 
+## Telemetry
+
+- `src/shared/telemetry.ts` — `trackEvent(event)`: fire-and-forget POST на `https://2md.site/api/event`
+- Использует `ensureInstallId()` из `identity.ts` как `clientId`
+- События: `install` (service-worker onInstalled), `copy` (sidepanel copy), `download_md` (sidepanel download)
+- Будущие события: `download_txt`, `download_pdf` — добавлять `trackEvent()` в соответствующие обработчики
+- Серверная часть: Durable Object на 2md.site (`~/Server/2mdsite/src/stats/`)
+- Дашборд: `(internal stats dashboard)`
+
 ## Документация
