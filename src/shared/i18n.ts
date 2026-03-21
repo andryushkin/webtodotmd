@@ -6,8 +6,10 @@ let currentLocale = 'en';
 
 const SUPPORTED_LOCALES = [
   'en', 'de', 'fr', 'es', 'it', 'nl', 'sv', 'da', 'no', 'fi',
-  'ar', 'id', 'ru', 'pt_PT', 'ja', 'fil', 'vi', 'tr', 'th', 'ko',
+  'ar', 'he', 'fa', 'id', 'ru', 'pt_PT', 'ja', 'fil', 'vi', 'tr', 'th', 'ko',
 ];
+
+const RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur']);
 
 function normalizeLocale(lang: string): string {
   if (SUPPORTED_LOCALES.includes(lang)) return lang;
@@ -63,7 +65,7 @@ export function t(key: string, ...args: (string | number)[]): string {
 }
 
 export function applyI18n(): void {
-  if (currentLocale === 'ar') {
+  if (RTL_LOCALES.has(currentLocale)) {
     document.documentElement.setAttribute('dir', 'rtl');
   } else {
     document.documentElement.removeAttribute('dir');

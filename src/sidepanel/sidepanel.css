@@ -320,8 +320,8 @@ body {
 }
 
 .preview-rendered blockquote {
-  border-left: 3px solid var(--border);
-  padding-left: 10px;
+  border-inline-start: 3px solid var(--border);
+  padding-inline-start: 10px;
   margin: 8px 0;
   color: var(--text-muted);
   font-style: italic;
@@ -334,7 +334,7 @@ body {
 
 .preview-rendered ul,
 .preview-rendered ol {
-  padding-left: 20px;
+  padding-inline-start: 20px;
   margin-bottom: 8px;
 }
 
@@ -344,7 +344,7 @@ body {
 
 .preview-rendered li:has(> input[type="checkbox"]) {
   list-style-type: none;
-  margin-left: -4px;
+  margin-inline-start: -4px;
 }
 
 .preview-rendered hr {
@@ -368,7 +368,7 @@ body {
 .preview-rendered td {
   border: 1px solid var(--border);
   padding: 4px 8px;
-  text-align: left;
+  text-align: start;
 }
 
 .preview-rendered th {
