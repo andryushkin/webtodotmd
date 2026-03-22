@@ -137,12 +137,15 @@ Chrome Extension для захвата выделений со страниц в
 - `docs/permissions-justification.md` — обоснование каждого permission для Google review
 - Версия `1.0.0` в `manifest.json`
 - Иконки: `icon16.png`, `icon48.png`, `icon128.png` в корне + `public/`
+- **v1.0.0 подана на ревью 2026-03-22**
+- ⚠️ **`host_permissions: ["*://*/*"]` НЕ указывать** — CWS флагирует как broad host permissions и задерживает ревью. `content_scripts.matches` покрывает авто-инъекцию; `scripting` + `activeTab` покрывает on-demand инъекцию через `ensureContentScript()`. CWS всё равно предупреждает из-за `content_scripts.matches` — это норма для универсального клиппера.
+- **Сборка zip:** `rm tomd-*.zip && cd dist && zip -r ../tomd-X.Y.Z.zip .` — сначала удалять старый zip, иначе zip обновит существующий архив и получится два manifest.json
 
 ## Тесты
 
 - `src/content/__tests__/find-highlight-target.test.ts` — тесты для `findHighlightTarget` (8 тестов)
 - `src/content/__tests__/conversion.test.ts` — тесты HTML→Markdown через `toMarkdown()` с linkedom (31 тест)
-- `src/shared/__tests__/` — тесты утилит (restricted, counter, gate, identity)
+- `src/shared/__tests__/` — тесты утилит (restricted, gate, identity)
 - **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
 - **DOM в тестах:** linkedom из `~/Server/markitdown/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
 
