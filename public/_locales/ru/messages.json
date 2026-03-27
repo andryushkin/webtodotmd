@@ -1,14 +1,14 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: сохраняй страницы в Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Конвертируйте выделенный текст в чистый Markdown — один клик от выделения до буфера обмена.",
+    "message": "Выделение → Markdown → буфер обмена. Один клик — и готово.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
-    "message": "Захватить выделение"
+    "message": "Скопировать выделенное"
   },
   "clear": {
     "message": "Очистить"
@@ -23,70 +23,67 @@
     "message": "Скачать"
   },
   "preview": {
-    "message": "Предпросмотр"
+    "message": "Просмотр"
   },
   "source": {
     "message": "Исходник"
   },
   "highlighterOn": {
-    "message": "Маркер включён"
+    "message": "Маркер вкл."
   },
   "highlighterOff": {
-    "message": "Маркер выключен"
+    "message": "Маркер выкл."
   },
   "highlights": {
-    "message": "{1} элемент(ов) — готово к захвату"
+    "message": "Выделено: {1} — готово к копированию"
   },
   "markdownPlaceholder": {
     "message": "Здесь появится Markdown…"
-  },
-  "copiedToday": {
-    "message": "Скопировано сегодня:"
   },
   "statusEmpty": {
     "message": "Пустая вкладка"
   },
   "statusRestricted": {
-    "message": "Ограниченная страница"
+    "message": "Страница недоступна"
   },
   "statusLocalFile": {
     "message": "Локальный файл"
   },
   "statusPdf": {
-    "message": "PDF — нельзя захватить"
+    "message": "PDF — копирование невозможно"
   },
   "statusReady": {
-    "message": "Готово к захвату — выделите текст и нажмите Захватить"
+    "message": "Выделите текст и нажмите Скопировать"
   },
   "errCannotAccess": {
-    "message": "Нет доступа к этой вкладке."
+    "message": "Нет доступа к вкладке."
   },
   "errCannotInject": {
-    "message": "Не удалось внедриться на страницу."
+    "message": "Не удалось подключиться к странице."
   },
   "errRestrictedUrl": {
-    "message": "Нельзя захватить с этой страницы (ограниченный URL)."
+    "message": "Копирование с этой страницы невозможно (ограниченный URL)."
   },
   "errTimeout": {
     "message": "Время ожидания истекло. Попробуйте снова."
   },
   "errConnect": {
-    "message": "Не удалось подключиться к странице. Перезагрузите и попробуйте снова."
+    "message": "Нет связи со страницей. Перезагрузите и попробуйте снова."
   },
   "errNoHighlights": {
-    "message": "Нет выделений. Кликайте по элементам страницы."
+    "message": "Ничего не выделено. Кликните по элементам на странице."
   },
   "errNoSelection": {
     "message": "Текст не выделен. Сначала выделите текст на странице."
   },
   "errConvertFailed": {
-    "message": "Не удалось конвертировать выделение."
+    "message": "Не удалось сконвертировать."
   },
   "successCaptured": {
-    "message": "Захвачено."
+    "message": "Готово."
   },
   "captureHighlights": {
-    "message": "Захватить выделения ({1})"
+    "message": "Скопировать выделенное ({1})"
   },
   "settingsTitle": {
     "message": "to .md — Настройки"
@@ -95,7 +92,7 @@
     "message": "Настройки to .md"
   },
   "sectionCapture": {
-    "message": "Захват"
+    "message": "Копирование"
   },
   "sectionDisplay": {
     "message": "Отображение"
@@ -107,22 +104,22 @@
     "message": "Язык"
   },
   "labelAutoMetadata": {
-    "message": "Автоматически добавлять метаданные"
+    "message": "Добавлять метаданные при копировании"
   },
   "labelShowBubble": {
-    "message": "Показывать всплывающую подсказку при выделении"
+    "message": "Показывать кнопку при выделении текста"
   },
   "labelDefaultView": {
     "message": "Режим просмотра по умолчанию"
   },
   "labelHighlightColor": {
-    "message": "Цвет выделения"
+    "message": "Цвет маркера"
   },
   "labelLanguage": {
     "message": "Язык"
   },
   "optPreview": {
-    "message": "Предпросмотр"
+    "message": "Просмотр"
   },
   "optSource": {
     "message": "Исходник"
@@ -146,9 +143,15 @@
     "message": "Не удалось скопировать"
   },
   "contextMenuTitle": {
-    "message": "добавить в .md"
+    "message": "Добавить в .md"
   },
   "statusHighlighterReady": {
-    "message": "Кликайте по элементам страницы для выделения"
+    "message": "Кликайте по элементам для выделения"
+  },
+  "sectionRating": {
+    "message": "Оцените расширение"
+  },
+  "ratingHide": {
+    "message": "Скрыть"
   }
 }

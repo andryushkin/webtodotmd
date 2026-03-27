@@ -31,6 +31,15 @@
       <div id="preview-rendered" class="preview preview-rendered" dir="auto" aria-label="Rendered preview"></div>
       <textarea id="preview-source" class="preview preview-source" dir="auto" data-i18n="markdownPlaceholder" data-i18n-attr="placeholder" placeholder="Markdown will appear here…" hidden></textarea>
 
+      <div id="rating-row" class="rating-row hidden">
+        <button class="star" data-value="1">★</button>
+        <button class="star" data-value="2">★</button>
+        <button class="star" data-value="3">★</button>
+        <button class="star" data-value="4">★</button>
+        <button class="star" data-value="5">★</button>
+        <button id="btn-rating-hide" class="btn-rating-hide" data-i18n="ratingHide">Hide</button>
+      </div>
+
       <div class="toolbar">
         <button id="btn-undo" class="btn btn-ghost" disabled title="Undo"></button>
         <button id="btn-redo" class="btn btn-ghost" disabled title="Redo"></button>
@@ -39,9 +48,6 @@
         <button id="btn-clear" class="btn btn-ghost" disabled></button>
       </div>
     </main>
-    <footer class="app-footer">
-      <span class="counter"><span data-i18n="copiedToday">Copied today:</span> <span id="counter-value">0</span></span>
-    </footer>
   </div>
 
   <script type="module" src="sidepanel.ts"></script>

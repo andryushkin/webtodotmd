@@ -86,6 +86,28 @@ h1 {
   cursor: pointer;
 }
 
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.star {
+  font-size: 20px;
+  color: #d0d0d0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 1px;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.star.highlighted {
+  color: #f5b731;
+}
+
 .status {
   font-size: 12px;
   color: var(--text-muted);

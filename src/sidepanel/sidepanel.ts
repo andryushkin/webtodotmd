@@ -2,7 +2,6 @@ import { marked } from '../../vendor/marked.esm.js';
 import DOMPurify from '../../vendor/purify.esm.mjs';
 import katex from '../../vendor/katex.mjs';
 import { isRestrictedUrl } from '../shared/restricted';
-import { incrementCounter, getCounterToday } from '../shared/counter';
 import { ensureContentScript } from '../shared/inject';
 import { icon, setButtonContent } from '../shared/icons';
 import { getSettings } from '../shared/settings-store';
@@ -34,7 +33,7 @@ const previewSource = document.getElementById('preview-source') as HTMLTextAreaE
 const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElement;
 const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
-const counterValue = document.getElementById('counter-value') as HTMLSpanElement;
+const ratingRow = document.getElementById('rating-row') as HTMLDivElement;
 
 // ---- State ----
 
@@ -86,6 +85,73 @@ function setTempStatus(msg: string, type: 'error' | 'success', iconName?: string
     revertTimer = null;
     setStatus(baseStatusMsg, baseStatusType, baseStatusIcon);
   }, ms);
+}
+
+// ---- Rating ----
+
+const CWS_REVIEWS_URL = 'https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego/reviews';
+const RATING_LOCALES = new Set(['en','de','fr','es','it','nl','sv','da','no','fi','ar','id','ru','pt-PT','ja','fil','vi','tr','th','ko']);
+
+function getRatingLocale(): string {
+  const lang = chrome.i18n.getUILanguage().replace('_', '-');
+  if (RATING_LOCALES.has(lang)) return lang;
+  const base = lang.split('-')[0];
+  if (base === 'pt') return 'pt-PT';
+  if (base === 'nb' || base === 'nn') return 'no';
+  if (RATING_LOCALES.has(base)) return base;
+  return 'en';
+}
+
+function getRatingUrl(stars: number): string {
+  if (stars >= 4) return CWS_REVIEWS_URL;
+  return `https://2md.site/${getRatingLocale()}/feedback`;
+}
+
+async function initRatingWidget() {
+  const { actionCount = 0, ratingHiddenUntil = 0 } = await chrome.storage.local.get(['actionCount', 'ratingHiddenUntil']);
+  if (actionCount >= 2 && ratingHiddenUntil < Date.now()) {
+    ratingRow.classList.remove('hidden');
+  }
+}
+
+function hideRatingRow(permanent = false) {
+  const until = permanent ? Number.MAX_SAFE_INTEGER : Date.now() + 6 * 30 * 24 * 60 * 60 * 1000;
+  chrome.storage.local.set({ ratingHiddenUntil: until });
+  ratingRow.classList.add('hidden');
+}
+
+async function incrementActionCount() {
+  const { actionCount = 0 } = await chrome.storage.local.get('actionCount');
+  await chrome.storage.local.set({ actionCount: actionCount + 1 });
+  initRatingWidget();
+}
+
+// Star interactions
+{
+  const stars = ratingRow.querySelectorAll('.star') as NodeListOf<HTMLButtonElement>;
+  const btnRatingHide = document.getElementById('btn-rating-hide') as HTMLButtonElement;
+
+  stars.forEach(star => {
+    star.addEventListener('mouseover', () => {
+      const val = parseInt(star.dataset.value!);
+      stars.forEach(s => s.classList.toggle('highlighted', parseInt(s.dataset.value!) <= val));
+    });
+    star.addEventListener('click', () => {
+      const val = parseInt(star.dataset.value!);
+      trackEvent(`rating_${val}`);
+      hideRatingRow(true);
+      chrome.tabs.create({ url: getRatingUrl(val) });
+    });
+  });
+
+  ratingRow.addEventListener('mouseleave', () => {
+    stars.forEach(s => s.classList.remove('highlighted'));
+  });
+
+  btnRatingHide.addEventListener('click', () => {
+    trackEvent('rating_hidden');
+    hideRatingRow(false);
+  });
 }
 
 function getTabReadiness(tab: chrome.tabs.Tab): { type: 'default' | 'warning'; icon: string; message: string } {
@@ -250,11 +316,6 @@ function updateButtonStates() {
   btnCopy.disabled = !hasContent;
   btnDownload.disabled = !hasContent;
   btnClear.disabled = !hasContent;
-}
-
-async function updateCounter() {
-  const count = await getCounterToday();
-  counterValue.textContent = String(count);
 }
 
 function sendMessageWithTimeout(
@@ -504,8 +565,7 @@ btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
   await navigator.clipboard.writeText(rawMd);
   trackEvent('copy');
-  await incrementCounter();
-  await updateCounter();
+  incrementActionCount();
   setButtonContent(btnCopy, 'check', t('copied'));
   setTimeout(() => {
     setButtonContent(btnCopy, 'copy', t('copy'));
@@ -521,8 +581,7 @@ btnDownload.addEventListener('click', async () => {
   await chrome.downloads.download({ url, filename, saveAs: false });
   URL.revokeObjectURL(url);
   trackEvent('download_md');
-  await incrementCounter();
-  await updateCounter();
+  incrementActionCount();
 });
 
 btnClear.addEventListener('click', () => {
@@ -556,7 +615,6 @@ async function init() {
 
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);
-  await updateCounter();
   updateButtonStates();
   updateUndoRedoButtons();
   updateHighlighterUI();
@@ -569,6 +627,7 @@ async function init() {
   });
 
   await updateReadinessStatus();
+  await initRatingWidget();
 }
 
 // React to settings changes

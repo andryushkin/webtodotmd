@@ -161,9 +161,20 @@ Chrome Extension для захвата выделений со страниц в
 
 - `src/shared/telemetry.ts` — `trackEvent(event)`: fire-and-forget POST на `https://2md.site/api/event`
 - Использует `ensureInstallId()` из `identity.ts` как `clientId`
-- События: `install` (service-worker onInstalled), `copy` (sidepanel copy), `download_md` (sidepanel download)
+- События: `install`, `copy`, `download_md`, `rating_1`..`rating_5`, `rating_hidden`
 - Будущие события: `download_txt`, `download_pdf` — добавлять `trackEvent()` в соответствующие обработчики
 - Серверная часть: Durable Object на 2md.site (`~/Server/2mdsite/src/stats/`)
 - Дашборд: `(internal stats dashboard)`
+
+## Star Rating Widget
+
+- **Side Panel** (`#rating-row`) — скрыт по умолчанию; показывается когда `actionCount >= 2` и `ratingHiddenUntil < Date.now()`
+- **Settings page** — секция `.group` в конце, всегда видна, без кнопки Hide
+- Состояние хранится в `chrome.storage.local`: `actionCount` (число copy+download), `ratingHiddenUntil` (timestamp)
+- Клик по звезде в sidepanel → скрыть **навсегда** (`Number.MAX_SAFE_INTEGER`); кнопка Hide → скрыть на 6 месяцев
+- ≤3 звезды → `https://2md.site/{locale}/feedback`; ≥4 → CWS reviews URL
+- `getRatingLocale()` дублирует логику `getUrlLocale()` из service-worker (не shared — по одному месту использования)
+- Телеметрия: `rating_1`..`rating_5`, `rating_hidden`
+- i18n ключи `sectionRating`, `ratingHide` добавлены в EN + RU; остальные языки — через `tomd-l10n` скилл
 
 ## Документация

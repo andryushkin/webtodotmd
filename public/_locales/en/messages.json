@@ -1,6 +1,6 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML to Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown will appear here…"
-  },
-  "copiedToday": {
-    "message": "Copied today:"
   },
   "statusEmpty": {
     "message": "Empty tab"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Click elements on the page to highlight"
+  },
+  "sectionRating": {
+    "message": "Rate this extension"
+  },
+  "ratingHide": {
+    "message": "Hide"
   }
 }

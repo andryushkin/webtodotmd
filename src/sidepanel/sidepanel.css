@@ -403,23 +403,53 @@ body {
 
 .content-gap { height: 0.5em; }
 
+/* Rating */
+
+.rating-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rating-row.hidden {
+  display: none;
+}
+
+.star {
+  font-size: 20px;
+  color: #d0d0d0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 1px;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.star.highlighted {
+  color: #f5b731;
+}
+
+.btn-rating-hide {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+.btn-rating-hide:hover {
+  text-decoration: underline;
+}
+
 /* Toolbar */
 
 .toolbar {
   display: flex;
   gap: var(--gap);
   flex-shrink: 0;
-}
-
-/* Footer */
-
-.app-footer {
-  flex-shrink: 0;
-  padding-top: var(--gap);
-  border-top: 1px solid var(--border);
-}
-
-.counter {
-  font-size: 11px;
-  color: var(--text-muted);
 }
