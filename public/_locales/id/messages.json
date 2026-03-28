@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Web Clipper HTML ke Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konversi teks yang dipilih ke Markdown bersih — satu klik dari seleksi ke clipboard.",
+    "message": "Ubah HTML halaman web menjadi Markdown. Simpan sebagai md, salin, atau unduh teks dengan Web Clipper yang canggih.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown akan muncul di sini…"
-  },
-  "copiedToday": {
-    "message": "Disalin hari ini:"
   },
   "statusEmpty": {
     "message": "Tab kosong"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Klik elemen di halaman untuk menyorot"
+  },
+  "sectionRating": {
+    "message": "Beri nilai ekstensi ini"
+  },
+  "ratingHide": {
+    "message": "Sembunyikan"
   }
 }

@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML ወደ Markdown ቀይር",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "የተመረጠ ጽሑፍ ወደ ንፁህ Markdown ቀይር — ከምርጫ እስከ ቅንጥብ ሰሌዳ አንድ ጠቅ።",
+    "message": "የድር ገጽ HTML ወደ Markdown ቀይር። እንደ .md አስቀምጥ፣ ቅዳ ወይም አውርድ — ኃይለኛ Web Clipper።",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "ምርጫ ቀይር"
+  },
+  "clear": {
+    "message": "አጽዳ"
+  },
+  "copy": {
+    "message": "ቅዳ"
+  },
+  "copied": {
+    "message": "ተቀድቷል"
+  },
+  "download": {
+    "message": "አውርድ"
+  },
+  "preview": {
+    "message": "ቅድሚያ ዕይታ"
+  },
+  "source": {
+    "message": "ምንጭ"
+  },
+  "highlighterOn": {
+    "message": "አድምቂ: ኦን"
+  },
+  "highlighterOff": {
+    "message": "አድምቂ: ኦፍ"
+  },
+  "highlights": {
+    "message": "{1} ምልክት — ለቀያሪ ዝግጁ"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown እዚህ ይታያል…"
+  },
+  "statusEmpty": {
+    "message": "ባዶ ትር"
+  },
+  "statusRestricted": {
+    "message": "የተገደበ ገጽ"
+  },
+  "statusLocalFile": {
+    "message": "የአካባቢ ፋይል"
+  },
+  "statusPdf": {
+    "message": "PDF — መቀየር አይቻልም"
+  },
+  "statusReady": {
+    "message": "ጽሑፍ ምረጥ፣ ቀይር ላይ ጠቅ ያድርጉ"
+  },
+  "errCannotAccess": {
+    "message": "ይህ ትር አይደረስም።"
+  },
+  "errCannotInject": {
+    "message": "ወደዚህ ገጽ መገናኘት አልተቻለም።"
+  },
+  "errRestrictedUrl": {
+    "message": "ከዚህ ገጽ መቀየር አይቻልም (የተገደበ URL)።"
+  },
+  "errTimeout": {
+    "message": "ጊዜ አልቋል። እንደገና ሞክር።"
+  },
+  "errConnect": {
+    "message": "መገናኘት አልተቻለም። እንደገና ጫን ሞክር።"
+  },
+  "errNoHighlights": {
+    "message": "ምልክቶች የሉም። በገጹ ላይ ባሉ ንጥሎች ጠቅ ያድርጉ።"
+  },
+  "errNoSelection": {
+    "message": "ምንም ጽሑፍ አልተመረጠም። መጀመሪያ ጽሑፍ ምረጥ።"
+  },
+  "errConvertFailed": {
+    "message": "ምርጫ ሊቀይር አልተቻለም።"
+  },
+  "successCaptured": {
+    "message": "ተቀይሯል።"
+  },
+  "captureHighlights": {
+    "message": "ምልክቶችን ቀይር ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — ቅንብሮች"
+  },
+  "settingsH1": {
+    "message": "to .md ቅንብሮች"
+  },
+  "sectionCapture": {
+    "message": "ቀያሪ"
+  },
+  "sectionDisplay": {
+    "message": "ዕይታ"
+  },
+  "sectionHighlighter": {
+    "message": "አድምቂ"
+  },
+  "sectionLanguage": {
+    "message": "ቋንቋ"
+  },
+  "labelAutoMetadata": {
+    "message": "ሲቀይር ሜታዳታ ራስ-ጨምር"
+  },
+  "labelShowBubble": {
+    "message": "ጽሑፍ ሲመረጥ ተንሳፋፊ ቁልፍ አሳይ"
+  },
+  "labelDefaultView": {
+    "message": "ነባሪ ዕይታ ሁነታ"
+  },
+  "labelHighlightColor": {
+    "message": "አድምቆ ቀለም"
+  },
+  "labelLanguage": {
+    "message": "ቋንቋ"
+  },
+  "optPreview": {
+    "message": "ቅድሚያ ዕይታ"
+  },
+  "optSource": {
+    "message": "ምንጭ"
+  },
+  "optAuto": {
+    "message": "ራስ-ሰር (የአሳሽ ቋንቋ)"
+  },
+  "savedSettings": {
+    "message": "ተቀምጧል።"
+  },
+  "bubbleText": {
+    "message": "ወደ .md ጨምር"
+  },
+  "toastNoSelection": {
+    "message": "ምንም ጽሑፍ አልተመረጠም"
+  },
+  "toastCopied": {
+    "message": "እንደ Markdown ተቀድቷል ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "መቅዳት አልተቻለም"
+  },
+  "contextMenuTitle": {
+    "message": "ወደ .md ጨምር"
+  },
+  "statusHighlighterReady": {
+    "message": "ምልክት ለማድረግ በገጹ ላይ ባሉ ንጥሎች ጠቅ ያድርጉ"
+  },
+  "sectionRating": {
+    "message": "ተጨማሪ ፕሮግራሙን ግምት ይስጡ"
+  },
+  "ratingHide": {
+    "message": "ደብቅ"
   }
 }

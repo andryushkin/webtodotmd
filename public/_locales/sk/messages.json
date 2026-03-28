@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML do Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konvertujte vybraný text do čistého Markdown — jeden klik od výberu do schránky.",
+    "message": "Preveďte HTML webových stránok do Markdownu. Uložte ako .md, skopírujte alebo stiahnite text pomocou tohto výkonného Web Clipperu.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Kopírovať výber"
+  },
+  "clear": {
+    "message": "Vymazať"
+  },
+  "copy": {
+    "message": "Kopírovať"
+  },
+  "copied": {
+    "message": "Skopírované"
+  },
+  "download": {
+    "message": "Stiahnuť"
+  },
+  "preview": {
+    "message": "Náhľad"
+  },
+  "source": {
+    "message": "Zdrojový kód"
+  },
+  "highlighterOn": {
+    "message": "Zvýrazňovač zap."
+  },
+  "highlighterOff": {
+    "message": "Zvýrazňovač vyp."
+  },
+  "highlights": {
+    "message": "Označené: {1} — pripravené"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown sa zobrazí tu…"
+  },
+  "statusEmpty": {
+    "message": "Prázdna záložka"
+  },
+  "statusRestricted": {
+    "message": "Obmedzená stránka"
+  },
+  "statusLocalFile": {
+    "message": "Lokálny súbor"
+  },
+  "statusPdf": {
+    "message": "PDF — kopírovanie nie je možné"
+  },
+  "statusReady": {
+    "message": "Vyberte text a kliknite na Kopírovať"
+  },
+  "errCannotAccess": {
+    "message": "K záložke nie je možné pristúpiť."
+  },
+  "errCannotInject": {
+    "message": "Nie je možné pripojiť sa k tejto stránke."
+  },
+  "errRestrictedUrl": {
+    "message": "Z tejto stránky nie je možné kopírovať (obmedzená URL)."
+  },
+  "errTimeout": {
+    "message": "Požiadavka vypršala. Skúste znova."
+  },
+  "errConnect": {
+    "message": "Pripojenie zlyhalo. Obnovte stránku a skúste znova."
+  },
+  "errNoHighlights": {
+    "message": "Nič nie je označené. Kliknite na prvky stránky."
+  },
+  "errNoSelection": {
+    "message": "Žiadny text nie je vybraný. Najprv vyberte text."
+  },
+  "errConvertFailed": {
+    "message": "Výber nie je možné previesť."
+  },
+  "successCaptured": {
+    "message": "Hotovo."
+  },
+  "captureHighlights": {
+    "message": "Kopírovať označené ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Nastavenia"
+  },
+  "settingsH1": {
+    "message": "Nastavenia to .md"
+  },
+  "sectionCapture": {
+    "message": "Kopírovanie"
+  },
+  "sectionDisplay": {
+    "message": "Zobrazenie"
+  },
+  "sectionHighlighter": {
+    "message": "Zvýrazňovač"
+  },
+  "sectionLanguage": {
+    "message": "Jazyk"
+  },
+  "labelAutoMetadata": {
+    "message": "Automaticky pridať metadáta"
+  },
+  "labelShowBubble": {
+    "message": "Zobrazovať tlačidlo pri výbere textu"
+  },
+  "labelDefaultView": {
+    "message": "Predvolené zobrazenie"
+  },
+  "labelHighlightColor": {
+    "message": "Farba zvýraznenia"
+  },
+  "labelLanguage": {
+    "message": "Jazyk"
+  },
+  "optPreview": {
+    "message": "Náhľad"
+  },
+  "optSource": {
+    "message": "Zdrojový kód"
+  },
+  "optAuto": {
+    "message": "Auto (jazyk prehliadača)"
+  },
+  "savedSettings": {
+    "message": "Uložené."
+  },
+  "bubbleText": {
+    "message": "pridať do .md"
+  },
+  "toastNoSelection": {
+    "message": "Žiadny text nie je vybraný"
+  },
+  "toastCopied": {
+    "message": "Skopírované ako Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kopírovanie zlyhalo"
+  },
+  "contextMenuTitle": {
+    "message": "pridať do .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Kliknite na prvky stránky"
+  },
+  "sectionRating": {
+    "message": "Ohodnoťte rozšírenie"
+  },
+  "ratingHide": {
+    "message": "Skryť"
   }
 }

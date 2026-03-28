@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML Markdownná alakítása",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Alakítsd át a kijelölt szöveget tiszta Markdown-ná — egy kattintással a kijelöléstől a vágólapig.",
+    "message": "Weblapok HTML tartalmát Markdownná alakítja. Mentse .md-ként, másolja vagy töltse le — erős Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Kijelölés konvertálása"
+  },
+  "clear": {
+    "message": "Törlés"
+  },
+  "copy": {
+    "message": "Másolás"
+  },
+  "copied": {
+    "message": "Másolva"
+  },
+  "download": {
+    "message": "Letöltés"
+  },
+  "preview": {
+    "message": "Előnézet"
+  },
+  "source": {
+    "message": "Forrás"
+  },
+  "highlighterOn": {
+    "message": "Kiemelő: be"
+  },
+  "highlighterOff": {
+    "message": "Kiemelő: ki"
+  },
+  "highlights": {
+    "message": "{1} kiemelés — konvertálható"
+  },
+  "markdownPlaceholder": {
+    "message": "A Markdown itt jelenik meg…"
+  },
+  "statusEmpty": {
+    "message": "Üres lap"
+  },
+  "statusRestricted": {
+    "message": "Korlátozott oldal"
+  },
+  "statusLocalFile": {
+    "message": "Helyi fájl"
+  },
+  "statusPdf": {
+    "message": "PDF — nem konvertálható"
+  },
+  "statusReady": {
+    "message": "Jelöljön ki szöveget, és kattintson a Konvertálásra"
+  },
+  "errCannotAccess": {
+    "message": "Ez a lap nem érhető el."
+  },
+  "errCannotInject": {
+    "message": "Nem sikerült csatlakozni az oldalhoz."
+  },
+  "errRestrictedUrl": {
+    "message": "Erről az oldalról nem konvertálható (korlátozott URL)."
+  },
+  "errTimeout": {
+    "message": "Időtúllépés. Próbálja újra."
+  },
+  "errConnect": {
+    "message": "Nem sikerült csatlakozni. Töltse újra az oldalt, és próbálja újra."
+  },
+  "errNoHighlights": {
+    "message": "Nincs kiemelés. Kattintson az oldal elemein a kiemeléshez."
+  },
+  "errNoSelection": {
+    "message": "Nincs kijelölt szöveg. Először jelöljön ki szöveget."
+  },
+  "errConvertFailed": {
+    "message": "A kijelölés konvertálása sikertelen."
+  },
+  "successCaptured": {
+    "message": "Konvertálva."
+  },
+  "captureHighlights": {
+    "message": "Kiemelések konvertálása ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Beállítások"
+  },
+  "settingsH1": {
+    "message": "to .md beállítások"
+  },
+  "sectionCapture": {
+    "message": "Konvertálás"
+  },
+  "sectionDisplay": {
+    "message": "Megjelenítés"
+  },
+  "sectionHighlighter": {
+    "message": "Kiemelő"
+  },
+  "sectionLanguage": {
+    "message": "Nyelv"
+  },
+  "labelAutoMetadata": {
+    "message": "Metaadatok automatikus hozzáadása"
+  },
+  "labelShowBubble": {
+    "message": "Lebegő gomb megjelenítése kijelöléskor"
+  },
+  "labelDefaultView": {
+    "message": "Alapértelmezett nézet"
+  },
+  "labelHighlightColor": {
+    "message": "Kiemelési szín"
+  },
+  "labelLanguage": {
+    "message": "Nyelv"
+  },
+  "optPreview": {
+    "message": "Előnézet"
+  },
+  "optSource": {
+    "message": "Forrás"
+  },
+  "optAuto": {
+    "message": "Automatikus (böngésző nyelve)"
+  },
+  "savedSettings": {
+    "message": "Mentve."
+  },
+  "bubbleText": {
+    "message": "md-be mentés"
+  },
+  "toastNoSelection": {
+    "message": "Nincs kijelölt szöveg"
+  },
+  "toastCopied": {
+    "message": "Másolva Markdown formátumban ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Másolás sikertelen"
+  },
+  "contextMenuTitle": {
+    "message": "md-be mentés"
+  },
+  "statusHighlighterReady": {
+    "message": "Kattintson az oldal elemein a kiemeléshez"
+  },
+  "sectionRating": {
+    "message": "Bővítmény értékelése"
+  },
+  "ratingHide": {
+    "message": "Elrejtés"
   }
 }

@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: تحويل صفحات الويب إلى Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "حوّل النص المحدد إلى Markdown منسّق ونظيف — نقرة واحدة من التحديد إلى الحافظة.",
+    "message": "حوّل HTML صفحة الويب إلى Markdown. احفظ كـ md أو انسخ أو نزّل النص باستخدام أداة Web Clipper القوية.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "سيظهر Markdown هنا…"
-  },
-  "copiedToday": {
-    "message": "تم النسخ اليوم:"
   },
   "statusEmpty": {
     "message": "تبويب فارغ"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "انقر على عناصر الصفحة للتمييز"
+  },
+  "sectionRating": {
+    "message": "قيّم هذا الامتداد"
+  },
+  "ratingHide": {
+    "message": "إخفاء"
   }
 }

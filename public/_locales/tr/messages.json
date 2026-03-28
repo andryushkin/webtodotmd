@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Web'den Markdown'a Dönüştürücü",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Seçili metni temiz Markdown’a dönüştürün — seçimden panoya tek tıkla.",
+    "message": "Web sayfası HTML’sini Markdown’a dönüştür. md olarak kaydet, kopyala veya metni bu güçlü Web Clipper ile indir.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown burada görünecek…"
-  },
-  "copiedToday": {
-    "message": "Bugün kopyalandı:"
   },
   "statusEmpty": {
     "message": "Boş sekme"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Vurgulamak için sayfadaki öğelere tıklayın"
+  },
+  "sectionRating": {
+    "message": "Bu uzantıyı değerlendir"
+  },
+  "ratingHide": {
+    "message": "Gizle"
   }
 }

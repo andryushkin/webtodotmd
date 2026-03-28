@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML Markdowniksi – Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Muunna valittu teksti puhtaaksi Markdowniksi — yksi napsautus valinnasta leikepöydälle.",
+    "message": "Muunna verkkosivun HTML Markdowniksi. Tallenna md-muodossa, kopioi tai lataa teksti tällä tehokkaalla Web Clipperillä.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown näkyy täällä…"
-  },
-  "copiedToday": {
-    "message": "Kopioitu tänään:"
   },
   "statusEmpty": {
     "message": "Tyhjä välilehti"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Napsauta sivun elementtejä korostaaksesi niitä"
+  },
+  "sectionRating": {
+    "message": "Arvioi laajennus"
+  },
+  "ratingHide": {
+    "message": "Piilota"
   }
 }

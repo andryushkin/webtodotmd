@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: वेबपेज को Markdown में बदलें",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "चुने हुए टेक्स्ट को साफ़ Markdown में बदलें — एक क्लिक में क्लिपबोर्ड पर।",
+    "message": "वेबपेज का HTML, Markdown में बदलें। .md के रूप में सेव करें, कॉपी करें या डाउनलोड करें — बेहतरीन Web Clipper।",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "चयन कन्वर्ट करें"
+  },
+  "clear": {
+    "message": "साफ करें"
+  },
+  "copy": {
+    "message": "कॉपी करें"
+  },
+  "copied": {
+    "message": "कॉपी हो गया"
+  },
+  "download": {
+    "message": "डाउनलोड करें"
+  },
+  "preview": {
+    "message": "प्रीव्यू"
+  },
+  "source": {
+    "message": "सोर्स"
+  },
+  "highlighterOn": {
+    "message": "हाइलाइटर: चालू"
+  },
+  "highlighterOff": {
+    "message": "हाइलाइटर: बंद"
+  },
+  "highlights": {
+    "message": "{1} हाइलाइट — कन्वर्ट के लिए तैयार"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown यहाँ दिखेगा…"
+  },
+  "statusEmpty": {
+    "message": "खाली टैब"
+  },
+  "statusRestricted": {
+    "message": "प्रतिबंधित पेज"
+  },
+  "statusLocalFile": {
+    "message": "लोकल फ़ाइल"
+  },
+  "statusPdf": {
+    "message": "PDF — कन्वर्ट नहीं होगा"
+  },
+  "statusReady": {
+    "message": "टेक्स्ट चुनें और कन्वर्ट पर क्लिक करें"
+  },
+  "errCannotAccess": {
+    "message": "इस टैब तक पहुँच नहीं हो सकी।"
+  },
+  "errCannotInject": {
+    "message": "इस पेज से कनेक्ट नहीं हो सका।"
+  },
+  "errRestrictedUrl": {
+    "message": "इस पेज से कन्वर्ट नहीं हो सकता (प्रतिबंधित URL)।"
+  },
+  "errTimeout": {
+    "message": "रिक्वेस्ट टाइम आउट हो गई। फिर कोशिश करें।"
+  },
+  "errConnect": {
+    "message": "पेज से कनेक्ट नहीं हो सका। रीलोड करके फिर कोशिश करें।"
+  },
+  "errNoHighlights": {
+    "message": "कोई हाइलाइट नहीं। पेज पर एलिमेंट क्लिक करें।"
+  },
+  "errNoSelection": {
+    "message": "कोई टेक्स्ट नहीं चुना। पहले पेज पर टेक्स्ट चुनें।"
+  },
+  "errConvertFailed": {
+    "message": "चयन कन्वर्ट नहीं हो सका।"
+  },
+  "successCaptured": {
+    "message": "कन्वर्ट हो गया।"
+  },
+  "captureHighlights": {
+    "message": "हाइलाइट कन्वर्ट करें ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — सेटिंग्स"
+  },
+  "settingsH1": {
+    "message": "to .md सेटिंग्स"
+  },
+  "sectionCapture": {
+    "message": "कन्वर्ट"
+  },
+  "sectionDisplay": {
+    "message": "डिस्प्ले"
+  },
+  "sectionHighlighter": {
+    "message": "हाइलाइटर"
+  },
+  "sectionLanguage": {
+    "message": "भाषा"
+  },
+  "labelAutoMetadata": {
+    "message": "कन्वर्ट पर मेटाडेटा ऑटो-जोड़ें"
+  },
+  "labelShowBubble": {
+    "message": "टेक्स्ट चुनने पर फ़्लोटिंग बटन दिखाएँ"
+  },
+  "labelDefaultView": {
+    "message": "डिफ़ॉल्ट व्यू मोड"
+  },
+  "labelHighlightColor": {
+    "message": "हाइलाइट कलर"
+  },
+  "labelLanguage": {
+    "message": "भाषा"
+  },
+  "optPreview": {
+    "message": "प्रीव्यू"
+  },
+  "optSource": {
+    "message": "सोर्स"
+  },
+  "optAuto": {
+    "message": "ऑटो (ब्राउज़र भाषा)"
+  },
+  "savedSettings": {
+    "message": "सेव हो गया।"
+  },
+  "bubbleText": {
+    "message": ".md में जोड़ें"
+  },
+  "toastNoSelection": {
+    "message": "कोई टेक्स्ट नहीं चुना"
+  },
+  "toastCopied": {
+    "message": "Markdown के रूप में कॉपी हुआ ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "कॉपी नहीं हो सका"
+  },
+  "contextMenuTitle": {
+    "message": ".md में जोड़ें"
+  },
+  "statusHighlighterReady": {
+    "message": "पेज के एलिमेंट पर क्लिक करके हाइलाइट करें"
+  },
+  "sectionRating": {
+    "message": "एक्सटेंशन को रेट करें"
+  },
+  "ratingHide": {
+    "message": "छिपाएँ"
   }
 }

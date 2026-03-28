@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Web Clipper d'HTML a Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Converteix el text seleccionat a Markdown net — un clic de la selecció al porta-retalls.",
+    "message": "Converteix l'HTML de pàgines web a Markdown. Desa com a .md, copia o baixa — un potent Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Convertir selecció"
+  },
+  "clear": {
+    "message": "Neteja"
+  },
+  "copy": {
+    "message": "Copia"
+  },
+  "copied": {
+    "message": "Copiat"
+  },
+  "download": {
+    "message": "Baixa"
+  },
+  "preview": {
+    "message": "Previsualització"
+  },
+  "source": {
+    "message": "Font"
+  },
+  "highlighterOn": {
+    "message": "Ressaltador: actiu"
+  },
+  "highlighterOff": {
+    "message": "Ressaltador: inactiu"
+  },
+  "highlights": {
+    "message": "{1} ressaltats — llests per convertir"
+  },
+  "markdownPlaceholder": {
+    "message": "El Markdown apareixerà aquí…"
+  },
+  "statusEmpty": {
+    "message": "Pestanya buida"
+  },
+  "statusRestricted": {
+    "message": "Pàgina restringida"
+  },
+  "statusLocalFile": {
+    "message": "Fitxer local"
+  },
+  "statusPdf": {
+    "message": "PDF — no es pot convertir"
+  },
+  "statusReady": {
+    "message": "Selecciona text i fes clic a Convertir"
+  },
+  "errCannotAccess": {
+    "message": "No es pot accedir a aquesta pestanya."
+  },
+  "errCannotInject": {
+    "message": "No s'ha pogut connectar amb la pàgina."
+  },
+  "errRestrictedUrl": {
+    "message": "No es pot convertir des d'aquesta pàgina (URL restringida)."
+  },
+  "errTimeout": {
+    "message": "S'ha esgotat el temps. Torna-ho a intentar."
+  },
+  "errConnect": {
+    "message": "No s'ha pogut connectar. Recarrega i torna-ho a intentar."
+  },
+  "errNoHighlights": {
+    "message": "Cap ressaltat. Fes clic en elements de la pàgina per ressaltar."
+  },
+  "errNoSelection": {
+    "message": "Cap text seleccionat. Selecciona text a la pàgina primer."
+  },
+  "errConvertFailed": {
+    "message": "No s'ha pogut convertir la selecció."
+  },
+  "successCaptured": {
+    "message": "Convertit."
+  },
+  "captureHighlights": {
+    "message": "Convertir ressaltats ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Configuració"
+  },
+  "settingsH1": {
+    "message": "Configuració to .md"
+  },
+  "sectionCapture": {
+    "message": "Convertir"
+  },
+  "sectionDisplay": {
+    "message": "Visualització"
+  },
+  "sectionHighlighter": {
+    "message": "Ressaltador"
+  },
+  "sectionLanguage": {
+    "message": "Idioma"
+  },
+  "labelAutoMetadata": {
+    "message": "Afegir metadades automàticament"
+  },
+  "labelShowBubble": {
+    "message": "Mostrar botó flotant en seleccionar"
+  },
+  "labelDefaultView": {
+    "message": "Mode de visualització predeterminat"
+  },
+  "labelHighlightColor": {
+    "message": "Color de ressaltat"
+  },
+  "labelLanguage": {
+    "message": "Idioma"
+  },
+  "optPreview": {
+    "message": "Previsualització"
+  },
+  "optSource": {
+    "message": "Font"
+  },
+  "optAuto": {
+    "message": "Auto (idioma del navegador)"
+  },
+  "savedSettings": {
+    "message": "Desat."
+  },
+  "bubbleText": {
+    "message": "afegir al .md"
+  },
+  "toastNoSelection": {
+    "message": "Cap text seleccionat"
+  },
+  "toastCopied": {
+    "message": "Copiat com a Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "No s'ha pogut copiar"
+  },
+  "contextMenuTitle": {
+    "message": "afegir al .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Fes clic en elements de la pàgina per ressaltar"
+  },
+  "sectionRating": {
+    "message": "Valorar l'extensió"
+  },
+  "ratingHide": {
+    "message": "Amaga"
   }
 }

@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML į Markdown konvertavimas",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konvertuokite pasirinktą tekstą į švarų Markdown — vienas paspaudimas nuo pasirinkimo iki iškarpinės.",
+    "message": "Konvertuokite tinklalapio HTML į Markdown. Išsaugokite kaip .md, kopijuokite arba atsisiųskite — galingas Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Konvertuoti pasirinkimą"
+  },
+  "clear": {
+    "message": "Išvalyti"
+  },
+  "copy": {
+    "message": "Kopijuoti"
+  },
+  "copied": {
+    "message": "Nukopijuota"
+  },
+  "download": {
+    "message": "Atsisiųsti"
+  },
+  "preview": {
+    "message": "Peržiūra"
+  },
+  "source": {
+    "message": "Šaltinis"
+  },
+  "highlighterOn": {
+    "message": "Žymiklis: įjungtas"
+  },
+  "highlighterOff": {
+    "message": "Žymiklis: išjungtas"
+  },
+  "highlights": {
+    "message": "{1} paryškinimų — paruošta konvertuoti"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown pasirodys čia…"
+  },
+  "statusEmpty": {
+    "message": "Tuščias skirtukas"
+  },
+  "statusRestricted": {
+    "message": "Apribotas puslapis"
+  },
+  "statusLocalFile": {
+    "message": "Vietinis failas"
+  },
+  "statusPdf": {
+    "message": "PDF — negalima konvertuoti"
+  },
+  "statusReady": {
+    "message": "Pasirinkite tekstą ir spustelėkite Konvertuoti"
+  },
+  "errCannotAccess": {
+    "message": "Nepavyko pasiekti šio skirtuko."
+  },
+  "errCannotInject": {
+    "message": "Nepavyko prisijungti prie puslapio."
+  },
+  "errRestrictedUrl": {
+    "message": "Negalima konvertuoti iš šio puslapio (apribotas URL)."
+  },
+  "errTimeout": {
+    "message": "Užklausa baigė laiką. Bandykite dar kartą."
+  },
+  "errConnect": {
+    "message": "Nepavyko prisijungti. Perkraukite ir bandykite dar kartą."
+  },
+  "errNoHighlights": {
+    "message": "Nėra paryškinimų. Spustelėkite puslapio elementus."
+  },
+  "errNoSelection": {
+    "message": "Tekstas nepasirinktas. Pirmiausia pasirinkite tekstą."
+  },
+  "errConvertFailed": {
+    "message": "Nepavyko konvertuoti pasirinkimo."
+  },
+  "successCaptured": {
+    "message": "Konvertuota."
+  },
+  "captureHighlights": {
+    "message": "Konvertuoti paryškinimus ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Nustatymai"
+  },
+  "settingsH1": {
+    "message": "to .md nustatymai"
+  },
+  "sectionCapture": {
+    "message": "Konvertavimas"
+  },
+  "sectionDisplay": {
+    "message": "Rodymas"
+  },
+  "sectionHighlighter": {
+    "message": "Žymiklis"
+  },
+  "sectionLanguage": {
+    "message": "Kalba"
+  },
+  "labelAutoMetadata": {
+    "message": "Automatiškai pridėti metaduomenis"
+  },
+  "labelShowBubble": {
+    "message": "Rodyti slankų mygtuką pasirenkant"
+  },
+  "labelDefaultView": {
+    "message": "Numatytasis rodinys"
+  },
+  "labelHighlightColor": {
+    "message": "Paryškinimo spalva"
+  },
+  "labelLanguage": {
+    "message": "Kalba"
+  },
+  "optPreview": {
+    "message": "Peržiūra"
+  },
+  "optSource": {
+    "message": "Šaltinis"
+  },
+  "optAuto": {
+    "message": "Automatinis (naršyklės kalba)"
+  },
+  "savedSettings": {
+    "message": "Išsaugota."
+  },
+  "bubbleText": {
+    "message": "pridėti į .md"
+  },
+  "toastNoSelection": {
+    "message": "Tekstas nepasirinktas"
+  },
+  "toastCopied": {
+    "message": "Nukopijuota kaip Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Nepavyko kopijuoti"
+  },
+  "contextMenuTitle": {
+    "message": "pridėti į .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Spustelėkite puslapio elementus paryškinimui"
+  },
+  "sectionRating": {
+    "message": "Įvertinti plėtinį"
+  },
+  "ratingHide": {
+    "message": "Slėpti"
   }
 }

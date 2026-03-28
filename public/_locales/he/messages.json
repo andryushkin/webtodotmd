@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML to Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "המר טקסט נבחר ל-Markdown נקי — לחיצה אחת מהבחירה ללוח העריכה.",
+    "message": "המר HTML של דפי אינטרנט ל-Markdown. שמור כ-.md, העתק או הורד — Web Clipper חזק.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "המר בחירה"
+  },
+  "clear": {
+    "message": "נקה"
+  },
+  "copy": {
+    "message": "העתק"
+  },
+  "copied": {
+    "message": "הועתק"
+  },
+  "download": {
+    "message": "הורד"
+  },
+  "preview": {
+    "message": "תצוגה מקדימה"
+  },
+  "source": {
+    "message": "מקור"
+  },
+  "highlighterOn": {
+    "message": "מסמן: פעיל"
+  },
+  "highlighterOff": {
+    "message": "מסמן: כבוי"
+  },
+  "highlights": {
+    "message": "{1} מסומנים — מוכן להמרה"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown יופיע כאן…"
+  },
+  "statusEmpty": {
+    "message": "לשונית ריקה"
+  },
+  "statusRestricted": {
+    "message": "דף מוגבל"
+  },
+  "statusLocalFile": {
+    "message": "קובץ מקומי"
+  },
+  "statusPdf": {
+    "message": "PDF — לא ניתן להמיר"
+  },
+  "statusReady": {
+    "message": "בחר טקסט ולחץ המר"
+  },
+  "errCannotAccess": {
+    "message": "לא ניתן לגשת ללשונית זו."
+  },
+  "errCannotInject": {
+    "message": "לא ניתן להתחבר לדף זה."
+  },
+  "errRestrictedUrl": {
+    "message": "לא ניתן להמיר מדף זה (URL מוגבל)."
+  },
+  "errTimeout": {
+    "message": "הבקשה פגה. נסה שוב."
+  },
+  "errConnect": {
+    "message": "לא ניתן להתחבר לדף. טען מחדש ונסה שוב."
+  },
+  "errNoHighlights": {
+    "message": "אין סימונים. לחץ על אלמנטים בדף לסימון."
+  },
+  "errNoSelection": {
+    "message": "לא נבחר טקסט. בחר טקסט בדף תחילה."
+  },
+  "errConvertFailed": {
+    "message": "לא ניתן להמיר את הבחירה."
+  },
+  "successCaptured": {
+    "message": "הומר."
+  },
+  "captureHighlights": {
+    "message": "המר סימונים ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — הגדרות"
+  },
+  "settingsH1": {
+    "message": "הגדרות to .md"
+  },
+  "sectionCapture": {
+    "message": "המרה"
+  },
+  "sectionDisplay": {
+    "message": "תצוגה"
+  },
+  "sectionHighlighter": {
+    "message": "מסמן"
+  },
+  "sectionLanguage": {
+    "message": "שפה"
+  },
+  "labelAutoMetadata": {
+    "message": "הוסף מטא-נתונים אוטומטית בהמרה"
+  },
+  "labelShowBubble": {
+    "message": "הצג כפתור צף בעת בחירת טקסט"
+  },
+  "labelDefaultView": {
+    "message": "מצב תצוגה ברירת מחדל"
+  },
+  "labelHighlightColor": {
+    "message": "צבע סימון"
+  },
+  "labelLanguage": {
+    "message": "שפה"
+  },
+  "optPreview": {
+    "message": "תצוגה מקדימה"
+  },
+  "optSource": {
+    "message": "מקור"
+  },
+  "optAuto": {
+    "message": "אוטומטי (שפת הדפדפן)"
+  },
+  "savedSettings": {
+    "message": "נשמר."
+  },
+  "bubbleText": {
+    "message": "הוסף ל-.md"
+  },
+  "toastNoSelection": {
+    "message": "לא נבחר טקסט"
+  },
+  "toastCopied": {
+    "message": "הועתק כ-Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "לא ניתן להעתיק"
+  },
+  "contextMenuTitle": {
+    "message": "הוסף ל-.md"
+  },
+  "statusHighlighterReady": {
+    "message": "לחץ על אלמנטים בדף לסימון"
+  },
+  "sectionRating": {
+    "message": "דרג את ההרחבה"
+  },
+  "ratingHide": {
+    "message": "הסתר"
   }
 }

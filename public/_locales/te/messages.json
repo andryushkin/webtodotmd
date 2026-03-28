@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML ని Markdown గా మార్చు",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "ఎంచుకున్న వచనాన్ని శుభ్రమైన Markdown కి మార్చండి — క్లిప్‌బోర్డ్‌కు ఒక క్లిక్.",
+    "message": "వెబ్‌పేజ్ HTML ని Markdown గా మార్చు. .md గా సేవ్ చేయి, కాపీ చేయి లేదా డౌన్‌లోడ్ చేయి — శక్తివంతమైన Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "ఎంపికను మార్చు"
+  },
+  "clear": {
+    "message": "తొలగించు"
+  },
+  "copy": {
+    "message": "కాపీ చేయి"
+  },
+  "copied": {
+    "message": "కాపీ అయింది"
+  },
+  "download": {
+    "message": "డౌన్‌లోడ్ చేయి"
+  },
+  "preview": {
+    "message": "ప్రివ్యూ"
+  },
+  "source": {
+    "message": "సోర్స్"
+  },
+  "highlighterOn": {
+    "message": "హైలైటర్: ఆన్"
+  },
+  "highlighterOff": {
+    "message": "హైలైటర్: ఆఫ్"
+  },
+  "highlights": {
+    "message": "{1} హైలైట్‌లు — మార్చడానికి సిద్ధం"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown ఇక్కడ కనిపిస్తుంది…"
+  },
+  "statusEmpty": {
+    "message": "ఖాళీ ట్యాబ్"
+  },
+  "statusRestricted": {
+    "message": "నిరోధించబడిన పేజ్"
+  },
+  "statusLocalFile": {
+    "message": "లోకల్ ఫైల్"
+  },
+  "statusPdf": {
+    "message": "PDF — మార్చలేదు"
+  },
+  "statusReady": {
+    "message": "టెక్స్ట్ ఎంచుకుని మార్చు క్లిక్ చేయి"
+  },
+  "errCannotAccess": {
+    "message": "ఈ ట్యాబ్‌ను యాక్సెస్ చేయలేదు."
+  },
+  "errCannotInject": {
+    "message": "ఈ పేజ్‌కి కనెక్ట్ అవ్వలేదు."
+  },
+  "errRestrictedUrl": {
+    "message": "ఈ పేజ్ నుండి మార్చలేదు (నిరోధించబడిన URL)."
+  },
+  "errTimeout": {
+    "message": "అభ్యర్థన గడువు మించింది. మళ్ళీ ప్రయత్నించు."
+  },
+  "errConnect": {
+    "message": "కనెక్ట్ అవ్వలేదు. రీలోడ్ చేసి మళ్ళీ ప్రయత్నించు."
+  },
+  "errNoHighlights": {
+    "message": "హైలైట్‌లు లేవు. పేజ్‌లో ఎలిమెంట్‌లపై క్లిక్ చేయి."
+  },
+  "errNoSelection": {
+    "message": "టెక్స్ట్ ఎంచుకోలేదు. ముందు పేజ్‌లో టెక్స్ట్ ఎంచుకో."
+  },
+  "errConvertFailed": {
+    "message": "ఎంపికను మార్చలేదు."
+  },
+  "successCaptured": {
+    "message": "మార్చబడింది."
+  },
+  "captureHighlights": {
+    "message": "హైలైట్‌లను మార్చు ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — సెట్టింగ్‌లు"
+  },
+  "settingsH1": {
+    "message": "to .md సెట్టింగ్‌లు"
+  },
+  "sectionCapture": {
+    "message": "మార్చు"
+  },
+  "sectionDisplay": {
+    "message": "డిస్‌ప్లే"
+  },
+  "sectionHighlighter": {
+    "message": "హైలైటర్"
+  },
+  "sectionLanguage": {
+    "message": "భాష"
+  },
+  "labelAutoMetadata": {
+    "message": "మార్చేటప్పుడు మెటాడేటా ఆటో-యాడ్ చేయి"
+  },
+  "labelShowBubble": {
+    "message": "టెక్స్ట్ ఎంచుకోవడంపై ఫ్లోటింగ్ బటన్ చూపించు"
+  },
+  "labelDefaultView": {
+    "message": "డిఫాల్ట్ వ్యూ మోడ్"
+  },
+  "labelHighlightColor": {
+    "message": "హైలైట్ రంగు"
+  },
+  "labelLanguage": {
+    "message": "భాష"
+  },
+  "optPreview": {
+    "message": "ప్రివ్యూ"
+  },
+  "optSource": {
+    "message": "సోర్స్"
+  },
+  "optAuto": {
+    "message": "ఆటో (బ్రౌజర్ భాష)"
+  },
+  "savedSettings": {
+    "message": "సేవ్ అయింది."
+  },
+  "bubbleText": {
+    "message": ".md కి జోడించు"
+  },
+  "toastNoSelection": {
+    "message": "టెక్స్ట్ ఎంచుకోలేదు"
+  },
+  "toastCopied": {
+    "message": "Markdown గా కాపీ అయింది ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "కాపీ అవ్వలేదు"
+  },
+  "contextMenuTitle": {
+    "message": ".md కి జోడించు"
+  },
+  "statusHighlighterReady": {
+    "message": "హైలైట్ చేయడానికి పేజ్‌లో ఎలిమెంట్‌లపై క్లిక్ చేయి"
+  },
+  "sectionRating": {
+    "message": "ఎక్స్‌టెన్షన్‌ను రేట్ చేయి"
+  },
+  "ratingHide": {
+    "message": "దాచు"
   }
 }

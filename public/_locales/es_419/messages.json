@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Web Clipper HTML a Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Convierte el texto seleccionado a Markdown limpio — un clic desde la selección al portapapeles.",
+    "message": "Convierte el HTML de páginas web a Markdown. Guarda como .md, copia o descarga texto con este potente Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Convertir selección"
+  },
+  "clear": {
+    "message": "Limpiar"
+  },
+  "copy": {
+    "message": "Copiar"
+  },
+  "copied": {
+    "message": "Copiado"
+  },
+  "download": {
+    "message": "Descargar"
+  },
+  "preview": {
+    "message": "Vista previa"
+  },
+  "source": {
+    "message": "Fuente"
+  },
+  "highlighterOn": {
+    "message": "Marcador activo"
+  },
+  "highlighterOff": {
+    "message": "Marcador inactivo"
+  },
+  "highlights": {
+    "message": "{1} resaltados — listos para convertir"
+  },
+  "markdownPlaceholder": {
+    "message": "El Markdown aparecerá aquí…"
+  },
+  "statusEmpty": {
+    "message": "Pestaña vacía"
+  },
+  "statusRestricted": {
+    "message": "Página restringida"
+  },
+  "statusLocalFile": {
+    "message": "Archivo local"
+  },
+  "statusPdf": {
+    "message": "PDF — sin soporte"
+  },
+  "statusReady": {
+    "message": "Selecciona texto y haz clic en Convertir"
+  },
+  "errCannotAccess": {
+    "message": "No se puede acceder a esta pestaña."
+  },
+  "errCannotInject": {
+    "message": "No se pudo conectar con esta página."
+  },
+  "errRestrictedUrl": {
+    "message": "No se puede convertir desde esta página (URL restringida)."
+  },
+  "errTimeout": {
+    "message": "Se agotó el tiempo. Intenta de nuevo."
+  },
+  "errConnect": {
+    "message": "No se pudo conectar. Recarga e intenta de nuevo."
+  },
+  "errNoHighlights": {
+    "message": "Sin resaltados. Haz clic en los elementos para resaltar."
+  },
+  "errNoSelection": {
+    "message": "Sin texto seleccionado. Selecciona texto primero."
+  },
+  "errConvertFailed": {
+    "message": "No se pudo convertir la selección."
+  },
+  "successCaptured": {
+    "message": "Convertido."
+  },
+  "captureHighlights": {
+    "message": "Convertir resaltados ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Configuración"
+  },
+  "settingsH1": {
+    "message": "Configuración to .md"
+  },
+  "sectionCapture": {
+    "message": "Convertir"
+  },
+  "sectionDisplay": {
+    "message": "Visualización"
+  },
+  "sectionHighlighter": {
+    "message": "Resaltador"
+  },
+  "sectionLanguage": {
+    "message": "Idioma"
+  },
+  "labelAutoMetadata": {
+    "message": "Agregar metadatos automáticamente"
+  },
+  "labelShowBubble": {
+    "message": "Mostrar botón flotante al seleccionar"
+  },
+  "labelDefaultView": {
+    "message": "Modo de vista predeterminado"
+  },
+  "labelHighlightColor": {
+    "message": "Color de resaltado"
+  },
+  "labelLanguage": {
+    "message": "Idioma"
+  },
+  "optPreview": {
+    "message": "Vista previa"
+  },
+  "optSource": {
+    "message": "Fuente"
+  },
+  "optAuto": {
+    "message": "Auto (idioma del navegador)"
+  },
+  "savedSettings": {
+    "message": "Guardado."
+  },
+  "bubbleText": {
+    "message": "agregar al .md"
+  },
+  "toastNoSelection": {
+    "message": "Sin texto seleccionado"
+  },
+  "toastCopied": {
+    "message": "Copiado como Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "No se pudo copiar"
+  },
+  "contextMenuTitle": {
+    "message": "agregar al .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Haz clic en los elementos de la página para resaltar"
+  },
+  "sectionRating": {
+    "message": "Valorar esta extensión"
+  },
+  "ratingHide": {
+    "message": "Ocultar"
   }
 }

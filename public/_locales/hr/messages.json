@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML u Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Pretvorite odabrani tekst u čisti Markdown — jedan klik od odabira do međuspremnika.",
+    "message": "Pretvorite HTML web stranica u Markdown. Spremi kao .md, kopiraj ili preuzmi tekst ovim moćnim Web Clipperom.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Kopiraj odabrano"
+  },
+  "clear": {
+    "message": "Očisti"
+  },
+  "copy": {
+    "message": "Kopiraj"
+  },
+  "copied": {
+    "message": "Kopirano"
+  },
+  "download": {
+    "message": "Preuzmi"
+  },
+  "preview": {
+    "message": "Pregled"
+  },
+  "source": {
+    "message": "Izvorni kôd"
+  },
+  "highlighterOn": {
+    "message": "Marker uključen"
+  },
+  "highlighterOff": {
+    "message": "Marker isključen"
+  },
+  "highlights": {
+    "message": "Označeno: {1} — spremno"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown će se pojaviti ovdje…"
+  },
+  "statusEmpty": {
+    "message": "Prazna kartica"
+  },
+  "statusRestricted": {
+    "message": "Ograničena stranica"
+  },
+  "statusLocalFile": {
+    "message": "Lokalna datoteka"
+  },
+  "statusPdf": {
+    "message": "PDF — kopiranje nije moguće"
+  },
+  "statusReady": {
+    "message": "Odaberi tekst i klikni Kopiraj"
+  },
+  "errCannotAccess": {
+    "message": "Pristup kartici nije moguć."
+  },
+  "errCannotInject": {
+    "message": "Nije moguće povezati se s ovom stranicom."
+  },
+  "errRestrictedUrl": {
+    "message": "Kopiranje s ove stranice nije moguće (ograničeni URL)."
+  },
+  "errTimeout": {
+    "message": "Zahtjev je istekao. Pokušaj ponovo."
+  },
+  "errConnect": {
+    "message": "Veza nije uspostavljena. Osvježi stranicu i pokušaj ponovo."
+  },
+  "errNoHighlights": {
+    "message": "Ništa nije označeno. Klikni na elemente stranice."
+  },
+  "errNoSelection": {
+    "message": "Nema odabranog teksta. Odaberi tekst na stranici."
+  },
+  "errConvertFailed": {
+    "message": "Odabrano nije moguće pretvoriti."
+  },
+  "successCaptured": {
+    "message": "Gotovo."
+  },
+  "captureHighlights": {
+    "message": "Kopiraj označeno ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Postavke"
+  },
+  "settingsH1": {
+    "message": "Postavke to .md"
+  },
+  "sectionCapture": {
+    "message": "Kopiranje"
+  },
+  "sectionDisplay": {
+    "message": "Prikaz"
+  },
+  "sectionHighlighter": {
+    "message": "Marker"
+  },
+  "sectionLanguage": {
+    "message": "Jezik"
+  },
+  "labelAutoMetadata": {
+    "message": "Automatski dodaj metapodatke"
+  },
+  "labelShowBubble": {
+    "message": "Prikaži gumb pri odabiru teksta"
+  },
+  "labelDefaultView": {
+    "message": "Zadani prikaz"
+  },
+  "labelHighlightColor": {
+    "message": "Boja označavanja"
+  },
+  "labelLanguage": {
+    "message": "Jezik"
+  },
+  "optPreview": {
+    "message": "Pregled"
+  },
+  "optSource": {
+    "message": "Izvorni kôd"
+  },
+  "optAuto": {
+    "message": "Auto (jezik preglednika)"
+  },
+  "savedSettings": {
+    "message": "Spremljeno."
+  },
+  "bubbleText": {
+    "message": "dodaj u .md"
+  },
+  "toastNoSelection": {
+    "message": "Nema odabranog teksta"
+  },
+  "toastCopied": {
+    "message": "Kopirano kao Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kopiranje nije uspjelo"
+  },
+  "contextMenuTitle": {
+    "message": "dodaj u .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klikni na elemente stranice"
+  },
+  "sectionRating": {
+    "message": "Ocijeni ovo proširenje"
+  },
+  "ratingHide": {
+    "message": "Sakrij"
   }
 }

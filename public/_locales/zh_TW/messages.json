@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: 將網頁轉換為 Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "將選取的文字轉換為整潔的 Markdown — 一鍵從選取到剪貼簿。",
+    "message": "將網頁 HTML 轉換為 Markdown。儲存為 .md、複製或下載 — 強大的 Web Clipper。",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "轉換選取內容"
+  },
+  "clear": {
+    "message": "清除"
+  },
+  "copy": {
+    "message": "複製"
+  },
+  "copied": {
+    "message": "已複製"
+  },
+  "download": {
+    "message": "下載"
+  },
+  "preview": {
+    "message": "預覽"
+  },
+  "source": {
+    "message": "原始碼"
+  },
+  "highlighterOn": {
+    "message": "標記：開啟"
+  },
+  "highlighterOff": {
+    "message": "標記：關閉"
+  },
+  "highlights": {
+    "message": "已標記 {1} 個 — 可轉換"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown 將顯示在此處…"
+  },
+  "statusEmpty": {
+    "message": "空白分頁"
+  },
+  "statusRestricted": {
+    "message": "受限頁面"
+  },
+  "statusLocalFile": {
+    "message": "本機檔案"
+  },
+  "statusPdf": {
+    "message": "PDF — 無法轉換"
+  },
+  "statusReady": {
+    "message": "選取文字，點擊轉換"
+  },
+  "errCannotAccess": {
+    "message": "無法存取此分頁。"
+  },
+  "errCannotInject": {
+    "message": "無法連線至此頁面。"
+  },
+  "errRestrictedUrl": {
+    "message": "無法從此頁面轉換（受限 URL）。"
+  },
+  "errTimeout": {
+    "message": "請求逾時。請重試。"
+  },
+  "errConnect": {
+    "message": "無法連線至頁面。請重新載入後重試。"
+  },
+  "errNoHighlights": {
+    "message": "未標記任何內容。請在頁面上點擊元素進行標記。"
+  },
+  "errNoSelection": {
+    "message": "未選取文字。請先在頁面上選取文字。"
+  },
+  "errConvertFailed": {
+    "message": "無法轉換選取內容。"
+  },
+  "successCaptured": {
+    "message": "已轉換。"
+  },
+  "captureHighlights": {
+    "message": "轉換標記內容 ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — 設定"
+  },
+  "settingsH1": {
+    "message": "to .md 設定"
+  },
+  "sectionCapture": {
+    "message": "轉換"
+  },
+  "sectionDisplay": {
+    "message": "顯示"
+  },
+  "sectionHighlighter": {
+    "message": "標記工具"
+  },
+  "sectionLanguage": {
+    "message": "語言"
+  },
+  "labelAutoMetadata": {
+    "message": "轉換時自動加入中繼資料"
+  },
+  "labelShowBubble": {
+    "message": "選取文字時顯示浮動按鈕"
+  },
+  "labelDefaultView": {
+    "message": "預設檢視模式"
+  },
+  "labelHighlightColor": {
+    "message": "標記顏色"
+  },
+  "labelLanguage": {
+    "message": "語言"
+  },
+  "optPreview": {
+    "message": "預覽"
+  },
+  "optSource": {
+    "message": "原始碼"
+  },
+  "optAuto": {
+    "message": "自動（跟隨瀏覽器語言）"
+  },
+  "savedSettings": {
+    "message": "已儲存。"
+  },
+  "bubbleText": {
+    "message": "新增至 .md"
+  },
+  "toastNoSelection": {
+    "message": "未選取文字"
+  },
+  "toastCopied": {
+    "message": "已複製為 Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "無法複製"
+  },
+  "contextMenuTitle": {
+    "message": "新增至 .md"
+  },
+  "statusHighlighterReady": {
+    "message": "點擊頁面上的元素進行標記"
+  },
+  "sectionRating": {
+    "message": "為擴充功能評分"
+  },
+  "ratingHide": {
+    "message": "隱藏"
   }
 }

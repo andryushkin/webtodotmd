@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Chuyển trang web sang Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Chuyển đổi văn bản đã chọn thành Markdown sạch — một cú nhấp từ lựa chọn đến clipboard.",
+    "message": "Chuyển HTML trang web sang Markdown. Lưu dưới dạng md, sao chép hoặc tải xuống văn bản với Web Clipper mạnh mẽ này.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown sẽ xuất hiện ở đây…"
-  },
-  "copiedToday": {
-    "message": "Đã sao chép hôm nay:"
   },
   "statusEmpty": {
     "message": "Tab trống"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Nhấp vào các phần tử trên trang để đánh dấu"
+  },
+  "sectionRating": {
+    "message": "Đánh giá tiện ích này"
+  },
+  "ratingHide": {
+    "message": "Ẩn"
   }
 }

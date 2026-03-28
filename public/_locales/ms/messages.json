@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Tukar halaman web ke Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Tukar teks yang dipilih kepada Markdown yang bersih — satu klik dari pilihan ke papan klip.",
+    "message": "Tukar HTML halaman web kepada Markdown. Simpan sebagai .md, salin atau muat turun — Web Clipper yang hebat.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Tukar pilihan"
+  },
+  "clear": {
+    "message": "Kosongkan"
+  },
+  "copy": {
+    "message": "Salin"
+  },
+  "copied": {
+    "message": "Disalin"
+  },
+  "download": {
+    "message": "Muat turun"
+  },
+  "preview": {
+    "message": "Pratonton"
+  },
+  "source": {
+    "message": "Sumber"
+  },
+  "highlighterOn": {
+    "message": "Pemanda: aktif"
+  },
+  "highlighterOff": {
+    "message": "Pemanda: tidak aktif"
+  },
+  "highlights": {
+    "message": "{1} disorot — sedia ditukar"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown akan muncul di sini…"
+  },
+  "statusEmpty": {
+    "message": "Tab kosong"
+  },
+  "statusRestricted": {
+    "message": "Halaman terhad"
+  },
+  "statusLocalFile": {
+    "message": "Fail tempatan"
+  },
+  "statusPdf": {
+    "message": "PDF — tidak boleh ditukar"
+  },
+  "statusReady": {
+    "message": "Pilih teks dan klik Tukar"
+  },
+  "errCannotAccess": {
+    "message": "Tidak dapat mengakses tab ini."
+  },
+  "errCannotInject": {
+    "message": "Tidak dapat menyambung ke halaman ini."
+  },
+  "errRestrictedUrl": {
+    "message": "Tidak dapat menukar dari halaman ini (URL terhad)."
+  },
+  "errTimeout": {
+    "message": "Permintaan tamat masa. Cuba lagi."
+  },
+  "errConnect": {
+    "message": "Tidak dapat menyambung. Muat semula dan cuba lagi."
+  },
+  "errNoHighlights": {
+    "message": "Tiada sorotan. Klik elemen pada halaman untuk menyorot."
+  },
+  "errNoSelection": {
+    "message": "Tiada teks dipilih. Pilih teks pada halaman dahulu."
+  },
+  "errConvertFailed": {
+    "message": "Tidak dapat menukar pilihan."
+  },
+  "successCaptured": {
+    "message": "Ditukar."
+  },
+  "captureHighlights": {
+    "message": "Tukar sorotan ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Tetapan"
+  },
+  "settingsH1": {
+    "message": "Tetapan to .md"
+  },
+  "sectionCapture": {
+    "message": "Tukar"
+  },
+  "sectionDisplay": {
+    "message": "Paparan"
+  },
+  "sectionHighlighter": {
+    "message": "Pemanda"
+  },
+  "sectionLanguage": {
+    "message": "Bahasa"
+  },
+  "labelAutoMetadata": {
+    "message": "Tambah metadata secara automatik"
+  },
+  "labelShowBubble": {
+    "message": "Tunjukkan butang terapung semasa memilih"
+  },
+  "labelDefaultView": {
+    "message": "Mod paparan lalai"
+  },
+  "labelHighlightColor": {
+    "message": "Warna sorotan"
+  },
+  "labelLanguage": {
+    "message": "Bahasa"
+  },
+  "optPreview": {
+    "message": "Pratonton"
+  },
+  "optSource": {
+    "message": "Sumber"
+  },
+  "optAuto": {
+    "message": "Auto (bahasa pelayar)"
+  },
+  "savedSettings": {
+    "message": "Disimpan."
+  },
+  "bubbleText": {
+    "message": "tambah ke .md"
+  },
+  "toastNoSelection": {
+    "message": "Tiada teks dipilih"
+  },
+  "toastCopied": {
+    "message": "Disalin sebagai Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Tidak dapat menyalin"
+  },
+  "contextMenuTitle": {
+    "message": "tambah ke .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Klik elemen pada halaman untuk menyorot"
+  },
+  "sectionRating": {
+    "message": "Nilaikan sambungan ini"
+  },
+  "ratingHide": {
+    "message": "Sembunyikan"
   }
 }

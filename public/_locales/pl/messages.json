@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML do Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konwertuj zaznaczony tekst na czysty Markdown — jeden klik od zaznaczenia do schowka.",
+    "message": "Konwertuj HTML stron internetowych na Markdown. Zapisz jako .md, skopiuj lub pobierz tekst tym potężnym Web Clipperem.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Kopiuj zaznaczenie"
+  },
+  "clear": {
+    "message": "Wyczyść"
+  },
+  "copy": {
+    "message": "Kopiuj"
+  },
+  "copied": {
+    "message": "Skopiowano"
+  },
+  "download": {
+    "message": "Pobierz"
+  },
+  "preview": {
+    "message": "Podgląd"
+  },
+  "source": {
+    "message": "Źródło"
+  },
+  "highlighterOn": {
+    "message": "Zakreślacz wł."
+  },
+  "highlighterOff": {
+    "message": "Zakreślacz wył."
+  },
+  "highlights": {
+    "message": "Zaznaczono: {1} — gotowe"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown pojawi się tutaj…"
+  },
+  "statusEmpty": {
+    "message": "Pusta karta"
+  },
+  "statusRestricted": {
+    "message": "Chroniona strona"
+  },
+  "statusLocalFile": {
+    "message": "Plik lokalny"
+  },
+  "statusPdf": {
+    "message": "PDF — kopiowanie niemożliwe"
+  },
+  "statusReady": {
+    "message": "Zaznacz tekst i kliknij Kopiuj"
+  },
+  "errCannotAccess": {
+    "message": "Brak dostępu do karty."
+  },
+  "errCannotInject": {
+    "message": "Nie można połączyć się z tą stroną."
+  },
+  "errRestrictedUrl": {
+    "message": "Kopiowanie z tej strony jest niemożliwe (chroniony URL)."
+  },
+  "errTimeout": {
+    "message": "Przekroczono limit czasu. Spróbuj ponownie."
+  },
+  "errConnect": {
+    "message": "Połączenie nie powiodło się. Odśwież stronę i spróbuj ponownie."
+  },
+  "errNoHighlights": {
+    "message": "Nic nie zaznaczono. Kliknij elementy na stronie."
+  },
+  "errNoSelection": {
+    "message": "Brak zaznaczonego tekstu. Najpierw zaznacz tekst."
+  },
+  "errConvertFailed": {
+    "message": "Nie można przekonwertować zaznaczenia."
+  },
+  "successCaptured": {
+    "message": "Gotowe."
+  },
+  "captureHighlights": {
+    "message": "Kopiuj zaznaczone ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Ustawienia"
+  },
+  "settingsH1": {
+    "message": "Ustawienia to .md"
+  },
+  "sectionCapture": {
+    "message": "Kopiowanie"
+  },
+  "sectionDisplay": {
+    "message": "Widok"
+  },
+  "sectionHighlighter": {
+    "message": "Zakreślacz"
+  },
+  "sectionLanguage": {
+    "message": "Język"
+  },
+  "labelAutoMetadata": {
+    "message": "Automatycznie dodaj metadane"
+  },
+  "labelShowBubble": {
+    "message": "Pokazuj przycisk przy zaznaczeniu tekstu"
+  },
+  "labelDefaultView": {
+    "message": "Domyślny widok"
+  },
+  "labelHighlightColor": {
+    "message": "Kolor zaznaczenia"
+  },
+  "labelLanguage": {
+    "message": "Język"
+  },
+  "optPreview": {
+    "message": "Podgląd"
+  },
+  "optSource": {
+    "message": "Źródło"
+  },
+  "optAuto": {
+    "message": "Auto (język przeglądarki)"
+  },
+  "savedSettings": {
+    "message": "Zapisano."
+  },
+  "bubbleText": {
+    "message": "dodaj do .md"
+  },
+  "toastNoSelection": {
+    "message": "Brak zaznaczonego tekstu"
+  },
+  "toastCopied": {
+    "message": "Skopiowano jako Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Kopiowanie nie powiodło się"
+  },
+  "contextMenuTitle": {
+    "message": "dodaj do .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Kliknij elementy na stronie"
+  },
+  "sectionRating": {
+    "message": "Oceń to rozszerzenie"
+  },
+  "ratingHide": {
+    "message": "Ukryj"
   }
 }

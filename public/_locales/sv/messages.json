@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML till Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konvertera markerad text till ren Markdown — ett klick från markering till urklipp.",
+    "message": "Konvertera webbsidans HTML till Markdown. Spara som md, kopiera eller ladda ner text med denna kraftfulla Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown visas här…"
-  },
-  "copiedToday": {
-    "message": "Kopierat idag:"
   },
   "statusEmpty": {
     "message": "Tom flik"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Klicka på element på sidan för att markera dem"
+  },
+  "sectionRating": {
+    "message": "Betygsätt tillägget"
+  },
+  "ratingHide": {
+    "message": "Dölj"
   }
 }

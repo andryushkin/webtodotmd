@@ -4,7 +4,7 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Выделение → Markdown → буфер обмена. Один клик — и готово.",
+    "message": "Конвертируй HTML веб-страниц в Markdown. Сохраняй как md, копируй или скачивай текст — мощный Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

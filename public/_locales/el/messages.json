@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML σε Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Μετατρέψτε επιλεγμένο κείμενο σε καθαρό Markdown — ένα κλικ από την επιλογή στο πρόχειρο.",
+    "message": "Μετατρέψτε HTML ιστοσελίδων σε Markdown. Αποθηκεύστε ως .md, αντιγράψτε ή κατεβάστε — ένα ισχυρό Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Μετατροπή επιλογής"
+  },
+  "clear": {
+    "message": "Εκκαθάριση"
+  },
+  "copy": {
+    "message": "Αντιγραφή"
+  },
+  "copied": {
+    "message": "Αντιγράφηκε"
+  },
+  "download": {
+    "message": "Λήψη"
+  },
+  "preview": {
+    "message": "Προεπισκόπηση"
+  },
+  "source": {
+    "message": "Πηγή"
+  },
+  "highlighterOn": {
+    "message": "Επισήμανση: ενεργή"
+  },
+  "highlighterOff": {
+    "message": "Επισήμανση: ανενεργή"
+  },
+  "highlights": {
+    "message": "{1} επισημάνσεις — έτοιμες"
+  },
+  "markdownPlaceholder": {
+    "message": "Το Markdown θα εμφανιστεί εδώ…"
+  },
+  "statusEmpty": {
+    "message": "Κενή καρτέλα"
+  },
+  "statusRestricted": {
+    "message": "Περιορισμένη σελίδα"
+  },
+  "statusLocalFile": {
+    "message": "Τοπικό αρχείο"
+  },
+  "statusPdf": {
+    "message": "PDF — δεν υποστηρίζεται"
+  },
+  "statusReady": {
+    "message": "Επιλέξτε κείμενο και κάντε κλικ στη Μετατροπή"
+  },
+  "errCannotAccess": {
+    "message": "Δεν είναι δυνατή η πρόσβαση σε αυτήν την καρτέλα."
+  },
+  "errCannotInject": {
+    "message": "Δεν ήταν δυνατή η σύνδεση με τη σελίδα."
+  },
+  "errRestrictedUrl": {
+    "message": "Μετατροπή από αυτή τη σελίδα δεν είναι δυνατή (περιορισμένο URL)."
+  },
+  "errTimeout": {
+    "message": "Λήξη χρονικού ορίου. Δοκιμάστε ξανά."
+  },
+  "errConnect": {
+    "message": "Δεν ήταν δυνατή η σύνδεση. Φορτώστε ξανά και δοκιμάστε."
+  },
+  "errNoHighlights": {
+    "message": "Καμία επισήμανση. Κάντε κλικ σε στοιχεία για επισήμανση."
+  },
+  "errNoSelection": {
+    "message": "Δεν επιλέχθηκε κείμενο. Επιλέξτε πρώτα κείμενο."
+  },
+  "errConvertFailed": {
+    "message": "Η μετατροπή δεν ήταν δυνατή."
+  },
+  "successCaptured": {
+    "message": "Μετατράπηκε."
+  },
+  "captureHighlights": {
+    "message": "Μετατροπή επισημάνσεων ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Ρυθμίσεις"
+  },
+  "settingsH1": {
+    "message": "Ρυθμίσεις to .md"
+  },
+  "sectionCapture": {
+    "message": "Μετατροπή"
+  },
+  "sectionDisplay": {
+    "message": "Εμφάνιση"
+  },
+  "sectionHighlighter": {
+    "message": "Επισήμανση"
+  },
+  "sectionLanguage": {
+    "message": "Γλώσσα"
+  },
+  "labelAutoMetadata": {
+    "message": "Αυτόματη προσθήκη μεταδεδομένων"
+  },
+  "labelShowBubble": {
+    "message": "Εμφάνιση κουμπιού κατά την επιλογή"
+  },
+  "labelDefaultView": {
+    "message": "Προεπιλεγμένη προβολή"
+  },
+  "labelHighlightColor": {
+    "message": "Χρώμα επισήμανσης"
+  },
+  "labelLanguage": {
+    "message": "Γλώσσα"
+  },
+  "optPreview": {
+    "message": "Προεπισκόπηση"
+  },
+  "optSource": {
+    "message": "Πηγή"
+  },
+  "optAuto": {
+    "message": "Αυτόματα (γλώσσα browser)"
+  },
+  "savedSettings": {
+    "message": "Αποθηκεύτηκε."
+  },
+  "bubbleText": {
+    "message": "προσθήκη στο .md"
+  },
+  "toastNoSelection": {
+    "message": "Δεν επιλέχθηκε κείμενο"
+  },
+  "toastCopied": {
+    "message": "Αντιγράφηκε ως Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Αδύνατη η αντιγραφή"
+  },
+  "contextMenuTitle": {
+    "message": "προσθήκη στο .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Κάντε κλικ σε στοιχεία για επισήμανση"
+  },
+  "sectionRating": {
+    "message": "Αξιολογήστε την επέκταση"
+  },
+  "ratingHide": {
+    "message": "Απόκρυψη"
   }
 }

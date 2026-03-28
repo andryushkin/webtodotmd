@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: 웹페이지를 Markdown으로 저장",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "선택한 텍스트를 깔끔한 Markdown으로 변환 — 클립보드로 한 번의 클릭.",
+    "message": "웹페이지 HTML을 Markdown으로 변환. md 저장, 복사 또는 텍스트 다운로드가 가능한 강력한 Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown이 여기에 표시됩니다…"
-  },
-  "copiedToday": {
-    "message": "오늘 복사됨:"
   },
   "statusEmpty": {
     "message": "빈 탭"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "페이지의 요소를 클릭하여 강조"
+  },
+  "sectionRating": {
+    "message": "확장 프로그램 평가"
+  },
+  "ratingHide": {
+    "message": "숨기기"
   }
 }

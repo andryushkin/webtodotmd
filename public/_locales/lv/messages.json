@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML uz Markdown konvertēšana",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Pārveidojiet atlasīto tekstu tīrā Markdown formātā — viens klikšķis no atlases līdz starpliktuvei.",
+    "message": "Konvertē tīmekļvietnes HTML uz Markdown. Saglabā kā .md, kopē vai lejupielādē — jaudīgs Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Konvertēt atlasi"
+  },
+  "clear": {
+    "message": "Notīrīt"
+  },
+  "copy": {
+    "message": "Kopēt"
+  },
+  "copied": {
+    "message": "Nokopēts"
+  },
+  "download": {
+    "message": "Lejupielādēt"
+  },
+  "preview": {
+    "message": "Priekšskatījums"
+  },
+  "source": {
+    "message": "Avots"
+  },
+  "highlighterOn": {
+    "message": "Marķieris: ieslēgts"
+  },
+  "highlighterOff": {
+    "message": "Marķieris: izslēgts"
+  },
+  "highlights": {
+    "message": "{1} iezīmējumi — gatavi konvertēšanai"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown parādīsies šeit…"
+  },
+  "statusEmpty": {
+    "message": "Tukša cilne"
+  },
+  "statusRestricted": {
+    "message": "Ierobežota lapa"
+  },
+  "statusLocalFile": {
+    "message": "Lokāls fails"
+  },
+  "statusPdf": {
+    "message": "PDF — nevar konvertēt"
+  },
+  "statusReady": {
+    "message": "Atlasiet tekstu un noklikšķiniet Konvertēt"
+  },
+  "errCannotAccess": {
+    "message": "Nevar piekļūt šai cilnei."
+  },
+  "errCannotInject": {
+    "message": "Nevarēja izveidot savienojumu ar lapu."
+  },
+  "errRestrictedUrl": {
+    "message": "Nevar konvertēt no šīs lapas (ierobežots URL)."
+  },
+  "errTimeout": {
+    "message": "Pieprasījuma laiks beidzās. Mēģiniet vēlreiz."
+  },
+  "errConnect": {
+    "message": "Nevarēja savienoties. Pārlādējiet un mēģiniet vēlreiz."
+  },
+  "errNoHighlights": {
+    "message": "Nav iezīmējumu. Noklikšķiniet uz lapas elementiem."
+  },
+  "errNoSelection": {
+    "message": "Teksts nav atlasīts. Vispirms atlasiet tekstu."
+  },
+  "errConvertFailed": {
+    "message": "Nevarēja konvertēt atlasi."
+  },
+  "successCaptured": {
+    "message": "Konvertēts."
+  },
+  "captureHighlights": {
+    "message": "Konvertēt iezīmējumus ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Iestatījumi"
+  },
+  "settingsH1": {
+    "message": "to .md iestatījumi"
+  },
+  "sectionCapture": {
+    "message": "Konvertēšana"
+  },
+  "sectionDisplay": {
+    "message": "Attēlojums"
+  },
+  "sectionHighlighter": {
+    "message": "Marķieris"
+  },
+  "sectionLanguage": {
+    "message": "Valoda"
+  },
+  "labelAutoMetadata": {
+    "message": "Automātiski pievienot metadatus"
+  },
+  "labelShowBubble": {
+    "message": "Rādīt peldošo pogu, atlasot"
+  },
+  "labelDefaultView": {
+    "message": "Noklusējuma skats"
+  },
+  "labelHighlightColor": {
+    "message": "Iezīmēšanas krāsa"
+  },
+  "labelLanguage": {
+    "message": "Valoda"
+  },
+  "optPreview": {
+    "message": "Priekšskatījums"
+  },
+  "optSource": {
+    "message": "Avots"
+  },
+  "optAuto": {
+    "message": "Automātisks (pārlūka valoda)"
+  },
+  "savedSettings": {
+    "message": "Saglabāts."
+  },
+  "bubbleText": {
+    "message": "pievienot .md"
+  },
+  "toastNoSelection": {
+    "message": "Teksts nav atlasīts"
+  },
+  "toastCopied": {
+    "message": "Nokopēts kā Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Nevarēja kopēt"
+  },
+  "contextMenuTitle": {
+    "message": "pievienot .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Noklikšķiniet uz lapas elementiem iezīmēšanai"
+  },
+  "sectionRating": {
+    "message": "Novērtēt paplašinājumu"
+  },
+  "ratingHide": {
+    "message": "Paslēpt"
   }
 }

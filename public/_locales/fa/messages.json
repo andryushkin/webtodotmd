@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML to Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "متن انتخابی را به Markdown تمیز تبدیل کنید — یک کلیک از انتخاب تا کلیپ‌بورد.",
+    "message": "HTML صفحات وب را به Markdown تبدیل کنید. به‌صورت .md ذخیره، کپی یا دانلود کنید — Web Clipper قوی.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "تبدیل انتخاب"
+  },
+  "clear": {
+    "message": "پاک کردن"
+  },
+  "copy": {
+    "message": "کپی"
+  },
+  "copied": {
+    "message": "کپی شد"
+  },
+  "download": {
+    "message": "دانلود"
+  },
+  "preview": {
+    "message": "پیش‌نمایش"
+  },
+  "source": {
+    "message": "منبع"
+  },
+  "highlighterOn": {
+    "message": "هایلایتر: روشن"
+  },
+  "highlighterOff": {
+    "message": "هایلایتر: خاموش"
+  },
+  "highlights": {
+    "message": "{1} مورد هایلایت — آماده تبدیل"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown اینجا نمایش داده می‌شود…"
+  },
+  "statusEmpty": {
+    "message": "تب خالی"
+  },
+  "statusRestricted": {
+    "message": "صفحه محدود"
+  },
+  "statusLocalFile": {
+    "message": "فایل محلی"
+  },
+  "statusPdf": {
+    "message": "PDF — قابل تبدیل نیست"
+  },
+  "statusReady": {
+    "message": "متن را انتخاب و روی تبدیل کلیک کنید"
+  },
+  "errCannotAccess": {
+    "message": "دسترسی به این تب ممکن نیست."
+  },
+  "errCannotInject": {
+    "message": "اتصال به این صفحه ممکن نشد."
+  },
+  "errRestrictedUrl": {
+    "message": "تبدیل از این صفحه ممکن نیست (URL محدود)."
+  },
+  "errTimeout": {
+    "message": "درخواست منقضی شد. دوباره امتحان کنید."
+  },
+  "errConnect": {
+    "message": "اتصال به صفحه ممکن نشد. بازنشانی و دوباره امتحان کنید."
+  },
+  "errNoHighlights": {
+    "message": "هایلایتی وجود ندارد. روی المان‌های صفحه کلیک کنید."
+  },
+  "errNoSelection": {
+    "message": "متنی انتخاب نشده. ابتدا متن را در صفحه انتخاب کنید."
+  },
+  "errConvertFailed": {
+    "message": "تبدیل انتخاب ممکن نشد."
+  },
+  "successCaptured": {
+    "message": "تبدیل شد."
+  },
+  "captureHighlights": {
+    "message": "تبدیل هایلایت‌ها ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — تنظیمات"
+  },
+  "settingsH1": {
+    "message": "تنظیمات to .md"
+  },
+  "sectionCapture": {
+    "message": "تبدیل"
+  },
+  "sectionDisplay": {
+    "message": "نمایش"
+  },
+  "sectionHighlighter": {
+    "message": "هایلایتر"
+  },
+  "sectionLanguage": {
+    "message": "زبان"
+  },
+  "labelAutoMetadata": {
+    "message": "افزودن خودکار متادیتا هنگام تبدیل"
+  },
+  "labelShowBubble": {
+    "message": "نمایش دکمه شناور هنگام انتخاب متن"
+  },
+  "labelDefaultView": {
+    "message": "حالت نمایش پیش‌فرض"
+  },
+  "labelHighlightColor": {
+    "message": "رنگ هایلایت"
+  },
+  "labelLanguage": {
+    "message": "زبان"
+  },
+  "optPreview": {
+    "message": "پیش‌نمایش"
+  },
+  "optSource": {
+    "message": "منبع"
+  },
+  "optAuto": {
+    "message": "خودکار (زبان مرورگر)"
+  },
+  "savedSettings": {
+    "message": "ذخیره شد."
+  },
+  "bubbleText": {
+    "message": "افزودن به .md"
+  },
+  "toastNoSelection": {
+    "message": "متنی انتخاب نشده"
+  },
+  "toastCopied": {
+    "message": "به‌صورت Markdown کپی شد ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "کپی ممکن نشد"
+  },
+  "contextMenuTitle": {
+    "message": "افزودن به .md"
+  },
+  "statusHighlighterReady": {
+    "message": "برای هایلایت روی المان‌های صفحه کلیک کنید"
+  },
+  "sectionRating": {
+    "message": "به افزونه امتیاز دهید"
+  },
+  "ratingHide": {
+    "message": "پنهان کردن"
   }
 }

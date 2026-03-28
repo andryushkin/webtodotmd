@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML-ൽ നിന്ന് Markdown-ലേക്ക്",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "തിരഞ്ഞെടുത്ത ടെക്സ്റ്റ് ക്ലീൻ Markdown ആക്കി മാറ്റുക — ക്ലിപ്‌ബോർഡിലേക്ക് ഒരു ക്ലിക്ക്.",
+    "message": "വെബ്‌പേജ് HTML, Markdown ആക്കി മാറ്റൂ. .md ആയി സേവ് ചെയ്യൂ, കോപ്പി ചെയ്യൂ അല്ലെങ്കിൽ ഡൗൺലോഡ് ചെയ്യൂ — ശക്തമായ Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "തിരഞ്ഞെടുപ്പ് കൺവേർട്ട് ചെയ്യൂ"
+  },
+  "clear": {
+    "message": "മായ്ക്കൂ"
+  },
+  "copy": {
+    "message": "കോപ്പി ചെയ്യൂ"
+  },
+  "copied": {
+    "message": "കോപ്പി ചെയ്തു"
+  },
+  "download": {
+    "message": "ഡൗൺലോഡ് ചെയ്യൂ"
+  },
+  "preview": {
+    "message": "പ്രിവ്യൂ"
+  },
+  "source": {
+    "message": "സോഴ്‌സ്"
+  },
+  "highlighterOn": {
+    "message": "ഹൈലൈറ്റർ: ഓൺ"
+  },
+  "highlighterOff": {
+    "message": "ഹൈലൈറ്റർ: ഓഫ്"
+  },
+  "highlights": {
+    "message": "{1} ഹൈലൈറ്റുകൾ — കൺവേർട്ട് ചെയ്യാൻ തയ്യാർ"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown ഇവിടെ ദൃശ്യമാകും…"
+  },
+  "statusEmpty": {
+    "message": "ശൂന്യമായ ടാബ്"
+  },
+  "statusRestricted": {
+    "message": "നിയന്ത്രിത പേജ്"
+  },
+  "statusLocalFile": {
+    "message": "ലോക്കൽ ഫയൽ"
+  },
+  "statusPdf": {
+    "message": "PDF — കൺവേർട്ട് ചെയ്യാൻ കഴിയില്ല"
+  },
+  "statusReady": {
+    "message": "ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുത്ത് കൺവേർട്ട് ക്ലിക്ക് ചെയ്യൂ"
+  },
+  "errCannotAccess": {
+    "message": "ഈ ടാബ് ആക്‌സസ് ചെയ്യാൻ കഴിയില്ല."
+  },
+  "errCannotInject": {
+    "message": "ഈ പേജിലേക്ക് കണക്‌ട് ചെയ്യാൻ കഴിഞ്ഞില്ല."
+  },
+  "errRestrictedUrl": {
+    "message": "ഈ പേജിൽ നിന്ന് കൺവേർട്ട് ചെയ്യാൻ കഴിയില്ല (നിയന്ത്രിത URL)."
+  },
+  "errTimeout": {
+    "message": "അഭ്യർഥന സമയം കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കൂ."
+  },
+  "errConnect": {
+    "message": "കണക്‌ട് ചെയ്യാൻ കഴിഞ്ഞില്ല. റീലോഡ് ചെയ്ത് വീണ്ടും ശ്രമിക്കൂ."
+  },
+  "errNoHighlights": {
+    "message": "ഹൈലൈറ്റുകളില്ല. പേജിലെ എലമെന്റുകൾ ക്ലിക്ക് ചെയ്യൂ."
+  },
+  "errNoSelection": {
+    "message": "ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുത്തിട്ടില്ല. ആദ്യം പേജിൽ ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുക്കൂ."
+  },
+  "errConvertFailed": {
+    "message": "തിരഞ്ഞെടുപ്പ് കൺവേർട്ട് ചെയ്യാൻ കഴിഞ്ഞില്ല."
+  },
+  "successCaptured": {
+    "message": "കൺവേർട്ട് ചെയ്തു."
+  },
+  "captureHighlights": {
+    "message": "ഹൈലൈറ്റുകൾ കൺവേർട്ട് ചെയ്യൂ ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — ക്രമീകരണങ്ങൾ"
+  },
+  "settingsH1": {
+    "message": "to .md ക്രമീകരണങ്ങൾ"
+  },
+  "sectionCapture": {
+    "message": "കൺവേർട്ട്"
+  },
+  "sectionDisplay": {
+    "message": "ഡിസ്‌പ്ലേ"
+  },
+  "sectionHighlighter": {
+    "message": "ഹൈലൈറ്റർ"
+  },
+  "sectionLanguage": {
+    "message": "ഭാഷ"
+  },
+  "labelAutoMetadata": {
+    "message": "കൺവേർട്ടിൽ മെറ്റാഡേറ്റ ഓട്ടോ-ആഡ് ചെയ്യൂ"
+  },
+  "labelShowBubble": {
+    "message": "ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുക്കുമ്പോൾ ഫ്ലോട്ടിംഗ് ബട്ടൺ കാണിക്കൂ"
+  },
+  "labelDefaultView": {
+    "message": "ഡിഫോൾട്ട് വ്യൂ മോഡ്"
+  },
+  "labelHighlightColor": {
+    "message": "ഹൈലൈറ്റ് നിറം"
+  },
+  "labelLanguage": {
+    "message": "ഭാഷ"
+  },
+  "optPreview": {
+    "message": "പ്രിവ്യൂ"
+  },
+  "optSource": {
+    "message": "സോഴ്‌സ്"
+  },
+  "optAuto": {
+    "message": "ഓട്ടോ (ബ്രൗസർ ഭാഷ)"
+  },
+  "savedSettings": {
+    "message": "സേവ് ചെയ്തു."
+  },
+  "bubbleText": {
+    "message": ".md-ൽ ചേർക്കൂ"
+  },
+  "toastNoSelection": {
+    "message": "ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുത്തിട്ടില്ല"
+  },
+  "toastCopied": {
+    "message": "Markdown ആയി കോപ്പി ചെയ്തു ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "കോപ്പി ചെയ്യാൻ കഴിഞ്ഞില്ല"
+  },
+  "contextMenuTitle": {
+    "message": ".md-ൽ ചേർക്കൂ"
+  },
+  "statusHighlighterReady": {
+    "message": "ഹൈലൈറ്റ് ചെയ്യാൻ പേജിലെ എലമെന്റുകൾ ക്ലിക്ക് ചെയ്യൂ"
+  },
+  "sectionRating": {
+    "message": "എക്‌സ്‌റ്റൻഷൻ റേറ്റ് ചെയ്യൂ"
+  },
+  "ratingHide": {
+    "message": "മറക്കൂ"
   }
 }

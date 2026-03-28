@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML-ஐ Markdown-ஆக மாற்றுக",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "தேர்ந்தெடுத்த உரையை சுத்தமான Markdown ஆக மாற்றவும் — ஒரு கிளிக்கில் கிளிப்போர்டுக்கு.",
+    "message": "வலைப்பக்க HTML-ஐ Markdown-ஆக மாற்றுக. .md ஆக சேமிக்க, நகலெடுக்க அல்லது பதிவிறக்கு — சக்திவாய்ந்த Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "தேர்வை மாற்று"
+  },
+  "clear": {
+    "message": "அழி"
+  },
+  "copy": {
+    "message": "நகலெடு"
+  },
+  "copied": {
+    "message": "நகலெடுக்கப்பட்டது"
+  },
+  "download": {
+    "message": "பதிவிறக்கு"
+  },
+  "preview": {
+    "message": "முன்னோட்டம்"
+  },
+  "source": {
+    "message": "மூலம்"
+  },
+  "highlighterOn": {
+    "message": "முன்னிலைப்படுத்தி: இயக்கம்"
+  },
+  "highlighterOff": {
+    "message": "முன்னிலைப்படுத்தி: நிறுத்தம்"
+  },
+  "highlights": {
+    "message": "{1} முன்னிலை — மாற்ற தயார்"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown இங்கே தோன்றும்…"
+  },
+  "statusEmpty": {
+    "message": "காலி தாவல்"
+  },
+  "statusRestricted": {
+    "message": "கட்டுப்படுத்தப்பட்ட பக்கம்"
+  },
+  "statusLocalFile": {
+    "message": "உள்ளூர் கோப்பு"
+  },
+  "statusPdf": {
+    "message": "PDF — மாற்ற இயலாது"
+  },
+  "statusReady": {
+    "message": "உரை தேர்ந்தெடுத்து மாற்று என்பதை கிளிக் செய்"
+  },
+  "errCannotAccess": {
+    "message": "இந்த தாவலை அணுக முடியவில்லை."
+  },
+  "errCannotInject": {
+    "message": "இந்த பக்கத்துடன் இணைக்க முடியவில்லை."
+  },
+  "errRestrictedUrl": {
+    "message": "இந்த பக்கத்தில் இருந்து மாற்ற முடியாது (கட்டுப்படுத்தப்பட்ட URL)."
+  },
+  "errTimeout": {
+    "message": "கோரிக்கை கால அவகாசம் முடிந்தது. மீண்டும் முயல்க."
+  },
+  "errConnect": {
+    "message": "இணைக்க முடியவில்லை. மீண்டும் ஏற்றி முயல்க."
+  },
+  "errNoHighlights": {
+    "message": "முன்னிலை இல்லை. பக்க உறுப்புகளை கிளிக் செய்."
+  },
+  "errNoSelection": {
+    "message": "உரை தேர்ந்தெடுக்கப்படவில்லை. முதலில் உரை தேர்ந்தெடு."
+  },
+  "errConvertFailed": {
+    "message": "தேர்வை மாற்ற முடியவில்லை."
+  },
+  "successCaptured": {
+    "message": "மாற்றப்பட்டது."
+  },
+  "captureHighlights": {
+    "message": "முன்னிலைப்படுத்தலை மாற்று ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — அமைப்புகள்"
+  },
+  "settingsH1": {
+    "message": "to .md அமைப்புகள்"
+  },
+  "sectionCapture": {
+    "message": "மாற்று"
+  },
+  "sectionDisplay": {
+    "message": "காட்சி"
+  },
+  "sectionHighlighter": {
+    "message": "முன்னிலைப்படுத்தி"
+  },
+  "sectionLanguage": {
+    "message": "மொழி"
+  },
+  "labelAutoMetadata": {
+    "message": "மாற்றும்போது மெட்டாடேட்டா தானாக சேர்"
+  },
+  "labelShowBubble": {
+    "message": "உரை தேர்வில் மிதக்கும் பொத்தான் காட்டு"
+  },
+  "labelDefaultView": {
+    "message": "இயல்புநிலை காட்சி முறை"
+  },
+  "labelHighlightColor": {
+    "message": "முன்னிலை நிறம்"
+  },
+  "labelLanguage": {
+    "message": "மொழி"
+  },
+  "optPreview": {
+    "message": "முன்னோட்டம்"
+  },
+  "optSource": {
+    "message": "மூலம்"
+  },
+  "optAuto": {
+    "message": "தானாக (உலாவி மொழி)"
+  },
+  "savedSettings": {
+    "message": "சேமிக்கப்பட்டது."
+  },
+  "bubbleText": {
+    "message": ".md-ல் சேர்"
+  },
+  "toastNoSelection": {
+    "message": "உரை தேர்ந்தெடுக்கப்படவில்லை"
+  },
+  "toastCopied": {
+    "message": "Markdown ஆக நகலெடுக்கப்பட்டது ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "நகலெடுக்க முடியவில்லை"
+  },
+  "contextMenuTitle": {
+    "message": ".md-ல் சேர்"
+  },
+  "statusHighlighterReady": {
+    "message": "முன்னிலைப்படுத்த பக்க உறுப்புகளை கிளிக் செய்"
+  },
+  "sectionRating": {
+    "message": "நீட்டிப்பை மதிப்பிடு"
+  },
+  "ratingHide": {
+    "message": "மறை"
   }
 }

@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: ওয়েবপেজ থেকে Markdown-এ রূপান্তর",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "নির্বাচিত টেক্সটকে পরিষ্কার Markdown-এ রূপান্তর করুন — ক্লিপবোর্ডে এক ক্লিকে।",
+    "message": "ওয়েবপেজের HTML, Markdown-এ রূপান্তর করুন। .md হিসেবে সেভ করুন, কপি বা ডাউনলোড করুন — শক্তিশালী Web Clipper।",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "নির্বাচন রূপান্তর করুন"
+  },
+  "clear": {
+    "message": "মুছুন"
+  },
+  "copy": {
+    "message": "কপি করুন"
+  },
+  "copied": {
+    "message": "কপি হয়েছে"
+  },
+  "download": {
+    "message": "ডাউনলোড করুন"
+  },
+  "preview": {
+    "message": "প্রিভিউ"
+  },
+  "source": {
+    "message": "সোর্স"
+  },
+  "highlighterOn": {
+    "message": "হাইলাইটার: চালু"
+  },
+  "highlighterOff": {
+    "message": "হাইলাইটার: বন্ধ"
+  },
+  "highlights": {
+    "message": "{1}টি হাইলাইট — রূপান্তরের জন্য প্রস্তুত"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown এখানে দেখাবে…"
+  },
+  "statusEmpty": {
+    "message": "খালি ট্যাব"
+  },
+  "statusRestricted": {
+    "message": "সীমাবদ্ধ পেজ"
+  },
+  "statusLocalFile": {
+    "message": "লোকাল ফাইল"
+  },
+  "statusPdf": {
+    "message": "PDF — রূপান্তর সম্ভব নয়"
+  },
+  "statusReady": {
+    "message": "টেক্সট নির্বাচন করুন এবং রূপান্তর করুন ক্লিক করুন"
+  },
+  "errCannotAccess": {
+    "message": "এই ট্যাবে প্রবেশ করা যাচ্ছে না।"
+  },
+  "errCannotInject": {
+    "message": "এই পেজে সংযোগ করা যায়নি।"
+  },
+  "errRestrictedUrl": {
+    "message": "এই পেজ থেকে রূপান্তর সম্ভব নয় (সীমাবদ্ধ URL)।"
+  },
+  "errTimeout": {
+    "message": "অনুরোধের সময় শেষ। আবার চেষ্টা করুন।"
+  },
+  "errConnect": {
+    "message": "পেজে সংযোগ হয়নি। রিলোড করে আবার চেষ্টা করুন।"
+  },
+  "errNoHighlights": {
+    "message": "কোনো হাইলাইট নেই। পেজের উপাদানে ক্লিক করুন।"
+  },
+  "errNoSelection": {
+    "message": "কোনো টেক্সট নির্বাচিত নয়। প্রথমে পেজে টেক্সট নির্বাচন করুন।"
+  },
+  "errConvertFailed": {
+    "message": "নির্বাচন রূপান্তর করা যায়নি।"
+  },
+  "successCaptured": {
+    "message": "রূপান্তর হয়েছে।"
+  },
+  "captureHighlights": {
+    "message": "হাইলাইট রূপান্তর করুন ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — সেটিংস"
+  },
+  "settingsH1": {
+    "message": "to .md সেটিংস"
+  },
+  "sectionCapture": {
+    "message": "রূপান্তর"
+  },
+  "sectionDisplay": {
+    "message": "ডিসপ্লে"
+  },
+  "sectionHighlighter": {
+    "message": "হাইলাইটার"
+  },
+  "sectionLanguage": {
+    "message": "ভাষা"
+  },
+  "labelAutoMetadata": {
+    "message": "রূপান্তরে স্বয়ংক্রিয়ভাবে মেটাডেটা যোগ করুন"
+  },
+  "labelShowBubble": {
+    "message": "টেক্সট নির্বাচনে ফ্লোটিং বাটন দেখান"
+  },
+  "labelDefaultView": {
+    "message": "ডিফল্ট ভিউ মোড"
+  },
+  "labelHighlightColor": {
+    "message": "হাইলাইট রঙ"
+  },
+  "labelLanguage": {
+    "message": "ভাষা"
+  },
+  "optPreview": {
+    "message": "প্রিভিউ"
+  },
+  "optSource": {
+    "message": "সোর্স"
+  },
+  "optAuto": {
+    "message": "স্বয়ংক্রিয় (ব্রাউজার ভাষা)"
+  },
+  "savedSettings": {
+    "message": "সেভ হয়েছে।"
+  },
+  "bubbleText": {
+    "message": ".md-এ যোগ করুন"
+  },
+  "toastNoSelection": {
+    "message": "কোনো টেক্সট নির্বাচিত নয়"
+  },
+  "toastCopied": {
+    "message": "Markdown হিসেবে কপি হয়েছে ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "কপি করা যায়নি"
+  },
+  "contextMenuTitle": {
+    "message": ".md-এ যোগ করুন"
+  },
+  "statusHighlighterReady": {
+    "message": "হাইলাইটের জন্য পেজের উপাদানে ক্লিক করুন"
+  },
+  "sectionRating": {
+    "message": "এক্সটেনশন রেট করুন"
+  },
+  "ratingHide": {
+    "message": "লুকান"
   }
 }

@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML към Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Конвертирайте избрания текст в чист Markdown — едно кликване от избора до клипборда.",
+    "message": "Конвертирайте HTML на уебстраници в Markdown. Запазете като .md, копирайте или изтеглете текст с този мощен Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Копирай избраното"
+  },
+  "clear": {
+    "message": "Изчисти"
+  },
+  "copy": {
+    "message": "Копирай"
+  },
+  "copied": {
+    "message": "Копирано"
+  },
+  "download": {
+    "message": "Изтегли"
+  },
+  "preview": {
+    "message": "Преглед"
+  },
+  "source": {
+    "message": "Изходен код"
+  },
+  "highlighterOn": {
+    "message": "Маркерът е вкл."
+  },
+  "highlighterOff": {
+    "message": "Маркерът е изкл."
+  },
+  "highlights": {
+    "message": "Маркирани: {1} — готово"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown ще се появи тук…"
+  },
+  "statusEmpty": {
+    "message": "Празен раздел"
+  },
+  "statusRestricted": {
+    "message": "Ограничена страница"
+  },
+  "statusLocalFile": {
+    "message": "Локален файл"
+  },
+  "statusPdf": {
+    "message": "PDF — копирането е невъзможно"
+  },
+  "statusReady": {
+    "message": "Избери текст и натисни Копирай"
+  },
+  "errCannotAccess": {
+    "message": "Достъп до раздела е невъзможен."
+  },
+  "errCannotInject": {
+    "message": "Не може да се свърже с тази страница."
+  },
+  "errRestrictedUrl": {
+    "message": "Копиране от тази страница е невъзможно (ограничен URL)."
+  },
+  "errTimeout": {
+    "message": "Заявката изтече. Опитай отново."
+  },
+  "errConnect": {
+    "message": "Няма връзка. Презареди страницата и опитай отново."
+  },
+  "errNoHighlights": {
+    "message": "Нищо не е маркирано. Кликни върху елементи на страницата."
+  },
+  "errNoSelection": {
+    "message": "Не е избран текст. Първо избери текст на страницата."
+  },
+  "errConvertFailed": {
+    "message": "Изборът не може да се конвертира."
+  },
+  "successCaptured": {
+    "message": "Готово."
+  },
+  "captureHighlights": {
+    "message": "Копирай маркираните ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Настройки"
+  },
+  "settingsH1": {
+    "message": "Настройки to .md"
+  },
+  "sectionCapture": {
+    "message": "Копиране"
+  },
+  "sectionDisplay": {
+    "message": "Изглед"
+  },
+  "sectionHighlighter": {
+    "message": "Маркер"
+  },
+  "sectionLanguage": {
+    "message": "Език"
+  },
+  "labelAutoMetadata": {
+    "message": "Автоматично добавяне на метаданни"
+  },
+  "labelShowBubble": {
+    "message": "Показвай бутон при избор на текст"
+  },
+  "labelDefaultView": {
+    "message": "Изглед по подразбиране"
+  },
+  "labelHighlightColor": {
+    "message": "Цвят на маркиране"
+  },
+  "labelLanguage": {
+    "message": "Език"
+  },
+  "optPreview": {
+    "message": "Преглед"
+  },
+  "optSource": {
+    "message": "Изходен код"
+  },
+  "optAuto": {
+    "message": "Авто (език на браузъра)"
+  },
+  "savedSettings": {
+    "message": "Запазено."
+  },
+  "bubbleText": {
+    "message": "добави в .md"
+  },
+  "toastNoSelection": {
+    "message": "Не е избран текст"
+  },
+  "toastCopied": {
+    "message": "Копирано като Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Копирането не успя"
+  },
+  "contextMenuTitle": {
+    "message": "добави в .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Кликни върху елементи на страницата"
+  },
+  "sectionRating": {
+    "message": "Оцени разширението"
+  },
+  "ratingHide": {
+    "message": "Скрий"
   }
 }

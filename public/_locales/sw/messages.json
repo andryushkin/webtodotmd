@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Hubadilisha HTML hadi Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Geuza maandishi yaliyochaguliwa kuwa Markdown safi — bonyeza mara moja kutoka kwa uteuzi hadi ubao wa kunakili.",
+    "message": "Badilisha HTML ya wavuti hadi Markdown. Hifadhi kama .md, nakili au pakua — Web Clipper yenye nguvu.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Badilisha uteuzi"
+  },
+  "clear": {
+    "message": "Futa"
+  },
+  "copy": {
+    "message": "Nakili"
+  },
+  "copied": {
+    "message": "Imenakiliwa"
+  },
+  "download": {
+    "message": "Pakua"
+  },
+  "preview": {
+    "message": "Onyesho la awali"
+  },
+  "source": {
+    "message": "Chanzo"
+  },
+  "highlighterOn": {
+    "message": "Kiboreshaji: washa"
+  },
+  "highlighterOff": {
+    "message": "Kiboreshaji: zima"
+  },
+  "highlights": {
+    "message": "{1} zilizowekwa alama — tayari kubadilisha"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown itaonekana hapa…"
+  },
+  "statusEmpty": {
+    "message": "Kichupo tupu"
+  },
+  "statusRestricted": {
+    "message": "Ukurasa uliozuiliwa"
+  },
+  "statusLocalFile": {
+    "message": "Faili la ndani"
+  },
+  "statusPdf": {
+    "message": "PDF — haiwezi kubadilishwa"
+  },
+  "statusReady": {
+    "message": "Chagua maandishi na ubonyeze Badilisha"
+  },
+  "errCannotAccess": {
+    "message": "Haiwezekani kufikia kichupo hiki."
+  },
+  "errCannotInject": {
+    "message": "Haikuweza kuunganisha na ukurasa huu."
+  },
+  "errRestrictedUrl": {
+    "message": "Haiwezekani kubadilisha kutoka ukurasa huu (URL iliyozuiliwa)."
+  },
+  "errTimeout": {
+    "message": "Ombi limeisha muda. Jaribu tena."
+  },
+  "errConnect": {
+    "message": "Haikuweza kuunganisha. Pakia upya na ujaribu tena."
+  },
+  "errNoHighlights": {
+    "message": "Hakuna alama. Bonyeza vipengele kwenye ukurasa."
+  },
+  "errNoSelection": {
+    "message": "Hakuna maandishi yaliyochaguliwa. Chagua kwanza."
+  },
+  "errConvertFailed": {
+    "message": "Haikuweza kubadilisha uteuzi."
+  },
+  "successCaptured": {
+    "message": "Imebadilishwa."
+  },
+  "captureHighlights": {
+    "message": "Badilisha vipengele ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Mipangilio"
+  },
+  "settingsH1": {
+    "message": "Mipangilio to .md"
+  },
+  "sectionCapture": {
+    "message": "Badilisha"
+  },
+  "sectionDisplay": {
+    "message": "Onyesho"
+  },
+  "sectionHighlighter": {
+    "message": "Kiboreshaji"
+  },
+  "sectionLanguage": {
+    "message": "Lugha"
+  },
+  "labelAutoMetadata": {
+    "message": "Ongeza metadata otomatiki"
+  },
+  "labelShowBubble": {
+    "message": "Onyesha kitufe kinachoelea wakati wa uteuzi"
+  },
+  "labelDefaultView": {
+    "message": "Hali ya mwonekano wa chaguo-msingi"
+  },
+  "labelHighlightColor": {
+    "message": "Rangi ya kuonyesha"
+  },
+  "labelLanguage": {
+    "message": "Lugha"
+  },
+  "optPreview": {
+    "message": "Onyesho la awali"
+  },
+  "optSource": {
+    "message": "Chanzo"
+  },
+  "optAuto": {
+    "message": "Otomatiki (lugha ya kivinjari)"
+  },
+  "savedSettings": {
+    "message": "Imehifadhiwa."
+  },
+  "bubbleText": {
+    "message": "ongeza kwa .md"
+  },
+  "toastNoSelection": {
+    "message": "Hakuna maandishi yaliyochaguliwa"
+  },
+  "toastCopied": {
+    "message": "Imenakiliwa kama Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Haikuweza kunakili"
+  },
+  "contextMenuTitle": {
+    "message": "ongeza kwa .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Bonyeza vipengele kwenye ukurasa kuweka alama"
+  },
+  "sectionRating": {
+    "message": "Kadiria ugani huu"
+  },
+  "ratingHide": {
+    "message": "Ficha"
   }
 }

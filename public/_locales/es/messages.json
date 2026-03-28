@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: Web Clipper HTML a Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Convierte el texto seleccionado a Markdown limpio — un clic desde la selección al portapapeles.",
+    "message": "Convierte el HTML de páginas web a Markdown. Guarda como md, copia o descarga texto con este potente Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "El Markdown aparecerá aquí…"
-  },
-  "copiedToday": {
-    "message": "Copiado hoy:"
   },
   "statusEmpty": {
     "message": "Pestaña vacía"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "Haz clic en los elementos de la página para resaltarlos"
+  },
+  "sectionRating": {
+    "message": "Valorar esta extensión"
+  },
+  "ratingHide": {
+    "message": "Ocultar"
   }
 }

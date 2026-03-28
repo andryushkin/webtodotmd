@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: ウェブページをMarkdownに変換",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "選択したテキストをクリーンなMarkdownに変換 — ワンクリックでクリップボードへ。",
+    "message": "ウェブページのHTMLをMarkdownに変換。md保存、コピー、またはダウンロードができる強力なWeb Clipper。",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdownがここに表示されます…"
-  },
-  "copiedToday": {
-    "message": "今日のコピー数:"
   },
   "statusEmpty": {
     "message": "空のタブ"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "ページの要素をクリックしてハイライト"
+  },
+  "sectionRating": {
+    "message": "拡張機能を評価する"
+  },
+  "ratingHide": {
+    "message": "非表示"
   }
 }

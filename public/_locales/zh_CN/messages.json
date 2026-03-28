@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML to Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "将选中文字转换为整洁的 Markdown — 一键从选择到剪贴板。",
+    "message": "将网页 HTML 转换为 Markdown。保存为 .md、复制或下载 — 强大的 Web Clipper。",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "转换选中内容"
+  },
+  "clear": {
+    "message": "清空"
+  },
+  "copy": {
+    "message": "复制"
+  },
+  "copied": {
+    "message": "已复制"
+  },
+  "download": {
+    "message": "下载"
+  },
+  "preview": {
+    "message": "预览"
+  },
+  "source": {
+    "message": "源码"
+  },
+  "highlighterOn": {
+    "message": "高亮：开启"
+  },
+  "highlighterOff": {
+    "message": "高亮：关闭"
+  },
+  "highlights": {
+    "message": "已高亮 {1} 个 — 可转换"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown 将显示在此处…"
+  },
+  "statusEmpty": {
+    "message": "空白标签页"
+  },
+  "statusRestricted": {
+    "message": "受限页面"
+  },
+  "statusLocalFile": {
+    "message": "本地文件"
+  },
+  "statusPdf": {
+    "message": "PDF — 无法转换"
+  },
+  "statusReady": {
+    "message": "选中文本，点击转换"
+  },
+  "errCannotAccess": {
+    "message": "无法访问此标签页。"
+  },
+  "errCannotInject": {
+    "message": "无法连接到此页面。"
+  },
+  "errRestrictedUrl": {
+    "message": "无法从此页面转换（受限 URL）。"
+  },
+  "errTimeout": {
+    "message": "请求超时。请重试。"
+  },
+  "errConnect": {
+    "message": "无法连接到页面。请重新加载后重试。"
+  },
+  "errNoHighlights": {
+    "message": "未高亮任何内容。请在页面上点击元素进行高亮。"
+  },
+  "errNoSelection": {
+    "message": "未选中文本。请先在页面上选中文本。"
+  },
+  "errConvertFailed": {
+    "message": "无法转换选中内容。"
+  },
+  "successCaptured": {
+    "message": "已转换。"
+  },
+  "captureHighlights": {
+    "message": "转换高亮内容 ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — 设置"
+  },
+  "settingsH1": {
+    "message": "to .md 设置"
+  },
+  "sectionCapture": {
+    "message": "转换"
+  },
+  "sectionDisplay": {
+    "message": "显示"
+  },
+  "sectionHighlighter": {
+    "message": "高亮工具"
+  },
+  "sectionLanguage": {
+    "message": "语言"
+  },
+  "labelAutoMetadata": {
+    "message": "转换时自动添加元数据"
+  },
+  "labelShowBubble": {
+    "message": "选中文本时显示浮动按钮"
+  },
+  "labelDefaultView": {
+    "message": "默认视图模式"
+  },
+  "labelHighlightColor": {
+    "message": "高亮颜色"
+  },
+  "labelLanguage": {
+    "message": "语言"
+  },
+  "optPreview": {
+    "message": "预览"
+  },
+  "optSource": {
+    "message": "源码"
+  },
+  "optAuto": {
+    "message": "自动（跟随浏览器语言）"
+  },
+  "savedSettings": {
+    "message": "已保存。"
+  },
+  "bubbleText": {
+    "message": "添加到 .md"
+  },
+  "toastNoSelection": {
+    "message": "未选中文本"
+  },
+  "toastCopied": {
+    "message": "已复制为 Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "无法复制"
+  },
+  "contextMenuTitle": {
+    "message": "添加到 .md"
+  },
+  "statusHighlighterReady": {
+    "message": "点击页面上的元素进行高亮"
+  },
+  "sectionRating": {
+    "message": "为扩展评分"
+  },
+  "ratingHide": {
+    "message": "隐藏"
   }
 }

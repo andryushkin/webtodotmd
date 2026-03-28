@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML у Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Конвертуйте виділений текст у чистий Markdown — один клік від виділення до буфера обміну.",
+    "message": "Конвертуйте HTML веб-сторінок у Markdown. Зберігайте як .md, копіюйте або завантажуйте текст — потужний Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Копіювати виділене"
+  },
+  "clear": {
+    "message": "Очистити"
+  },
+  "copy": {
+    "message": "Копіювати"
+  },
+  "copied": {
+    "message": "Скопійовано"
+  },
+  "download": {
+    "message": "Завантажити"
+  },
+  "preview": {
+    "message": "Перегляд"
+  },
+  "source": {
+    "message": "Джерело"
+  },
+  "highlighterOn": {
+    "message": "Маркер увімк."
+  },
+  "highlighterOff": {
+    "message": "Маркер вимк."
+  },
+  "highlights": {
+    "message": "Виділено: {1} — готово до копіювання"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown з'явиться тут…"
+  },
+  "statusEmpty": {
+    "message": "Порожня вкладка"
+  },
+  "statusRestricted": {
+    "message": "Сторінка недоступна"
+  },
+  "statusLocalFile": {
+    "message": "Локальний файл"
+  },
+  "statusPdf": {
+    "message": "PDF — копіювання неможливе"
+  },
+  "statusReady": {
+    "message": "Виділіть текст і натисніть Копіювати"
+  },
+  "errCannotAccess": {
+    "message": "Немає доступу до цієї вкладки."
+  },
+  "errCannotInject": {
+    "message": "Не вдалося підключитися до сторінки."
+  },
+  "errRestrictedUrl": {
+    "message": "Копіювання з цієї сторінки неможливе (обмежений URL)."
+  },
+  "errTimeout": {
+    "message": "Час очікування вичерпано. Спробуйте ще раз."
+  },
+  "errConnect": {
+    "message": "Немає зв'язку зі сторінкою. Оновіть і спробуйте ще раз."
+  },
+  "errNoHighlights": {
+    "message": "Нічого не виділено. Клікніть на елементи сторінки."
+  },
+  "errNoSelection": {
+    "message": "Текст не виділений. Спочатку виділіть текст."
+  },
+  "errConvertFailed": {
+    "message": "Не вдалося конвертувати виділення."
+  },
+  "successCaptured": {
+    "message": "Готово."
+  },
+  "captureHighlights": {
+    "message": "Копіювати виділене ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Налаштування"
+  },
+  "settingsH1": {
+    "message": "Налаштування to .md"
+  },
+  "sectionCapture": {
+    "message": "Копіювання"
+  },
+  "sectionDisplay": {
+    "message": "Відображення"
+  },
+  "sectionHighlighter": {
+    "message": "Маркер"
+  },
+  "sectionLanguage": {
+    "message": "Мова"
+  },
+  "labelAutoMetadata": {
+    "message": "Автоматично додавати метадані"
+  },
+  "labelShowBubble": {
+    "message": "Показувати кнопку при виділенні тексту"
+  },
+  "labelDefaultView": {
+    "message": "Режим перегляду за замовчуванням"
+  },
+  "labelHighlightColor": {
+    "message": "Колір виділення"
+  },
+  "labelLanguage": {
+    "message": "Мова"
+  },
+  "optPreview": {
+    "message": "Перегляд"
+  },
+  "optSource": {
+    "message": "Джерело"
+  },
+  "optAuto": {
+    "message": "Авто (мова браузера)"
+  },
+  "savedSettings": {
+    "message": "Збережено."
+  },
+  "bubbleText": {
+    "message": "додати в .md"
+  },
+  "toastNoSelection": {
+    "message": "Текст не виділений"
+  },
+  "toastCopied": {
+    "message": "Скопійовано як Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Не вдалося скопіювати"
+  },
+  "contextMenuTitle": {
+    "message": "додати в .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Клікайте по елементах для виділення"
+  },
+  "sectionRating": {
+    "message": "Оцініть розширення"
+  },
+  "ratingHide": {
+    "message": "Сховати"
   }
 }

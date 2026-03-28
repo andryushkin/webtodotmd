@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML Markdowniks teisendamine",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Teisenda valitud tekst puhtaks Markdown-iks — ühe klikiga valikust lõikelaudale.",
+    "message": "Teisenda veebilehe HTML Markdowniks. Salvesta .md-failina, kopeeri või laadi alla — võimas Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Teisenda valik"
+  },
+  "clear": {
+    "message": "Tühjenda"
+  },
+  "copy": {
+    "message": "Kopeeri"
+  },
+  "copied": {
+    "message": "Kopeeritud"
+  },
+  "download": {
+    "message": "Laadi alla"
+  },
+  "preview": {
+    "message": "Eelvaade"
+  },
+  "source": {
+    "message": "Lähtekood"
+  },
+  "highlighterOn": {
+    "message": "Marker: sisse"
+  },
+  "highlighterOff": {
+    "message": "Marker: välja"
+  },
+  "highlights": {
+    "message": "{1} esiletõstet — valmis teisendamiseks"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown ilmub siia…"
+  },
+  "statusEmpty": {
+    "message": "Tühi vahekaart"
+  },
+  "statusRestricted": {
+    "message": "Piiratud leht"
+  },
+  "statusLocalFile": {
+    "message": "Kohalik fail"
+  },
+  "statusPdf": {
+    "message": "PDF — ei saa teisendada"
+  },
+  "statusReady": {
+    "message": "Vali tekst ja klõpsa Teisenda"
+  },
+  "errCannotAccess": {
+    "message": "Sellele vahekaardile ei pääse ligi."
+  },
+  "errCannotInject": {
+    "message": "Ei saanud lehega ühendust."
+  },
+  "errRestrictedUrl": {
+    "message": "Sellelt lehelt ei saa teisendada (piiratud URL)."
+  },
+  "errTimeout": {
+    "message": "Aegumine. Proovi uuesti."
+  },
+  "errConnect": {
+    "message": "Ei saanud ühendust. Laadi leht uuesti ja proovi."
+  },
+  "errNoHighlights": {
+    "message": "Esiletõsteid pole. Klõpsa lehel elementidel."
+  },
+  "errNoSelection": {
+    "message": "Teksti pole valitud. Vali esmalt lehel tekst."
+  },
+  "errConvertFailed": {
+    "message": "Valikut ei saanud teisendada."
+  },
+  "successCaptured": {
+    "message": "Teisendatud."
+  },
+  "captureHighlights": {
+    "message": "Teisenda esiletõsted ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Sätted"
+  },
+  "settingsH1": {
+    "message": "to .md sätted"
+  },
+  "sectionCapture": {
+    "message": "Teisendamine"
+  },
+  "sectionDisplay": {
+    "message": "Kuvamine"
+  },
+  "sectionHighlighter": {
+    "message": "Marker"
+  },
+  "sectionLanguage": {
+    "message": "Keel"
+  },
+  "labelAutoMetadata": {
+    "message": "Lisa metaandmed automaatselt"
+  },
+  "labelShowBubble": {
+    "message": "Näita hõljuvat nuppu valimisel"
+  },
+  "labelDefaultView": {
+    "message": "Vaikevaade"
+  },
+  "labelHighlightColor": {
+    "message": "Esiletõste värv"
+  },
+  "labelLanguage": {
+    "message": "Keel"
+  },
+  "optPreview": {
+    "message": "Eelvaade"
+  },
+  "optSource": {
+    "message": "Lähtekood"
+  },
+  "optAuto": {
+    "message": "Automaatne (brauseri keel)"
+  },
+  "savedSettings": {
+    "message": "Salvestatud."
+  },
+  "bubbleText": {
+    "message": "lisa .md-i"
+  },
+  "toastNoSelection": {
+    "message": "Teksti pole valitud"
+  },
+  "toastCopied": {
+    "message": "Kopeeritud Markdownina ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Ei saanud kopeerida"
+  },
+  "contextMenuTitle": {
+    "message": "lisa .md-i"
+  },
+  "statusHighlighterReady": {
+    "message": "Esiletõstmiseks klõpsa lehel elementidel"
+  },
+  "sectionRating": {
+    "message": "Hinda laiendust"
+  },
+  "ratingHide": {
+    "message": "Peida"
   }
 }

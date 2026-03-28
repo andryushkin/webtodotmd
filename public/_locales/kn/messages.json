@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: ವೆಬ್ HTML ಅನ್ನು Markdown ಗೆ ಬದಲಾಯಿಸಿ",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "ಆಯ್ಕೆ ಮಾಡಿದ ಪಠ್ಯವನ್ನು ಸ್ವಚ್ಛ Markdown ಗೆ ಪರಿವರ್ತಿಸಿ — ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ಒಂದು ಕ್ಲಿಕ್.",
+    "message": "ವೆಬ್‌ಪೇಜ್ HTML ಅನ್ನು Markdown ಗೆ ಬದಲಾಯಿಸಿ. .md ಆಗಿ ಉಳಿಸಿ, ನಕಲಿಸಿ ಅಥವಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ — ಶಕ್ತಿಶಾಲಿ Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "ಆಯ್ಕೆ ಪರಿವರ್ತಿಸಿ"
+  },
+  "clear": {
+    "message": "ತೆರವುಗೊಳಿಸಿ"
+  },
+  "copy": {
+    "message": "ನಕಲಿಸಿ"
+  },
+  "copied": {
+    "message": "ನಕಲಿಸಲಾಗಿದೆ"
+  },
+  "download": {
+    "message": "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  },
+  "preview": {
+    "message": "ಮುನ್ನೋಟ"
+  },
+  "source": {
+    "message": "ಮೂಲ"
+  },
+  "highlighterOn": {
+    "message": "ಹೈಲೈಟರ್: ಆನ್"
+  },
+  "highlighterOff": {
+    "message": "ಹೈಲೈಟರ್: ಆಫ್"
+  },
+  "highlights": {
+    "message": "{1} ಹೈಲೈಟ್‌ಗಳು — ಪರಿವರ್ತಿಸಲು ಸಿದ್ಧ"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ…"
+  },
+  "statusEmpty": {
+    "message": "ಖಾಲಿ ಟ್ಯಾಬ್"
+  },
+  "statusRestricted": {
+    "message": "ನಿರ್ಬಂಧಿತ ಪುಟ"
+  },
+  "statusLocalFile": {
+    "message": "ಸ್ಥಳೀಯ ಫೈಲ್"
+  },
+  "statusPdf": {
+    "message": "PDF — ಪರಿವರ್ತಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
+  },
+  "statusReady": {
+    "message": "ಪಠ್ಯ ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಪರಿವರ್ತಿಸಿ ಕ್ಲಿಕ್ ಮಾಡಿ"
+  },
+  "errCannotAccess": {
+    "message": "ಈ ಟ್ಯಾಬ್ ಪ್ರವೇಶಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ."
+  },
+  "errCannotInject": {
+    "message": "ಈ ಪುಟಕ್ಕೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ."
+  },
+  "errRestrictedUrl": {
+    "message": "ಈ ಪುಟದಿಂದ ಪರಿವರ್ತಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ (ನಿರ್ಬಂಧಿತ URL)."
+  },
+  "errTimeout": {
+    "message": "ವಿನಂತಿ ಸಮಯ ಮೀರಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  },
+  "errConnect": {
+    "message": "ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ. ಮರುಲೋಡ್ ಮಾಡಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  },
+  "errNoHighlights": {
+    "message": "ಹೈಲೈಟ್ ಇಲ್ಲ. ಪುಟದಲ್ಲಿ ಅಂಶಗಳ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ."
+  },
+  "errNoSelection": {
+    "message": "ಪಠ್ಯ ಆಯ್ಕೆಯಾಗಿಲ್ಲ. ಮೊದಲು ಪಠ್ಯ ಆಯ್ಕೆಮಾಡಿ."
+  },
+  "errConvertFailed": {
+    "message": "ಆಯ್ಕೆ ಪರಿವರ್ತಿಸಲಾಗಲಿಲ್ಲ."
+  },
+  "successCaptured": {
+    "message": "ಪರಿವರ್ತಿಸಲಾಗಿದೆ."
+  },
+  "captureHighlights": {
+    "message": "ಹೈಲೈಟ್‌ಗಳನ್ನು ಪರಿವರ್ತಿಸಿ ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
+  },
+  "settingsH1": {
+    "message": "to .md ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
+  },
+  "sectionCapture": {
+    "message": "ಪರಿವರ್ತನೆ"
+  },
+  "sectionDisplay": {
+    "message": "ಪ್ರದರ್ಶನ"
+  },
+  "sectionHighlighter": {
+    "message": "ಹೈಲೈಟರ್"
+  },
+  "sectionLanguage": {
+    "message": "ಭಾಷೆ"
+  },
+  "labelAutoMetadata": {
+    "message": "ಪರಿವರ್ತನೆಯಲ್ಲಿ ಮೆಟಾಡೇಟಾ ಸ್ವಯಂ-ಸೇರಿಸಿ"
+  },
+  "labelShowBubble": {
+    "message": "ಪಠ್ಯ ಆಯ್ಕೆಯಲ್ಲಿ ತೇಲುವ ಬಟನ್ ತೋರಿಸಿ"
+  },
+  "labelDefaultView": {
+    "message": "ಡೀಫಾಲ್ಟ್ ವೀಕ್ಷಣಾ ಮೋಡ್"
+  },
+  "labelHighlightColor": {
+    "message": "ಹೈಲೈಟ್ ಬಣ್ಣ"
+  },
+  "labelLanguage": {
+    "message": "ಭಾಷೆ"
+  },
+  "optPreview": {
+    "message": "ಮುನ್ನೋಟ"
+  },
+  "optSource": {
+    "message": "ಮೂಲ"
+  },
+  "optAuto": {
+    "message": "ಸ್ವಯಂ (ಬ್ರೌಸರ್ ಭಾಷೆ)"
+  },
+  "savedSettings": {
+    "message": "ಉಳಿಸಲಾಗಿದೆ."
+  },
+  "bubbleText": {
+    "message": ".md ಗೆ ಸೇರಿಸಿ"
+  },
+  "toastNoSelection": {
+    "message": "ಪಠ್ಯ ಆಯ್ಕೆಯಾಗಿಲ್ಲ"
+  },
+  "toastCopied": {
+    "message": "Markdown ಆಗಿ ನಕಲಿಸಲಾಗಿದೆ ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "ನಕಲಿಸಲಾಗಲಿಲ್ಲ"
+  },
+  "contextMenuTitle": {
+    "message": ".md ಗೆ ಸೇರಿಸಿ"
+  },
+  "statusHighlighterReady": {
+    "message": "ಹೈಲೈಟ್ ಮಾಡಲು ಪುಟದ ಅಂಶಗಳ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ"
+  },
+  "sectionRating": {
+    "message": "ವಿಸ್ತರಣೆಯನ್ನು ರೇಟ್ ಮಾಡಿ"
+  },
+  "ratingHide": {
+    "message": "ಮರೆಮಾಡಿ"
   }
 }

@@ -112,7 +112,7 @@ Chrome Extension для захвата выделений со страниц в
 
 ## i18n (v1.0)
 
-- `public/_locales/<code>/messages.json` — 52 языка; ключи `appName` + `appDescription`
+- `public/_locales/<code>/messages.json` — 52 языка (+ en = 53 директории); **51 ключ** на каждую локаль (полный UI + настройки + рейтинг)
 - `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
 - **`_locales/` ДОЛЖЕН быть в `public/`** — `build.sh` делает `cp -r public/* dist/`; корневой `_locales/` не попадёт в dist
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
@@ -122,13 +122,16 @@ Chrome Extension для захвата выделений со страниц в
 - **Service Worker** импортирует `t, initI18n`; при смене языка пересоздаёт context menu (`removeAll` + `create`) и пишет переводы в `chrome.storage.local` (ключ `contentI18n`)
 - **Content Script** НЕ импортирует `i18n.ts` (fetch locale файлов ненадёжен в content scripts); получает переводы из `chrome.storage.local` → `contentI18n`, записанные service worker-ом
 - ⚠️ **Не использовать `chrome.runtime.sendMessage` для передачи данных service worker → content script** — `onMessage` listeners в side panel и service worker конфликтуют; использовать `chrome.storage.local`
+- **Локали — полный список:** `ar, bg, bn, ca, cs, da, de, el, es, es_419, et, fa, fi, fil, fr, gu, he, hi, hr, hu, id, it, ja, kn, ko, lt, lv, ml, mr, ms, nl, no, pl, pt_BR, pt_PT, ro, ru, sk, sl, sr, sv, sw, ta, te, th, tr, uk, vi, zh_CN, zh_TW, am` (52 + en)
+- **Проверка полноты:** `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
+- **⚠️ Проверка смысла appDescription:** наличие ключа не гарантирует правильный перевод — 9 локалей (bg, cs, hr, pl, ro, sk, sl, sr, uk) имели неверный текст вместо перевода EN-описания. При аудите: вывести `appDescription.message` для всех локалей и сравнить со смыслом EN.
 - **RTL-поддержка:** `RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])` в `i18n.ts`; `applyI18n()` ставит `dir="rtl"` на `<html>` для любой RTL-локали; контентные области (`#preview-rendered`, `#preview-source`) имеют `dir="auto"` — браузер автоопределяет направление захваченного текста; в CSS использовать logical properties (`border-inline-start`, `padding-inline-start`, `text-align: start`) вместо `left`/`right`
 
 ## Welcome & Changelog pages
 
 - При установке (`reason === 'install'`) → `https://2md.site/<locale>/welcome`
 - При обновлении → `https://2md.site/<locale>/changelog` (только если `SHOW_CHANGELOG_ON_UPDATE = true` в `service-worker.ts`)
-- Локаль: `chrome.i18n.getUILanguage()` с нормализацией; fallback → `en`; спец-кейсы: `pt-*→pt-PT`, `nb/nn→no`
+- Локаль: `chrome.i18n.getUILanguage()` с нормализацией; fallback → `en`; спец-кейсы: `pt-PT→pt_PT`, `pt-BR/pt→pt_BR`, `zh-TW→zh_TW`, `zh→zh_CN`, `nb/nn→no`
 - Документация для сайта: `docs/website-welcome-changelog.md`
 
 ## Публикация (v1.0)
@@ -175,6 +178,6 @@ Chrome Extension для захвата выделений со страниц в
 - ≤3 звезды → `https://2md.site/{locale}/feedback`; ≥4 → CWS reviews URL
 - `getRatingLocale()` дублирует логику `getUrlLocale()` из service-worker (не shared — по одному месту использования)
 - Телеметрия: `rating_1`..`rating_5`, `rating_hidden`
-- i18n ключи `sectionRating`, `ratingHide` добавлены в EN + RU; остальные языки — через `tomd-l10n` скилл
+- **⚠️ Полнота локалей** — новые ключи добавлять сразу во все 20 локалей (не только EN+RU); перевод — `tomd-l10n` скилл; проверка: `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
 
 ## Документация

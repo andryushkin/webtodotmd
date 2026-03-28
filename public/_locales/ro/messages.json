@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: HTML în Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Convertiți textul selectat în Markdown curat — un clic de la selecție la clipboard.",
+    "message": "Convertiți HTML-ul paginilor web în Markdown. Salvați ca .md, copiați sau descărcați text cu acest Web Clipper puternic.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "Copiază selecția"
+  },
+  "clear": {
+    "message": "Șterge"
+  },
+  "copy": {
+    "message": "Copiază"
+  },
+  "copied": {
+    "message": "Copiat"
+  },
+  "download": {
+    "message": "Descarcă"
+  },
+  "preview": {
+    "message": "Previzualizare"
+  },
+  "source": {
+    "message": "Sursă"
+  },
+  "highlighterOn": {
+    "message": "Evidențiator activ"
+  },
+  "highlighterOff": {
+    "message": "Evidențiator inactiv"
+  },
+  "highlights": {
+    "message": "Evidențiate: {1} — gata"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown va apărea aici…"
+  },
+  "statusEmpty": {
+    "message": "Filă goală"
+  },
+  "statusRestricted": {
+    "message": "Pagină restricționată"
+  },
+  "statusLocalFile": {
+    "message": "Fișier local"
+  },
+  "statusPdf": {
+    "message": "PDF — copierea nu este posibilă"
+  },
+  "statusReady": {
+    "message": "Selectează text și apasă Copiază"
+  },
+  "errCannotAccess": {
+    "message": "Nu se poate accesa această filă."
+  },
+  "errCannotInject": {
+    "message": "Nu se poate conecta la această pagină."
+  },
+  "errRestrictedUrl": {
+    "message": "Copierea de pe această pagină nu este posibilă (URL restricționat)."
+  },
+  "errTimeout": {
+    "message": "Cerere expirată. Încearcă din nou."
+  },
+  "errConnect": {
+    "message": "Conexiune eșuată. Reîncarcă pagina și încearcă din nou."
+  },
+  "errNoHighlights": {
+    "message": "Nimic evidențiat. Apasă pe elemente din pagină."
+  },
+  "errNoSelection": {
+    "message": "Niciun text selectat. Selectează mai întâi text."
+  },
+  "errConvertFailed": {
+    "message": "Selecția nu poate fi convertită."
+  },
+  "successCaptured": {
+    "message": "Gata."
+  },
+  "captureHighlights": {
+    "message": "Copiază evidențiatele ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — Setări"
+  },
+  "settingsH1": {
+    "message": "Setări to .md"
+  },
+  "sectionCapture": {
+    "message": "Copiere"
+  },
+  "sectionDisplay": {
+    "message": "Afișaj"
+  },
+  "sectionHighlighter": {
+    "message": "Evidențiator"
+  },
+  "sectionLanguage": {
+    "message": "Limbă"
+  },
+  "labelAutoMetadata": {
+    "message": "Adaugă automat metadate"
+  },
+  "labelShowBubble": {
+    "message": "Afișează buton la selectarea textului"
+  },
+  "labelDefaultView": {
+    "message": "Vizualizare implicită"
+  },
+  "labelHighlightColor": {
+    "message": "Culoare evidențiere"
+  },
+  "labelLanguage": {
+    "message": "Limbă"
+  },
+  "optPreview": {
+    "message": "Previzualizare"
+  },
+  "optSource": {
+    "message": "Sursă"
+  },
+  "optAuto": {
+    "message": "Auto (limba browserului)"
+  },
+  "savedSettings": {
+    "message": "Salvat."
+  },
+  "bubbleText": {
+    "message": "adaugă în .md"
+  },
+  "toastNoSelection": {
+    "message": "Niciun text selectat"
+  },
+  "toastCopied": {
+    "message": "Copiat ca Markdown ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "Copierea a eșuat"
+  },
+  "contextMenuTitle": {
+    "message": "adaugă în .md"
+  },
+  "statusHighlighterReady": {
+    "message": "Apasă pe elemente din pagină"
+  },
+  "sectionRating": {
+    "message": "Evaluează extensia"
+  },
+  "ratingHide": {
+    "message": "Ascunde"
   }
 }

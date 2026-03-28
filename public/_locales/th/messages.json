@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: บันทึกเว็บเป็น Markdown",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "แปลงข้อความที่เลือกเป็น Markdown ที่สะอาด — คลิกเดียวจากการเลือกไปยังคลิปบอร์ด",
+    "message": "แปลง HTML ของหน้าเว็บเป็น Markdown บันทึกเป็น md คัดลอก หรือดาวน์โหลดข้อความด้วย Web Clipper อันทรงพลัง",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
@@ -39,9 +39,6 @@
   },
   "markdownPlaceholder": {
     "message": "Markdown จะปรากฏที่นี่…"
-  },
-  "copiedToday": {
-    "message": "คัดลอกวันนี้:"
   },
   "statusEmpty": {
     "message": "แท็บว่าง"
@@ -150,5 +147,11 @@
   },
   "statusHighlighterReady": {
     "message": "คลิกองค์ประกอบบนหน้าเพื่อไฮไลต์"
+  },
+  "sectionRating": {
+    "message": "ให้คะแนนส่วนขยายนี้"
+  },
+  "ratingHide": {
+    "message": "ซ่อน"
   }
 }

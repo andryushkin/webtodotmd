@@ -1,10 +1,157 @@
 {
   "appName": {
-    "message": "to .md",
+    "message": "Text to .md: વેબ HTML ને Markdown માં બદલો",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "પસંદ કરેલ ટેક્સ્ટને ક્લીન Markdown માં કન્વર્ટ કરો — ક્લિપબોર્ડ માટે એક ક્લિક.",
+    "message": "વેબપેજ HTML ને Markdown માં બદલો. .md તરીકે સેવ કરો, કૉપી કરો અથવા ડાઉનલોડ કરો — શક્તિશાળી Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
+  },
+  "captureSelection": {
+    "message": "પસંદગી કન્વર્ટ કરો"
+  },
+  "clear": {
+    "message": "સાફ કરો"
+  },
+  "copy": {
+    "message": "કૉપી કરો"
+  },
+  "copied": {
+    "message": "કૉપી થઈ ગઈ"
+  },
+  "download": {
+    "message": "ડાઉનલોડ કરો"
+  },
+  "preview": {
+    "message": "પ્રીવ્યૂ"
+  },
+  "source": {
+    "message": "સોર્સ"
+  },
+  "highlighterOn": {
+    "message": "હાઇલાઇટર: ચાલુ"
+  },
+  "highlighterOff": {
+    "message": "હાઇલાઇટર: બંધ"
+  },
+  "highlights": {
+    "message": "{1} હાઇલાઇટ — કન્વર્ટ કરવા તૈયાર"
+  },
+  "markdownPlaceholder": {
+    "message": "Markdown અહીં દેખાશે…"
+  },
+  "statusEmpty": {
+    "message": "ખાલી ટૅબ"
+  },
+  "statusRestricted": {
+    "message": "પ્રતિબંધિત પેજ"
+  },
+  "statusLocalFile": {
+    "message": "લોકલ ફાઇલ"
+  },
+  "statusPdf": {
+    "message": "PDF — કન્વર્ટ થઈ શકે નહીં"
+  },
+  "statusReady": {
+    "message": "ટેક્સ્ટ પસંદ કરો અને કન્વર્ટ ક્લિક કરો"
+  },
+  "errCannotAccess": {
+    "message": "આ ટૅબ ઍક્સેસ કરી શકાતી નથી."
+  },
+  "errCannotInject": {
+    "message": "આ પેજ સાથે કનેક્ટ થઈ શકાયું નહીં."
+  },
+  "errRestrictedUrl": {
+    "message": "આ પેજ પરથી કન્વર્ટ થઈ શકે નહીં (પ્રતિબંધિત URL)."
+  },
+  "errTimeout": {
+    "message": "વિનંતી સમય સમાપ્ત. ફરી પ્રયાસ કરો."
+  },
+  "errConnect": {
+    "message": "કનેક્ટ થઈ શકાયું નહીં. રીલોડ કરીને ફરી પ્રયાસ કરો."
+  },
+  "errNoHighlights": {
+    "message": "કોઈ હાઇલાઇટ નથી. પેજ પર એલિમેન્ટ ક્લિક કરો."
+  },
+  "errNoSelection": {
+    "message": "કોઈ ટેક્સ્ટ પસંદ નથી. પ્રથમ પેજ પર ટેક્સ્ટ પસંદ કરો."
+  },
+  "errConvertFailed": {
+    "message": "પસંદગી કન્વર્ટ થઈ શકી નહીં."
+  },
+  "successCaptured": {
+    "message": "કન્વર્ટ થઈ ગઈ."
+  },
+  "captureHighlights": {
+    "message": "હાઇલાઇટ કન્વર્ટ કરો ({1})"
+  },
+  "settingsTitle": {
+    "message": "to .md — સેટિંગ્સ"
+  },
+  "settingsH1": {
+    "message": "to .md સેટિંગ્સ"
+  },
+  "sectionCapture": {
+    "message": "કન્વર્ટ"
+  },
+  "sectionDisplay": {
+    "message": "ડિસ્પ્લે"
+  },
+  "sectionHighlighter": {
+    "message": "હાઇલાઇટર"
+  },
+  "sectionLanguage": {
+    "message": "ભાષા"
+  },
+  "labelAutoMetadata": {
+    "message": "કન્વર્ટ પર મેટાડેટા ઑટો-ઍડ કરો"
+  },
+  "labelShowBubble": {
+    "message": "ટેક્સ્ટ પસંદ કરતા ફ્લોટિંગ બટન દેખાડો"
+  },
+  "labelDefaultView": {
+    "message": "ડિફૉલ્ટ વ્યૂ મોડ"
+  },
+  "labelHighlightColor": {
+    "message": "હાઇલાઇટ રંગ"
+  },
+  "labelLanguage": {
+    "message": "ભાષા"
+  },
+  "optPreview": {
+    "message": "પ્રીવ્યૂ"
+  },
+  "optSource": {
+    "message": "સોર્સ"
+  },
+  "optAuto": {
+    "message": "ઑટો (બ્રાઉઝર ભાષા)"
+  },
+  "savedSettings": {
+    "message": "સેવ થઈ ગઈ."
+  },
+  "bubbleText": {
+    "message": ".md માં ઉમેરો"
+  },
+  "toastNoSelection": {
+    "message": "કોઈ ટેક્સ્ટ પસંદ નથી"
+  },
+  "toastCopied": {
+    "message": "Markdown તરીકે કૉપી થઈ ✓"
+  },
+  "toastCouldNotCopy": {
+    "message": "કૉપી થઈ શકી નહીં"
+  },
+  "contextMenuTitle": {
+    "message": ".md માં ઉમેરો"
+  },
+  "statusHighlighterReady": {
+    "message": "હાઇલાઇટ કરવા પેજ પર એલિમેન્ટ ક્લિક કરો"
+  },
+  "sectionRating": {
+    "message": "એક્સ્ટેન્શન રેટ કરો"
+  },
+  "ratingHide": {
+    "message": "છૂપાવો"
   }
 }

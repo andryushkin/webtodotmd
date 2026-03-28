@@ -4,7 +4,7 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Convert selected text to clean, formatted Markdown — one click from selection to clipboard.",
+    "message": "Convert selected Webpage HTML to Markdown. Save to md, copy, or download text with this powerful Web Clipper.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
