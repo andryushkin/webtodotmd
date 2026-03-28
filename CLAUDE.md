@@ -180,4 +180,13 @@ Chrome Extension для захвата выделений со страниц в
 - Телеметрия: `rating_1`..`rating_5`, `rating_hidden`
 - **⚠️ Полнота локалей** — новые ключи добавлять сразу во все 20 локалей (не только EN+RU); перевод — `tomd-l10n` скилл; проверка: `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
 
+## CWS Store Descriptions
+
+- `docs/lang/description/` — long description .txt файлы для CWS Developer Dashboard (53 файла: en + 52 локали)
+- Формат: plain text, эмодзи-заголовки секций, маркированные списки через `-`, лимит 4500 символов
+- **docs/lang/ (устаревшие файлы)** — не использовать (de, ru.md и т.д. — старые черновики)
+- При обновлении описания: редактировать `docs/lang/description/en.txt` → регенерировать через скилл `tomd-l10n` (CWS Long Description Mode)
+- **Не переводить:** `.md`, `YAML front matter`, `Shadow DOM`, `Manifest V3`, `DOMPurify`, `KaTeX`, `LaTeX`, `MathML`, `RTL`, `Obsidian`, `Notion`, `Web clipper`, `HTML to Markdown`, `Markdown converter/formatter`
+- **Гибридный SEO:** "конвертер (HTML to Markdown)", "веб-клиппер (Web clipper)" — перевод + EN-термин в скобках
+
 ## Документация
