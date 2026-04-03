@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { parseHTML } from '~/Server/markitdown/node_modules/linkedom/esm/index.js';
-import { toMarkdown } from '~/Server/markitdown/src/browser.ts';
+import { parseHTML } from '~/Server/htmltodotmd/node_modules/linkedom/esm/index.js';
+import { toMarkdown } from '~/Server/htmltodotmd/src/browser.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;

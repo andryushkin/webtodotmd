@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parseHTML } from '~/Server/markitdown/node_modules/linkedom/esm/index.js';
+import { parseHTML } from '~/Server/htmltodotmd/node_modules/linkedom/esm/index.js';
 import { BLOCK_TAGS, findHighlightTarget } from '../highlight-target';
 
 function makeDoc(html: string) {

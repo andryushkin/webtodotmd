@@ -1,18 +1,18 @@
 Chrome Extension для захвата выделений со страниц в Markdown.
-Ядро конвертации — внешняя библиотека `@markitdown/core`.
+Ядро конвертации — внешняя библиотека `htmltodotmd`.
 
 ## Разработка
 
 - **Сборка:** `bash build.sh` — без `bun install`, без `node_modules`
 - **Транспайлер:** Bun (встроенный, глобально установлен) — компилирует `.ts` без npm-пакетов
-- **Тесты:** `bun test` — Bun test + linkedom (из `~/Server/markitdown/node_modules/linkedom`)
+- **Тесты:** `bun test` — Bun test + linkedom (из `~/Server/htmltodotmd/node_modules/linkedom`)
 - **GitHub:** https://github.com/andryushkin/todotmd (private), ветка `main`
 
 ### Vendored зависимости (нет node_modules)
 - `vendor/marked.esm.js` — ESM бандл marked (скопирован из node_modules)
 - `vendor/purify.esm.mjs` — ESM бандл DOMPurify
 - `types/chrome/` — типы Chrome API (скопированы из @types/chrome)
-- `@markitdown/core` — импортируется напрямую: `../../../markitdown/src/browser.ts`
+- `htmltodotmd` — импортируется напрямую: `../../../htmltodotmd/src/browser.ts`
 
 ## Архитектура
 
@@ -25,7 +25,7 @@ Chrome Extension для захвата выделений со страниц в
 
 ## Ключевые зависимости
 
-- `@markitdown/core` — HTML→Markdown
+- `htmltodotmd` — HTML→Markdown
 - `marked` + `DOMPurify` — rendered Markdown preview в Side Panel
 - Manifest V3, permission `scripting` для on-demand injection
 
@@ -80,7 +80,7 @@ Chrome Extension для захвата выделений со страниц в
 - Toggle-кнопка в Side Panel рядом с Capture; при включении — блокирует обычные клики на странице
 - Hover: dashed-overlay на элементе под курсором; Click: фиксирует/снимает highlight (outline + background)
 - Capture button автоматически переключается на `CAPTURE_HIGHLIGHTS` при наличии highlights
-- `captureHighlightsMd()` — создаёт fake Selection для каждого highlighted-элемента, конвертирует через markitdown, объединяет через `\n\n`
+- `captureHighlightsMd()` — создаёт fake Selection для каждого highlighted-элемента, конвертирует через htmltodotmd, объединяет через `\n\n`
 - `HIGHLIGHT_COUNT` сообщения из content script → side panel для обновления badge
 - Clear highlights: удаляет CSS-классы и сбрасывает Set
 - **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
@@ -150,7 +150,7 @@ Chrome Extension для захвата выделений со страниц в
 - `src/content/__tests__/conversion.test.ts` — тесты HTML→Markdown через `toMarkdown()` с linkedom (31 тест)
 - `src/shared/__tests__/` — тесты утилит (restricted, gate, identity)
 - **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
-- **DOM в тестах:** linkedom из `~/Server/markitdown/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
+- **DOM в тестах:** linkedom из `~/Server/htmltodotmd/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
 
 ## Keyboard Shortcuts
 
