@@ -189,10 +189,6 @@ body {
   color: var(--text);
 }
 
-#btn-undo,
-#btn-redo {
-  border: 1px solid var(--border);
-}
 
 /* Capture row */
 
