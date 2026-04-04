@@ -92,7 +92,8 @@ Chrome Extension для захвата выделений со страниц в
 
 - `src/settings/settings.html` + `.ts` + `.css` — Options page (зарегистрирована в manifest как `options_page`)
 - `src/shared/settings-store.ts` — `getSettings()` / `saveSettings()` через `chrome.storage.local`
-- Настройки: `autoMetadata` (bool), `showBubble` (bool), `defaultViewMode` (preview|source), `highlighterColor` (hex)
+- Настройки: `autoMetadata` (bool), `showBubble` (bool), `defaultViewMode` (preview|source), `highlighterColor` (hex), `uiLanguage` (string, default `'en'`)
+- **uiLanguage default = `'en'`** — не `'auto'`; опция "Auto (browser language)" доступна в select, но не является дефолтом; fallback `?? 'en'` во всех местах (service-worker, sidepanel)
 - Side Panel и Content Script слушают `chrome.storage.onChanged` для реактивного обновления
 - Кнопка-шестерёнка в header Side Panel → `chrome.runtime.openOptionsPage()`
 
