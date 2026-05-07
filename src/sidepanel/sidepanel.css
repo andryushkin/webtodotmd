@@ -449,3 +449,47 @@ body {
   gap: var(--gap);
   flex-shrink: 0;
 }
+
+.txt-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.txt-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  inset-inline-start: 0;
+  min-width: 180px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10;
+}
+
+.txt-menu[hidden] {
+  display: none;
+}
+
+.txt-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: start;
+}
+
+.txt-menu-item:hover {
+  background: var(--bg-secondary);
+}

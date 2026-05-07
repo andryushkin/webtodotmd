@@ -153,5 +153,23 @@
   },
   "ratingHide": {
     "message": "Hide"
+  },
+  "tooltipCopyMd": {
+    "message": "Copy as Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Download Markdown file"
+  },
+  "tooltipCopyTxt": {
+    "message": "Copy as plain text"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Download plain text file"
+  },
+  "tooltipTxtMenu": {
+    "message": "Plain text options"
+  },
+  "copiedTxt": {
+    "message": "Plain text copied"
   }
 }

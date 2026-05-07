@@ -18,8 +18,6 @@
         <button id="btn-highlighter" class="btn btn-secondary" title="Highlighter mode"></button>
       </div>
 
-      <div id="status" class="status" aria-live="polite"></div>
-
       <div class="header-actions">
         <div class="view-toggle">
           <button id="btn-preview" class="toggle active" aria-pressed="true" title="Preview"></button>
@@ -42,9 +40,18 @@
         <button id="btn-rating-hide" class="btn-rating-hide" data-i18n="ratingHide">Hide</button>
       </div>
 
+      <div id="status" class="status" aria-live="polite"></div>
+
       <div class="toolbar">
         <button id="btn-copy" class="btn btn-secondary" disabled></button>
         <button id="btn-download" class="btn btn-secondary" disabled></button>
+        <div class="txt-menu-wrap">
+          <button id="btn-txt-menu" class="btn btn-secondary" aria-haspopup="true" aria-expanded="false" disabled></button>
+          <div id="txt-menu" class="txt-menu" hidden role="menu">
+            <button id="btn-copy-txt" class="txt-menu-item" role="menuitem"></button>
+            <button id="btn-download-txt" class="txt-menu-item" role="menuitem"></button>
+          </div>
+        </div>
         <button id="btn-clear" class="btn btn-ghost" disabled></button>
       </div>
     </main>

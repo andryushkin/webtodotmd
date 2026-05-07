@@ -8,6 +8,7 @@ import { getSettings } from '../shared/settings-store';
 import { initI18n, t, applyI18n } from '../shared/i18n';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
 import { trackEvent } from '../shared/telemetry';
+import { stripMarkdown } from '../shared/strip-markdown';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -26,6 +27,10 @@ const btnUndo = document.getElementById('btn-undo') as HTMLButtonElement;
 const btnRedo = document.getElementById('btn-redo') as HTMLButtonElement;
 const btnCopy = document.getElementById('btn-copy') as HTMLButtonElement;
 const btnDownload = document.getElementById('btn-download') as HTMLButtonElement;
+const btnTxtMenu = document.getElementById('btn-txt-menu') as HTMLButtonElement;
+const txtMenu = document.getElementById('txt-menu') as HTMLDivElement;
+const btnCopyTxt = document.getElementById('btn-copy-txt') as HTMLButtonElement;
+const btnDownloadTxt = document.getElementById('btn-download-txt') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
@@ -78,13 +83,33 @@ function setBaseStatus(msg: string, type: 'default' | 'warning' = 'default', ico
   if (revertTimer === null) setStatus(msg, type, iconName);
 }
 
-function setTempStatus(msg: string, type: 'error' | 'success', iconName?: string, ms = 3000) {
+function setTempStatus(msg: string, type: StatusType, iconName?: string, ms = 3000) {
   if (revertTimer) clearTimeout(revertTimer);
   setStatus(msg, type, iconName);
   revertTimer = setTimeout(() => {
     revertTimer = null;
     setStatus(baseStatusMsg, baseStatusType, baseStatusIcon);
   }, ms);
+}
+
+function clearTempStatus() {
+  if (revertTimer) {
+    clearTimeout(revertTimer);
+    revertTimer = null;
+  }
+  setStatus(baseStatusMsg, baseStatusType, baseStatusIcon);
+}
+
+function attachStatusTooltip(btn: HTMLButtonElement, i18nKey: string) {
+  btn.addEventListener('mouseenter', () => {
+    if (btn.disabled) return;
+    if (revertTimer) clearTimeout(revertTimer);
+    revertTimer = null;
+    setStatus(t(i18nKey), 'default');
+  });
+  btn.addEventListener('mouseleave', () => {
+    clearTempStatus();
+  });
 }
 
 // ---- Rating ----
@@ -322,6 +347,8 @@ function updateButtonStates() {
   const hasContent = rawMd.trim().length > 0;
   btnCopy.disabled = !hasContent;
   btnDownload.disabled = !hasContent;
+  btnTxtMenu.disabled = !hasContent;
+  if (!hasContent) closeTxtMenu();
   btnClear.disabled = !hasContent;
 }
 
@@ -568,6 +595,22 @@ chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
   if (changeInfo.status === 'complete' || changeInfo.url) updateReadinessStatus();
 });
 
+function safeFilename(ext: string): string {
+  return (lastMeta?.title ?? 'selection')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .slice(0, 80) + ext;
+}
+
+function closeTxtMenu() {
+  txtMenu.hidden = true;
+  btnTxtMenu.setAttribute('aria-expanded', 'false');
+}
+
+function openTxtMenu() {
+  txtMenu.hidden = false;
+  btnTxtMenu.setAttribute('aria-expanded', 'true');
+}
+
 btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
   await navigator.clipboard.writeText(rawMd);
@@ -581,13 +624,46 @@ btnCopy.addEventListener('click', async () => {
 
 btnDownload.addEventListener('click', async () => {
   if (!rawMd) return;
-  const filename = (lastMeta?.title ?? 'selection')
-    .replace(/[\\/:*?"<>|]/g, '-')
-    .slice(0, 80) + '.md';
   const url = URL.createObjectURL(new Blob([rawMd], { type: 'text/markdown' }));
-  await chrome.downloads.download({ url, filename, saveAs: false });
+  await chrome.downloads.download({ url, filename: safeFilename('.md'), saveAs: false });
   URL.revokeObjectURL(url);
   trackEvent('download_md');
+  incrementActionCount();
+});
+
+btnTxtMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (txtMenu.hidden) openTxtMenu(); else closeTxtMenu();
+});
+
+document.addEventListener('click', (e) => {
+  if (txtMenu.hidden) return;
+  const target = e.target as Node;
+  if (!txtMenu.contains(target) && target !== btnTxtMenu) closeTxtMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !txtMenu.hidden) closeTxtMenu();
+});
+
+btnCopyTxt.addEventListener('click', async () => {
+  if (!rawMd) return;
+  closeTxtMenu();
+  const txt = stripMarkdown(rawMd);
+  await navigator.clipboard.writeText(txt);
+  trackEvent('copy_txt');
+  incrementActionCount();
+  setTempStatus(t('copiedTxt'), 'success', 'check', 1500);
+});
+
+btnDownloadTxt.addEventListener('click', async () => {
+  if (!rawMd) return;
+  closeTxtMenu();
+  const txt = stripMarkdown(rawMd);
+  const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+  await chrome.downloads.download({ url, filename: safeFilename('.txt'), saveAs: false });
+  URL.revokeObjectURL(url);
+  trackEvent('download_txt');
   incrementActionCount();
 });
 
@@ -605,6 +681,10 @@ function applyButtonLabels() {
     t(highlighterEnabled ? 'highlighterOn' : 'highlighterOff'));
   setButtonContent(btnCopy, 'copy', t('copy'));
   setButtonContent(btnDownload, 'download', t('download'));
+  btnTxtMenu.innerHTML =
+    `<span class="btn-label">.txt</span>` + icon('chevronDown', 12);
+  btnCopyTxt.innerHTML = icon('copy', 14) + `<span class="btn-label">${escHtml(t('tooltipCopyTxt'))}</span>`;
+  btnDownloadTxt.innerHTML = icon('download', 14) + `<span class="btn-label">${escHtml(t('tooltipDownloadTxt'))}</span>`;
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
@@ -619,6 +699,10 @@ async function init() {
   btnRedo.innerHTML = icon('redo', 14);
   btnSettings.innerHTML = icon('settings', 14);
   applyButtonLabels();
+
+  attachStatusTooltip(btnCopy, 'tooltipCopyMd');
+  attachStatusTooltip(btnDownload, 'tooltipDownloadMd');
+  attachStatusTooltip(btnTxtMenu, 'tooltipTxtMenu');
 
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);
