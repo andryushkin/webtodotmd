@@ -8,7 +8,10 @@ const SHOW_CHANGELOG_ON_UPDATE = false;
 
 const SUPPORTED_LOCALES = new Set([
   'en','de','fr','es','it','nl','sv','da','no','fi',
-  'ar','id','ru','pt-PT','ja','fil','vi','tr','th','ko',
+  'ar','he','fa','id','ru','pt-PT','pt-BR','ja','fil','vi','tr','th','ko',
+  'bg','cs','hr','pl','ro','sk','sl','sr','uk',
+  'zh-CN','zh-TW','el','hu','hi','ms','es-419',
+  'et','lt','lv','ca','bn','gu','kn','ml','mr','ta','te','am','sw',
 ]);
 
 function getUrlLocale(): string {
@@ -16,7 +19,9 @@ function getUrlLocale(): string {
   const normalized = lang.replace('_', '-');
   if (SUPPORTED_LOCALES.has(normalized)) return normalized;
   const base = normalized.split('-')[0];
-  if (base === 'pt') return 'pt-PT';
+  if (lang.startsWith('pt-PT') || lang === 'pt_PT') return 'pt-PT';
+  if (base === 'pt') return 'pt-BR';
+  if (base === 'zh') return 'zh-CN'; // zh-TW matched above via SUPPORTED_LOCALES
   if (base === 'nb' || base === 'nn') return 'no';
   if (SUPPORTED_LOCALES.has(base)) return base;
   return 'en';
@@ -48,7 +53,7 @@ async function writeContentTranslations() {
 
 async function createContextMenu() {
   const { settings } = await chrome.storage.local.get('settings');
-  await initI18n(settings?.uiLanguage ?? 'auto');
+  await initI18n(settings?.uiLanguage ?? 'en');
   await writeContentTranslations();
   chrome.contextMenus.create({
     id: 'capture-and-copy',
@@ -59,8 +64,8 @@ async function createContextMenu() {
 
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area === 'local' && changes.settings) {
-    const newLang = changes.settings.newValue?.uiLanguage ?? 'auto';
-    const oldLang = changes.settings.oldValue?.uiLanguage ?? 'auto';
+    const newLang = changes.settings.newValue?.uiLanguage ?? 'en';
+    const oldLang = changes.settings.oldValue?.uiLanguage ?? 'en';
     if (newLang !== oldLang) {
       await initI18n(newLang);
       await writeContentTranslations();

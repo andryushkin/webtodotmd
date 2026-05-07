@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>to .md — Chrome Extension Test Fixture</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --fg: #1a1a1a;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --border: #e5e5e5;
+    --code-bg: #f3f4f6;
+    --section-bg: #ffffff;
+    --toc-bg: #f8f9fa;
+    --toc-w: 260px;
+    --badge-bg: #fef3c7;
+    --badge-fg: #92400e;
+    --font-body: "Georgia", "Times New Roman", serif;
+    --font-heading: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 2rem; }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--fg);
+    background: var(--bg);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── TOC Sidebar ── */
+  nav#toc {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    width: var(--toc-w);
+    min-width: var(--toc-w);
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 1rem;
+    background: var(--toc-bg);
+    border-right: 1px solid var(--border);
+    font-family: var(--font-heading);
+    font-size: 13px;
+  }
+  nav#toc h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; }
+  nav#toc ol { list-style: none; counter-reset: toc-counter; }
+  nav#toc ol li { counter-increment: toc-counter; }
+  nav#toc ol li a {
+    display: block;
+    padding: 4px 8px;
+    color: var(--fg);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  nav#toc ol li a::before { content: counter(toc-counter) ". "; color: var(--muted); font-weight: 600; }
+  nav#toc ol li a:hover { background: var(--accent-light); color: var(--accent); }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem 6rem;
+  }
+
+  /* ── Banner ── */
+  .banner {
+    background: var(--accent-light);
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2.5rem;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    color: #1e40af;
+  }
+  .banner strong { font-size: 15px; }
+
+  /* ── Sections ── */
+  section {
+    background: var(--section-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  section > .section-id {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--code-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── Typography ── */
+  h1 { font-family: var(--font-heading); font-size: 2rem; margin-bottom: 0.5rem; }
+  h2 { font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 1.25rem 0 0.5rem; }
+  h4 { font-family: var(--font-heading); font-size: 1.05rem; margin: 1rem 0 0.4rem; }
+  h5 { font-family: var(--font-heading); font-size: 0.95rem; margin: 0.75rem 0 0.3rem; }
+  h6 { font-family: var(--font-heading); font-size: 0.85rem; margin: 0.5rem 0 0.25rem; color: var(--muted); }
+  p { margin-bottom: 0.75rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* ── Inline ── */
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  a { color: var(--accent); }
+
+  blockquote {
+    border-left: 4px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    background: #f8fafc;
+    color: #374151;
+  }
+  blockquote blockquote { border-left-color: #93c5fd; margin: 0.5rem 0; }
+
+  /* ── Tables ── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.9em;
+  }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  th { background: var(--code-bg); font-family: var(--font-heading); font-weight: 600; }
+
+  /* ── Lists ── */
+  ul, ol { margin: 0.5rem 0 0.5rem 1.5rem; }
+  li { margin-bottom: 0.25rem; }
+  dl { margin: 0.5rem 0; }
+  dt { font-weight: 700; margin-top: 0.5rem; }
+  dd { margin-left: 1.5rem; color: #4b5563; }
+
+  /* ── Images ── */
+  img { max-width: 100%; height: auto; border-radius: 6px; }
+  figure { margin: 1rem 0; }
+  figcaption { font-size: 0.85em; color: var(--muted); margin-top: 0.5rem; font-style: italic; }
+
+  /* ── Details ── */
+  details { margin: 0.75rem 0; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; }
+  summary { cursor: pointer; font-weight: 600; font-family: var(--font-heading); }
+
+  /* ── Address ── */
+  address { font-style: normal; background: var(--code-bg); padding: 0.75rem 1rem; border-radius: 6px; margin: 0.5rem 0; }
+
+  /* ── Badge / Label ── */
+  .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--badge-bg);
+    color: var(--badge-fg);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ── Math sections ── */
+  .math-variant { margin: 1rem 0; padding: 1rem; border: 1px dashed var(--border); border-radius: 6px; }
+  .math-variant h4 { margin-top: 0; }
+
+  /* ── Highlighter test ── */
+  .highlight-test > * { transition: outline 0.15s; cursor: pointer; }
+  .highlight-test > *:hover { outline: 3px solid #f59e0b; outline-offset: 4px; border-radius: 4px; }
+
+  /* ── Multi-range ── */
+  .multi-range p { padding: 0.75rem 1rem; margin-bottom: 0.5rem; background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 0 6px 6px 0; }
+
+  /* ── MathJax v3 custom elements (minimal styling for visibility) ── */
+  mjx-container { display: inline-block; }
+  mjx-container[display="true"] { display: block; text-align: center; margin: 1rem 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    nav#toc { display: none; }
+    main { padding: 1.5rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ TOC SIDEBAR ════════════════════ -->
+<nav id="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#sec-inline">Inline Formatting</a></li>
+    <li><a href="#sec-block">Block Elements</a></li>
+    <li><a href="#sec-lists">Lists</a></li>
+    <li><a href="#sec-code">Code</a></li>
+    <li><a href="#sec-tables">Tables</a></li>
+    <li><a href="#sec-images">Images</a></li>
+    <li><a href="#sec-semantic">Semantic Elements</a></li>
+    <li><a href="#sec-math">Math Formulas</a></li>
+    <li><a href="#sec-shadow">Shadow DOM</a></li>
+    <li><a href="#sec-multirange">Multi-Range Selection</a></li>
+    <li><a href="#sec-highlighter">Highlighter Mode</a></li>
+    <li><a href="#sec-edge">Edge Cases</a></li>
+    <li><a href="#sec-long">Long Content</a></li>
+  </ol>
+</nav>
+
+<!-- ════════════════════ MAIN CONTENT ════════════════════ -->
+<main>
+
+<div class="banner">
+  <strong>to .md — Test Fixture</strong><br>
+  This page is a comprehensive test fixture for the <em>"to .md"</em> Chrome Extension that captures web page selections as Markdown. Select any content on this page, activate the extension, and verify the Markdown output matches expectations. Every section below tests a distinct HTML→Markdown conversion scenario.
+</div>
+
+<!-- ═══════════════ 1. INLINE FORMATTING ═══════════════ -->
+<section id="sec-inline">
+  <span class="section-id">#sec-inline</span>
+  <h2>1. Basic Inline Formatting</h2>
+
+  <h3>Text Decoration</h3>
+  <p>This is <strong>bold text</strong> using &lt;strong&gt;.</p>
+  <p>This is <b>also bold</b> using &lt;b&gt;.</p>
+  <p>This is <em>italic text</em> using &lt;em&gt;.</p>
+  <p>This is <i>also italic</i> using &lt;i&gt;.</p>
+  <p>This is <strong><em>bold and italic combined</em></strong>.</p>
+  <p>This is <em><strong>italic wrapping bold</strong></em>.</p>
+  <p>This is <del>strikethrough text</del> using &lt;del&gt;.</p>
+  <p>This is <s>also strikethrough</s> using &lt;s&gt;.</p>
+  <p>This is <strike>legacy strikethrough</strike> using &lt;strike&gt;.</p>
+  <p>This is <code>inline code</code> using &lt;code&gt;.</p>
+  <p>Code with backtick inside: <code>use `backticks` carefully</code>.</p>
+  <p>This has <sub>subscript</sub> and <sup>superscript</sup> text.</p>
+  <p>This is <mark>highlighted/marked</mark> text.</p>
+  <p>Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy.</p>
+  <p>Mixed: <strong>bold with <em>italic inside</em> and <code>code too</code></strong>.</p>
+  <p>Adjacent formatting: <em>hello</em><em>world</em> — should these merge?</p>
+  <p>Whitespace edge: <em> text with spaces </em> around it.</p>
+
+  <h3>Links</h3>
+  <p>An <a href="https://example.com">absolute link</a> to example.com.</p>
+  <p>A <a href="https://example.com" title="Example Title">link with title attribute</a>.</p>
+  <p>A <a href="/relative/path">relative link</a> on the same domain.</p>
+  <p>A <a href="#sec-code">fragment link</a> to another section.</p>
+  <p>An email link: <a href="mailto:test@example.com">test@example.com</a>.</p>
+  <p>A bare URL: <a href="https://www.mozilla.org">https://www.mozilla.org</a>.</p>
+  <p>Link with <strong>bold text</strong>: <a href="https://example.com"><strong>bold link content</strong></a>.</p>
+  <p>Link with special chars in URL: <a href="https://example.com/path?q=hello&lang=en#section(1)">complex URL with parens</a>.</p>
+</section>
+
+<!-- ═══════════════ 2. BLOCK ELEMENTS ═══════════════ -->
+<section id="sec-block">
+  <span class="section-id">#sec-block</span>
+  <h2>2. Block Elements</h2>
+
+  <h3>Headings (all levels)</h3>
+  <h1>Heading Level 1</h1>
+  <h2>Heading Level 2</h2>
+  <h3>Heading Level 3</h3>
+  <h4>Heading Level 4</h4>
+  <h5>Heading Level 5</h5>
+  <h6>Heading Level 6</h6>
+  <h3>Heading with <em>italic</em> and <code>code</code> inside</h3>
+
+  <h3>Paragraphs</h3>
+  <p>This is the first paragraph. It contains enough text to potentially wrap across multiple lines in the browser, testing how the converter handles natural line wrapping versus actual paragraph boundaries.</p>
+  <p>This is the second paragraph, separated from the first by a &lt;p&gt; tag boundary. The converter should produce a blank line between them in Markdown.</p>
+  <p>Paragraph with<br>a line break<br>using &lt;br&gt; tags inside.</p>
+
+  <h3>Blockquotes</h3>
+  <blockquote>
+    <p>This is a simple blockquote with one paragraph.</p>
+  </blockquote>
+
+  <blockquote>
+    <p>This is a blockquote with multiple paragraphs.</p>
+    <p>Here is the second paragraph inside the same blockquote.</p>
+  </blockquote>
+
+  <blockquote>
+    <p>Outer blockquote level 1.</p>
+    <blockquote>
+      <p>Nested blockquote level 2.</p>
+      <blockquote>
+        <p>Deeply nested blockquote level 3.</p>
+      </blockquote>
+    </blockquote>
+    <p>Back to level 1.</p>
+  </blockquote>
+
+  <blockquote>
+    <p>Blockquote containing a list:</p>
+    <ul>
+      <li>Item A</li>
+      <li>Item B</li>
+    </ul>
+    <p>And some <strong>bold</strong> text after.</p>
+  </blockquote>
+
+  <blockquote>
+    <p>Blockquote with code inside:</p>
+    <pre><code>console.log("hello from blockquote");</code></pre>
+  </blockquote>
+
+  <h3>Horizontal Rules</h3>
+  <p>Text before horizontal rule.</p>
+  <hr>
+  <p>Text after horizontal rule.</p>
+</section>
+
+<!-- ═══════════════ 3. LISTS ═══════════════ -->
+<section id="sec-lists">
+  <span class="section-id">#sec-lists</span>
+  <h2>3. Lists</h2>
+
+  <h3>Unordered List (flat)</h3>
+  <ul>
+    <li>Apple</li>
+    <li>Banana</li>
+    <li>Cherry</li>
+    <li>Dragonfruit</li>
+  </ul>
+
+  <h3>Ordered List (flat)</h3>
+  <ol>
+    <li>First item</li>
+    <li>Second item</li>
+    <li>Third item</li>
+  </ol>
+
+  <h3>Ordered List with custom start</h3>
+  <ol start="5">
+    <li>This is item five</li>
+    <li>This is item six</li>
+    <li>This is item seven</li>
+  </ol>
+
+  <h3>Nested List (2+ levels)</h3>
+  <ul>
+    <li>Frontend
+      <ul>
+        <li>HTML</li>
+        <li>CSS
+          <ul>
+            <li>Flexbox</li>
+            <li>Grid</li>
+          </ul>
+        </li>
+        <li>JavaScript</li>
+      </ul>
+    </li>
+    <li>Backend
+      <ul>
+        <li>Node.js</li>
+        <li>Python</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Mixed Nested (ordered inside unordered)</h3>
+  <ul>
+    <li>Setup steps:
+      <ol>
+        <li>Install dependencies</li>
+        <li>Configure environment</li>
+        <li>Run tests</li>
+      </ol>
+    </li>
+    <li>Deployment:
+      <ol>
+        <li>Build</li>
+        <li>Deploy to staging</li>
+        <li>Deploy to production</li>
+      </ol>
+    </li>
+  </ul>
+
+  <h3>Task List (checkboxes)</h3>
+  <ul>
+    <li><input type="checkbox" checked disabled> Write the tests</li>
+    <li><input type="checkbox" checked disabled> Implement the parser</li>
+    <li><input type="checkbox" disabled> Fix edge cases</li>
+    <li><input type="checkbox" disabled> Write documentation</li>
+  </ul>
+
+  <h3>Definition List</h3>
+  <dl>
+    <dt>Markdown</dt>
+    <dd>A lightweight markup language for creating formatted text using a plain-text editor.</dd>
+
+    <dt>HTML</dt>
+    <dd>HyperText Markup Language — the standard markup language for documents designed to be displayed in a web browser.</dd>
+
+    <dt>DOM</dt>
+    <dd>Document Object Model — a programming interface for HTML documents.</dd>
+    <dd>It represents the page so that programs can change the document structure, style, and content.</dd>
+  </dl>
+
+  <h3>List with inline formatting</h3>
+  <ul>
+    <li><strong>Bold item</strong> with description</li>
+    <li><em>Italic item</em> with <a href="https://example.com">a link</a></li>
+    <li>Item with <code>inline code</code> and <del>strikethrough</del></li>
+  </ul>
+</section>
+
+<!-- ═══════════════ 4. CODE ═══════════════ -->
+<section id="sec-code">
+  <span class="section-id">#sec-code</span>
+  <h2>4. Code</h2>
+
+  <h3>Inline Code</h3>
+  <p>Use the <code>console.log()</code> function to debug.</p>
+  <p>Set the variable with <code>let x = 42;</code> in JavaScript.</p>
+  <p>Backtick inside code: <code>echo `date`</code>.</p>
+
+  <h3>Fenced Code Block — JavaScript</h3>
+  <pre><code class="language-javascript">// Fibonacci sequence generator
+function* fibonacci() {
+  let a = 0, b = 1;
+  while (true) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
+}
+
+const fib = fibonacci();
+for (let i = 0; i &lt; 10; i++) {
+  console.log(fib.next().value);
+}</code></pre>
+
+  <h3>Fenced Code Block — Python</h3>
+  <pre><code class="language-python">import asyncio
+
+async def fetch_data(url: str) -&gt; dict:
+    """Fetch JSON data from a URL."""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
+
+# Usage
+data = asyncio.run(fetch_data("https://api.example.com/data"))</code></pre>
+
+  <h3>Fenced Code Block — HTML (tests escaping)</h3>
+  <pre><code class="language-html">&lt;div class="container"&gt;
+  &lt;h1&gt;Hello &amp; welcome&lt;/h1&gt;
+  &lt;p&gt;Paragraph with &lt;em&gt;emphasis&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3>Code block with triple backticks inside</h3>
+  <pre><code class="language-markdown">Here is how you write a code block:
+
+```javascript
+console.log("nested fences!");
+```
+
+End of example.</code></pre>
+
+  <h3>Preformatted text (pre without code)</h3>
+  <pre>
+    This is preformatted text.
+    It preserves    spaces    and
+    line breaks exactly as written.
+        Indented line here.
+  </pre>
+
+  <h3>Code block with syntax-highlighted spans</h3>
+  <pre><code class="language-javascript"><span class="hljs-keyword">const</span> greeting = <span class="hljs-string">"Hello, World!"</span>;
+<span class="hljs-built_in">console</span>.<span class="hljs-title function_">log</span>(greeting);</code></pre>
+</section>
+
+<!-- ═══════════════ 5. TABLES ═══════════════ -->
+<section id="sec-tables">
+  <span class="section-id">#sec-tables</span>
+  <h2>5. Tables</h2>
+
+  <h3>Simple 3×3 Table</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Status</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Inline formatting</td>
+        <td>Done</td>
+        <td>Bold, italic, code</td>
+      </tr>
+      <tr>
+        <td>Block elements</td>
+        <td>Done</td>
+        <td>Headings, quotes, lists</td>
+      </tr>
+      <tr>
+        <td>Math formulas</td>
+        <td>In Progress</td>
+        <td>KaTeX, MathJax, MathML</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Table with alignment</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Left Aligned</th>
+        <th style="text-align: center;">Center Aligned</th>
+        <th style="text-align: right;">Right Aligned</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: left;">Apple</td>
+        <td style="text-align: center;">100g</td>
+        <td style="text-align: right;">$1.50</td>
+      </tr>
+      <tr>
+        <td style="text-align: left;">Banana</td>
+        <td style="text-align: center;">120g</td>
+        <td style="text-align: right;">$0.75</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Table with colspan</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th colspan="2">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Frontend</td>
+        <td>React</td>
+        <td>Vue</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="text-align: center;"><em>More frameworks available</em></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Table with inline formatting & special chars</h3>
+  <table>
+    <thead>
+      <tr><th>Element</th><th>Markdown</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Bold</strong></td><td><code>**text**</code></td><td>**text**</td></tr>
+      <tr><td><em>Italic</em></td><td><code>*text*</code></td><td>*text*</td></tr>
+      <tr><td>Pipe in cell</td><td><code>\|</code></td><td>value | other</td></tr>
+      <tr><td>Empty cell →</td><td></td><td>← also empty</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════ 6. IMAGES ═══════════════ -->
+<section id="sec-images">
+  <span class="section-id">#sec-images</span>
+  <h2>6. Images</h2>
+
+  <h3>Inline image with alt text and title</h3>
+  <p>Here is a placeholder image:
+    <img src="https://via.placeholder.com/300x150/2563eb/ffffff?text=Test+Image"
+         alt="A blue placeholder image"
+         title="This is the title attribute"
+         width="300" height="150">
+  </p>
+
+  <h3>Image inside a link</h3>
+  <p>
+    <a href="https://example.com">
+      <img src="https://via.placeholder.com/200x100/22c55e/ffffff?text=Click+Me"
+           alt="Clickable green image"
+           title="Link wrapping an image">
+    </a>
+  </p>
+
+  <h3>Image without alt text (edge case)</h3>
+  <p><img src="https://via.placeholder.com/150x75/f59e0b/000000?text=No+Alt"></p>
+
+  <h3>Figure with figcaption</h3>
+  <figure>
+    <img src="https://via.placeholder.com/400x200/8b5cf6/ffffff?text=Figure+Image"
+         alt="A purple figure image" width="400" height="200">
+    <figcaption>Figure 1: This is a figure caption describing the image above.</figcaption>
+  </figure>
+</section>
+
+<!-- ═══════════════ 7. SEMANTIC ELEMENTS ═══════════════ -->
+<section id="sec-semantic">
+  <span class="section-id">#sec-semantic</span>
+  <h2>7. Semantic / Structural Elements</h2>
+
+  <h3>&lt;details&gt; / &lt;summary&gt;</h3>
+  <details>
+    <summary>Click to expand this collapsible section</summary>
+    <p>This content is hidden by default and revealed when the user clicks the summary. The converter should handle this gracefully.</p>
+    <ul>
+      <li>Hidden item 1</li>
+      <li>Hidden item 2</li>
+    </ul>
+  </details>
+
+  <details open>
+    <summary>This one starts open</summary>
+    <p>Already visible content inside an open details element.</p>
+  </details>
+
+  <h3>&lt;figure&gt; / &lt;figcaption&gt;</h3>
+  <figure>
+    <blockquote>
+      <p>The best way to predict the future is to invent it.</p>
+    </blockquote>
+    <figcaption>— Alan Kay, 1971</figcaption>
+  </figure>
+
+  <h3>&lt;address&gt;</h3>
+  <address>
+    Written by <a href="mailto:dev@example.com">Developer Name</a>.<br>
+    Visit us at: Example Corp, 123 Main St, Anytown, USA
+  </address>
+
+  <h3>&lt;abbr&gt;</h3>
+  <p>The <abbr title="World Wide Web Consortium">W3C</abbr> maintains web standards. You can also use <abbr title="HyperText Markup Language">HTML</abbr> and <abbr title="Cascading Style Sheets">CSS</abbr>.</p>
+
+  <h3>&lt;time&gt;</h3>
+  <p>The event takes place on <time datetime="2025-12-31T23:59:59">December 31, 2025 at midnight</time>.</p>
+  <p>Published: <time datetime="2025-03-15">March 15, 2025</time>.</p>
+
+  <h3>Other inline semantic elements</h3>
+  <p>This is a <span>span element</span> with no semantic meaning.</p>
+  <p>Use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> to open DevTools.</p>
+  <p>The result is: <samp>Error: file not found</samp>.</p>
+  <p>The variable <var>x</var> represents the unknown value.</p>
+  <p>This text is <ins>inserted (underlined)</ins> and this is <del>deleted</del>.</p>
+  <p>H<sub>2</sub>O is water. E = mc<sup>2</sup> is famous.</p>
+</section>
+
+<!-- ═══════════════ 8. MATH FORMULAS ═══════════════ -->
+<section id="sec-math">
+  <span class="section-id">#sec-math</span>
+  <h2>8. Math Formulas</h2>
+  <p>Each sub-section tests a different math rendering library's HTML output. The converter should extract the LaTeX source from each.</p>
+
+  <!-- ── 8a. KaTeX ── -->
+  <div class="math-variant" id="math-katex">
+    <span class="badge">8a</span>
+    <h3>KaTeX-rendered</h3>
+    <p>Uses real KaTeX DOM structure with <code>.katex</code> class, <code>.katex-mathml</code> (hidden MathML + annotation), and <code>.katex-html</code> (visual spans).</p>
+
+    <h4>Inline: x² + y² = z²</h4>
+    <p>The Pythagorean theorem states that
+      <span class="katex">
+        <span class="katex-mathml">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <semantics>
+              <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
+              <annotation encoding="application/x-tex">x^2 + y^2 = z^2</annotation>
+            </semantics>
+          </math>
+        </span>
+        <span class="katex-html" aria-hidden="true">
+          <span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span>
+          <span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span>
+          <span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span>
+        </span>
+      </span>
+    for right triangles.</p>
+
+    <h4>Block: Quadratic Formula</h4>
+    <span class="katex-display">
+      <span class="katex">
+        <span class="katex-mathml">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <semantics>
+              <mrow><mi>x</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow>
+              <annotation encoding="application/x-tex">x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</annotation>
+            </semantics>
+          </math>
+        </span>
+        <span class="katex-html" aria-hidden="true">
+          <span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span>
+          <span class="base"><span class="strut" style="height:2.276em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.59em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span><span class="mord mathnormal">a</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">±</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9144em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">4</span><span class="mord mathnormal">a</span><span class="mord mathnormal">c</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span>
+        </span>
+      </span>
+    </span>
+  </div>
+
+  <!-- ── 8b. MathJax v3 ── -->
+  <div class="math-variant" id="math-mathjax3">
+    <span class="badge">8b</span>
+    <h3>MathJax v3</h3>
+    <p>Uses <code>&lt;mjx-container&gt;</code> custom elements with <code>&lt;mjx-assistive-mml&gt;</code> containing MathML.</p>
+
+    <h4>Inline: x² + y² = z²</h4>
+    <p>The Pythagorean theorem:
+      <mjx-container class="MathJax" jax="CHTML" style="font-size: 120.7%; position: relative;" role="presentation" tabindex="0">
+        <mjx-math class="MJX-TEX" aria-hidden="true">
+          <mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align:0.363em;"><mjx-mn class="mjx-n" size="s"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-script></mjx-msup>
+          <mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo>
+          <mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align:0.363em;"><mjx-mn class="mjx-n" size="s"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-script></mjx-msup>
+          <mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo>
+          <mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align:0.363em;"><mjx-mn class="mjx-n" size="s"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-script></mjx-msup>
+        </mjx-math>
+        <mjx-assistive-mml role="presentation" unselectable="on" display="inline">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <semantics>
+              <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
+              <annotation encoding="application/x-tex">x^2 + y^2 = z^2</annotation>
+            </semantics>
+          </math>
+        </mjx-assistive-mml>
+      </mjx-container>
+    holds for right triangles.</p>
+
+    <h4>Block: Quadratic Formula</h4>
+    <mjx-container class="MathJax" jax="CHTML" display="true" style="font-size: 120.7%; position: relative; text-align: center;" role="presentation" tabindex="0">
+      <mjx-math class="MJX-TEX" aria-hidden="true">
+        <mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi>
+        <mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo>
+        <mjx-mfrac><mjx-frac type="d"><mjx-num><mjx-nstrut type="d"></mjx-nstrut><mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D44F TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-cB1"></mjx-c></mjx-mo><mjx-msqrt><mjx-sqrt><mjx-surd><mjx-mo class="mjx-lop"><mjx-c class="mjx-c221A"></mjx-c></mjx-mo></mjx-surd><mjx-box><mjx-mrow><mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D44F TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align:0.363em;"><mjx-mn class="mjx-n" size="s"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c34"></mjx-c></mjx-mn><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D44E TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D450 TEX-I"></mjx-c></mjx-mi></mjx-mrow></mjx-box></mjx-sqrt></mjx-msqrt></mjx-mrow></mjx-num><mjx-dbox><mjx-dtable><mjx-line type="d"></mjx-line><mjx-row><mjx-den><mjx-dstrut type="d"></mjx-dstrut><mjx-mrow><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D44E TEX-I"></mjx-c></mjx-mi></mjx-mrow></mjx-den></mjx-row></mjx-dtable></mjx-dbox></mjx-frac></mjx-mfrac>
+      </mjx-math>
+      <mjx-assistive-mml role="presentation" unselectable="on" display="block">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <semantics>
+            <mrow><mi>x</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow>
+            <annotation encoding="application/x-tex">x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</annotation>
+          </semantics>
+        </math>
+      </mjx-assistive-mml>
+    </mjx-container>
+  </div>
+
+  <!-- ── 8c. MathJax v2 ── -->
+  <div class="math-variant" id="math-mathjax2">
+    <span class="badge">8c</span>
+    <h3>MathJax v2</h3>
+    <p>Uses <code>&lt;script type="math/tex"&gt;</code> tags that remain in the DOM.</p>
+
+    <h4>Inline: x² + y² = z²</h4>
+    <p>The Pythagorean theorem: <script type="math/tex">x^2 + y^2 = z^2</script> holds for right triangles.</p>
+
+    <h4>Block: Quadratic Formula</h4>
+    <script type="math/tex; mode=display">x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</script>
+  </div>
+
+  <!-- ── 8d. Wikipedia-style ── -->
+  <div class="math-variant" id="math-wikipedia">
+    <span class="badge">8d</span>
+    <h3>Wikipedia-style</h3>
+    <p>Uses <code>&lt;math alttext="..."&gt;</code> with the LaTeX in the alttext attribute.</p>
+
+    <h4>Inline: x² + y² = z²</h4>
+    <p>The Pythagorean theorem states
+      <span class="mwe-math-element">
+        <span class="mwe-math-mathml-inline mwe-math-mathml-a11y" style="display: none;">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" alttext="{\displaystyle x^{2}+y^{2}=z^{2}}">
+            <semantics>
+              <mrow class="MJX-TeXAtom-ORD"><mstyle displaystyle="true" scriptlevel="0"><msup><mi>x</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msup><mo>+</mo><msup><mi>y</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msup><mo>=</mo><msup><mi>z</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msup></mstyle></mrow>
+              <annotation encoding="application/x-tex">{\displaystyle x^{2}+y^{2}=z^{2}}</annotation>
+            </semantics>
+          </math>
+        </span>
+        <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/pythagorean" class="mwe-math-fallback-image-inline" alt="{\displaystyle x^{2}+y^{2}=z^{2}}" aria-hidden="true" style="vertical-align: -0.338ex; width:14.2ex; height:2.676ex;">
+      </span>
+    for right triangles.</p>
+
+    <h4>Block: Quadratic Formula</h4>
+    <span class="mwe-math-element">
+      <span class="mwe-math-mathml-display mwe-math-mathml-a11y" style="display: none;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" alttext="{\displaystyle x={\frac {-b\pm {\sqrt {b^{2}-4ac}}}{2a}}}">
+          <semantics>
+            <mrow class="MJX-TeXAtom-ORD"><mstyle displaystyle="true" scriptlevel="0"><mi>x</mi><mo>=</mo><mrow class="MJX-TeXAtom-ORD"><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><mrow class="MJX-TeXAtom-ORD"><msqrt><msup><mi>b</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt></mrow></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow></mstyle></mrow>
+            <annotation encoding="application/x-tex">{\displaystyle x={\frac {-b\pm {\sqrt {b^{2}-4ac}}}{2a}}}</annotation>
+          </semantics>
+        </math>
+      </span>
+      <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/quadratic" class="mwe-math-fallback-image-display" alt="{\displaystyle x={\frac {-b\pm {\sqrt {b^{2}-4ac}}}{2a}}}" aria-hidden="true" style="vertical-align: -1.838ex; width:21.1ex; height:5.676ex; display: block; margin: 0.5em auto;">
+    </span>
+  </div>
+
+  <!-- ── 8e. Raw MathML ── -->
+  <div class="math-variant" id="math-mathml">
+    <span class="badge">8e</span>
+    <h3>Raw MathML</h3>
+    <p>Pure MathML without alttext or annotation — the converter must either pass through or attempt to interpret.</p>
+
+    <h4>Inline: x² + y² = z²</h4>
+    <p>The Pythagorean theorem:
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">
+        <mrow>
+          <msup><mi>x</mi><mn>2</mn></msup>
+          <mo>+</mo>
+          <msup><mi>y</mi><mn>2</mn></msup>
+          <mo>=</mo>
+          <msup><mi>z</mi><mn>2</mn></msup>
+        </mrow>
+      </math>
+    holds for right triangles.</p>
+
+    <h4>Block: Quadratic Formula</h4>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <mi>x</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mrow>
+            <mrow><mo>−</mo><mi>b</mi></mrow>
+            <mo>±</mo>
+            <msqrt>
+              <mrow>
+                <msup><mi>b</mi><mn>2</mn></msup>
+                <mo>−</mo>
+                <mrow><mn>4</mn><mo>⁢</mo><mi>a</mi><mo>⁢</mo><mi>c</mi></mrow>
+              </mrow>
+            </msqrt>
+          </mrow>
+          <mrow><mn>2</mn><mo>⁢</mo><mi>a</mi></mrow>
+        </mfrac>
+      </mrow>
+    </math>
+  </div>
+</section>
+
+<!-- ═══════════════ 9. SHADOW DOM ═══════════════ -->
+<section id="sec-shadow">
+  <span class="section-id">#sec-shadow</span>
+  <h2>9. Shadow DOM</h2>
+  <p>The <code>&lt;test-shadow&gt;</code> custom element below has a Shadow Root attached with <code>mode: 'open'</code>. Content inside the shadow root is invisible to normal DOM traversal — the converter must explicitly access <code>element.shadowRoot</code> to reach it.</p>
+
+  <test-shadow></test-shadow>
+
+  <p>If the converter extracted the heading and paragraph from inside the shadow root above, the test passes.</p>
+</section>
+
+<!-- ═══════════════ 10. MULTI-RANGE SELECTION ═══════════════ -->
+<section id="sec-multirange">
+  <span class="section-id">#sec-multirange</span>
+  <h2>10. Multi-Range Selection Test</h2>
+  <p>Hold <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) and click-drag to select non-contiguous text ranges across the paragraphs below. Then activate the extension to verify it captures all selected ranges.</p>
+
+  <div class="multi-range">
+    <p><strong>[Paragraph A]</strong> The quick brown fox jumps over the lazy dog. This is the first selectable paragraph for multi-range testing.</p>
+    <p><strong>[Paragraph B]</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Select this paragraph along with A and C simultaneously.</p>
+    <p><strong>[Paragraph C]</strong> Pack my box with five dozen liquor jugs. The third and final paragraph in this multi-range selection test.</p>
+  </div>
+</section>
+
+<!-- ═══════════════ 11. HIGHLIGHTER MODE ═══════════════ -->
+<section id="sec-highlighter">
+  <span class="section-id">#sec-highlighter</span>
+  <h2>11. Highlighter Mode Test</h2>
+  <p>In highlighter mode, click individual block elements below to toggle their selection. Each element should be visually distinct and separately clickable.</p>
+
+  <div class="highlight-test">
+    <h2>Highlighter: Heading Element</h2>
+
+    <p>Highlighter: This is a standalone paragraph element. Click it to select just this block.</p>
+
+    <blockquote>
+      <p>Highlighter: This is a blockquote element. It should be selectable as one block.</p>
+    </blockquote>
+
+    <ul>
+      <li>Highlighter: List item one</li>
+      <li>Highlighter: List item two</li>
+      <li>Highlighter: List item three</li>
+    </ul>
+
+    <table>
+      <thead><tr><th>Col A</th><th>Col B</th><th>Col C</th></tr></thead>
+      <tbody>
+        <tr><td>HL-1</td><td>HL-2</td><td>HL-3</td></tr>
+        <tr><td>HL-4</td><td>HL-5</td><td>HL-6</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code class="language-bash">#!/bin/bash
+# Highlighter: This is a code block
+echo "Select this entire block with one click"
+for i in 1 2 3; do
+  echo "Iteration $i"
+done</code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════ 12. EDGE CASES ═══════════════ -->
+<section id="sec-edge">
+  <span class="section-id">#sec-edge</span>
+  <h2>12. Edge Cases</h2>
+
+  <h3>Markdown special characters in plain text</h3>
+  <p>These characters must be escaped in output: # heading * star _ underscore > quote [ bracket ] bracket ` backtick \ backslash | pipe</p>
+  <p>A line starting with a number: 1. This looks like a list but is a paragraph.</p>
+  <p>A line starting with hash: # This looks like a heading but is a paragraph.</p>
+  <p>Three dashes in text: --- could be mistaken for a horizontal rule.</p>
+
+  <h3>HTML entities</h3>
+  <p>Ampersand: &amp; | Less than: &lt; | Greater than: &gt; | Non-breaking space:&nbsp;here | Em dash: &mdash; | Copyright: &copy; | Emoji: &#x1F600;</p>
+
+  <h3>Empty and whitespace elements</h3>
+  <p></p>
+  <p> </p>
+  <strong></strong>
+  <em> </em>
+  <p>The above lines contain empty &lt;p&gt;, whitespace-only &lt;p&gt;, empty &lt;strong&gt;, and whitespace-only &lt;em&gt;.</p>
+
+  <h3>CSS-hidden content</h3>
+  <p>Visible paragraph before hidden content.</p>
+  <p style="display: none;">This paragraph is display:none and should be EXCLUDED from conversion.</p>
+  <p style="visibility: hidden;">This paragraph is visibility:hidden and should also be EXCLUDED.</p>
+  <p>Visible paragraph after hidden content.</p>
+
+  <h3>Block inside inline (invalid but real-world HTML)</h3>
+  <a href="https://example.com">
+    <div>
+      <h3>Block heading inside a link</h3>
+      <p>Block paragraph inside a link. Browsers render this despite it being invalid HTML.</p>
+    </div>
+  </a>
+
+  <h3>Deeply nested structure</h3>
+  <blockquote>
+    <p>Quote containing a list with code:</p>
+    <ol>
+      <li>First step:
+        <pre><code class="language-bash">npm install</code></pre>
+      </li>
+      <li>Second step:
+        <blockquote>
+          <p>Nested quote inside a list inside a quote.</p>
+          <ul>
+            <li>Deep item A</li>
+            <li>Deep item B with <strong>bold</strong> and <a href="#">a link</a></li>
+          </ul>
+        </blockquote>
+      </li>
+    </ol>
+  </blockquote>
+
+  <h3>Links with edge-case URLs</h3>
+  <p><a href="https://example.com/path(with)parens">URL with parentheses</a></p>
+  <p><a href="https://example.com/path?q=a&b=c&d=e#fragment">URL with query & fragment</a></p>
+  <p><a href="javascript:void(0)">javascript: link (should be sanitized)</a></p>
+
+  <h3>Template element (should be ignored)</h3>
+  <template>
+    <p>This content is inside a &lt;template&gt; tag and should NOT appear in conversion output.</p>
+  </template>
+  <p>If the converter outputs the template content above, that's a bug.</p>
+
+  <h3>Whitespace handling stress test</h3>
+  <p>Word   with   multiple   spaces   between   them.</p>
+  <p>
+    Line with
+    newlines in
+    the source code.
+  </p>
+  <p>Tab	separated	words	here.</p>
+
+  <h3>Overlapping / interleaved formatting (real-world messy HTML)</h3>
+  <p><strong>Bold starts <em>then italic starts</strong> and bold ends</em> — browsers fix this but nesting is wrong.</p>
+
+  <h3>Footnote-style references</h3>
+  <p>Some text with a reference<sup><a href="#fn1" id="ref1">[1]</a></sup> and another reference<sup><a href="#fn2" id="ref2">[2]</a></sup>.</p>
+  <hr>
+  <ol>
+    <li id="fn1">First footnote explanation. <a href="#ref1">↩</a></li>
+    <li id="fn2">Second footnote explanation. <a href="#ref2">↩</a></li>
+  </ol>
+</section>
+
+<!-- ═══════════════ 13. LONG CONTENT ═══════════════ -->
+<section id="sec-long">
+  <span class="section-id">#sec-long</span>
+  <h2>13. Long Content (Scroll & Partial Selection Test)</h2>
+  <p>This section contains 20+ paragraphs to test scrolling behavior, partial selection (selecting only a portion of a long page), and performance with larger content blocks.</p>
+
+  <p><strong>§1.</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+
+  <p><strong>§2.</strong> Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+
+  <p><strong>§3.</strong> Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula ut dictum pharetra, nisi nunc fringilla magna, in commodo elit erat nec turpis. Ut pharetra auctor nunc.</p>
+
+  <p><strong>§4.</strong> Proin elementum augue at urna cursus, non pellentesque lectus fermentum. Maecenas sed diam eget risus varius blandit sit amet non magna. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Donec sed odio dui. Vestibulum id ligula porta felis euismod semper.</p>
+
+  <p><strong>§5.</strong> Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Cras mattis consectetur purus sit amet fermentum. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Aenean lacinia bibendum nulla sed consectetur.</p>
+
+  <p><strong>§6.</strong> Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ut facilisis in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.</p>
+
+  <p><strong>§7.</strong> Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Etiam porta sem malesuada magna mollis euismod. Sed posuere consectetur est at lobortis.</p>
+
+  <p><strong>§8.</strong> Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Maecenas faucibus mollis interdum. Donec ullamcorper nulla non metus auctor fringilla. Cras mattis consectetur purus sit amet fermentum. Nulla vitae elit libero, a pharetra augue.</p>
+
+  <p><strong>§9.</strong> Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Cras justo odio, dapibus ut facilisis in, egestas eget quam. Morbi leo risus, porta ac consectetur ac.</p>
+
+  <p><strong>§10.</strong> Vestibulum at eros. Nulla vitae elit libero, a pharetra augue. Maecenas sed diam eget risus varius blandit sit amet non magna. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec id elit non mi porta gravida at eget metus.</p>
+
+  <p><strong>§11.</strong> Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+
+  <p><strong>§12.</strong> Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis.</p>
+
+  <p><strong>§13.</strong> Ut varius tincidunt libero. Phasellus dolor. Maecenas vestibulum mollis diam. Pellentesque ut neque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In dui magna, posuere eget, vestibulum et, tempor auctor, justo. In ac felis quis tortor malesuada pretium.</p>
+
+  <p><strong>§14.</strong> Pellentesque auctor neque nec urna. Proin sapien ipsum, porta a, auctor quis, euismod ut, mi. Aenean viverra rhoncus pede. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut non enim eleifend felis pretium feugiat.</p>
+
+  <p><strong>§15.</strong> Vivamus quis mi. Phasellus a est. Phasellus magna. In hac habitasse platea dictumst. Curabitur at lacus ac velit ornare lobortis. Curabitur a felis in nunc fringilla tristique. Morbi mattis ullamcorper velit. Phasellus gravida semper nisi. Nullam vel sem.</p>
+
+  <p><strong>§16.</strong> Pellentesque libero tortor, tincidunt et, tincidunt eget, semper nec, quam. Sed hendrerit. Morbi ac fermentum et, tincidunt eget, semper nec. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc.</p>
+
+  <p><strong>§17.</strong> Donec vitae orci sed dolor rutrum auctor. Fusce egestas elit eget lorem. Suspendisse nisl elit, rhoncus eget, elementum ac, condimentum eget, diam. Nam at tortor in tellus interdum sagittis. Aliquam lobortis. Donec orci lectus, aliquam vel, dapibus a, dignissim sit amet, augue.</p>
+
+  <p><strong>§18.</strong> Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Morbi lacinia molestie dui. Praesent blandit dolor. Sed non quam. In vel mi sit amet augue congue elementum. Morbi in ipsum sit amet pede facilisis laoreet. Donec lacus nunc, viverra nec, blandit vel.</p>
+
+  <p><strong>§19.</strong> Suspendisse potenti. Fusce accumsan mollis eros. Pellentesque a diam sit amet mi ullamcorper vehicula. Integer adipiscing risus a sem. Nullam quis massa sit amet nibh viverra malesuada. Nunc sem lacus, accumsan quis, faucibus non, congue vel, arcu. Ut scelerisque hendrerit tellus.</p>
+
+  <p><strong>§20.</strong> Integer sagittis. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus.</p>
+
+  <p><strong>§21.</strong> Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum.</p>
+
+  <p><strong>§22.</strong> Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus.</p>
+</section>
+
+</main>
+
+<!-- ════════════════════ SCRIPTS ════════════════════ -->
+<script>
+// ── Shadow DOM: register <test-shadow> custom element ──
+class TestShadow extends HTMLElement {
+  constructor() {
+    super();
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          border: 2px dashed #a78bfa;
+          border-radius: 8px;
+          padding: 1.25rem;
+          margin: 1rem 0;
+          background: #faf5ff;
+        }
+        h2 { font-family: sans-serif; font-size: 1.3rem; color: #6d28d9; margin: 0 0 0.5rem; }
+        p { font-family: Georgia, serif; color: #4c1d95; line-height: 1.6; margin: 0; }
+        .badge {
+          display: inline-block;
+          font-size: 11px;
+          font-family: monospace;
+          background: #ede9fe;
+          color: #6d28d9;
+          padding: 2px 8px;
+          border-radius: 3px;
+          margin-bottom: 0.75rem;
+        }
+      </style>
+      <span class="badge">Shadow DOM content</span>
+      <h2>Shadow Root Heading</h2>
+      <p>This paragraph lives inside a Shadow DOM. If you can read this in the Markdown output, the converter successfully traversed into <code>element.shadowRoot</code>.</p>
+      <ul>
+        <li>Shadow list item 1</li>
+        <li>Shadow list item <strong>two (bold)</strong></li>
+        <li>Shadow list item with <a href="https://example.com">a link</a></li>
+      </ul>
+    `;
+  }
+}
+customElements.define('test-shadow', TestShadow);
+
+// ── Smooth-scroll active TOC highlighting ──
+(function() {
+  const tocLinks = document.querySelectorAll('#toc a');
+  const sections = Array.from(tocLinks).map(a => document.querySelector(a.getAttribute('href')));
+
+  function updateActive() {
+    let current = 0;
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i] && sections[i].getBoundingClientRect().top <= 80) {
+        current = i;
+      }
+    }
+    tocLinks.forEach((a, i) => {
+      a.style.fontWeight = i === current ? '700' : '';
+      a.style.color = i === current ? '#2563eb' : '';
+      a.style.background = i === current ? '#dbeafe' : '';
+    });
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+
+</body>
+</html>

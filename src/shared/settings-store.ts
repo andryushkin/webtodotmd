@@ -9,13 +9,13 @@ export interface Settings {
 const DEFAULTS: Settings = {
   autoMetadata: true,
   defaultViewMode: 'preview',
-  highlighterColor: '#2563eb',
+  highlighterColor: '#0066cc',
   showBubble: true,
-  uiLanguage: 'auto',
+  uiLanguage: 'en',
 };
 
 export async function getSettings(): Promise<Settings> {
-  const { settings } = await chrome.storage.local.get('settings');
+  const { settings = {} } = await chrome.storage.local.get('settings');
   return { ...DEFAULTS, ...settings };
 }
 

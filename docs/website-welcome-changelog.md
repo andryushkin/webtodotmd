@@ -1,11 +1,11 @@
-# Welcome & Changelog pages — dotmd.tools
+# Welcome & Changelog pages — 2md.site
 
 ## URL структура
 
 | Событие | URL |
 |---|---|
-| Первая установка | `https://dotmd.tools/<locale>/welcome` |
-| Обновление расширения | `https://dotmd.tools/<locale>/changelog` |
+| Первая установка | `https://2md.site/<locale>/welcome` |
+| Обновление расширения | `https://2md.site/<locale>/changelog` |
 
 ## Поддерживаемые локали
 

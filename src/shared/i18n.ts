@@ -6,7 +6,10 @@ let currentLocale = 'en';
 
 const SUPPORTED_LOCALES = [
   'en', 'de', 'fr', 'es', 'it', 'nl', 'sv', 'da', 'no', 'fi',
-  'ar', 'he', 'fa', 'id', 'ru', 'pt_PT', 'ja', 'fil', 'vi', 'tr', 'th', 'ko',
+  'ar', 'he', 'fa', 'id', 'ru', 'pt_PT', 'pt_BR', 'ja', 'fil', 'vi', 'tr', 'th', 'ko',
+  'bg', 'cs', 'hr', 'pl', 'ro', 'sk', 'sl', 'sr', 'uk',
+  'zh_CN', 'zh_TW', 'el', 'hu', 'hi', 'ms', 'es_419',
+  'et', 'lt', 'lv', 'ca', 'bn', 'gu', 'kn', 'ml', 'mr', 'ta', 'te', 'am', 'sw',
 ];
 
 const RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur']);
@@ -20,8 +23,11 @@ function normalizeLocale(lang: string): string {
   const base = lang.split(/[-_]/)[0].toLowerCase();
   // Norwegian: nb/nn → no
   if (base === 'nb' || base === 'nn') return 'no';
-  // Portuguese: pt-PT or pt-BR falls back to pt_PT (only pt_PT supported)
-  if (base === 'pt') return 'pt_PT';
+  // Portuguese: pt-PT → pt_PT; pt-BR or bare pt → pt_BR
+  if (lang === 'pt-PT' || lang === 'pt_PT') return 'pt_PT';
+  if (base === 'pt') return 'pt_BR';
+  // Chinese: zh-TW → zh_TW; zh-CN/bare zh → zh_CN
+  if (base === 'zh') return 'zh_CN';
   if (SUPPORTED_LOCALES.includes(base)) return base;
   return 'en';
 }
