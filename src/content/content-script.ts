@@ -1,4 +1,4 @@
-import { selectionToMarkdown } from '../../../htmltodotmd/src/browser.ts';
+import { toMarkdown } from '../../../htmltodotmd/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
@@ -7,6 +7,88 @@ import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 // (content scripts cannot reliably fetch extension _locales files)
 
 // ---- Shadow DOM flattening ----
+
+// Clones a Range into a DocumentFragment and replaces literal \n in text nodes
+// with <br> elements so that sites like Instagram (which use \n in <span> text
+// nodes instead of <p>/<br>) produce correct paragraph breaks in Markdown.
+// Expands a Range to whitespace boundaries when start/end land mid-token
+// in text nodes (token = run of non-whitespace, includes letters/digits/
+// punctuation). Element-boundary selections are left untouched.
+const WORD_CHAR_RE = /\S/u;
+function expandRangeToWords(range: Range): Range {
+  const out = range.cloneRange();
+  const { startContainer, startOffset, endContainer, endOffset } = out;
+  if (startContainer.nodeType === Node.TEXT_NODE) {
+    const text = startContainer.textContent ?? '';
+    let i = startOffset;
+    while (i > 0 && WORD_CHAR_RE.test(text[i - 1]!)) i--;
+    if (i !== startOffset) out.setStart(startContainer, i);
+  }
+  if (endContainer.nodeType === Node.TEXT_NODE) {
+    const text = endContainer.textContent ?? '';
+    let i = endOffset;
+    while (i < text.length && WORD_CHAR_RE.test(text[i]!)) i++;
+    if (i !== endOffset) out.setEnd(endContainer, i);
+  }
+  return out;
+}
+
+function cloneRangeWithBr(range: Range): DocumentFragment {
+  const fragment = range.cloneContents();
+  const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
+  const textNodes: Text[] = [];
+  let node = walker.nextNode();
+  while (node) {
+    textNodes.push(node as Text);
+    node = walker.nextNode();
+  }
+  for (const textNode of textNodes) {
+    if (!textNode.textContent?.includes('\n')) continue;
+    let ancestor: Element | null = textNode.parentElement;
+    let skip = false;
+    while (ancestor) {
+      const tag = ancestor.tagName.toLowerCase();
+      if (['pre', 'code', 'script', 'style', 'svg', 'math', 'textarea'].includes(tag)) {
+        skip = true; break;
+      }
+      if (/white-space\s*:\s*pre/.test(ancestor.getAttribute('style') || '')) {
+        skip = true; break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+    if (skip) continue;
+    const parts = textNode.textContent.split('\n');
+    if (parts.length <= 1) continue;
+    // Drop leading/trailing whitespace-only parts (HTML indentation between
+    // tags is not author-intent line break). Keep inner empty parts so that
+    // consecutive \n\n in author content (e.g. Instagram captions) stays.
+    let start = 0, end = parts.length;
+    while (start < end - 1 && /^\s*$/.test(parts[start]!)) start++;
+    while (end > start + 1 && /^\s*$/.test(parts[end - 1]!)) end--;
+    const effective = parts.slice(start, end);
+    if (effective.length <= 1) continue;
+    const frag = document.createDocumentFragment();
+    effective.forEach((part, i) => {
+      if (i > 0) frag.appendChild(document.createElement('br'));
+      frag.appendChild(document.createTextNode(part));
+    });
+    textNode.replaceWith(frag);
+  }
+  return fragment;
+}
+
+// Collapses 2+ consecutive hard line breaks (`\<NL>` from <br>) into paragraph
+// breaks. Guards fenced code blocks where backslash-newline may be legitimate
+// (e.g. shell line continuations). See plan: glimmering-strolling-stardust.md
+function collapseHardBreaksToParagraphs(md: string): string {
+  const segments = md.split(/(^```[\s\S]*?^```$)/gm);
+  return segments
+    .map((seg, i) => {
+      if (i % 2 === 1) return seg;
+      return seg.replace(/(?:\\\n[ \t]*){2,}/g, '\n\n');
+    })
+    .join('');
+}
 
 function expandShadowRoots(): () => void {
   const cleanups: (() => void)[] = [];
@@ -44,16 +126,15 @@ const rawMathmlRule = {
 function selectionToMd(selection: Selection): string {
   const cleanup = expandShadowRoots();
   try {
+    const opts = { baseUrl: document.baseURI, headingOffset: 1, math: true, rules: [rawMathmlRule] };
     if (selection.rangeCount > 1) {
       const fragments: string[] = [];
       for (let i = 0; i < selection.rangeCount; i++) {
-        const range = selection.getRangeAt(i);
-        const sel = { rangeCount: 1, getRangeAt: () => range } as unknown as Selection;
-        fragments.push(selectionToMarkdown(sel, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] }));
+        fragments.push(collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(selection.getRangeAt(i))), opts)));
       }
       return fragments.join('\n\n');
     }
-    return selectionToMarkdown(selection, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] });
+    return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(selection.getRangeAt(0))), opts));
   } finally {
     cleanup();
   }
@@ -340,13 +421,15 @@ function findPageTitle(): string {
     } catch { /* ignore */ }
   }
 
-  return (
+  const raw = (
     getMeta('property', 'og:title') ||
     getMeta('name', 'twitter:title') ||
     schemaHeadline ||
     getMeta('name', 'title') ||
     document.title
   );
+  const clean = raw.replace(/[\n\r\u2028\u2029]+/g, ' ').trim();
+  return clean.length > 200 ? clean.slice(0, 197) + '…' : clean;
 }
 
 function captureHighlightsMd(): string {
@@ -357,11 +440,11 @@ function captureHighlightsMd(): string {
 
   const cleanup = expandShadowRoots();
   try {
+    const opts = { baseUrl: document.baseURI, headingOffset: 1, math: true, rules: [rawMathmlRule] };
     const fragments = sorted.map(el => {
       const range = document.createRange();
       range.selectNodeContents(el);
-      const fakeSel = { rangeCount: 1, getRangeAt: () => range } as unknown as Selection;
-      return selectionToMarkdown(fakeSel, { baseUrl: window.location.href, headingOffset: 1, math: true, rules: [rawMathmlRule] });
+      return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
     });
     return fragments.join('\n\n');
   } finally {

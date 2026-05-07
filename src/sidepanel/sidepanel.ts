@@ -232,12 +232,17 @@ function renderMathInDOM(container: HTMLElement) {
   });
 }
 
-const METADATA_RE = /---\ntitle: "([^"]*)"\nsource: ([^\n]+)\ndate: ([^\n]+)\n---/g;
+// Backward-compatible matcher: accepts both single- and double-quoted YAML
+// values for title/source. Inner content stops at the matching quote.
+const METADATA_RE = /---\ntitle: (?:"([^"]*)"|'((?:[^']|'')*)')\nsource: (?:"([^"\n]+)"|'((?:[^'\n]|'')+)')\ndate: ([^\n]+)\n---/g;
 
 function buildMetadata(meta: PageMeta): string {
-  const escapedTitle = meta.title.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  // Use single-quoted YAML: only `'` needs doubling. Avoids ugly `\"` escapes
+  // when og:title contains literal double quotes (e.g. Instagram captions).
+  const escapedTitle = meta.title.replace(/'/g, "''");
+  const escapedUrl = meta.url.replace(/'/g, "''");
   const dateStr = meta.date.slice(0, 10);
-  return `---\ntitle: "${escapedTitle}"\nsource: ${meta.url}\ndate: ${dateStr}\n---`;
+  return `---\ntitle: '${escapedTitle}'\nsource: '${escapedUrl}'\ndate: ${dateStr}\n---`;
 }
 
 const ALLOWED_HTML_TAGS = new Set(['sub', 'sup', 'br']);
@@ -257,8 +262,10 @@ function escapeHtmlTagsInMarkdown(md: string): string {
 
 function renderMarkdown(md: string) {
   const processed = preprocessMath(escapeHtmlTagsInMarkdown(md))
-    .replace(METADATA_RE, (_, title, source, date) => {
-      const safeTitle = title.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    .replace(METADATA_RE, (_, titleDQ, titleSQ, sourceDQ, sourceSQ, date) => {
+      const rawTitle = titleSQ != null ? titleSQ.replace(/''/g, "'") : titleDQ;
+      const source = sourceSQ != null ? sourceSQ.replace(/''/g, "'") : sourceDQ;
+      const safeTitle = rawTitle.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
       return `\n\n<div class="metadata-block"><div class="metadata-field"><span class="metadata-icon">${icon('fileText', 12)}</span><span class="metadata-value">${escHtml(safeTitle)}</span></div><div class="metadata-field"><span class="metadata-icon">${icon('link', 12)}</span><a href="${escHtml(source)}" class="metadata-link" title="${escHtml(source)}">${escHtml(shortUrl(source))}</a></div><div class="metadata-field"><span class="metadata-icon">${icon('calendar', 12)}</span><span class="metadata-value">${escHtml(date)}</span></div></div>\n\n`;
     })
     .replace(/\n{3,}/g, '\n\n<div class="content-gap"></div>\n\n');
@@ -636,8 +643,8 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     const s = changes.settings.newValue;
     if (s) {
       autoMetadata = s.autoMetadata ?? false;
-      const newLang = s.uiLanguage ?? 'auto';
-      const oldLang = changes.settings.oldValue?.uiLanguage ?? 'auto';
+      const newLang = s.uiLanguage ?? 'en';
+      const oldLang = changes.settings.oldValue?.uiLanguage ?? 'en';
       if (newLang !== oldLang) {
         await initI18n(newLang);
         applyI18n();
