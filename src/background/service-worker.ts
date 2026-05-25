@@ -55,6 +55,7 @@ async function createContextMenu() {
   const { settings } = await chrome.storage.local.get('settings');
   await initI18n(settings?.uiLanguage ?? 'en');
   await writeContentTranslations();
+  await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: 'capture-and-copy',
     title: t('contextMenuTitle') || 'add to .md',
