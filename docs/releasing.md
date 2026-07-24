@@ -13,14 +13,49 @@ Before packaging, check that `bun test src` passes and that the panel, the
 options page and a capture on an ordinary page all work with no console
 errors.
 
-## Version bump
+## Versioning
 
-The version lives in exactly two places that must agree:
+Semantic versioning, read from the user's side rather than the code's — the
+question is what a person who already has the extension installed would need to
+be told:
 
-- `manifest.json` → `version`
-- `package.json` → `version`
+| Bump | When |
+| --- | --- |
+| **Patch** `1.2.x` | Bug fixes, conversion corrections, translation and copy fixes, internal refactors. Nothing new to learn. |
+| **Minor** `1.x.0` | A new capability or a visible behavior change: a button, a capture mode, a shortcut, a setting. |
+| **Major** `x.0.0` | The output or the workflow changes in a way that breaks existing habits — front matter shape, default capture behavior, settings that do not carry over. |
 
-Add the release to [CHANGELOG.md](../CHANGELOG.md) in the same commit.
+Two rules the Chrome Web Store enforces, and one this repository does:
+
+- **Versions must strictly increase.** A number that has been uploaded is burnt
+  even if that submission was rejected — bump again rather than re-uploading.
+- **Four dot-separated integers maximum**, each 0–65535, no leading zeros, no
+  suffixes. `1.2.2` is fine; `1.2.2-beta` is not.
+- **`manifest.json` and `package.json` must agree.** `scripts/audit.sh` fails
+  if they drift.
+
+### Release commit
+
+The version bump, the `CHANGELOG.md` entry and the tag describe one release and
+belong together:
+
+```bash
+# after the bump is committed
+git tag -a v1.2.3 -m "1.2.3"
+git push --follow-tags
+```
+
+Tag the commit that was actually packaged and uploaded — if fixes land after
+the bump commit and ship in the same submission, the tag goes on the last of
+them, not on the bump.
+
+### Changelog entries
+
+One `## X.Y.Z — YYYY-MM-DD` section per published version, newest first, dated
+by submission. Write what changed for the user and why it matters; leave out
+refactors, dependency bumps and repository chores that nobody outside notices.
+If a release is nothing but internal work, it does not need a section — and
+probably does not need a submission either.
 
 ## Package
 

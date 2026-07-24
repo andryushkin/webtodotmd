@@ -1,6 +1,8 @@
 # Changelog
 
-Versions are the ones published to the Chrome Web Store.
+Versions are the ones published to the Chrome Web Store, newest first, dated by
+submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
+about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
 ## 1.2.2 — 2026-07-24
 
