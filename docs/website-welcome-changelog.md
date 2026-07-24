@@ -1,72 +1,56 @@
-# Welcome & Changelog pages — 2md.site
+# Welcome and changelog pages — 2md.site
 
-## URL структура
+The contract between the extension and the site it opens after install and
+update. The extension side is implemented; this file is what the site has to
+honor.
 
-| Событие | URL |
-|---|---|
-| Первая установка | `https://2md.site/<locale>/welcome` |
-| Обновление расширения | `https://2md.site/<locale>/changelog` |
+## URLs
 
-## Поддерживаемые локали
+| Event | URL |
+| --- | --- |
+| First install | `https://2md.site/<locale>/welcome` |
+| Extension update | `https://2md.site/<locale>/changelog` |
+
+Updates only open a page when `SHOW_CHANGELOG_ON_UPDATE` is `true` in
+`src/background/service-worker.ts`; it is off by default and turned on by hand
+for meaningful releases.
+
+## Locales
+
+`getUrlLocale()` in the service worker resolves `chrome.i18n.getUILanguage()`
+against this set:
 
 ```
-en, de, fr, es, it, nl, sv, da, no, fi, ar, id, ru, pt-PT, ja, fil, vi, tr, th, ko
+en, de, fr, es, es-419, it, nl, sv, da, no, fi, ar, he, fa, id, ru,
+pt-PT, pt-BR, ja, fil, vi, tr, th, ko, bg, cs, hr, pl, ro, sk, sl, sr,
+uk, zh-CN, zh-TW, el, hu, hi, ms, et, lt, lv, ca, bn, gu, kn, ml, mr,
+ta, te, am, sw
 ```
 
-Fallback для неподдерживаемых → `en`.
+Resolution order: exact match on the normalized tag (`pt_PT` → `pt-PT`), then
+the special cases below, then the base language, then `en`.
 
-## Логика определения локали (уже реализована в расширении)
-
-| Chrome UI Language | URL locale |
-|---|---|
-| `ru` | `ru` |
+| Chrome UI language | URL locale |
+| --- | --- |
 | `en-US`, `en-GB` | `en` |
 | `pt-PT` | `pt-PT` |
-| `pt-BR` | `pt-PT` |
+| `pt`, `pt-BR` | `pt-BR` |
+| `zh-TW` | `zh-TW` |
+| `zh`, other `zh-*` | `zh-CN` |
 | `nb`, `nn` | `no` |
-| `zh-CN`, `zh-TW` | `en` (не поддерживается) |
+| anything unlisted | `en` |
 
-## Что нужно сделать на сайте
+## What the site must provide
 
-### Страницы для создания
+**Every locale in the set must return a page, not a 404.** Untranslated locales
+should serve the English content rather than fail.
 
-1. `/<locale>/welcome` — страница после первой установки
-2. `/<locale>/changelog` — страница с историей обновлений
+- `/<locale>/welcome` — thank the user for installing, show the three capture
+  modes (selection, highlighter, shortcuts), and end with a call to action:
+  open the panel and try it on a page. A short GIF or screenshot helps.
+- `/<locale>/changelog` — what changed in the current release. The version can
+  be read from `manifest.json`.
 
-### Требования к `/welcome`
-
-- Поблагодарить за установку
-- Показать ключевые возможности расширения (capture selection, highlighter mode, side panel)
-- Опционально: короткий onboarding / GIF / скриншот
-- CTA: открыть расширение, попробовать на странице
-
-### Требования к `/changelog`
-
-- Открывается только для значимых релизов (разработчик включает вручную через `SHOW_CHANGELOG_ON_UPDATE = true` в service-worker.ts)
-- Показывает что нового в текущей версии
-- Версию можно читать из `manifest.json` (поле `version`)
-
-### Роутинг
-
-Все 20 локалей должны возвращать страницу (не 404). Если страница не переведена — отдавать английскую версию.
-
-Пример структуры:
-```
-/en/welcome
-/ru/welcome
-/de/welcome
-... (все 20 локалей)
-
-/en/changelog
-/ru/changelog
-...
-```
-
-## Управление changelog в расширении
-
-Файл: `src/background/service-worker.ts`
-
-```typescript
-// Менять вручную перед значимым релизом
-const SHOW_CHANGELOG_ON_UPDATE = false; // → true для крупных обновлений
-```
+Two more pages are linked from inside the extension and follow the same locale
+scheme: `/<locale>/feedback` (opened by a rating of three stars or less) and
+the privacy policy.

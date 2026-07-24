@@ -1,0 +1,99 @@
+# Text to .md
+
+Chrome extension that turns what you selected on a page into clean Markdown.
+The conversion runs inside the browser — the page content is never uploaded
+anywhere, and there is no account to create.
+
+[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego)
+
+## What it does
+
+- **Selection capture** — select anything, click the floating button (or press
+  <kbd>Alt</kbd>+<kbd>M</kbd>) and get Markdown. Multi-range selections are
+  joined into one document; Shadow DOM content is flattened before conversion,
+  so web components convert like ordinary markup.
+- **Highlighter mode** — click whole blocks (paragraphs, lists, tables, code,
+  quotes) to collect them across the page, then capture them all at once.
+- **Side panel workspace** — rendered preview and raw source in one toggle,
+  undo/redo, copy, download as `.md` or `.txt`, and appending several clippings
+  into one note.
+- **Front matter** — title, source URL and capture date are added as YAML front
+  matter, so clippings drop straight into Obsidian or any vault.
+- **Math and code** — MathML is converted to LaTeX and rendered with KaTeX in
+  the preview; fenced code blocks keep their language.
+- **52 locales**, including full RTL layout for Arabic, Hebrew and Persian.
+
+## Build
+
+Requires [Bun](https://bun.sh) (the transpiler) and Chrome. The build itself
+needs no `node_modules` — Bun compiles the TypeScript directly and every runtime
+dependency is vendored.
+
+```bash
+git clone --recurse-submodules https://github.com/andryushkin/webtodotmd.git
+cd webtodotmd
+bash build.sh
+```
+
+The unpacked extension lands in `dist/` — load it via `chrome://extensions`
+▸ Developer mode ▸ Load unpacked.
+
+If you cloned without `--recurse-submodules`, run
+`git submodule update --init` first: the HTML → Markdown core lives in
+[`vendor/htmltodotmd`](https://github.com/andryushkin/htmltodotmd) and the
+content script does not compile without it.
+
+## Tests
+
+Tests are the one place that needs a package install — `linkedom` provides the
+DOM the conversion tests run against.
+
+```bash
+bun install
+bun test src
+```
+
+Use `bun test src` rather than bare `bun test`, which would also pick up the
+submodule's own suite.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `src/content/` | Content script: selection capture, highlighter mode, page title normalization |
+| `src/sidepanel/` | The main UI — preview/source, toolbar, rating widget |
+| `src/background/` | Service worker: context menu, commands, panel behavior |
+| `src/settings/` | Options page |
+| `src/shared/` | i18n, icons, storage, injection, telemetry |
+| `public/_locales/` | 52 locales; must live under `public/` to reach `dist/` |
+| `vendor/` | Vendored runtime deps + the `htmltodotmd` submodule |
+| `docs/` | Domain documentation ([index](docs/README.md)) |
+
+## Privacy
+
+Captured content stays on the device: conversion happens in the content script,
+and the extension has no server to send it to. The only network call is an
+anonymous usage counter (a random install ID plus an event name such as `copy`
+or `download_md`) sent to `2md.site` — no URLs, no page content, no personal
+data. [privacy-policy.html](privacy-policy.html) is the published policy, and
+[docs/permissions-justification.md](docs/permissions-justification.md) explains
+why each manifest permission exists.
+
+## Repository notes
+
+This is a personal project developed largely with AI agents. `CLAUDE.md` and
+`AGENTS.md` are the agent working guides, and [`docs/`](docs/README.md) holds
+the domain documentation, written for humans and agents alike.
+
+## Contributing
+
+Bug reports and ideas help most: bugs go to
+[Issues](https://github.com/andryushkin/webtodotmd/issues), ideas and questions
+to [Discussions](https://github.com/andryushkin/webtodotmd/discussions).
+[CONTRIBUTING.md](CONTRIBUTING.md) has the details, including the deliberately
+narrow pull-request policy.
+
+## License
+
+[MIT](LICENSE). Bundled third-party code is listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

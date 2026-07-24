@@ -1,4 +1,4 @@
-import { toMarkdown } from '../../../htmltodotmd/src/browser.ts';
+import { toMarkdown } from '../../vendor/htmltodotmd/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
@@ -353,7 +353,7 @@ function onHighlighterClick(e: MouseEvent) {
     highlights.delete(target);
     target.classList.remove('s2md-highlighted');
   } else {
-    // Убрать любого предка, если он уже в highlights
+    // Drop any ancestor that is already highlighted
     let ancestor: Element | null = target.parentElement;
     while (ancestor && ancestor !== document.body) {
       if (highlights.has(ancestor)) {
@@ -363,7 +363,7 @@ function onHighlighterClick(e: MouseEvent) {
       ancestor = ancestor.parentElement;
     }
 
-    // Убрать всех потомков, покрытых новым элементом
+    // Drop every descendant now covered by the new element
     for (const el of [...highlights]) {
       if (target.contains(el)) {
         highlights.delete(el);

@@ -1,0 +1,42 @@
+name: Bug report
+description: A capture fails, or the Markdown comes out wrong
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you select, what Markdown did you get, and what did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      description: Where it happened. Leave blank if the page is private — a snippet below works too.
+  - type: textarea
+    id: snippet
+    attributes:
+      label: HTML to reproduce
+      description: A minimal HTML snippet that triggers the problem.
+      render: html
+  - type: dropdown
+    id: how
+    attributes:
+      label: How did you capture
+      multiple: true
+      options:
+        - Floating button
+        - Side panel button
+        - Highlighter mode
+        - Alt+M / Alt+Shift+M
+        - Context menu
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Extension and Chrome versions
+      placeholder: "Text to .md 1.2.2, Chrome 138, macOS 15.5"
+    validations:
+      required: true

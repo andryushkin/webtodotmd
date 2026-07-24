@@ -1,3 +1,9 @@
 node_modules/
 dist/
 *.DS_Store
+
+# Packaged extension archives, built by build.sh and uploaded to the Web Store
+*.zip
+
+# Local agent settings
+.claude/settings.local.json

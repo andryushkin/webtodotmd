@@ -278,7 +278,7 @@ function escapeHtmlTagsInMarkdown(md: string): string {
   const parts = md.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g);
   return parts
     .map((part, i) => {
-      if (i % 2 === 1) return part; // code block — не трогать
+      if (i % 2 === 1) return part; // code span or fence — leave untouched
       return part.replace(/<(\/?)(([a-zA-Z][a-zA-Z0-9]*))([^>]*)>/g, (_match, slash, tagName, _tn, attrs) => {
         if (ALLOWED_HTML_TAGS.has(tagName.toLowerCase())) return _match;
         return `&lt;${slash}${tagName}${attrs}&gt;`;

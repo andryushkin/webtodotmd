@@ -84,12 +84,14 @@
   <main>
     <header>
       <h1>to .md — Privacy Policy</h1>
-      <p class="meta">Effective date: 2026-03-16 &nbsp;·&nbsp; Last updated: 2026-03-16</p>
+      <p class="meta">Effective date: 2026-03-16 &nbsp;·&nbsp; Last updated: 2026-07-24</p>
     </header>
 
     <div class="highlight">
-      <strong>Short version:</strong> to .md processes everything locally in your browser.
-      No data is sent to any server. No accounts. No tracking.
+      <strong>Short version:</strong> to .md converts everything locally in your browser.
+      Your selections, the Markdown they produce, and the pages you visit never leave your
+      device. The only thing sent anywhere is an anonymous counter of how often features are
+      used — no accounts, no profiles, no page data.
     </div>
 
     <h2>1. What to .md Does</h2>
@@ -105,29 +107,49 @@
       <li>URLs or titles of pages you visit</li>
       <li>Your browsing history</li>
       <li>Personal information of any kind</li>
-      <li>Usage analytics or telemetry</li>
+      <li>Anything that could identify you or link usage back to a person</li>
     </ul>
 
-    <h2>3. Local Storage</h2>
+    <h2>3. Anonymous Usage Counters</h2>
+    <p>To know which features are worth maintaining, the extension sends a small event to
+    <code>https://2md.site/api/event</code> when you copy, download, hand a note to another
+    app, or rate the extension. Each event contains exactly four fields:</p>
+    <ul>
+      <li><strong>Install ID</strong> — a random UUID generated on your device at install
+      time. It is not derived from anything about you or your browser, and it is not linked
+      to any other identifier.</li>
+      <li><strong>Event name</strong> — for example <code>copy</code>,
+      <code>download_md</code> or <code>rating_5</code>.</li>
+      <li><strong>Interface language</strong> and <strong>extension version</strong>.</li>
+    </ul>
+    <p>No page content, URL, title, or timestamp of what you captured is included. The
+    request is fire-and-forget: if it fails, the extension ignores the failure and carries
+    on. The receiving endpoint is operated by the extension's developer, not by an
+    advertising or analytics company.</p>
+
+    <h2>4. Local Storage</h2>
     <p>The extension uses <code>chrome.storage.local</code> and <code>chrome.storage.session</code>
     to store the following data <strong>locally on your device only</strong>:</p>
     <ul>
-      <li><strong>Install ID</strong> — a randomly generated anonymous UUID created at install time.
-      Used internally to prepare for optional future features. Never transmitted.</li>
-      <li><strong>Action counter</strong> — a count of how many times you have used the extension today.
-      Displayed in the side panel. Never transmitted.</li>
+      <li><strong>Settings</strong> — your preferences: interface language, highlight colour,
+      default view mode, whether metadata and the floating button are enabled.</li>
+      <li><strong>Install ID</strong> — the anonymous UUID described in section 3, kept so the
+      same random value is reused instead of generating a new one each time.</li>
+      <li><strong>Action counter</strong> — how many times you have copied or downloaded,
+      used only to decide when to show the rating prompt once, and when to stop showing it.</li>
       <li><strong>Capture signal</strong> — a session-only timestamp used to coordinate between the
       toolbar icon click and the side panel. Cleared when the browser session ends.</li>
     </ul>
-    <p>All stored data remains exclusively on your local device and is never sent anywhere.</p>
+    <p>Apart from the four fields listed in section 3, none of this is transmitted anywhere.</p>
 
-    <h2>4. Permissions Explained</h2>
+    <h2>5. Permissions Explained</h2>
     <p>The extension requests the following browser permissions:</p>
     <ul>
       <li><strong>activeTab</strong> — to read the selected text on the currently active page when
       you explicitly trigger a capture. Access is granted only for the moment of the action.</li>
       <li><strong>sidePanel</strong> — to display the Markdown preview in Chrome's side panel.</li>
-      <li><strong>storage</strong> — to store the action counter and install ID locally.</li>
+      <li><strong>storage</strong> — to store your settings, the action counter and the
+      install ID locally.</li>
       <li><strong>contextMenus</strong> — to add a "Copy as Markdown" item to the right-click menu.</li>
       <li><strong>clipboardWrite</strong> — to write the converted Markdown to your clipboard.</li>
       <li><strong>downloads</strong> — to save the Markdown as a <code>.md</code> file when you
@@ -136,32 +158,35 @@
     </ul>
     <p>No permission is used for any purpose other than what is described above.</p>
 
-    <h2>5. Third-Party Services</h2>
+    <h2>6. Third-Party Services</h2>
     <p>to .md does not communicate with any third-party servers, APIs, or analytics services.
-    All HTML-to-Markdown conversion happens entirely in your browser using bundled libraries
-    (<code>@markitdown/core</code>, <code>marked</code>, <code>DOMPurify</code>).</p>
+    The counters in section 3 go to <code>2md.site</code>, which is run by the extension's
+    developer. All HTML-to-Markdown conversion happens entirely in your browser using bundled
+    libraries (<code>htmltodotmd</code>, <code>marked</code>, <code>DOMPurify</code>,
+    <code>KaTeX</code>), which are compiled into the extension and load nothing from the
+    network.</p>
 
-    <h2>6. Content Security</h2>
+    <h2>7. Content Security</h2>
     <p>The extension uses <code>DOMPurify</code> to sanitize all rendered HTML output,
     preventing XSS attacks. No content from web pages is ever injected into the extension's
     UI in an unsafe way.</p>
 
-    <h2>7. Children's Privacy</h2>
+    <h2>8. Children's Privacy</h2>
     <p>to .md does not knowingly collect any information from anyone, including children
     under the age of 13. The extension collects no personal data whatsoever.</p>
 
-    <h2>8. Changes to This Policy</h2>
+    <h2>9. Changes to This Policy</h2>
     <p>If this Privacy Policy changes materially, the updated version will be published at
     this URL with a new effective date. Continued use of the extension after changes
     constitutes acceptance of the updated policy.</p>
 
-    <h2>9. Contact</h2>
+    <h2>10. Contact</h2>
     <p>If you have questions about this Privacy Policy, please open an issue at the
     project's GitHub repository:
-    <a href="https://github.com/andryushkin/to .md">github.com/andryushkin/to .md</a></p>
+    <a href="https://github.com/andryushkin/webtodotmd">github.com/andryushkin/webtodotmd</a></p>
 
     <footer>
-      <p>to .md is open source software. All processing is local. Your selections stay yours.</p>
+      <p>to .md is open source software. Conversion is local. Your selections stay yours.</p>
     </footer>
   </main>
 </body>

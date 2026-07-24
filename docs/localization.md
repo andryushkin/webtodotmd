@@ -1,7 +1,13 @@
-# to .md — Localization Prompt Spec
+# Localization spec
 
-> **Purpose**: This document is a prompt for an LLM agent (Claude Code) to produce culturally-adapted localizations of the `to .md` Chrome extension.
+> **Purpose**: This document is a prompt for an LLM agent to produce
+> culturally-adapted localizations of the Text to .md Chrome extension.
 > It is NOT a translation brief — it is a specification that ensures every string is adapted to feel native in the target language.
+>
+> **Naming note**: the store listing title is currently
+> `HTML Text to .md — Online Markdown Web Clipper` (SEO-driven), while the
+> in-product brand remains `to .md`. Where this spec says `appName`, it means
+> the store title; the strings inside the UI still use `to .md`.
 
 ---
 
@@ -518,7 +524,7 @@ Below is the current Russian (`ru`) translation for audit against these rules. T
 ```
 You are localizing the Chrome extension "to .md" into {TARGET_LANGUAGE}.
 
-Read the localization spec at L10N_PROMPT.md (attached).
+Read the localization spec at docs/localization.md (attached).
 
 Input: the English messages.json (attached).
 Output: a complete {TARGET_LOCALE}/messages.json file.

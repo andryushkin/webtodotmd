@@ -1,209 +1,100 @@
-Chrome Extension для захвата выделений со страниц в Markdown.
-Ядро конвертации — внешняя библиотека `htmltodotmd`.
+# Text to .md — working guide
 
-## Разработка
+Manifest V3 Chrome extension that converts a page selection to Markdown.
+Surfaces: content script (capture), side panel (main UI), service worker
+(coordination), options page. Conversion itself is not in this repository — it
+comes from [htmltodotmd](https://github.com/andryushkin/htmltodotmd), the
+`vendor/htmltodotmd` submodule.
 
-- **Сборка:** `bash build.sh` — без `bun install`, без `node_modules`
-- **Транспайлер:** Bun (встроенный, глобально установлен) — компилирует `.ts` без npm-пакетов
-- **Тесты:** `bun test` — Bun test + linkedom (из `~/Server/htmltodotmd/node_modules/linkedom`)
-- **GitHub:** https://github.com/andryushkin/todotmd (private), ветка `main`
+Domain documentation lives in `docs/` (`docs/README.md` is the index) — read
+the file matching your task before changing that area, and update it in the
+same change when you alter behavior it describes.
 
-### Vendored зависимости (нет node_modules)
-- `vendor/marked.esm.js` — ESM бандл marked (скопирован из node_modules)
-- `vendor/purify.esm.mjs` — ESM бандл DOMPurify
-- `types/chrome/` — типы Chrome API (скопированы из @types/chrome)
-- `htmltodotmd` — импортируется напрямую: `../../../htmltodotmd/src/browser.ts`
+## Project map
 
-## Архитектура
+- `src/content/` — `content-script.ts` (selection capture, highlighter mode,
+  floating bubble, Shadow DOM flattening), `page-title.ts`, `html-entities.ts`
+  (generated), `highlight-target.ts`.
+- `src/sidepanel/` — the main UI: preview/source, toolbar, status bar, rating.
+- `src/background/service-worker.ts` — context menu, commands, panel behavior,
+  install/update pages.
+- `src/settings/` — options page.
+- `src/shared/` — i18n, icons, settings store, injection, messaging,
+  telemetry, identity.
+- `public/_locales/` — 52 locales; must stay under `public/` to reach `dist/`.
+- `vendor/` — marked, DOMPurify, KaTeX, mathml-to-latex, and the
+  `htmltodotmd` submodule.
 
-- **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`); Shadow DOM flattening перед конвертацией; после успешного `CAPTURE_SELECTION` вызывает `removeAllRanges()` чтобы повторный capture без выделения давал NO_SELECTION
-- **Page title** — `findPageTitle()` берёт первый непустой из `og:title` (по `property`) → `twitter:title` → ld+json `headline` → `meta[name=title]` → `document.title`, затем прогоняет через `normalizePageTitle()` из `src/content/page-title.ts`. ⚠️ Метаданные сайтов бывают **двойно закодированы**: gazeta.ru отдаёт `content="10&amp;nbsp;самых…"`, парсер декодирует атрибут один раз и `getAttribute()` возвращает литеральный `&nbsp;`. Поэтому `normalizePageTitle` декодирует сущности **ещё на один уровень**, сворачивает NBSP/BOM в обычный пробел (title идёт и в имя файла) и режет до 200 code units
-- **`decodeEntities()` — детали:** `src/content/html-entities.ts` — сгенерированный файл (не править руками) с **полным** набором WHATWG: 2125 имён / 2231 форма, ~26 КБ (content-script 256 → 274 КБ). Формат `name:hex`, префикс `*` = имя, валидное и без `;`, точка = ссылка на два кодпоинта. ⚠️ **Набор обязан быть полным**: декодер идёт по правилу HTML-токенизатора «longest match», поэтому при урезанной таблице `&notin;` не просто «не декодируется» — он схлопнется в `¬in;` по legacy-имени `&not`. Отсюда же `&notit;` → `¬it;`, `&copy2026` → `©2026`. Регистр значим (`&Eacute;` ≠ `&eacute;`); один проход (`&amp;lt;` → `&lt;`, не `<`); несовпавшие прогоны (`AT&T`) остаются как есть; числовые ссылки из C1-диапазона ремапятся по-браузерному (`&#146;` → `’`). ⚠️ Тестировать через DOM нельзя: linkedom не декодирует сущности вообще — тесты сверяются с эталонным `entities.json`
-- **Обрезка title — по графемам:** `Intl.Segmenter` (fallback — code points через `Array.from`); резать по `slice()` нельзя — рвётся суррогатная пара emoji или ZWJ-последовательность, и битый символ уезжает в front matter и имя файла
-- **Content script injection** — `content_scripts` в manifest (авто-инъекция на `*://*/*`); `ensureContentScript()` шлёт PING, и при отсутствии ответа переинъецирует через `scripting.executeScript()`
-- **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview; слушает `chrome.storage.session.onChanged` для auto-capture; Lucide-style SVG-иконки на всех кнопках
-- **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + пишет `captureSignal: Date.now()` в `chrome.storage.session`
+## Build and test
 
-Подробности интеграции с библиотекой: [docs/CHROME_EXTENSION.md]
+```bash
+bash build.sh     # → dist/, no node_modules needed
+bun install       # once, for linkedom
+bun test src      # not bare `bun test` — that runs the submodule's suite too
+```
 
-## Ключевые зависимости
+Bun is the transpiler; there is no bundler config. Packaging and store steps
+are in `docs/releasing.md`.
 
-- `htmltodotmd` — HTML→Markdown
-- `marked` + `DOMPurify` — rendered Markdown preview в Side Panel
-- Manifest V3, permission `scripting` для on-demand injection
+## Invariants
 
-## Side Panel — ключевые паттерны
+**Side panel**
 
-- State `rawMd: string` — единый источник истины для содержимого (не `textarea.value`)
-- `setContent(md)` — всегда использовать для обновления: обновляет rawMd, rendered div и source textarea
-- `setViewMode('preview'|'source')` — управляет видимостью и aria-pressed
-- Copy всегда читает `rawMd` (сырой Markdown, не HTML)
-- `DOMPurify.sanitize()` обязателен перед присвоением `innerHTML`
-- Toggle-кнопки Preview/Source находятся в `<header>`, не в toolbar
-- `captureSelection(silent: boolean)` — единая функция capture для кнопки и auto-capture; `silent=true` подавляет NO_SELECTION ошибку
-- **Status bar — базовый + временный статус:** `setBaseStatus(msg, type, icon)` — постоянный (readiness), `setTempStatus(msg, type, icon, ms)` — временный (ошибки, успех) с откатом к базовому. Ошибки → `setTempStatus`. `setStatus` — низкоуровневый, напрямую не вызывать.
-- **Readiness status:** `getTabReadiness(tab)` определяет тип вкладки; `updateReadinessStatus()` вызывается при `onActivated`, `onUpdated` и в конце `init()`. PDF/file/chrome/пустая → `warning`; обычная → `default + crosshair + "Ready to capture"`
-- **`setStatus` использует `innerHTML`** (иконка + `<span>${escHtml(msg)}</span>`) — сообщение всегда экранировать через `escHtml`
-- **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
-- **Toolbar responsive:** `.toolbar` имеет `flex-wrap: wrap` (страховка от обрезания), а `updateToolbarDensity()` меряет реальную раскладку — если элементы ушли на второй ряд, вешает класс `compact` (только иконки; `.txt` наоборот теряет chevron, оставляет текст). Замер всегда в не-compact состоянии → нет осцилляции. ⚠️ В compact `.btn-label` скрыт, а SVG-иконка имени не даёт — поэтому `setButtonContent()` всегда ставит `aria-label` (для `#btn-txt-menu` и `#btn-editmd`, где видимый текст `.txt`/`EditMD` не описывает действие, — вручную в `applyButtonLabels()`). Триггеры: `applyButtonLabels()`, `ResizeObserver` на `document.body` (ширина панели тянется мышью), `document.fonts.ready` (Inter меняет ширину подписей). Порог локаль-независим: EN отдаёт подписи ниже ~460px, DE — ниже ~560px
-- **marked: `html: true` + `escapeHtmlTagsInMarkdown()`:** marked настроен с `html: true` чтобы рендерились injected div'ы (KaTeX, metadata-block, content-gap, sub, sup). Чтобы literal HTML-теги в тексте страниц не рендерились как HTML — `escapeHtmlTagsInMarkdown()` вызывается первым шагом в `renderMarkdown()`, экранирует теги в non-code частях (исключения: sub, sup, br). DOMPurify sanitize — XSS-защита поверх.
+- `rawMd: string` is the single source of truth, never `textarea.value`.
+  Update through `setContent(md)`; Copy always reads `rawMd`.
+- `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
+  (injected KaTeX/metadata blocks must render), so
+  `escapeHtmlTagsInMarkdown()` runs first on captured text.
+- Status: `setBaseStatus()` for readiness, `setTempStatus()` for errors and
+  confirmations. Do not call `setStatus()` directly; it uses `innerHTML`, so
+  messages go through `escHtml()`.
+- `setButtonContent()` always sets `aria-label` — in compact mode the visible
+  label is gone. `updateToolbarDensity()` measures in the non-compact state,
+  which is what keeps it from oscillating.
 
-## Иконки (Lucide-style SVG)
+**Content script**
 
-- `src/shared/icons.ts` — SVG-пути для всех иконок (24×24 viewBox, stroke-based)
-- `icon(name, size)` — генерирует inline SVG строку
-- `setButtonContent(btn, iconName, label)` — устанавливает иконку + текст в кнопку
-- Иконки инициализируются в JS при старте панели (не в HTML)
-- `icon()` отдаёт SVG с `aria-hidden="true"` + `focusable="false"` (декоративный), `setButtonContent()` дублирует подпись в `aria-label` — иначе кнопка без видимого текста остаётся безымянной для screen reader
-- При смене состояния кнопки (Copy → Copied) — вызывать `setButtonContent` с новой иконкой
-- **Метаданные используют `icon(name, 12)`** — `fileText`, `link`, `calendar`; `.metadata-field` требует `align-items: center` (не baseline) для правильного выравнивания SVG
+- Never import `src/shared/i18n.ts` there — fetching locale files is
+  unreliable. Translations arrive via `chrome.storage.local` (`contentI18n`),
+  written by the service worker.
+- Never pass service worker → content script data with
+  `chrome.runtime.sendMessage`: the panel and the worker both listen and
+  compete. Use `chrome.storage.local`.
+- Bubble visibility is `style.display` only. `element.hidden` does not work —
+  the inline `display:inline-flex` in `style.cssText` overrides the UA
+  `[hidden]` rule.
+- `expandShadowRoots()` must be wrapped in try/finally so its cleanup always
+  runs.
 
-## Floating Bubble
+**Entities and titles**
 
-- `showBubble()` / `hideBubble()` в `content-script.ts` — управление видимостью только через `style.display`
-- ⚠️ **Не использовать `element.hidden`** — `style.cssText` с `display:inline-flex` перебивает UA-стиль `[hidden]{display:none}`, элемент остаётся видимым
-- `bubble.innerHTML` (текст + иконка) устанавливается **каждый раз** при вызове `showBubble()` — не только при первом создании; это позволяет подхватить смену языка
-- После клика: `hideBubble()` + `removeAllRanges()` через 400ms (очищает выделение после отправки capture-сигнала)
-- `mousedown` listener проверяет `bubble.style.display !== 'none'` (не `!bubble.hidden`)
-- **i18n в bubble:** переводы приходят из `chrome.storage.local` (ключ `contentI18n`), записываются service worker-ом после `initI18n()`; content script читает на старте + слушает `storage.onChanged`; `i18n(key, fallback)` — проверяет `translations[key]`, фоллбэк на `chrome.i18n.getMessage()`
+- `html-entities.ts` is generated from the WHATWG table — do not hand-edit, and
+  do not trim it. The decoder matches longest-first, so a partial table makes
+  `&notin;` collapse to `¬in;` via legacy `&not`.
+- Truncate titles by grapheme (`Intl.Segmenter`), never `slice()`.
+- Entity behavior cannot be tested through the DOM (linkedom does not decode);
+  tests compare against the reference table.
 
-## Shadow DOM Flattening
+**Chrome quirks**
 
-- `expandShadowRoots()` в `content-script.ts` — перед capture временно инжектит содержимое shadow roots как `<s2md-shadow>` элементы
-- Возвращает cleanup-функцию, которую нужно вызвать после capture
-- Обёрнуто в try/finally для гарантии очистки
+- Always call `setPanelBehavior({ openPanelOnActionClick: false })` explicitly
+  on service worker start — Chrome persists `true` across reloads and then
+  `chrome.action.onClicked` never fires.
+- Do not add `host_permissions: ["*://*/*"]` to the manifest; store review
+  flags it. `content_scripts.matches` + `scripting`/`activeTab` are enough.
 
-## Lazy Content Script Injection
+**Testability**
 
-- `src/shared/inject.ts` — `ensureContentScript(tabId)`: PING → если нет ответа → `scripting.executeScript()`
-- Используется и в sidepanel (перед `CAPTURE_SELECTION`), и в service-worker (перед `CAPTURE_AND_COPY`)
-- Floating bubble появляется только после первой инъекции скрипта (не на каждой странице)
+Functions needing tests go in their own module — `content-script.ts` cannot be
+imported by a test because of its top-level Chrome API calls.
 
-## Highlighter Mode
+**Localization**
 
-- Альтернативный режим захвата: кликами выделяются блочные элементы страницы (P, H1-H6, LI, UL, OL, BLOCKQUOTE, PRE, TABLE и др.)
-- Toggle-кнопка в Side Panel рядом с Capture; при включении — блокирует обычные клики на странице
-- Hover: dashed-overlay на элементе под курсором; Click: фиксирует/снимает highlight (outline + background)
-- Capture button автоматически переключается на `CAPTURE_HIGHLIGHTS` при наличии highlights
-- `captureHighlightsMd()` — создаёт fake Selection для каждого highlighted-элемента, конвертирует через htmltodotmd, объединяет через `\n\n`
-- `HIGHLIGHT_COUNT` сообщения из content script → side panel для обновления badge
-- Clear highlights: удаляет CSS-классы и сбрасывает Set
-- **Auto-clear после capture:** `captureSelection()` вызывает `clearHighlights()` сразу после успешного `CAPTURE_HIGHLIGHTS`
-- `findHighlightTarget(el)` в `src/content/highlight-target.ts` — поднимается по DOM до ближайшего блочного элемента; остановка по `tagName === 'BODY'|'HTML'` (не через `=== document.body`)
-- **Auto-disable при закрытии панели (port-based):** Side Panel открывает `chrome.runtime.connect()` порт при старте; Content Script получает `port.onDisconnect` событие и автоматически деактивирует highlighter mode — без явного сообщения от панели
-- **Auto-disable при смене вкладки:** `chrome.tabs.onActivated` в Side Panel проверяет `highlighterEnabled`; при смене вкладки вызывает `highlighterPort?.disconnect()` (→ content script получает `port.onDisconnect` → `disableHighlighter()`), затем сбрасывает `highlighterEnabled`, `highlightCount`, вызывает `updateHighlighterUI()`
+New UI strings go into all 52 locales at once, not just `en`. The completeness
+check is in `docs/releasing.md`.
 
-## Settings Page
+## Conventions
 
-- `src/settings/settings.html` + `.ts` + `.css` — Options page (зарегистрирована в manifest как `options_page`)
-- `src/shared/settings-store.ts` — `getSettings()` / `saveSettings()` через `chrome.storage.local`
-- Настройки: `autoMetadata` (bool), `showBubble` (bool), `defaultViewMode` (preview|source), `highlighterColor` (hex), `uiLanguage` (string, default `'en'`)
-- **uiLanguage default = `'en'`** — не `'auto'`; опция "Auto (browser language)" доступна в select, но не является дефолтом; fallback `?? 'en'` во всех местах (service-worker, sidepanel)
-- Side Panel и Content Script слушают `chrome.storage.onChanged` для реактивного обновления
-- Кнопка-шестерёнка в header Side Panel → `chrome.runtime.openOptionsPage()`
-
-## Auto-capture паттерн (US-1)
-
-- Service worker пишет `{ captureSignal: Date.now() }` в `chrome.storage.session` при клике на иконку
-- Side panel слушает `chrome.storage.session.onChanged` и вызывает `captureSelection(true)`
-- При `silent=true`: NO_SELECTION → молчим (панель просто пустая), прочие ошибки тоже подавляются
-- Side panel при старте читает `captureSignal` (startup check) — нужен для race condition когда панель только открылась
-
-## ⚠️ Chrome Side Panel: setPanelBehavior кешируется
-
-- `openPanelOnActionClick: true` передаёт клик Chrome-у → `chrome.action.onClicked` **не срабатывает**
-- Chrome **сохраняет** это значение между перезагрузками расширения
-- **Правило:** всегда явно вызывать `setPanelBehavior({ openPanelOnActionClick: false })` при старте service worker
-- Без явного `false` старое `true` останется активным даже если убрать вызов из кода
-
-## i18n (v1.0)
-
-- `public/_locales/<code>/messages.json` — 51 язык (+ en = 52 директории); **60 ключей** на каждую локаль (полный UI + настройки + рейтинг + .txt + EditMD)
-- `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
-- **`_locales/` ДОЛЖЕН быть в `public/`** — `build.sh` делает `cp -r public/* dist/`; корневой `_locales/` не попадёт в dist
-- **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
-- `_locales/` влияет только на отображение в Chrome UI (тултип, страница расширений)
-- При добавлении `default_locale`: поля `name` и `description` в manifest ОБЯЗАНЫ использовать `__MSG_*` синтаксис
-- **Side Panel / Settings** используют `src/shared/i18n.ts` → `initI18n(uiLanguage)` + `t(key)` (уважает `uiLanguage` настройку); Side Panel реактивно обновляет UI при смене языка через `storage.onChanged` → `applyI18n()` + `applyButtonLabels()`
-- **Service Worker** импортирует `t, initI18n`; при смене языка пересоздаёт context menu (`removeAll` + `create`) и пишет переводы в `chrome.storage.local` (ключ `contentI18n`)
-- **Content Script** НЕ импортирует `i18n.ts` (fetch locale файлов ненадёжен в content scripts); получает переводы из `chrome.storage.local` → `contentI18n`, записанные service worker-ом
-- ⚠️ **Не использовать `chrome.runtime.sendMessage` для передачи данных service worker → content script** — `onMessage` listeners в side panel и service worker конфликтуют; использовать `chrome.storage.local`
-- **Локали — полный список:** `ar, bg, bn, ca, cs, da, de, el, es, es_419, et, fa, fi, fil, fr, gu, he, hi, hr, hu, id, it, ja, kn, ko, lt, lv, ml, mr, ms, nl, no, pl, pt_BR, pt_PT, ro, ru, sk, sl, sr, sv, sw, ta, te, th, tr, uk, vi, zh_CN, zh_TW, am` (51 + en = 52 директории)
-- **Проверка полноты:** `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
-- **⚠️ Проверка смысла appDescription:** наличие ключа не гарантирует правильный перевод — 9 локалей (bg, cs, hr, pl, ro, sk, sl, sr, uk) имели неверный текст вместо перевода EN-описания. При аудите: вывести `appDescription.message` для всех локалей и сравнить со смыслом EN.
-- **RTL-поддержка:** `RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])` в `i18n.ts`; `applyI18n()` ставит `dir="rtl"` на `<html>` для любой RTL-локали; контентные области (`#preview-rendered`, `#preview-source`) имеют `dir="auto"` — браузер автоопределяет направление захваченного текста; в CSS использовать logical properties (`border-inline-start`, `padding-inline-start`, `text-align: start`) вместо `left`/`right`
-
-## Welcome & Changelog pages
-
-- При установке (`reason === 'install'`) → `https://2md.site/<locale>/welcome`
-- При обновлении → `https://2md.site/<locale>/changelog` (только если `SHOW_CHANGELOG_ON_UPDATE = true` в `service-worker.ts`)
-- Локаль: `chrome.i18n.getUILanguage()` с нормализацией; fallback → `en`; спец-кейсы: `pt-PT→pt_PT`, `pt-BR/pt→pt_BR`, `zh-TW→zh_TW`, `zh→zh_CN`, `nb/nn→no`
-- Документация для сайта: `docs/website-welcome-changelog.md`
-
-## Публикация (v1.0)
-
-- `privacy-policy.html` — Privacy Policy страница; хостить публично перед сабмитом в CWS
-- `docs/permissions-justification.md` — обоснование каждого permission для Google review
-- Версия `1.0.0` в `manifest.json`
-- Иконки: `icon16.png`, `icon48.png`, `icon128.png` в корне + `public/`
-- **v1.0.0 подана на ревью 2026-03-22**
-- ⚠️ **`host_permissions: ["*://*/*"]` НЕ указывать** — CWS флагирует как broad host permissions и задерживает ревью. `content_scripts.matches` покрывает авто-инъекцию; `scripting` + `activeTab` покрывает on-demand инъекцию через `ensureContentScript()`. CWS всё равно предупреждает из-за `content_scripts.matches` — это норма для универсального клиппера.
-- **Сборка zip:** `rm tomd-*.zip && cd dist && zip -r ../tomd-X.Y.Z.zip .` — сначала удалять старый zip, иначе zip обновит существующий архив и получится два manifest.json
-
-## Тесты
-
-- `src/content/__tests__/find-highlight-target.test.ts` — тесты для `findHighlightTarget` (8 тестов)
-- `src/content/__tests__/conversion.test.ts` — тесты HTML→Markdown через `toMarkdown()` с linkedom (31 тест)
-- `src/content/__tests__/page-title.test.ts` — тесты `decodeEntities` / `normalizePageTitle` (11 тестов)
-- `src/shared/__tests__/` — тесты утилит (restricted, gate, identity)
-- **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
-- **DOM в тестах:** linkedom из `~/Server/htmltodotmd/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`
-
-## Keyboard Shortcuts
-
-- **Alt+M** (`capture-and-copy`) — захватить выделение → clipboard, toast на странице, панель не открывается
-- **Alt+Shift+M** (`capture-and-append`) — захватить выделение → открыть Side Panel + append к содержимому
-- Команды регистрируются в `manifest.json` → `commands`; обрабатываются в `service-worker.ts` → `chrome.commands.onCommand`
-- Для открытия панели из команды использовать `chrome.sidePanel.open({ windowId: tab.windowId })` (не `tabId`)
-- Паттерн append: открыть панель + `chrome.storage.session.set({ captureSignal: Date.now() })` → side panel auto-captures через `storage.session.onChanged`
-
-## EditMD Integration (Send to EditMD)
-
-- Кнопка `btn-editmd` в toolbar Side Panel — паттерн Obsidian Web Clipper: тело заметки через clipboard, URL несёт только имя файла
-- Обработчик: `navigator.clipboard.writeText(rawMd)` → `chrome.tabs.update(activeTab, { url: 'editmd://new?file=<title>&clipboard' })`, fallback `window.open(url)`
-- **Отсутствие handler-а `editmd://` необнаружимо:** `window.open` вернул `null` → `errEditmdOpen` + `return` (без `trackEvent`/`incrementActionCount`), но `null` означает в основном заблокированное окно, а не «нет handler-а». Ненулевой результат — лишь созданный browsing context; URL грузится асинхронно. Поэтому статус нейтральный: `openingEditmd` («Opening in EditMD…»), тип `default`, не `success` — заявлять доставку нельзя
-- `file` — имя **без** расширения (`safeFilename('')`), приложение само добавляет `.md`
-- Первый вызов показывает системный диалог Chrome «Открыть EditMD?» — норма для custom scheme
-- i18n-ключи: `tooltipSendEditmd`, `openingEditmd`, `errEditmdOpen`; label кнопки — литерал `EditMD` (бренд, не переводится), поэтому `aria-label` = `t('tooltipSendEditmd')`
-- Сторона приложения EditMD — план: `~/Server/editmd/docs/plan-url-scheme.md` (регистрация схемы `editmd://` ещё не реализована)
-
-## Telemetry
-
-- `src/shared/telemetry.ts` — `trackEvent(event)`: fire-and-forget POST на `https://2md.site/api/event`
-- Использует `ensureInstallId()` из `identity.ts` как `clientId`
-- События: `install`, `copy`, `copy_txt`, `download_md`, `download_txt`, `send_editmd`, `rating_1`..`rating_5`, `rating_hidden`
-- Будущие события: `download_pdf` — добавлять `trackEvent()` в соответствующие обработчики
-- Серверная часть: Durable Object на 2md.site (`~/Server/2mdsite/src/stats/`)
-- Дашборд: `(internal stats dashboard)`
-
-## Star Rating Widget
-
-- **Side Panel** (`#rating-row`) — скрыт по умолчанию; показывается когда `actionCount >= 2` и `ratingHiddenUntil < Date.now()`
-- **Settings page** — секция `.group` в конце, всегда видна, без кнопки Hide
-- Состояние хранится в `chrome.storage.local`: `actionCount` (число copy+download), `ratingHiddenUntil` (timestamp)
-- Клик по звезде в sidepanel → скрыть **навсегда** (`Number.MAX_SAFE_INTEGER`); кнопка Hide → скрыть на 6 месяцев
-- ≤3 звезды → `https://2md.site/{locale}/feedback`; ≥4 → CWS reviews URL
-- `getRatingLocale()` дублирует логику `getUrlLocale()` из service-worker (не shared — по одному месту использования)
-- Телеметрия: `rating_1`..`rating_5`, `rating_hidden`
-- **⚠️ Полнота локалей** — новые ключи добавлять сразу во все 51 локаль (не только EN+RU); проверка: `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
-
-## CWS Store Descriptions
-
-- `docs/lang/description/` — long description .txt файлы для CWS Developer Dashboard (53 файла: en + 52 локали)
-- Формат: plain text, эмодзи-заголовки секций, маркированные списки через `-`, лимит 4500 символов
-- **docs/lang/ (устаревшие файлы)** — не использовать (de, ru.md и т.д. — старые черновики)
-- При обновлении описания: редактировать `docs/lang/description/en.txt` → регенерировать через скилл `tomd-l10n` (CWS Long Description Mode)
-- **Не переводить:** `.md`, `YAML front matter`, `Shadow DOM`, `Manifest V3`, `DOMPurify`, `KaTeX`, `LaTeX`, `MathML`, `RTL`, `Obsidian`, `Notion`, `Web clipper`, `HTML to Markdown`, `Markdown converter/formatter`
-- **Гибридный SEO:** "конвертер (HTML to Markdown)", "веб-клиппер (Web clipper)" — перевод + EN-термин в скобках
-
-## Документация
+- Commit messages: `feat`, `fix`, `refactor`, `docs`, `chore`.
+- Public-facing text in the repository — README, docs, comments, commit
+  messages — is English.
