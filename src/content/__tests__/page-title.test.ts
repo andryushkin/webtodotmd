@@ -29,13 +29,25 @@ describe('decodeEntities', () => {
     expect(decodeEntities('a&#151;b')).toBe('a—b');
   });
 
-  test('leaves unknown names untouched', () => {
+  test('covers the whole WHATWG set, not a subset', () => {
+    expect(decodeEntities('&colon;&comma;&excl;&period;&sol;&dollar;&equals;')).toBe(':,!./$=');
+    expect(decodeEntities('&boxDL;&bigstar;&rarr;')).toBe('╗★→');
+    expect(decodeEntities('&notin;')).toBe('∉');
+    // 93 references map to two code points
+    expect(decodeEntities('&NotEqualTilde;')).toBe('≂̸');
+  });
+
+  test('takes the longest reference, as the HTML tokenizer does', () => {
+    expect(decodeEntities('&notit;')).toBe('¬it;');
+    expect(decodeEntities('&copy2026')).toBe('©2026');
+    expect(decodeEntities('&notin')).toBe('¬in');
+  });
+
+  test('leaves unmatched runs untouched', () => {
     expect(decodeEntities('AT&T')).toBe('AT&T');
     expect(decodeEntities('R&D budget')).toBe('R&D budget');
     expect(decodeEntities('Tom & Jerry')).toBe('Tom & Jerry');
-    expect(decodeEntities('&notarealentity;')).toBe('&notarealentity;');
-    // outside the shipped blocks — documented limitation, must stay verbatim
-    expect(decodeEntities('&boxDL;')).toBe('&boxDL;');
+    expect(decodeEntities('&zzz;')).toBe('&zzz;');
   });
 
   test('follows HTML on the missing semicolon: legacy names only', () => {
