@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Nie można przekonwertować zaznaczenia."
   },
+  "errEditmdOpen": {
+    "message": "Nie można otworzyć EditMD."
+  },
   "successCaptured": {
     "message": "Gotowe."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Ukryj"
   },
+  "tooltipCopyMd": {
+    "message": "Kopiuj jako Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Pobierz plik Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopiuj jako zwykły tekst"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Pobierz plik tekstowy"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opcje zwykłego tekstu"
+  },
+  "copiedTxt": {
+    "message": "Skopiowano zwykły tekst"
+  },
   "tooltipSendEditmd": {
     "message": "Wyślij do EditMD"
   },
-  "sentEditmd": {
-    "message": "Wysłano do EditMD"
+  "openingEditmd": {
+    "message": "Otwieranie EditMD…"
   }
 }

@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "A kijelölés konvertálása sikertelen."
   },
+  "errEditmdOpen": {
+    "message": "Az EditMD nem nyitható meg."
+  },
   "successCaptured": {
     "message": "Konvertálva."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Elrejtés"
   },
+  "tooltipCopyMd": {
+    "message": "Másolás Markdownként"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown-fájl letöltése"
+  },
+  "tooltipCopyTxt": {
+    "message": "Másolás egyszerű szövegként"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Szövegfájl letöltése"
+  },
+  "tooltipTxtMenu": {
+    "message": "Egyszerű szöveg beállításai"
+  },
+  "copiedTxt": {
+    "message": "Egyszerű szöveg másolva"
+  },
   "tooltipSendEditmd": {
     "message": "Küldés az EditMD-be"
   },
-  "sentEditmd": {
-    "message": "Elküldve az EditMD-be"
+  "openingEditmd": {
+    "message": "EditMD megnyitása…"
   }
 }

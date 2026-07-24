@@ -157,10 +157,28 @@
   "ratingHide": {
     "message": "Скрыть"
   },
+  "tooltipCopyMd": {
+    "message": "Копировать как Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Скачать файл Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Копировать как обычный текст"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Скачать текстовый файл"
+  },
+  "tooltipTxtMenu": {
+    "message": "Параметры обычного текста"
+  },
+  "copiedTxt": {
+    "message": "Обычный текст скопирован"
+  },
   "tooltipSendEditmd": {
     "message": "Отправить в EditMD"
   },
-  "sentEditmd": {
-    "message": "Отправлено в EditMD"
+  "openingEditmd": {
+    "message": "Открываем EditMD…"
   }
 }

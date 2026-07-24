@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "ምርጫ ሊቀይር አልተቻለም።"
   },
+  "errEditmdOpen": {
+    "message": "EditMD መክፈት አልተቻለም።"
+  },
   "successCaptured": {
     "message": "ተቀይሯል።"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "ደብቅ"
   },
+  "tooltipCopyMd": {
+    "message": "እንደ Markdown ቅዳ"
+  },
+  "tooltipDownloadMd": {
+    "message": "የMarkdown ፋይል አውርድ"
+  },
+  "tooltipCopyTxt": {
+    "message": "እንደ ተራ ጽሑፍ ቅዳ"
+  },
+  "tooltipDownloadTxt": {
+    "message": "የጽሑፍ ፋይል አውርድ"
+  },
+  "tooltipTxtMenu": {
+    "message": "የተራ ጽሑፍ አማራጮች"
+  },
+  "copiedTxt": {
+    "message": "ተራ ጽሑፍ ተቀድቷል"
+  },
   "tooltipSendEditmd": {
     "message": "ወደ EditMD ላክ"
   },
-  "sentEditmd": {
-    "message": "ወደ EditMD ተልኳል"
+  "openingEditmd": {
+    "message": "EditMD በመክፈት ላይ…"
   }
 }

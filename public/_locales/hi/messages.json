@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "चयन कन्वर्ट नहीं हो सका।"
   },
+  "errEditmdOpen": {
+    "message": "EditMD नहीं खोला जा सका."
+  },
   "successCaptured": {
     "message": "कन्वर्ट हो गया।"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "छिपाएँ"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown के रूप में कॉपी करें"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown फ़ाइल डाउनलोड करें"
+  },
+  "tooltipCopyTxt": {
+    "message": "सादे टेक्स्ट के रूप में कॉपी करें"
+  },
+  "tooltipDownloadTxt": {
+    "message": "टेक्स्ट फ़ाइल डाउनलोड करें"
+  },
+  "tooltipTxtMenu": {
+    "message": "सादे टेक्स्ट के विकल्प"
+  },
+  "copiedTxt": {
+    "message": "सादा टेक्स्ट कॉपी हुआ"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD में भेजें"
   },
-  "sentEditmd": {
-    "message": "EditMD में भेजा गया"
+  "openingEditmd": {
+    "message": "EditMD खोला जा रहा है…"
   }
 }

@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Não foi possível converter a seleção."
   },
+  "errEditmdOpen": {
+    "message": "Não foi possível abrir o EditMD."
+  },
   "successCaptured": {
     "message": "Capturado."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Ocultar"
   },
+  "tooltipCopyMd": {
+    "message": "Copiar como Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Transferir ficheiro Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Copiar como texto simples"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Transferir ficheiro de texto"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opções de texto simples"
+  },
+  "copiedTxt": {
+    "message": "Texto simples copiado"
+  },
   "tooltipSendEditmd": {
     "message": "Enviar para o EditMD"
   },
-  "sentEditmd": {
-    "message": "Enviado para o EditMD"
+  "openingEditmd": {
+    "message": "A abrir o EditMD…"
   }
 }

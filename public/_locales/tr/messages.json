@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Seçim dönüştürülemedi."
   },
+  "errEditmdOpen": {
+    "message": "EditMD açılamadı."
+  },
   "successCaptured": {
     "message": "Yakalandı."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Gizle"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown olarak kopyala"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown dosyasını indir"
+  },
+  "tooltipCopyTxt": {
+    "message": "Düz metin olarak kopyala"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Metin dosyasını indir"
+  },
+  "tooltipTxtMenu": {
+    "message": "Düz metin seçenekleri"
+  },
+  "copiedTxt": {
+    "message": "Düz metin kopyalandı"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD'ye gönder"
   },
-  "sentEditmd": {
-    "message": "EditMD'ye gönderildi"
+  "openingEditmd": {
+    "message": "EditMD açılıyor…"
   }
 }

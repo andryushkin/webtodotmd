@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Η μετατροπή δεν ήταν δυνατή."
   },
+  "errEditmdOpen": {
+    "message": "Δεν ήταν δυνατό το άνοιγμα του EditMD."
+  },
   "successCaptured": {
     "message": "Μετατράπηκε."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Απόκρυψη"
   },
+  "tooltipCopyMd": {
+    "message": "Αντιγραφή ως Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Λήψη αρχείου Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Αντιγραφή ως απλό κείμενο"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Λήψη αρχείου κειμένου"
+  },
+  "tooltipTxtMenu": {
+    "message": "Επιλογές απλού κειμένου"
+  },
+  "copiedTxt": {
+    "message": "Το απλό κείμενο αντιγράφηκε"
+  },
   "tooltipSendEditmd": {
     "message": "Αποστολή στο EditMD"
   },
-  "sentEditmd": {
-    "message": "Στάλθηκε στο EditMD"
+  "openingEditmd": {
+    "message": "Άνοιγμα του EditMD…"
   }
 }

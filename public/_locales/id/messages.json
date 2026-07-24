@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Tidak dapat mengonversi pilihan."
   },
+  "errEditmdOpen": {
+    "message": "Tidak dapat membuka EditMD."
+  },
   "successCaptured": {
     "message": "Ditangkap."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Sembunyikan"
   },
+  "tooltipCopyMd": {
+    "message": "Salin sebagai Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Unduh file Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Salin sebagai teks biasa"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Unduh file teks"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opsi teks biasa"
+  },
+  "copiedTxt": {
+    "message": "Teks biasa disalin"
+  },
   "tooltipSendEditmd": {
     "message": "Kirim ke EditMD"
   },
-  "sentEditmd": {
-    "message": "Terkirim ke EditMD"
+  "openingEditmd": {
+    "message": "Membuka EditMD…"
   }
 }

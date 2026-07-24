@@ -42,7 +42,7 @@ Chrome Extension для захвата выделений со страниц в
 - **Readiness status:** `getTabReadiness(tab)` определяет тип вкладки; `updateReadinessStatus()` вызывается при `onActivated`, `onUpdated` и в конце `init()`. PDF/file/chrome/пустая → `warning`; обычная → `default + crosshair + "Ready to capture"`
 - **`setStatus` использует `innerHTML`** (иконка + `<span>${escHtml(msg)}</span>`) — сообщение всегда экранировать через `escHtml`
 - **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
-- **Toolbar responsive:** `.toolbar` имеет `flex-wrap: wrap` (страховка от обрезания), а `updateToolbarDensity()` меряет реальную раскладку — если элементы ушли на второй ряд, вешает класс `compact` (только иконки; `.txt` наоборот теряет chevron, оставляет текст). Замер всегда в не-compact состоянии → нет осцилляции. Триггеры: `applyButtonLabels()`, `ResizeObserver` на `document.body` (ширина панели тянется мышью), `document.fonts.ready` (Inter меняет ширину подписей). Порог локаль-независим: EN отдаёт подписи ниже ~460px, DE — ниже ~560px
+- **Toolbar responsive:** `.toolbar` имеет `flex-wrap: wrap` (страховка от обрезания), а `updateToolbarDensity()` меряет реальную раскладку — если элементы ушли на второй ряд, вешает класс `compact` (только иконки; `.txt` наоборот теряет chevron, оставляет текст). Замер всегда в не-compact состоянии → нет осцилляции. ⚠️ В compact `.btn-label` скрыт, а SVG-иконка имени не даёт — поэтому `setButtonContent()` всегда ставит `aria-label` (для `#btn-txt-menu` и `#btn-editmd`, где видимый текст `.txt`/`EditMD` не описывает действие, — вручную в `applyButtonLabels()`). Триггеры: `applyButtonLabels()`, `ResizeObserver` на `document.body` (ширина панели тянется мышью), `document.fonts.ready` (Inter меняет ширину подписей). Порог локаль-независим: EN отдаёт подписи ниже ~460px, DE — ниже ~560px
 - **marked: `html: true` + `escapeHtmlTagsInMarkdown()`:** marked настроен с `html: true` чтобы рендерились injected div'ы (KaTeX, metadata-block, content-gap, sub, sup). Чтобы literal HTML-теги в тексте страниц не рендерились как HTML — `escapeHtmlTagsInMarkdown()` вызывается первым шагом в `renderMarkdown()`, экранирует теги в non-code частях (исключения: sub, sup, br). DOMPurify sanitize — XSS-защита поверх.
 
 ## Иконки (Lucide-style SVG)
@@ -51,6 +51,7 @@ Chrome Extension для захвата выделений со страниц в
 - `icon(name, size)` — генерирует inline SVG строку
 - `setButtonContent(btn, iconName, label)` — устанавливает иконку + текст в кнопку
 - Иконки инициализируются в JS при старте панели (не в HTML)
+- `icon()` отдаёт SVG с `aria-hidden="true"` + `focusable="false"` (декоративный), `setButtonContent()` дублирует подпись в `aria-label` — иначе кнопка без видимого текста остаётся безымянной для screen reader
 - При смене состояния кнопки (Copy → Copied) — вызывать `setButtonContent` с новой иконкой
 - **Метаданные используют `icon(name, 12)`** — `fileText`, `link`, `calendar`; `.metadata-field` требует `align-items: center` (не baseline) для правильного выравнивания SVG
 
@@ -114,7 +115,7 @@ Chrome Extension для захвата выделений со страниц в
 
 ## i18n (v1.0)
 
-- `public/_locales/<code>/messages.json` — 52 языка (+ en = 53 директории); **51 ключ** на каждую локаль (полный UI + настройки + рейтинг)
+- `public/_locales/<code>/messages.json` — 51 язык (+ en = 52 директории); **60 ключей** на каждую локаль (полный UI + настройки + рейтинг + .txt + EditMD)
 - `manifest.json` использует `__MSG_appName__` / `__MSG_appDescription__` + `"default_locale": "en"`
 - **`_locales/` ДОЛЖЕН быть в `public/`** — `build.sh` делает `cp -r public/* dist/`; корневой `_locales/` не попадёт в dist
 - **CWS Store Listing переводы — через Developer Dashboard, НЕ через `_locales/`**
@@ -124,7 +125,7 @@ Chrome Extension для захвата выделений со страниц в
 - **Service Worker** импортирует `t, initI18n`; при смене языка пересоздаёт context menu (`removeAll` + `create`) и пишет переводы в `chrome.storage.local` (ключ `contentI18n`)
 - **Content Script** НЕ импортирует `i18n.ts` (fetch locale файлов ненадёжен в content scripts); получает переводы из `chrome.storage.local` → `contentI18n`, записанные service worker-ом
 - ⚠️ **Не использовать `chrome.runtime.sendMessage` для передачи данных service worker → content script** — `onMessage` listeners в side panel и service worker конфликтуют; использовать `chrome.storage.local`
-- **Локали — полный список:** `ar, bg, bn, ca, cs, da, de, el, es, es_419, et, fa, fi, fil, fr, gu, he, hi, hr, hu, id, it, ja, kn, ko, lt, lv, ml, mr, ms, nl, no, pl, pt_BR, pt_PT, ro, ru, sk, sl, sr, sv, sw, ta, te, th, tr, uk, vi, zh_CN, zh_TW, am` (52 + en)
+- **Локали — полный список:** `ar, bg, bn, ca, cs, da, de, el, es, es_419, et, fa, fi, fil, fr, gu, he, hi, hr, hu, id, it, ja, kn, ko, lt, lv, ml, mr, ms, nl, no, pl, pt_BR, pt_PT, ro, ru, sk, sl, sr, sv, sw, ta, te, th, tr, uk, vi, zh_CN, zh_TW, am` (51 + en = 52 директории)
 - **Проверка полноты:** `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
 - **⚠️ Проверка смысла appDescription:** наличие ключа не гарантирует правильный перевод — 9 локалей (bg, cs, hr, pl, ro, sk, sl, sr, uk) имели неверный текст вместо перевода EN-описания. При аудите: вывести `appDescription.message` для всех локалей и сравнить со смыслом EN.
 - **RTL-поддержка:** `RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])` в `i18n.ts`; `applyI18n()` ставит `dir="rtl"` на `<html>` для любой RTL-локали; контентные области (`#preview-rendered`, `#preview-source`) имеют `dir="auto"` — браузер автоопределяет направление захваченного текста; в CSS использовать logical properties (`border-inline-start`, `padding-inline-start`, `text-align: start`) вместо `left`/`right`
@@ -166,10 +167,10 @@ Chrome Extension для захвата выделений со страниц в
 
 - Кнопка `btn-editmd` в toolbar Side Panel — паттерн Obsidian Web Clipper: тело заметки через clipboard, URL несёт только имя файла
 - Обработчик: `navigator.clipboard.writeText(rawMd)` → `chrome.tabs.update(activeTab, { url: 'editmd://new?file=<title>&clipboard' })`, fallback `window.open(url)`
-- **Fallback проверяется:** `window.open` вернул `null` → `errEditmdOpen` + `return` (без `trackEvent`/`incrementActionCount`). Chrome не сообщает, есть ли handler у схемы, — это единственный наблюдаемый отказ, поэтому «успех» означает лишь «навигация начата»
+- **Отсутствие handler-а `editmd://` необнаружимо:** `window.open` вернул `null` → `errEditmdOpen` + `return` (без `trackEvent`/`incrementActionCount`), но `null` означает в основном заблокированное окно, а не «нет handler-а». Ненулевой результат — лишь созданный browsing context; URL грузится асинхронно. Поэтому статус нейтральный: `openingEditmd` («Opening in EditMD…»), тип `default`, не `success` — заявлять доставку нельзя
 - `file` — имя **без** расширения (`safeFilename('')`), приложение само добавляет `.md`
 - Первый вызов показывает системный диалог Chrome «Открыть EditMD?» — норма для custom scheme
-- i18n-ключи: `tooltipSendEditmd`, `sentEditmd`; label кнопки — литерал `EditMD` (бренд, не переводится)
+- i18n-ключи: `tooltipSendEditmd`, `openingEditmd`, `errEditmdOpen`; label кнопки — литерал `EditMD` (бренд, не переводится), поэтому `aria-label` = `t('tooltipSendEditmd')`
 - Сторона приложения EditMD — план: `~/Server/editmd/docs/plan-url-scheme.md` (регистрация схемы `editmd://` ещё не реализована)
 
 ## Telemetry
@@ -190,7 +191,7 @@ Chrome Extension для захвата выделений со страниц в
 - ≤3 звезды → `https://2md.site/{locale}/feedback`; ≥4 → CWS reviews URL
 - `getRatingLocale()` дублирует логику `getUrlLocale()` из service-worker (не shared — по одному месту использования)
 - Телеметрия: `rating_1`..`rating_5`, `rating_hidden`
-- **⚠️ Полнота локалей** — новые ключи добавлять сразу во все 20 локалей (не только EN+RU); перевод — `tomd-l10n` скилл; проверка: `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
+- **⚠️ Полнота локалей** — новые ключи добавлять сразу во все 51 локаль (не только EN+RU); проверка: `python3 -c "import json,os; d='public/_locales'; en=set(json.load(open(d+'/en/messages.json'))); [print(l,'OK') if not set(en)-set(json.load(open(f'{d}/{l}/messages.json'))) else print(l,'MISSING',sorted(set(en)-set(json.load(open(f'{d}/{l}/messages.json'))))) for l in sorted(os.listdir(d)) if os.path.exists(f'{d}/{l}/messages.json')]"`
 
 ## CWS Store Descriptions
 

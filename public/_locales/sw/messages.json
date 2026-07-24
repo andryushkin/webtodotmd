@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Haikuweza kubadilisha uteuzi."
   },
+  "errEditmdOpen": {
+    "message": "Imeshindwa kufungua EditMD."
+  },
   "successCaptured": {
     "message": "Imebadilishwa."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Ficha"
   },
+  "tooltipCopyMd": {
+    "message": "Nakili kama Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Pakua faili ya Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Nakili kama maandishi sahili"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Pakua faili ya maandishi"
+  },
+  "tooltipTxtMenu": {
+    "message": "Chaguo za maandishi sahili"
+  },
+  "copiedTxt": {
+    "message": "Maandishi sahili yamenakiliwa"
+  },
   "tooltipSendEditmd": {
     "message": "Tuma kwa EditMD"
   },
-  "sentEditmd": {
-    "message": "Imetumwa kwa EditMD"
+  "openingEditmd": {
+    "message": "Inafungua EditMD…"
   }
 }

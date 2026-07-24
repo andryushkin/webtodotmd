@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Valintaa ei voitu muuntaa."
   },
+  "errEditmdOpen": {
+    "message": "EditMD:tä ei voitu avata."
+  },
   "successCaptured": {
     "message": "Kaapattu."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Piilota"
   },
+  "tooltipCopyMd": {
+    "message": "Kopioi Markdownina"
+  },
+  "tooltipDownloadMd": {
+    "message": "Lataa Markdown-tiedosto"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopioi pelkkänä tekstinä"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Lataa tekstitiedosto"
+  },
+  "tooltipTxtMenu": {
+    "message": "Pelkän tekstin asetukset"
+  },
+  "copiedTxt": {
+    "message": "Pelkkä teksti kopioitu"
+  },
   "tooltipSendEditmd": {
     "message": "Lähetä EditMD:hen"
   },
-  "sentEditmd": {
-    "message": "Lähetetty EditMD:hen"
+  "openingEditmd": {
+    "message": "Avataan EditMD…"
   }
 }

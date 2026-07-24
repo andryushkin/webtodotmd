@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "ఎంపికను మార్చలేదు."
   },
+  "errEditmdOpen": {
+    "message": "EditMDని తెరవడం సాధ్యం కాలేదు."
+  },
   "successCaptured": {
     "message": "మార్చబడింది."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "దాచు"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown‌గా కాపీ చేయి"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ఫైల్‌ను డౌన్‌లోడ్ చేయి"
+  },
+  "tooltipCopyTxt": {
+    "message": "సాదా వచనంగా కాపీ చేయి"
+  },
+  "tooltipDownloadTxt": {
+    "message": "వచన ఫైల్‌ను డౌన్‌లోడ్ చేయి"
+  },
+  "tooltipTxtMenu": {
+    "message": "సాదా వచన ఎంపికలు"
+  },
+  "copiedTxt": {
+    "message": "సాదా వచనం కాపీ చేయబడింది"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD కి పంపండి"
   },
-  "sentEditmd": {
-    "message": "EditMD కి పంపబడింది"
+  "openingEditmd": {
+    "message": "EditMD తెరవబడుతోంది…"
   }
 }

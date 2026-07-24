@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Kunde inte konvertera markeringen."
   },
+  "errEditmdOpen": {
+    "message": "Det gick inte att öppna EditMD."
+  },
   "successCaptured": {
     "message": "Fångat."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Dölj"
   },
+  "tooltipCopyMd": {
+    "message": "Kopiera som Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Ladda ned Markdown-fil"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopiera som oformaterad text"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Ladda ned textfil"
+  },
+  "tooltipTxtMenu": {
+    "message": "Alternativ för oformaterad text"
+  },
+  "copiedTxt": {
+    "message": "Oformaterad text kopierad"
+  },
   "tooltipSendEditmd": {
     "message": "Skicka till EditMD"
   },
-  "sentEditmd": {
-    "message": "Skickat till EditMD"
+  "openingEditmd": {
+    "message": "Öppnar EditMD…"
   }
 }

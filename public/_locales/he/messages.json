@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "לא ניתן להמיר את הבחירה."
   },
+  "errEditmdOpen": {
+    "message": "לא ניתן לפתוח את EditMD."
+  },
   "successCaptured": {
     "message": "הומר."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "הסתר"
   },
+  "tooltipCopyMd": {
+    "message": "העתקה כ-Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "הורדת קובץ Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "העתקה כטקסט רגיל"
+  },
+  "tooltipDownloadTxt": {
+    "message": "הורדת קובץ טקסט"
+  },
+  "tooltipTxtMenu": {
+    "message": "אפשרויות טקסט רגיל"
+  },
+  "copiedTxt": {
+    "message": "הטקסט הרגיל הועתק"
+  },
   "tooltipSendEditmd": {
     "message": "שליחה אל EditMD"
   },
-  "sentEditmd": {
-    "message": "נשלח אל EditMD"
+  "openingEditmd": {
+    "message": "פותח את EditMD…"
   }
 }

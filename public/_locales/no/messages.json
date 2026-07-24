@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Kunne ikke konvertere utvalget."
   },
+  "errEditmdOpen": {
+    "message": "Kunne ikke åpne EditMD."
+  },
   "successCaptured": {
     "message": "Fanget."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Skjul"
   },
+  "tooltipCopyMd": {
+    "message": "Kopier som Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Last ned Markdown-fil"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopier som ren tekst"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Last ned tekstfil"
+  },
+  "tooltipTxtMenu": {
+    "message": "Alternativer for ren tekst"
+  },
+  "copiedTxt": {
+    "message": "Ren tekst kopiert"
+  },
   "tooltipSendEditmd": {
     "message": "Send til EditMD"
   },
-  "sentEditmd": {
-    "message": "Sendt til EditMD"
+  "openingEditmd": {
+    "message": "Åpner EditMD…"
   }
 }

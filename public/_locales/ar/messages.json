@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "تعذّر تحويل التحديد."
   },
+  "errEditmdOpen": {
+    "message": "تعذّر فتح EditMD."
+  },
   "successCaptured": {
     "message": "تم الالتقاط."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "إخفاء"
   },
+  "tooltipCopyMd": {
+    "message": "نسخ بتنسيق Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "تنزيل ملف Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "نسخ كنص عادي"
+  },
+  "tooltipDownloadTxt": {
+    "message": "تنزيل ملف نصي"
+  },
+  "tooltipTxtMenu": {
+    "message": "خيارات النص العادي"
+  },
+  "copiedTxt": {
+    "message": "تم نسخ النص العادي"
+  },
   "tooltipSendEditmd": {
     "message": "إرسال إلى EditMD"
   },
-  "sentEditmd": {
-    "message": "تم الإرسال إلى EditMD"
+  "openingEditmd": {
+    "message": "جارٍ فتح EditMD…"
   }
 }

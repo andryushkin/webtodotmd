@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "ಆಯ್ಕೆ ಪರಿವರ್ತಿಸಲಾಗಲಿಲ್ಲ."
   },
+  "errEditmdOpen": {
+    "message": "EditMD ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
+  },
   "successCaptured": {
     "message": "ಪರಿವರ್ತಿಸಲಾಗಿದೆ."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "ಮರೆಮಾಡಿ"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown ಆಗಿ ನಕಲಿಸಿ"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  },
+  "tooltipCopyTxt": {
+    "message": "ಸರಳ ಪಠ್ಯವಾಗಿ ನಕಲಿಸಿ"
+  },
+  "tooltipDownloadTxt": {
+    "message": "ಪಠ್ಯ ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  },
+  "tooltipTxtMenu": {
+    "message": "ಸರಳ ಪಠ್ಯದ ಆಯ್ಕೆಗಳು"
+  },
+  "copiedTxt": {
+    "message": "ಸರಳ ಪಠ್ಯ ನಕಲಾಗಿದೆ"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD ಗೆ ಕಳುಹಿಸಿ"
   },
-  "sentEditmd": {
-    "message": "EditMD ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ"
+  "openingEditmd": {
+    "message": "EditMD ತೆರೆಯಲಾಗುತ್ತಿದೆ…"
   }
 }

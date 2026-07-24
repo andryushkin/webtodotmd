@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Изборът не може да се конвертира."
   },
+  "errEditmdOpen": {
+    "message": "EditMD не можа да се отвори."
+  },
   "successCaptured": {
     "message": "Готово."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Скрий"
   },
+  "tooltipCopyMd": {
+    "message": "Копиране като Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Изтегляне на файл Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Копиране като обикновен текст"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Изтегляне на текстов файл"
+  },
+  "tooltipTxtMenu": {
+    "message": "Опции за обикновен текст"
+  },
+  "copiedTxt": {
+    "message": "Обикновеният текст е копиран"
+  },
   "tooltipSendEditmd": {
     "message": "Изпращане в EditMD"
   },
-  "sentEditmd": {
-    "message": "Изпратено в EditMD"
+  "openingEditmd": {
+    "message": "Отваряне на EditMD…"
   }
 }

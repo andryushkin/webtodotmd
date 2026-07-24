@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "தேர்வை மாற்ற முடியவில்லை."
   },
+  "errEditmdOpen": {
+    "message": "EditMD ஐத் திறக்க முடியவில்லை."
+  },
   "successCaptured": {
     "message": "மாற்றப்பட்டது."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "மறை"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown ஆக நகலெடு"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown கோப்பைப் பதிவிறக்கு"
+  },
+  "tooltipCopyTxt": {
+    "message": "எளிய உரையாக நகலெடு"
+  },
+  "tooltipDownloadTxt": {
+    "message": "உரைக் கோப்பைப் பதிவிறக்கு"
+  },
+  "tooltipTxtMenu": {
+    "message": "எளிய உரை விருப்பங்கள்"
+  },
+  "copiedTxt": {
+    "message": "எளிய உரை நகலெடுக்கப்பட்டது"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD-க்கு அனுப்பு"
   },
-  "sentEditmd": {
-    "message": "EditMD-க்கு அனுப்பப்பட்டது"
+  "openingEditmd": {
+    "message": "EditMD திறக்கப்படுகிறது…"
   }
 }

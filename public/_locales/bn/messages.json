@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "নির্বাচন রূপান্তর করা যায়নি।"
   },
+  "errEditmdOpen": {
+    "message": "EditMD খোলা যায়নি।"
+  },
   "successCaptured": {
     "message": "রূপান্তর হয়েছে।"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "লুকান"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown হিসেবে কপি করুন"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ফাইল ডাউনলোড করুন"
+  },
+  "tooltipCopyTxt": {
+    "message": "সাধারণ টেক্সট হিসেবে কপি করুন"
+  },
+  "tooltipDownloadTxt": {
+    "message": "টেক্সট ফাইল ডাউনলোড করুন"
+  },
+  "tooltipTxtMenu": {
+    "message": "সাধারণ টেক্সটের বিকল্প"
+  },
+  "copiedTxt": {
+    "message": "সাধারণ টেক্সট কপি করা হয়েছে"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD-তে পাঠান"
   },
-  "sentEditmd": {
-    "message": "EditMD-তে পাঠানো হয়েছে"
+  "openingEditmd": {
+    "message": "EditMD খোলা হচ্ছে…"
   }
 }

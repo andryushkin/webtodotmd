@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Výber nie je možné previesť."
   },
+  "errEditmdOpen": {
+    "message": "EditMD sa nepodarilo otvoriť."
+  },
   "successCaptured": {
     "message": "Hotovo."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Skryť"
   },
+  "tooltipCopyMd": {
+    "message": "Kopírovať ako Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Stiahnuť súbor Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopírovať ako obyčajný text"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Stiahnuť textový súbor"
+  },
+  "tooltipTxtMenu": {
+    "message": "Možnosti obyčajného textu"
+  },
+  "copiedTxt": {
+    "message": "Obyčajný text skopírovaný"
+  },
   "tooltipSendEditmd": {
     "message": "Odoslať do EditMD"
   },
-  "sentEditmd": {
-    "message": "Odoslané do EditMD"
+  "openingEditmd": {
+    "message": "Otvára sa EditMD…"
   }
 }

@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Nevarēja konvertēt atlasi."
   },
+  "errEditmdOpen": {
+    "message": "Neizdevās atvērt EditMD."
+  },
   "successCaptured": {
     "message": "Konvertēts."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Paslēpt"
   },
+  "tooltipCopyMd": {
+    "message": "Kopēt kā Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Lejupielādēt Markdown failu"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopēt kā vienkāršu tekstu"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Lejupielādēt teksta failu"
+  },
+  "tooltipTxtMenu": {
+    "message": "Vienkārša teksta opcijas"
+  },
+  "copiedTxt": {
+    "message": "Vienkāršs teksts nokopēts"
+  },
   "tooltipSendEditmd": {
     "message": "Sūtīt uz EditMD"
   },
-  "sentEditmd": {
-    "message": "Nosūtīts uz EditMD"
+  "openingEditmd": {
+    "message": "Tiek atvērts EditMD…"
   }
 }

@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Valikut ei saanud teisendada."
   },
+  "errEditmdOpen": {
+    "message": "EditMD-d ei õnnestunud avada."
+  },
   "successCaptured": {
     "message": "Teisendatud."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Peida"
   },
+  "tooltipCopyMd": {
+    "message": "Kopeeri Markdownina"
+  },
+  "tooltipDownloadMd": {
+    "message": "Laadi alla Markdowni fail"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopeeri lihttekstina"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Laadi alla tekstifail"
+  },
+  "tooltipTxtMenu": {
+    "message": "Lihtteksti valikud"
+  },
+  "copiedTxt": {
+    "message": "Lihttekst kopeeritud"
+  },
   "tooltipSendEditmd": {
     "message": "Saada EditMD-sse"
   },
-  "sentEditmd": {
-    "message": "Saadetud EditMD-sse"
+  "openingEditmd": {
+    "message": "EditMD avamine…"
   }
 }

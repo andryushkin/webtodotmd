@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Nepavyko konvertuoti pasirinkimo."
   },
+  "errEditmdOpen": {
+    "message": "Nepavyko atverti EditMD."
+  },
   "successCaptured": {
     "message": "Konvertuota."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Slėpti"
   },
+  "tooltipCopyMd": {
+    "message": "Kopijuoti kaip Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Atsisiųsti Markdown failą"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopijuoti kaip grynąjį tekstą"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Atsisiųsti teksto failą"
+  },
+  "tooltipTxtMenu": {
+    "message": "Grynojo teksto parinktys"
+  },
+  "copiedTxt": {
+    "message": "Grynasis tekstas nukopijuotas"
+  },
   "tooltipSendEditmd": {
     "message": "Siųsti į EditMD"
   },
-  "sentEditmd": {
-    "message": "Išsiųsta į EditMD"
+  "openingEditmd": {
+    "message": "Atveriama EditMD…"
   }
 }

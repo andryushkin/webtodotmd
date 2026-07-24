@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "निवड रूपांतरित होऊ शकली नाही."
   },
+  "errEditmdOpen": {
+    "message": "EditMD उघडता आले नाही."
+  },
   "successCaptured": {
     "message": "रूपांतरित झाले."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "लपवा"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown म्हणून कॉपी करा"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown फाइल डाउनलोड करा"
+  },
+  "tooltipCopyTxt": {
+    "message": "साध्या मजकुराच्या स्वरूपात कॉपी करा"
+  },
+  "tooltipDownloadTxt": {
+    "message": "मजकूर फाइल डाउनलोड करा"
+  },
+  "tooltipTxtMenu": {
+    "message": "साध्या मजकुराचे पर्याय"
+  },
+  "copiedTxt": {
+    "message": "साधा मजकूर कॉपी केला"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD मध्ये पाठवा"
   },
-  "sentEditmd": {
-    "message": "EditMD मध्ये पाठवले"
+  "openingEditmd": {
+    "message": "EditMD उघडत आहे…"
   }
 }

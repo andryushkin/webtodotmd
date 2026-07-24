@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "无法转换选中内容。"
   },
+  "errEditmdOpen": {
+    "message": "无法打开 EditMD。"
+  },
   "successCaptured": {
     "message": "已转换。"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "隐藏"
   },
+  "tooltipCopyMd": {
+    "message": "复制为 Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "下载 Markdown 文件"
+  },
+  "tooltipCopyTxt": {
+    "message": "复制为纯文本"
+  },
+  "tooltipDownloadTxt": {
+    "message": "下载文本文件"
+  },
+  "tooltipTxtMenu": {
+    "message": "纯文本选项"
+  },
+  "copiedTxt": {
+    "message": "已复制纯文本"
+  },
   "tooltipSendEditmd": {
     "message": "发送到 EditMD"
   },
-  "sentEditmd": {
-    "message": "已发送到 EditMD"
+  "openingEditmd": {
+    "message": "正在打开 EditMD…"
   }
 }

@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Не вдалося конвертувати виділення."
   },
+  "errEditmdOpen": {
+    "message": "Не вдалося відкрити EditMD."
+  },
   "successCaptured": {
     "message": "Готово."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Сховати"
   },
+  "tooltipCopyMd": {
+    "message": "Копіювати як Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Завантажити файл Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Копіювати як звичайний текст"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Завантажити текстовий файл"
+  },
+  "tooltipTxtMenu": {
+    "message": "Параметри звичайного тексту"
+  },
+  "copiedTxt": {
+    "message": "Звичайний текст скопійовано"
+  },
   "tooltipSendEditmd": {
     "message": "Надіслати в EditMD"
   },
-  "sentEditmd": {
-    "message": "Надіслано в EditMD"
+  "openingEditmd": {
+    "message": "Відкриваємо EditMD…"
   }
 }

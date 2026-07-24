@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "ไม่สามารถแปลงที่เลือกได้"
   },
+  "errEditmdOpen": {
+    "message": "ไม่สามารถเปิด EditMD ได้"
+  },
   "successCaptured": {
     "message": "จับภาพแล้ว"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "ซ่อน"
   },
+  "tooltipCopyMd": {
+    "message": "คัดลอกเป็น Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "ดาวน์โหลดไฟล์ Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "คัดลอกเป็นข้อความธรรมดา"
+  },
+  "tooltipDownloadTxt": {
+    "message": "ดาวน์โหลดไฟล์ข้อความ"
+  },
+  "tooltipTxtMenu": {
+    "message": "ตัวเลือกข้อความธรรมดา"
+  },
+  "copiedTxt": {
+    "message": "คัดลอกข้อความธรรมดาแล้ว"
+  },
   "tooltipSendEditmd": {
     "message": "ส่งไปยัง EditMD"
   },
-  "sentEditmd": {
-    "message": "ส่งไปยัง EditMD แล้ว"
+  "openingEditmd": {
+    "message": "กำลังเปิด EditMD…"
   }
 }

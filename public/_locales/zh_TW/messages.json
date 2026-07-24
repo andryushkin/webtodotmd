@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "無法轉換選取內容。"
   },
+  "errEditmdOpen": {
+    "message": "無法開啟 EditMD。"
+  },
   "successCaptured": {
     "message": "已轉換。"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "隱藏"
   },
+  "tooltipCopyMd": {
+    "message": "複製為 Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "下載 Markdown 檔案"
+  },
+  "tooltipCopyTxt": {
+    "message": "複製為純文字"
+  },
+  "tooltipDownloadTxt": {
+    "message": "下載文字檔"
+  },
+  "tooltipTxtMenu": {
+    "message": "純文字選項"
+  },
+  "copiedTxt": {
+    "message": "已複製純文字"
+  },
   "tooltipSendEditmd": {
     "message": "傳送到 EditMD"
   },
-  "sentEditmd": {
-    "message": "已傳送到 EditMD"
+  "openingEditmd": {
+    "message": "正在開啟 EditMD…"
   }
 }

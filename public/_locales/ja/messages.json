@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "選択範囲を変換できませんでした。"
   },
+  "errEditmdOpen": {
+    "message": "EditMD を開けませんでした。"
+  },
   "successCaptured": {
     "message": "キャプチャしました。"
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "非表示"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown としてコピー"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ファイルをダウンロード"
+  },
+  "tooltipCopyTxt": {
+    "message": "書式なしテキストとしてコピー"
+  },
+  "tooltipDownloadTxt": {
+    "message": "テキストファイルをダウンロード"
+  },
+  "tooltipTxtMenu": {
+    "message": "書式なしテキストのオプション"
+  },
+  "copiedTxt": {
+    "message": "書式なしテキストをコピーしました"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD に送信"
   },
-  "sentEditmd": {
-    "message": "EditMD に送信しました"
+  "openingEditmd": {
+    "message": "EditMD を開いています…"
   }
 }

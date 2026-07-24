@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "തിരഞ്ഞെടുപ്പ് കൺവേർട്ട് ചെയ്യാൻ കഴിഞ്ഞില്ല."
   },
+  "errEditmdOpen": {
+    "message": "EditMD തുറക്കാനായില്ല."
+  },
   "successCaptured": {
     "message": "കൺവേർട്ട് ചെയ്തു."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "മറക്കൂ"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown ആയി പകർത്തുക"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ഫയൽ ഡൗൺലോഡ് ചെയ്യുക"
+  },
+  "tooltipCopyTxt": {
+    "message": "പ്ലെയിൻ ടെക്‌സ്റ്റായി പകർത്തുക"
+  },
+  "tooltipDownloadTxt": {
+    "message": "ടെക്‌സ്റ്റ് ഫയൽ ഡൗൺലോഡ് ചെയ്യുക"
+  },
+  "tooltipTxtMenu": {
+    "message": "പ്ലെയിൻ ടെക്‌സ്റ്റ് ഓപ്ഷനുകൾ"
+  },
+  "copiedTxt": {
+    "message": "പ്ലെയിൻ ടെക്‌സ്റ്റ് പകർത്തി"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD-ലേക്ക് അയയ്ക്കുക"
   },
-  "sentEditmd": {
-    "message": "EditMD-ലേക്ക് അയച്ചു"
+  "openingEditmd": {
+    "message": "EditMD തുറക്കുന്നു…"
   }
 }

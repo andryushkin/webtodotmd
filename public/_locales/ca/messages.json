@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "No s'ha pogut convertir la selecció."
   },
+  "errEditmdOpen": {
+    "message": "No s'ha pogut obrir EditMD."
+  },
   "successCaptured": {
     "message": "Convertit."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Amaga"
   },
+  "tooltipCopyMd": {
+    "message": "Copia com a Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Baixa el fitxer Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Copia com a text sense format"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Baixa el fitxer de text"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opcions de text sense format"
+  },
+  "copiedTxt": {
+    "message": "Text sense format copiat"
+  },
   "tooltipSendEditmd": {
     "message": "Envia a EditMD"
   },
-  "sentEditmd": {
-    "message": "Enviat a EditMD"
+  "openingEditmd": {
+    "message": "S'està obrint EditMD…"
   }
 }

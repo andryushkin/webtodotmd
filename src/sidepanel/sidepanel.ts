@@ -682,9 +682,10 @@ btnEditmd.addEventListener('click', async () => {
     if (!tab?.id) throw new Error('NO_TAB');
     await chrome.tabs.update(tab.id, { url });
   } catch {
-    // window.open returns null when the navigation never started. Chrome gives
-    // no signal for "no handler for this scheme", so this is the only failure
-    // we can actually observe — don't report success on top of it.
+    // A non-null return only means a browsing context was created — the URL is
+    // loaded asynchronously, so it says nothing about whether editmd:// has a
+    // handler. null mostly means the window was blocked outright; report that,
+    // but don't read the other branch as "it arrived".
     if (!window.open(url)) {
       setTempStatus(t('errEditmdOpen'), 'error', 'x');
       return;
@@ -692,7 +693,9 @@ btnEditmd.addEventListener('click', async () => {
   }
   trackEvent('send_editmd');
   incrementActionCount();
-  setTempStatus(t('sentEditmd'), 'success', 'check', 2000);
+  // Chrome never tells us whether the scheme was handled, so the status claims
+  // only what we know: the handoff was started.
+  setTempStatus(t('openingEditmd'), 'default', 'send', 2000);
 });
 
 btnClear.addEventListener('click', () => {
@@ -711,9 +714,14 @@ function applyButtonLabels() {
   setButtonContent(btnDownload, 'download', t('download'));
   btnTxtMenu.innerHTML =
     `<span class="btn-label">.txt</span>` + icon('chevronDown', 12);
+  // ".txt" alone is not a name a screen reader can act on, and the chevron
+  // disappears in compact mode — spell the action out for assistive tech.
+  btnTxtMenu.setAttribute('aria-label', t('tooltipTxtMenu'));
   btnCopyTxt.innerHTML = icon('copy', 14) + `<span class="btn-label">${escHtml(t('tooltipCopyTxt'))}</span>`;
   btnDownloadTxt.innerHTML = icon('download', 14) + `<span class="btn-label">${escHtml(t('tooltipDownloadTxt'))}</span>`;
   setButtonContent(btnEditmd, 'send', 'EditMD');
+  // The visible label is the brand alone; name the action for assistive tech.
+  btnEditmd.setAttribute('aria-label', t('tooltipSendEditmd'));
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;

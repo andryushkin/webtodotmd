@@ -105,9 +105,12 @@ const PATHS: Record<string, string> = {
 
 export function icon(name: string, size = 14): string {
   const paths = PATHS[name] ?? '';
-  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths}</svg>`;
 }
 
+// aria-label mirrors the visible label so the button keeps its accessible name
+// when the compact toolbar hides .btn-label — the icon alone carries no name.
 export function setButtonContent(btn: HTMLButtonElement, iconName: string, label: string, size?: number): void {
   btn.innerHTML = icon(iconName, size) + `<span class="btn-label">${label}</span>`;
+  btn.setAttribute('aria-label', label);
 }

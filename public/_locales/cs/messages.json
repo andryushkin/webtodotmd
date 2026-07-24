@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Výběr nelze převést."
   },
+  "errEditmdOpen": {
+    "message": "EditMD se nepodařilo otevřít."
+  },
   "successCaptured": {
     "message": "Hotovo."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Skrýt"
   },
+  "tooltipCopyMd": {
+    "message": "Kopírovat jako Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Stáhnout soubor Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopírovat jako prostý text"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Stáhnout textový soubor"
+  },
+  "tooltipTxtMenu": {
+    "message": "Možnosti prostého textu"
+  },
+  "copiedTxt": {
+    "message": "Prostý text zkopírován"
+  },
   "tooltipSendEditmd": {
     "message": "Odeslat do EditMD"
   },
-  "sentEditmd": {
-    "message": "Odesláno do EditMD"
+  "openingEditmd": {
+    "message": "Otevírání EditMD…"
   }
 }

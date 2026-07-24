@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Selecția nu poate fi convertită."
   },
+  "errEditmdOpen": {
+    "message": "EditMD nu a putut fi deschis."
+  },
   "successCaptured": {
     "message": "Gata."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Ascunde"
   },
+  "tooltipCopyMd": {
+    "message": "Copiază drept Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Descarcă fișierul Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Copiază drept text simplu"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Descarcă fișierul text"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opțiuni pentru text simplu"
+  },
+  "copiedTxt": {
+    "message": "Text simplu copiat"
+  },
   "tooltipSendEditmd": {
     "message": "Trimite în EditMD"
   },
-  "sentEditmd": {
-    "message": "Trimis în EditMD"
+  "openingEditmd": {
+    "message": "Se deschide EditMD…"
   }
 }

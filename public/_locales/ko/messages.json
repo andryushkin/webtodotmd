@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "선택 영역을 변환할 수 없습니다."
   },
+  "errEditmdOpen": {
+    "message": "EditMD를 열 수 없습니다."
+  },
   "successCaptured": {
     "message": "캡처되었습니다."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "숨기기"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown으로 복사"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown 파일 다운로드"
+  },
+  "tooltipCopyTxt": {
+    "message": "일반 텍스트로 복사"
+  },
+  "tooltipDownloadTxt": {
+    "message": "텍스트 파일 다운로드"
+  },
+  "tooltipTxtMenu": {
+    "message": "일반 텍스트 옵션"
+  },
+  "copiedTxt": {
+    "message": "일반 텍스트를 복사했습니다"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD로 보내기"
   },
-  "sentEditmd": {
-    "message": "EditMD로 보냈습니다"
+  "openingEditmd": {
+    "message": "EditMD 여는 중…"
   }
 }

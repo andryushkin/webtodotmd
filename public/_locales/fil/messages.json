@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Hindi makonvert ang pinili."
   },
+  "errEditmdOpen": {
+    "message": "Hindi mabuksan ang EditMD."
+  },
   "successCaptured": {
     "message": "Nakuha."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Itago"
   },
+  "tooltipCopyMd": {
+    "message": "Kopyahin bilang Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "I-download ang Markdown file"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopyahin bilang plain text"
+  },
+  "tooltipDownloadTxt": {
+    "message": "I-download ang text file"
+  },
+  "tooltipTxtMenu": {
+    "message": "Mga opsyon sa plain text"
+  },
+  "copiedTxt": {
+    "message": "Nakopya ang plain text"
+  },
   "tooltipSendEditmd": {
     "message": "Ipadala sa EditMD"
   },
-  "sentEditmd": {
-    "message": "Naipadala sa EditMD"
+  "openingEditmd": {
+    "message": "Binubuksan ang EditMD…"
   }
 }

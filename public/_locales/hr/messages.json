@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Odabrano nije moguće pretvoriti."
   },
+  "errEditmdOpen": {
+    "message": "EditMD se nije mogao otvoriti."
+  },
   "successCaptured": {
     "message": "Gotovo."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Sakrij"
   },
+  "tooltipCopyMd": {
+    "message": "Kopiraj kao Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Preuzmi Markdown datoteku"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopiraj kao obični tekst"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Preuzmi tekstualnu datoteku"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opcije običnog teksta"
+  },
+  "copiedTxt": {
+    "message": "Obični tekst kopiran"
+  },
   "tooltipSendEditmd": {
     "message": "Pošalji u EditMD"
   },
-  "sentEditmd": {
-    "message": "Poslano u EditMD"
+  "openingEditmd": {
+    "message": "Otvaranje EditMD-a…"
   }
 }

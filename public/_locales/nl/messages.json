@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Kon selectie niet converteren."
   },
+  "errEditmdOpen": {
+    "message": "Kan EditMD niet openen."
+  },
   "successCaptured": {
     "message": "Vastgelegd."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Verbergen"
   },
+  "tooltipCopyMd": {
+    "message": "Kopiëren als Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown-bestand downloaden"
+  },
+  "tooltipCopyTxt": {
+    "message": "Kopiëren als platte tekst"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Tekstbestand downloaden"
+  },
+  "tooltipTxtMenu": {
+    "message": "Opties voor platte tekst"
+  },
+  "copiedTxt": {
+    "message": "Platte tekst gekopieerd"
+  },
   "tooltipSendEditmd": {
     "message": "Verzenden naar EditMD"
   },
-  "sentEditmd": {
-    "message": "Verzonden naar EditMD"
+  "openingEditmd": {
+    "message": "EditMD wordt geopend…"
   }
 }

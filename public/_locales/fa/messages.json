@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "تبدیل انتخاب ممکن نشد."
   },
+  "errEditmdOpen": {
+    "message": "باز کردن EditMD ممکن نشد."
+  },
   "successCaptured": {
     "message": "تبدیل شد."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "پنهان کردن"
   },
+  "tooltipCopyMd": {
+    "message": "کپی به‌صورت Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "دانلود فایل Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "کپی به‌صورت متن ساده"
+  },
+  "tooltipDownloadTxt": {
+    "message": "دانلود فایل متنی"
+  },
+  "tooltipTxtMenu": {
+    "message": "گزینه‌های متن ساده"
+  },
+  "copiedTxt": {
+    "message": "متن ساده کپی شد"
+  },
   "tooltipSendEditmd": {
     "message": "ارسال به EditMD"
   },
-  "sentEditmd": {
-    "message": "به EditMD ارسال شد"
+  "openingEditmd": {
+    "message": "در حال باز کردن EditMD…"
   }
 }

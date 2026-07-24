@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "પસંદગી કન્વર્ટ થઈ શકી નહીં."
   },
+  "errEditmdOpen": {
+    "message": "EditMD ખોલી શકાયું નથી."
+  },
   "successCaptured": {
     "message": "કન્વર્ટ થઈ ગઈ."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "છૂપાવો"
   },
+  "tooltipCopyMd": {
+    "message": "Markdown તરીકે કૉપિ કરો"
+  },
+  "tooltipDownloadMd": {
+    "message": "Markdown ફાઇલ ડાઉનલોડ કરો"
+  },
+  "tooltipCopyTxt": {
+    "message": "સાદા ટેક્સ્ટ તરીકે કૉપિ કરો"
+  },
+  "tooltipDownloadTxt": {
+    "message": "ટેક્સ્ટ ફાઇલ ડાઉનલોડ કરો"
+  },
+  "tooltipTxtMenu": {
+    "message": "સાદા ટેક્સ્ટના વિકલ્પો"
+  },
+  "copiedTxt": {
+    "message": "સાદો ટેક્સ્ટ કૉપિ થયો"
+  },
   "tooltipSendEditmd": {
     "message": "EditMD માં મોકલો"
   },
-  "sentEditmd": {
-    "message": "EditMD માં મોકલાયું"
+  "openingEditmd": {
+    "message": "EditMD ખૂલી રહ્યું છે…"
   }
 }

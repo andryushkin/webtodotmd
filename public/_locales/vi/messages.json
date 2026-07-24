@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Không thể chuyển đổi vùng chọn."
   },
+  "errEditmdOpen": {
+    "message": "Không thể mở EditMD."
+  },
   "successCaptured": {
     "message": "Đã chụp."
   },
@@ -154,10 +157,28 @@
   "ratingHide": {
     "message": "Ẩn"
   },
+  "tooltipCopyMd": {
+    "message": "Sao chép dưới dạng Markdown"
+  },
+  "tooltipDownloadMd": {
+    "message": "Tải xuống tệp Markdown"
+  },
+  "tooltipCopyTxt": {
+    "message": "Sao chép dưới dạng văn bản thuần"
+  },
+  "tooltipDownloadTxt": {
+    "message": "Tải xuống tệp văn bản"
+  },
+  "tooltipTxtMenu": {
+    "message": "Tùy chọn văn bản thuần"
+  },
+  "copiedTxt": {
+    "message": "Đã sao chép văn bản thuần"
+  },
   "tooltipSendEditmd": {
     "message": "Gửi tới EditMD"
   },
-  "sentEditmd": {
-    "message": "Đã gửi tới EditMD"
+  "openingEditmd": {
+    "message": "Đang mở EditMD…"
   }
 }
