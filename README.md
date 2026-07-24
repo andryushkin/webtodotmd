@@ -85,9 +85,8 @@ Captured content stays on the device: conversion happens in the content script,
 and the extension has no server to send it to. The only network call is an
 anonymous usage counter (a random install ID plus an event name such as `copy`
 or `download_md`) sent to `2md.site` — no URLs, no page content, no personal
-data. [privacy-policy.html](privacy-policy.html) is the published policy, and
-[docs/permissions-justification.md](docs/permissions-justification.md) explains
-why each manifest permission exists.
+data. [privacy-policy.html](privacy-policy.html) is the published policy; every
+manifest permission and what it is used for is listed there in section 5.
 
 ## Repository notes
 

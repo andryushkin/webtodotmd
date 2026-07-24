@@ -18,8 +18,8 @@ doc — fix it in the same change.
 ## Execution
 
 - All prose in the repository is English: comments, docs, commit messages. The
-  exception is `public/_locales/` and `docs/lang/`, which are translations by
-  definition, and the Russian examples inside `docs/localization.md`.
+  exception is `public/_locales/`, which is translations by definition, and the
+  Russian examples inside `docs/localization.md`.
 - Conversion bugs usually belong to
   [htmltodotmd](https://github.com/andryushkin/htmltodotmd), the
   `vendor/htmltodotmd` submodule — check there before patching around a bad

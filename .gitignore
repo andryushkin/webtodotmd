@@ -7,3 +7,7 @@ dist/
 
 # Local agent settings
 .claude/settings.local.json
+
+# Chrome Web Store material: listing copy, store translations, screenshots and
+# banner sources. Kept out of the repository — it is dashboard input, not code.
+/store/

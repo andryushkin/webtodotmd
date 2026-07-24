@@ -35,14 +35,19 @@ rejection. The archives are gitignored — they are build output, not source.
 
 ## Chrome Web Store submission
 
+Listing material is **not in this repository**. It lives in a gitignored
+`store/` directory next to the source, because it is Developer Dashboard input
+rather than part of the extension:
+
+| Path | Contents |
+| --- | --- |
+| `store/lang/description/` | Long descriptions, one plain text file per locale, 4500 characters max. Edit `en.txt` first, then regenerate the rest |
+| `store/img/` | Icon, banner sources and screenshots |
+| `store/permissions-justification.md` | The text to paste into the review form; keep it in sync when permissions change |
+
 - The store listing's **translations are managed in the Developer Dashboard**,
   not in `_locales/`. `public/_locales/` only affects how Chrome itself labels
   the extension (tooltip, extensions page).
-- Long descriptions live in [`lang/description/`](lang/description) — one plain
-  text file per locale, 4500 characters max. Edit `en.txt` first, then
-  regenerate the rest.
-- [permissions-justification.md](permissions-justification.md) is the text to
-  paste into the review form; keep it in sync when permissions change.
 - Do not add `host_permissions: ["*://*/*"]` back to the manifest — it makes
   review flag broad host permissions and delays approval.
   `content_scripts.matches` plus `scripting`/`activeTab` already cover both
