@@ -4,7 +4,18 @@ Chrome extension that turns what you selected on a page into clean Markdown.
 The conversion runs inside the browser — the page content is never uploaded
 anywhere, and there is no account to create.
 
-[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego)
+## Install
+
+**From the Chrome Web Store** —
+[Text to .md](https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego),
+the reviewed build, updated automatically. Works in Chrome and other
+Chromium browsers that use the store (Edge, Brave, Opera, Vivaldi, Arc).
+
+**From source** — [build it](#build), then open `chrome://extensions`, turn on
+**Developer mode**, click **Load unpacked** and pick the `dist/` directory. The
+extension appears in the toolbar; pin it if you want the icon visible. After a
+rebuild, press the reload arrow on its card — Chrome does not pick up changes
+on its own.
 
 ## What it does
 
@@ -35,8 +46,8 @@ cd webtodotmd
 bash build.sh
 ```
 
-The unpacked extension lands in `dist/` — load it via `chrome://extensions`
-▸ Developer mode ▸ Load unpacked.
+The unpacked extension lands in `dist/`, ready to load as described in
+[Install](#install).
 
 If you cloned without `--recurse-submodules`, run
 `git submodule update --init` first: the HTML → Markdown core lives in
