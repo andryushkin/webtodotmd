@@ -17,6 +17,7 @@ Chrome Extension для захвата выделений со страниц в
 ## Архитектура
 
 - **Content script** — захватывает `window.getSelection()` через `selectionToMarkdown()`; поддерживает `rangeCount > 1` (объединение через `\n\n`); Shadow DOM flattening перед конвертацией; после успешного `CAPTURE_SELECTION` вызывает `removeAllRanges()` чтобы повторный capture без выделения давал NO_SELECTION
+- **Page title** — `findPageTitle()` берёт первый непустой из `og:title` (по `property`) → `twitter:title` → ld+json `headline` → `meta[name=title]` → `document.title`, затем прогоняет через `normalizePageTitle()` из `src/content/page-title.ts`. ⚠️ Метаданные сайтов бывают **двойно закодированы**: gazeta.ru отдаёт `content="10&amp;nbsp;самых…"`, парсер декодирует атрибут один раз и `getAttribute()` возвращает литеральный `&nbsp;`. Поэтому `normalizePageTitle` декодирует сущности **ещё на один уровень** (один проход — `&amp;lt;` остаётся `&lt;`; неизвестные имена вроде `AT&T` не трогаются), сворачивает NBSP/BOM в обычный пробел (title идёт и в имя файла) и режет до 200 символов
 - **Content script injection** — `content_scripts` в manifest (авто-инъекция на `*://*/*`); `ensureContentScript()` шлёт PING, и при отсутствии ответа переинъецирует через `scripting.executeScript()`
 - **Side Panel** — основной UI (не Popup); кнопка "Capture Selection" + rendered Markdown preview; слушает `chrome.storage.session.onChanged` для auto-capture; Lucide-style SVG-иконки на всех кнопках
 - **Background (service worker)** — координация; `chrome.action.onClicked` открывает панель + пишет `captureSignal: Date.now()` в `chrome.storage.session`
@@ -151,6 +152,7 @@ Chrome Extension для захвата выделений со страниц в
 
 - `src/content/__tests__/find-highlight-target.test.ts` — тесты для `findHighlightTarget` (8 тестов)
 - `src/content/__tests__/conversion.test.ts` — тесты HTML→Markdown через `toMarkdown()` с linkedom (31 тест)
+- `src/content/__tests__/page-title.test.ts` — тесты `decodeEntities` / `normalizePageTitle` (11 тестов)
 - `src/shared/__tests__/` — тесты утилит (restricted, gate, identity)
 - **Паттерн тестируемости:** функции без chrome API выносить из `content-script.ts` в отдельные модули — content-script нельзя импортировать в тест из-за top-level chrome-кода
 - **DOM в тестах:** linkedom из `~/Server/htmltodotmd/node_modules/linkedom/esm/index.js`; `toMarkdown(html, { domAdapter })` где `domAdapter = (html) => parseHTML(html).document`

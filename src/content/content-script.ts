@@ -3,6 +3,7 @@ import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndC
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
+import { normalizePageTitle } from './page-title';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
@@ -428,8 +429,7 @@ function findPageTitle(): string {
     getMeta('name', 'title') ||
     document.title
   );
-  const clean = raw.replace(/[\n\r\u2028\u2029]+/g, ' ').trim();
-  return clean.length > 200 ? clean.slice(0, 197) + '…' : clean;
+  return normalizePageTitle(raw);
 }
 
 function captureHighlightsMd(): string {
