@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "लपवा"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD मध्ये पाठवा"
+  },
+  "sentEditmd": {
+    "message": "EditMD मध्ये पाठवले"
   }
 }

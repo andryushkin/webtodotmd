@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Dölj"
+  },
+  "tooltipSendEditmd": {
+    "message": "Skicka till EditMD"
+  },
+  "sentEditmd": {
+    "message": "Skickat till EditMD"
   }
 }

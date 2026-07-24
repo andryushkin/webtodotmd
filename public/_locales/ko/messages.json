@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "숨기기"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD로 보내기"
+  },
+  "sentEditmd": {
+    "message": "EditMD로 보냈습니다"
   }
 }

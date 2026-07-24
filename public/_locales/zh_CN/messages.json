@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "隐藏"
+  },
+  "tooltipSendEditmd": {
+    "message": "发送到 EditMD"
+  },
+  "sentEditmd": {
+    "message": "已发送到 EditMD"
   }
 }

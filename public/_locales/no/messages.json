@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Skjul"
+  },
+  "tooltipSendEditmd": {
+    "message": "Send til EditMD"
+  },
+  "sentEditmd": {
+    "message": "Sendt til EditMD"
   }
 }

@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Skrýt"
+  },
+  "tooltipSendEditmd": {
+    "message": "Odeslat do EditMD"
+  },
+  "sentEditmd": {
+    "message": "Odesláno do EditMD"
   }
 }

@@ -161,12 +161,21 @@ Chrome Extension для захвата выделений со страниц в
 - Для открытия панели из команды использовать `chrome.sidePanel.open({ windowId: tab.windowId })` (не `tabId`)
 - Паттерн append: открыть панель + `chrome.storage.session.set({ captureSignal: Date.now() })` → side panel auto-captures через `storage.session.onChanged`
 
+## EditMD Integration (Send to EditMD)
+
+- Кнопка `btn-editmd` в toolbar Side Panel — паттерн Obsidian Web Clipper: тело заметки через clipboard, URL несёт только имя файла
+- Обработчик: `navigator.clipboard.writeText(rawMd)` → `chrome.tabs.update(activeTab, { url: 'editmd://new?file=<title>&clipboard' })`, fallback `window.open(url)`
+- `file` — имя **без** расширения (`safeFilename('')`), приложение само добавляет `.md`
+- Первый вызов показывает системный диалог Chrome «Открыть EditMD?» — норма для custom scheme
+- i18n-ключи: `tooltipSendEditmd`, `sentEditmd`; label кнопки — литерал `EditMD` (бренд, не переводится)
+- Сторона приложения EditMD — план: `~/Server/editmd/docs/plan-url-scheme.md` (регистрация схемы `editmd://` ещё не реализована)
+
 ## Telemetry
 
 - `src/shared/telemetry.ts` — `trackEvent(event)`: fire-and-forget POST на `https://2md.site/api/event`
 - Использует `ensureInstallId()` из `identity.ts` как `clientId`
-- События: `install`, `copy`, `download_md`, `rating_1`..`rating_5`, `rating_hidden`
-- Будущие события: `download_txt`, `download_pdf` — добавлять `trackEvent()` в соответствующие обработчики
+- События: `install`, `copy`, `copy_txt`, `download_md`, `download_txt`, `send_editmd`, `rating_1`..`rating_5`, `rating_hidden`
+- Будущие события: `download_pdf` — добавлять `trackEvent()` в соответствующие обработчики
 - Серверная часть: Durable Object на 2md.site (`~/Server/2mdsite/src/stats/`)
 - Дашборд: `(internal stats dashboard)`
 

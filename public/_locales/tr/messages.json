@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Gizle"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD'ye gönder"
+  },
+  "sentEditmd": {
+    "message": "EditMD'ye gönderildi"
   }
 }

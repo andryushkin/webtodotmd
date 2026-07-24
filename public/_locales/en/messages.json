@@ -171,5 +171,13 @@
   },
   "copiedTxt": {
     "message": "Plain text copied"
+  },
+  "tooltipSendEditmd": {
+    "message": "Send to EditMD",
+    "description": "Tooltip for the Send to EditMD toolbar button"
+  },
+  "sentEditmd": {
+    "message": "Sent to EditMD",
+    "description": "Status after content was handed to the EditMD app"
   }
 }

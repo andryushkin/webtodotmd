@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "മറക്കൂ"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD-ലേക്ക് അയയ്ക്കുക"
+  },
+  "sentEditmd": {
+    "message": "EditMD-ലേക്ക് അയച്ചു"
   }
 }

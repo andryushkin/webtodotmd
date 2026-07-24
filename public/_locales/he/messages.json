@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "הסתר"
+  },
+  "tooltipSendEditmd": {
+    "message": "שליחה אל EditMD"
+  },
+  "sentEditmd": {
+    "message": "נשלח אל EditMD"
   }
 }

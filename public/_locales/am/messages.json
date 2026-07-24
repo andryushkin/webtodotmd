@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "ደብቅ"
+  },
+  "tooltipSendEditmd": {
+    "message": "ወደ EditMD ላክ"
+  },
+  "sentEditmd": {
+    "message": "ወደ EditMD ተልኳል"
   }
 }

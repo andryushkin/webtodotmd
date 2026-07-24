@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Amaga"
+  },
+  "tooltipSendEditmd": {
+    "message": "Envia a EditMD"
+  },
+  "sentEditmd": {
+    "message": "Enviat a EditMD"
   }
 }

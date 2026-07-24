@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Ficha"
+  },
+  "tooltipSendEditmd": {
+    "message": "Tuma kwa EditMD"
+  },
+  "sentEditmd": {
+    "message": "Imetumwa kwa EditMD"
   }
 }

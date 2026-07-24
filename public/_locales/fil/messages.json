@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Itago"
+  },
+  "tooltipSendEditmd": {
+    "message": "Ipadala sa EditMD"
+  },
+  "sentEditmd": {
+    "message": "Naipadala sa EditMD"
   }
 }

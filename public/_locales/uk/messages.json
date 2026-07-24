@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Сховати"
+  },
+  "tooltipSendEditmd": {
+    "message": "Надіслати в EditMD"
+  },
+  "sentEditmd": {
+    "message": "Надіслано в EditMD"
   }
 }

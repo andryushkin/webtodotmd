@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Ocultar"
+  },
+  "tooltipSendEditmd": {
+    "message": "Enviar a EditMD"
+  },
+  "sentEditmd": {
+    "message": "Enviado a EditMD"
   }
 }

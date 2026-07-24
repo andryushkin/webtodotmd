@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "隱藏"
+  },
+  "tooltipSendEditmd": {
+    "message": "傳送到 EditMD"
+  },
+  "sentEditmd": {
+    "message": "已傳送到 EditMD"
   }
 }

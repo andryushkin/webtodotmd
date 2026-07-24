@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Piilota"
+  },
+  "tooltipSendEditmd": {
+    "message": "Lähetä EditMD:hen"
+  },
+  "sentEditmd": {
+    "message": "Lähetetty EditMD:hen"
   }
 }

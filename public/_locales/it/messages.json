@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Nascondi"
+  },
+  "tooltipSendEditmd": {
+    "message": "Invia a EditMD"
+  },
+  "sentEditmd": {
+    "message": "Inviato a EditMD"
   }
 }

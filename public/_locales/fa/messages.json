@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "پنهان کردن"
+  },
+  "tooltipSendEditmd": {
+    "message": "ارسال به EditMD"
+  },
+  "sentEditmd": {
+    "message": "به EditMD ارسال شد"
   }
 }

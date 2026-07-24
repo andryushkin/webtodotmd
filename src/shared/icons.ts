@@ -92,6 +92,10 @@ const PATHS: Record<string, string> = {
   chevronDown:
     '<polyline points="6 9 12 15 18 9"/>',
 
+  send:
+    '<path d="m22 2-7 20-4-9-9-4Z"/>' +
+    '<path d="M22 2 11 13"/>',
+
   calendar:
     '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>' +
     '<line x1="16" y1="2" x2="16" y2="6"/>' +

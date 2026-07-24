@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "非表示"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD に送信"
+  },
+  "sentEditmd": {
+    "message": "EditMD に送信しました"
   }
 }

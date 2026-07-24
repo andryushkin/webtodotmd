@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "மறை"
+  },
+  "tooltipSendEditmd": {
+    "message": "EditMD-க்கு அனுப்பு"
+  },
+  "sentEditmd": {
+    "message": "EditMD-க்கு அனுப்பப்பட்டது"
   }
 }

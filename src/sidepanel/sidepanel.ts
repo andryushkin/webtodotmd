@@ -31,6 +31,7 @@ const btnTxtMenu = document.getElementById('btn-txt-menu') as HTMLButtonElement;
 const txtMenu = document.getElementById('txt-menu') as HTMLDivElement;
 const btnCopyTxt = document.getElementById('btn-copy-txt') as HTMLButtonElement;
 const btnDownloadTxt = document.getElementById('btn-download-txt') as HTMLButtonElement;
+const btnEditmd = document.getElementById('btn-editmd') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
@@ -349,6 +350,7 @@ function updateButtonStates() {
   btnDownload.disabled = !hasContent;
   btnTxtMenu.disabled = !hasContent;
   if (!hasContent) closeTxtMenu();
+  btnEditmd.disabled = !hasContent;
   btnClear.disabled = !hasContent;
 }
 
@@ -667,6 +669,25 @@ btnDownloadTxt.addEventListener('click', async () => {
   incrementActionCount();
 });
 
+// Send to EditMD: clipboard carries the body (URL length is capped),
+// the editmd://new URL carries only the file name — same handoff as
+// the Obsidian Web Clipper's obsidian://new?...&clipboard.
+btnEditmd.addEventListener('click', async () => {
+  if (!rawMd) return;
+  await navigator.clipboard.writeText(rawMd);
+  const url = `editmd://new?file=${encodeURIComponent(safeFilename(''))}&clipboard`;
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) throw new Error('NO_TAB');
+    await chrome.tabs.update(tab.id, { url });
+  } catch {
+    window.open(url);
+  }
+  trackEvent('send_editmd');
+  incrementActionCount();
+  setTempStatus(t('sentEditmd'), 'success', 'check', 2000);
+});
+
 btnClear.addEventListener('click', () => {
   setContent('');
   previewRendered.innerHTML = '';
@@ -685,6 +706,7 @@ function applyButtonLabels() {
     `<span class="btn-label">.txt</span>` + icon('chevronDown', 12);
   btnCopyTxt.innerHTML = icon('copy', 14) + `<span class="btn-label">${escHtml(t('tooltipCopyTxt'))}</span>`;
   btnDownloadTxt.innerHTML = icon('download', 14) + `<span class="btn-label">${escHtml(t('tooltipDownloadTxt'))}</span>`;
+  setButtonContent(btnEditmd, 'send', 'EditMD');
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
@@ -703,6 +725,7 @@ async function init() {
   attachStatusTooltip(btnCopy, 'tooltipCopyMd');
   attachStatusTooltip(btnDownload, 'tooltipDownloadMd');
   attachStatusTooltip(btnTxtMenu, 'tooltipTxtMenu');
+  attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
 
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);

@@ -153,5 +153,11 @@
   },
   "ratingHide": {
     "message": "Elrejtés"
+  },
+  "tooltipSendEditmd": {
+    "message": "Küldés az EditMD-be"
+  },
+  "sentEditmd": {
+    "message": "Elküldve az EditMD-be"
   }
 }
