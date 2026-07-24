@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Не удалось сконвертировать."
   },
+  "errEditmdOpen": {
+    "message": "Не удалось открыть EditMD."
+  },
   "successCaptured": {
     "message": "Готово."
   },

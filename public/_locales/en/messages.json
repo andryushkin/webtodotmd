@@ -79,6 +79,9 @@
   "errConvertFailed": {
     "message": "Could not convert selection."
   },
+  "errEditmdOpen": {
+    "message": "Could not open EditMD."
+  },
   "successCaptured": {
     "message": "Captured."
   },

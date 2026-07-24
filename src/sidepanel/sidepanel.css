@@ -446,8 +446,29 @@ body {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--gap);
   flex-shrink: 0;
+}
+
+/* Compact toolbar (set by updateToolbarDensity when the labelled row no longer
+   fits): labels go, icons stay — hover still names the action in the status
+   bar. ".txt" is the label that carries the meaning, so it keeps its text and
+   drops the chevron instead. */
+.toolbar.compact .btn > .btn-label {
+  display: none;
+}
+
+.toolbar.compact .btn {
+  padding: 6px 10px;
+}
+
+.toolbar.compact #btn-txt-menu > .btn-label {
+  display: inline;
+}
+
+.toolbar.compact #btn-txt-menu > .icon {
+  display: none;
 }
 
 .txt-menu-wrap {

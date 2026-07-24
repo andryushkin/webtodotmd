@@ -40,6 +40,7 @@ const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElemen
 const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const ratingRow = document.getElementById('rating-row') as HTMLDivElement;
+const toolbar = document.querySelector('.toolbar') as HTMLDivElement;
 
 // ---- State ----
 
@@ -681,7 +682,13 @@ btnEditmd.addEventListener('click', async () => {
     if (!tab?.id) throw new Error('NO_TAB');
     await chrome.tabs.update(tab.id, { url });
   } catch {
-    window.open(url);
+    // window.open returns null when the navigation never started. Chrome gives
+    // no signal for "no handler for this scheme", so this is the only failure
+    // we can actually observe — don't report success on top of it.
+    if (!window.open(url)) {
+      setTempStatus(t('errEditmdOpen'), 'error', 'x');
+      return;
+    }
   }
   trackEvent('send_editmd');
   incrementActionCount();
@@ -710,6 +717,18 @@ function applyButtonLabels() {
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
+  updateToolbarDensity();
+}
+
+// Labels stay while the toolbar fits on one row; a narrow panel or a long
+// locale (de "Herunterladen") makes it wrap, and then we drop to icons. Always
+// measure with the labels on, so the two states can't oscillate.
+function updateToolbarDensity() {
+  toolbar.classList.remove('compact');
+  const items = [...toolbar.children] as HTMLElement[];
+  if (items.some(el => el.offsetTop > items[0].offsetTop)) {
+    toolbar.classList.add('compact');
+  }
 }
 
 async function init() {
@@ -721,6 +740,13 @@ async function init() {
   btnRedo.innerHTML = icon('redo', 14);
   btnSettings.innerHTML = icon('settings', 14);
   applyButtonLabels();
+
+  // The side panel sits next to the page and the user can drag it narrower.
+  // Observe body — its width tracks the panel and, unlike the toolbar's own,
+  // is unaffected by the compact class we toggle.
+  new ResizeObserver(updateToolbarDensity).observe(document.body);
+  // Inter arrives after first paint and changes how wide the labels are.
+  document.fonts.ready.then(updateToolbarDensity);
 
   attachStatusTooltip(btnCopy, 'tooltipCopyMd');
   attachStatusTooltip(btnDownload, 'tooltipDownloadMd');

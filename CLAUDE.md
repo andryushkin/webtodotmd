@@ -42,6 +42,7 @@ Chrome Extension для захвата выделений со страниц в
 - **Readiness status:** `getTabReadiness(tab)` определяет тип вкладки; `updateReadinessStatus()` вызывается при `onActivated`, `onUpdated` и в конце `init()`. PDF/file/chrome/пустая → `warning`; обычная → `default + crosshair + "Ready to capture"`
 - **`setStatus` использует `innerHTML`** (иконка + `<span>${escHtml(msg)}</span>`) — сообщение всегда экранировать через `escHtml`
 - **KaTeX + MathML:** `preprocessMath` очищает U+2061–U+2064 (невидимые MathML-операторы) из latex-строк перед `mathMap.set()` — иначе KaTeX выдаёт `unknownSymbol` warnings
+- **Toolbar responsive:** `.toolbar` имеет `flex-wrap: wrap` (страховка от обрезания), а `updateToolbarDensity()` меряет реальную раскладку — если элементы ушли на второй ряд, вешает класс `compact` (только иконки; `.txt` наоборот теряет chevron, оставляет текст). Замер всегда в не-compact состоянии → нет осцилляции. Триггеры: `applyButtonLabels()`, `ResizeObserver` на `document.body` (ширина панели тянется мышью), `document.fonts.ready` (Inter меняет ширину подписей). Порог локаль-независим: EN отдаёт подписи ниже ~460px, DE — ниже ~560px
 - **marked: `html: true` + `escapeHtmlTagsInMarkdown()`:** marked настроен с `html: true` чтобы рендерились injected div'ы (KaTeX, metadata-block, content-gap, sub, sup). Чтобы literal HTML-теги в тексте страниц не рендерились как HTML — `escapeHtmlTagsInMarkdown()` вызывается первым шагом в `renderMarkdown()`, экранирует теги в non-code частях (исключения: sub, sup, br). DOMPurify sanitize — XSS-защита поверх.
 
 ## Иконки (Lucide-style SVG)
@@ -165,6 +166,7 @@ Chrome Extension для захвата выделений со страниц в
 
 - Кнопка `btn-editmd` в toolbar Side Panel — паттерн Obsidian Web Clipper: тело заметки через clipboard, URL несёт только имя файла
 - Обработчик: `navigator.clipboard.writeText(rawMd)` → `chrome.tabs.update(activeTab, { url: 'editmd://new?file=<title>&clipboard' })`, fallback `window.open(url)`
+- **Fallback проверяется:** `window.open` вернул `null` → `errEditmdOpen` + `return` (без `trackEvent`/`incrementActionCount`). Chrome не сообщает, есть ли handler у схемы, — это единственный наблюдаемый отказ, поэтому «успех» означает лишь «навигация начата»
 - `file` — имя **без** расширения (`safeFilename('')`), приложение само добавляет `.md`
 - Первый вызов показывает системный диалог Chrome «Открыть EditMD?» — норма для custom scheme
 - i18n-ключи: `tooltipSendEditmd`, `sentEditmd`; label кнопки — литерал `EditMD` (бренд, не переводится)
