@@ -28,6 +28,8 @@ doc — fix it in the same change.
 - Verify with a real build: `bash build.sh`, then `bun test src`. Behavior
   that only the browser exercises (panel UI, highlighter, shortcuts) needs the
   unpacked extension reloaded in `chrome://extensions`.
+- Before pushing or changing repository visibility, run `scripts/audit.sh`
+  and resolve every failure using the criteria in `docs/audit.md`.
 - A new UI string means a new key in all 52 locales, not just `en`. The
   completeness check is in `docs/releasing.md`.
 - Keep commits narrow and single-purpose; the message style is `feat`, `fix`,

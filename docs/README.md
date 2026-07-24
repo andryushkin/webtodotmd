@@ -13,6 +13,7 @@ not be broken.
 | [features.md](features.md) | What the extension does, from a user's point of view — capture modes, side panel, settings |
 | [localization.md](localization.md) | Localization spec: brand voice, per-locale rules, what must never be translated |
 | [releasing.md](releasing.md) | Build, package, and Chrome Web Store submission |
+| [audit.md](audit.md) | Public-repository gate: mechanical checks and reviewer judgment |
 | [permissions-justification.md](permissions-justification.md) | Why each manifest permission exists (written for store review) |
 | [website-welcome-changelog.md](website-welcome-changelog.md) | Contract with 2md.site for the install/update pages |
 

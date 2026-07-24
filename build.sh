@@ -23,4 +23,10 @@ sed 's/service-worker\.ts/service-worker.js/;s/content-script\.ts/content-script
 # Copy public/ contents (icons, _locales)
 cp -r public/* dist/
 
+# Ship the project and third-party license texts with the extension package.
+mkdir -p dist/licenses
+cp LICENSE THIRD_PARTY_NOTICES.md dist/
+cp vendor/licenses/* dist/licenses/
+cp vendor/htmltodotmd/LICENSE dist/licenses/htmltodotmd-LICENSE
+
 echo "Build OK → dist/"

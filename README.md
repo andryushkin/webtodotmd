@@ -69,6 +69,16 @@ submodule's own suite.
 | `vendor/` | Vendored runtime deps + the `htmltodotmd` submodule |
 | `docs/` | Domain documentation ([index](docs/README.md)) |
 
+Before pushing or changing repository visibility, run the static public-repo
+gate:
+
+```bash
+scripts/audit.sh
+```
+
+The criteria and the remaining manual checks are documented in
+[docs/audit.md](docs/audit.md).
+
 ## Privacy
 
 Captured content stays on the device: conversion happens in the content script,
