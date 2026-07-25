@@ -37,6 +37,7 @@
 | Any occurrence of `PDF` | `PDF` | Universal abbreviation. |
 | Any occurrence of `URL` | `URL` | Universal abbreviation. |
 | `✓` symbol in `toastCopied` | `✓` | Keep as-is. |
+| Any occurrence of `EditMD` | `EditMD` | Product name of a separate app. Never transliterate. |
 
 ### 2.2 Placeholder `{1}`
 The token `{1}` is a runtime substitution (a number). It MUST remain exactly as `{1}` in every locale. Position it where natural for the target language's word order.
@@ -335,6 +336,24 @@ Errors are shown in the status bar or as inline messages. They should be:
 | **Constraint** | ≤ 35 chars. |
 | **Adaptation** | Generic conversion failure. Keep vague — the user can't fix this. |
 
+#### `errClipboard`
+| | |
+|---|---|
+| **EN** | `Could not copy to the clipboard.` |
+| **Where** | Status bar, after Copy, Copy `.txt` or Send to EditMD |
+| **Constraint** | ≤ 40 chars. |
+| **Cause** | Chrome refused the clipboard write, normally because the panel did not have focus. |
+| **Adaptation** | Say that the copy did not happen, not why — the user recovers by clicking in the panel and trying again. Use the target locale's usual word for the system clipboard. |
+
+#### `errEditmdOpen`
+| | |
+|---|---|
+| **EN** | `Could not open EditMD.` |
+| **Where** | Status bar, after Send to EditMD |
+| **Constraint** | ≤ 30 chars. |
+| **Cause** | The `editmd://` hand-off was refused by the browser; usually EditMD is not installed. |
+| **Adaptation** | Keep `EditMD` untranslated. Calm and factual — do not add "install it first", the extension cannot tell whether it is installed. |
+
 ---
 
 ### 3.8 Success Messages
@@ -346,6 +365,22 @@ Errors are shown in the status bar or as inline messages. They should be:
 | **Where** | Status bar, after successful conversion |
 | **Constraint** | ≤ 12 chars. End with period. |
 | **Adaptation** | Minimal confirmation. One word + period. Must feel like a quick "done." |
+
+#### `copiedTxt`
+| | |
+|---|---|
+| **EN** | `Plain text copied` |
+| **Where** | Status bar, after Copy `.txt` |
+| **Constraint** | ≤ 25 chars. |
+| **Adaptation** | "Plain text" means Markdown syntax stripped. Use the same wording as `tooltipCopyTxt` in this locale. No period — it is a transient confirmation. |
+
+#### `openingEditmd`
+| | |
+|---|---|
+| **EN** | `Opening in EditMD…` |
+| **Where** | Status bar, right after Send to EditMD |
+| **Constraint** | ≤ 25 chars. Keep the trailing `…` (U+2026). |
+| **Adaptation** | Keep `EditMD` untranslated. Present progressive: the hand-off was started, and the extension never learns whether it arrived, so do not phrase it as completed ("Opened"). |
 
 ---
 
@@ -480,12 +515,87 @@ Settings appear on a dedicated `options.html` page. Labels can be longer. Use na
 
 ---
 
+### 3.13 Toolbar Tooltips
+
+These are the accessible names of the export buttons, shown in the status bar on
+hover. They are also what a screen reader announces, and in the compact toolbar —
+where the visible labels are dropped — they are the only thing naming the button.
+So they must say what the button *does*, never repeat the icon.
+
+#### `tooltipCopyMd`
+| | |
+|---|---|
+| **EN** | `Copy as Markdown` |
+| **Constraint** | ≤ 30 chars. Keep `Markdown` untranslated. |
+| **Adaptation** | Verb phrase. The verb should match the `copy` button label in this locale. |
+
+#### `tooltipDownloadMd`
+| | |
+|---|---|
+| **EN** | `Download Markdown file` |
+| **Constraint** | ≤ 35 chars. Keep `Markdown` untranslated. |
+| **Adaptation** | Verb should match the `download` button label in this locale. |
+
+#### `tooltipCopyTxt`
+| | |
+|---|---|
+| **EN** | `Copy as plain text` |
+| **Constraint** | ≤ 30 chars. |
+| **Adaptation** | "Plain text" = Markdown syntax stripped. Keep consistent with `copiedTxt` and `tooltipDownloadTxt`. |
+
+#### `tooltipDownloadTxt`
+| | |
+|---|---|
+| **EN** | `Download plain text file` |
+| **Constraint** | ≤ 35 chars. |
+| **Adaptation** | Same "plain text" wording as `tooltipCopyTxt`. |
+
+#### `tooltipTxtMenu`
+| | |
+|---|---|
+| **EN** | `Plain text options` |
+| **Where** | The `.txt` button, which opens a menu of two items |
+| **Constraint** | ≤ 30 chars. |
+| **Adaptation** | The button's visible label is the literal `.txt`, which is never translated — this string is what names it for assistive tech. Describe the menu, not the file extension. |
+
+#### `tooltipSendEditmd`
+| | |
+|---|---|
+| **EN** | `Send to EditMD` |
+| **Where** | The EditMD button, whose visible label is the bare brand name |
+| **Constraint** | ≤ 30 chars. Keep `EditMD` untranslated. |
+| **Adaptation** | Names the action the brand alone does not. macOS-only button, absent on other platforms — still translate it. |
+
+---
+
+### 3.14 Rating Widget
+
+A row at the bottom of the side panel, shown after the user has captured a few
+times, asking for a Web Store review.
+
+#### `sectionRating`
+| | |
+|---|---|
+| **EN** | `Rate this extension` |
+| **Constraint** | ≤ 30 chars. |
+| **Adaptation** | An invitation, not a demand. Avoid exclamation marks and "please". |
+
+#### `ratingHide`
+| | |
+|---|---|
+| **EN** | `Hide` |
+| **Where** | Dismisses the rating row for good |
+| **Constraint** | ≤ 12 chars. |
+| **Adaptation** | Single word if the language allows. Neutral — it is a dismissal, not a refusal. |
+
+---
+
 ## 4. Quality Checklist for Each Locale
 
 Before delivering a locale file, the translator (human or LLM) must verify:
 
 - [ ] `appName` is exactly `to .md` (not translated)
-- [ ] `Markdown`, `.md`, `PDF`, `URL` are NOT translated
+- [ ] `Markdown`, `.md`, `PDF`, `URL`, `EditMD` are NOT translated
 - [ ] `{1}` placeholder is present and correctly positioned
 - [ ] `✓` is present in `toastCopied`
 - [ ] No string exceeds its character constraint by more than 20%
