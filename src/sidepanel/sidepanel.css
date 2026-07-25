@@ -471,19 +471,11 @@ body {
   display: none;
 }
 
-/* EditMD is a macOS app, so the button ships hidden and init() reveals it once
-   chrome.runtime.getPlatformInfo() reports mac — that way it is never painted
-   on a platform where editmd:// has no handler. Hidden rather than removed, so
-   the toolbar code addresses it unconditionally; the `hidden` attribute would
-   not work here, .btn sets display: inline-flex and that beats the UA [hidden]
-   rule. A display:none child reports offsetTop 0, so it cannot trip
-   updateToolbarDensity(). */
-#btn-editmd {
+/* The EditMD button is hidden off macOS (see sidepanel.ts). `.btn` sets
+   display: inline-flex, which beats the UA [hidden] rule — so state it here,
+   the way .txt-menu[hidden] below does. */
+#btn-editmd[hidden] {
   display: none;
-}
-
-body.platform-mac #btn-editmd {
-  display: inline-flex;
 }
 
 .txt-menu-wrap {

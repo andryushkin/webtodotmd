@@ -42,6 +42,17 @@ const statusEl = document.getElementById('status') as HTMLDivElement;
 const ratingRow = document.getElementById('rating-row') as HTMLDivElement;
 const toolbar = document.querySelector('.toolbar') as HTMLDivElement;
 
+// EditMD is a macOS app; elsewhere nothing answers editmd://, so the button is
+// hidden. Read the platform synchronously, before first paint: awaiting
+// chrome.runtime.getPlatformInfo() would show the button and then take it away
+// (or the reverse) on every panel open. The UA hint is a low-entropy value
+// Chrome always exposes, and this is our own extension page, so it has no
+// reason to lie; anything unrecognized hides the button.
+const uaPlatform =
+  (navigator as Navigator & { userAgentData?: { platform?: string } })
+    .userAgentData?.platform ?? navigator.platform;
+btnEditmd.hidden = !/mac/i.test(uaPlatform ?? '');
+
 // ---- State ----
 
 let rawMd = '';
@@ -742,30 +753,19 @@ function applyButtonLabels() {
 // measure with the labels on, so the two states can't oscillate.
 function updateToolbarDensity() {
   toolbar.classList.remove('compact');
-  const items = [...toolbar.children] as HTMLElement[];
+  // Hidden children (the EditMD button off macOS) report offsetTop 0 and would
+  // read as the top row, making every visible button look wrapped.
+  const items = ([...toolbar.children] as HTMLElement[])
+    .filter(el => el.offsetParent !== null);
   if (items.some(el => el.offsetTop > items[0].offsetTop)) {
     toolbar.classList.add('compact');
   }
 }
 
 async function init() {
-  // Neither probe depends on the other, and both sit on the panel's open path.
-  // A failing getPlatformInfo() must not take the panel down with it — nothing
-  // catches init() — so it falls back to mac, the platform the gated button is
-  // for.
-  const [settings, platform] = await Promise.all([
-    getSettings(),
-    chrome.runtime.getPlatformInfo().catch(() => ({ os: 'mac' })),
-  ]);
+  const settings = await getSettings();
   await initI18n(settings.uiLanguage);
   applyI18n();
-
-  // EditMD ships for macOS only; elsewhere nothing answers editmd://. The
-  // button is hidden in CSS and revealed here, so it is never painted on a
-  // platform that cannot use it. Set the class before the first
-  // applyButtonLabels(): it measures toolbar density, and a hidden button must
-  // not be part of that measurement.
-  document.body.classList.toggle('platform-mac', platform.os === 'mac');
 
   btnUndo.innerHTML = icon('undo', 14);
   btnRedo.innerHTML = icon('redo', 14);
