@@ -101,6 +101,13 @@ adds a `compact` class if anything wrapped, so there is no oscillation. In
 compact mode the visible label is gone, so `setButtonContent()` always sets
 `aria-label`.
 
+One toolbar button is platform-conditional: **Send to EditMD** targets a macOS
+app, so it is `display: none` by default and revealed by a `platform-mac` class
+that `init()` puts on `<body>` after `chrome.runtime.getPlatformInfo()`. The
+node always exists — the button code needs no null checks — and the class is
+set before the first `updateToolbarDensity()`, so the measurement matches what
+the panel actually shows.
+
 ## i18n
 
 `public/_locales/` holds 52 locale directories, and the manifest name and

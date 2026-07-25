@@ -52,7 +52,7 @@ with undo/redo history.
 | Copy | Copies the raw Markdown to the clipboard |
 | Download | Saves a `.md` file, named after the page title |
 | `.txt` menu | Copy or download the same content with Markdown syntax stripped |
-| EditMD | Hands the note to the EditMD editor via the `editmd://` scheme (macOS only — the button is absent on other platforms, gated on `chrome.runtime.getPlatformInfo()`) |
+| EditMD | Hands the note to the EditMD editor via the `editmd://` scheme — macOS only, the button is hidden elsewhere |
 | Clear | Empties the panel and resets history |
 | Undo / Redo | Step through edit history |
 
