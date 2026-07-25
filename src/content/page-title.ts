@@ -5,6 +5,7 @@
 // download file name. Decode one more level and normalise the whitespace.
 
 import { ENTITY_KEYS, MAX_ENTITY_KEY_LEN } from './html-entities';
+import { truncateGraphemes } from '../shared/truncate';
 
 // Numeric references in the C1 range are what a Windows-1252 authoring tool
 // meant, not the control characters they name; HTML parsers remap them and so
@@ -50,24 +51,9 @@ export function decodeEntities(text: string): string {
 
 const TITLE_MAX = 200;
 
-let segmenter: Intl.Segmenter | undefined;
-
-// Slicing by code units would cut a surrogate pair or a ZWJ sequence in half
-// and leave a broken character in the front matter and the file name, so walk
-// grapheme clusters and stop before the budget is exceeded.
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text;
-  const budget = max - 1; // the ellipsis takes one code unit
-  const clusters: Iterable<string> = typeof Intl.Segmenter === 'function'
-    ? [...(segmenter ??= new Intl.Segmenter(undefined, { granularity: 'grapheme' })).segment(text)]
-        .map(s => s.segment)
-    : Array.from(text); // code points: still never splits a surrogate pair
-  let out = '';
-  for (const cluster of clusters) {
-    if (out.length + cluster.length > budget) break;
-    out += cluster;
-  }
-  return out + '…';
+  return truncateGraphemes(text, max - 1) + '…'; // the ellipsis takes one code unit
 }
 
 export function normalizePageTitle(raw: string): string {

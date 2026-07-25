@@ -9,6 +9,7 @@ import { initI18n, t, applyI18n } from '../shared/i18n';
 import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '../shared/messaging';
 import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
+import { truncateGraphemes } from '../shared/truncate';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -610,9 +611,11 @@ chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
 });
 
 function safeFilename(ext: string): string {
-  return (lastMeta?.title ?? 'selection')
-    .replace(/[\\/:*?"<>|]/g, '-')
-    .slice(0, 80) + ext;
+  // Grapheme truncation, not slice(): a title cut mid-emoji leaves a lone
+  // surrogate, which encodeURIComponent() rejects with URIError on the
+  // editmd:// hand-off and which reaches the download name intact.
+  const name = (lastMeta?.title ?? 'selection').replace(/[\\/:*?"<>|]/g, '-');
+  return truncateGraphemes(name, 80) + ext;
 }
 
 function closeTxtMenu() {
