@@ -744,6 +744,13 @@ async function init() {
   await initI18n(settings.uiLanguage);
   applyI18n();
 
+  // EditMD ships for macOS only — elsewhere nothing answers editmd://, so drop
+  // the button rather than offer a dead end. Must happen before the first
+  // applyButtonLabels(): it measures toolbar density, and a button that is
+  // about to go would push the panel into compact mode too early.
+  const { os } = await chrome.runtime.getPlatformInfo();
+  if (os !== 'mac') btnEditmd.remove();
+
   btnUndo.innerHTML = icon('undo', 14);
   btnRedo.innerHTML = icon('redo', 14);
   btnSettings.innerHTML = icon('settings', 14);
@@ -759,7 +766,7 @@ async function init() {
   attachStatusTooltip(btnCopy, 'tooltipCopyMd');
   attachStatusTooltip(btnDownload, 'tooltipDownloadMd');
   attachStatusTooltip(btnTxtMenu, 'tooltipTxtMenu');
-  attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
+  if (btnEditmd.isConnected) attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
 
   autoMetadata = settings.autoMetadata;
   setViewMode(settings.defaultViewMode);

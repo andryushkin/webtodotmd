@@ -8,7 +8,8 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
 - **Send to EditMD** — a toolbar button hands the note off to
   [EditMD](https://github.com/andryushkin/editmd) over the `editmd://` URL
-  scheme (body via clipboard, filename in the URL).
+  scheme (body via clipboard, filename in the URL). EditMD is macOS-only, so
+  the button only appears there.
 - Page titles now decode HTML entities the way the HTML tokenizer does: the
   full WHATWG named-reference set, longest match first, one pass only. Sites
   that double-encode their `og:title` no longer leak `&nbsp;` into the front
