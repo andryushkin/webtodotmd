@@ -4,6 +4,19 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.3.0 — 2026-07-25
+
+- **Send to EditMD is a macOS button.** EditMD is a Mac app, and on other
+  platforms nothing answers the `editmd://` hand-off, so the button no longer
+  appears there.
+- Fixed a hand-off that could fail silently: a page title truncated in the
+  middle of an emoji produced a broken file name, and the EditMD button then
+  did nothing at all — after the note had already replaced the clipboard.
+  Download names were affected by the same cut.
+- Copying now says so when it fails. Chrome refuses a clipboard write while the
+  panel does not have focus, which happens whenever the last click was in the
+  page; Copy, Copy `.txt` and Send to EditMD reported nothing and looked inert.
+
 ## 1.2.2 — 2026-07-24
 
 - **Send to EditMD** — a toolbar button hands the note off to
