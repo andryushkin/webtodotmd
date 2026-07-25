@@ -68,6 +68,31 @@ Delete the old archive first. `zip` updates an existing archive instead of
 replacing it, which yields a zip with two `manifest.json` entries and a store
 rejection. The archives are gitignored — they are build output, not source.
 
+## GitHub release
+
+The same archive is published as a GitHub Release, so the build that is in
+review — or already in the store — can be downloaded and loaded unpacked
+without rebuilding it:
+
+```bash
+gh release list                                  # what is there now
+gh release delete vX.Y.Z --yes                   # the previous one, tag kept
+gh release create v1.3.0 tomd-1.3.0.zip \
+  --title "1.3.0" --notes "$(...)"               # notes: this version's CHANGELOG section
+```
+
+Two rules:
+
+- **One release at a time.** The previous release is deleted before the new one
+  is created, so the releases page never offers a choice between builds. This
+  does break links to older archives — the trade-off is deliberate, the store
+  is where old versions live.
+- **Never `--cleanup-tag`.** The release goes, the tag stays: tags are the
+  record of what was packaged, and `CHANGELOG.md` points at them.
+
+The tag has to exist and be pushed first, which means the release comes after
+the submission, not before it — see [Release commit](#release-commit).
+
 ## Chrome Web Store submission
 
 Listing material is **not in this repository**. It lives in a gitignored
