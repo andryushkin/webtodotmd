@@ -675,7 +675,16 @@ btnDownloadTxt.addEventListener('click', async () => {
 // the Obsidian Web Clipper's obsidian://new?...&clipboard.
 btnEditmd.addEventListener('click', async () => {
   if (!rawMd) return;
-  await navigator.clipboard.writeText(rawMd);
+  // The clipboard carries the note, so a refused write is a failed handoff, not
+  // a detail: writeText rejects with NotAllowedError whenever the panel does
+  // not hold focus — a routine state, the user's last click is usually in the
+  // page. Without this the rejection was unhandled and the button looked inert.
+  try {
+    await navigator.clipboard.writeText(rawMd);
+  } catch {
+    setTempStatus(t('errEditmdOpen'), 'error', 'x');
+    return;
+  }
   const url = `editmd://new?file=${encodeURIComponent(safeFilename(''))}&clipboard`;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
