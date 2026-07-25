@@ -830,4 +830,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   }
 });
 
-init();
+// init() awaits storage and the locale files; anything that rejects there stops
+// the rest of the startup — labels, view mode, readiness — and used to do it
+// without a trace. It cannot be recovered from here, but it can be findable.
+init().catch(err => console.error('side panel init failed', err));
