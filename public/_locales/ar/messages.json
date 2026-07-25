@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "تعذّر فتح EditMD."
   },
+  "errClipboard": {
+    "message": "تعذّر النسخ إلى الحافظة."
+  },
   "successCaptured": {
     "message": "تم الالتقاط."
   },

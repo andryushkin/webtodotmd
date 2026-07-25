@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD açılamadı."
   },
+  "errClipboard": {
+    "message": "Panoya kopyalanamadı."
+  },
   "successCaptured": {
     "message": "Yakalandı."
   },

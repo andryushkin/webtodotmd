@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Az EditMD nem nyitható meg."
   },
+  "errClipboard": {
+    "message": "Nem sikerült a vágólapra másolni."
+  },
   "successCaptured": {
     "message": "Konvertálva."
   },

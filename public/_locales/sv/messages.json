@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Det gick inte att öppna EditMD."
   },
+  "errClipboard": {
+    "message": "Det gick inte att kopiera till urklipp."
+  },
   "successCaptured": {
     "message": "Fångat."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Tidak dapat membuka EditMD."
   },
+  "errClipboard": {
+    "message": "Tidak dapat menyalin ke papan klip."
+  },
   "successCaptured": {
     "message": "Ditangkap."
   },

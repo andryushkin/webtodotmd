@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD തുറക്കാനായില്ല."
   },
+  "errClipboard": {
+    "message": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്താനായില്ല."
+  },
   "successCaptured": {
     "message": "കൺവേർട്ട് ചെയ്തു."
   },

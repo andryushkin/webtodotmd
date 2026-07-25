@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "No se pudo abrir EditMD."
   },
+  "errClipboard": {
+    "message": "No se ha podido copiar al portapapeles."
+  },
   "successCaptured": {
     "message": "Capturado."
   },

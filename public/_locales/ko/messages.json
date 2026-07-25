@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD를 열 수 없습니다."
   },
+  "errClipboard": {
+    "message": "클립보드에 복사하지 못했습니다."
+  },
   "successCaptured": {
     "message": "캡처되었습니다."
   },

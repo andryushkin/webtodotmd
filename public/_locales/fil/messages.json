@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Hindi mabuksan ang EditMD."
   },
+  "errClipboard": {
+    "message": "Hindi makopya sa clipboard."
+  },
   "successCaptured": {
     "message": "Nakuha."
   },

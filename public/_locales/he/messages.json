@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "לא ניתן לפתוח את EditMD."
   },
+  "errClipboard": {
+    "message": "ההעתקה ללוח לא הצליחה."
+  },
   "successCaptured": {
     "message": "הומר."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Не вдалося відкрити EditMD."
   },
+  "errClipboard": {
+    "message": "Не вдалося скопіювати в буфер обміну."
+  },
   "successCaptured": {
     "message": "Готово."
   },

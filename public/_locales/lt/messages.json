@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Nepavyko atverti EditMD."
   },
+  "errClipboard": {
+    "message": "Nepavyko nukopijuoti į iškarpinę."
+  },
   "successCaptured": {
     "message": "Konvertuota."
   },

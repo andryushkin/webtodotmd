@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD konnte nicht geöffnet werden."
   },
+  "errClipboard": {
+    "message": "Kopieren in die Zwischenablage fehlgeschlagen."
+  },
   "successCaptured": {
     "message": "Erfasst."
   },

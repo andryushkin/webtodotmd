@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "无法打开 EditMD。"
   },
+  "errClipboard": {
+    "message": "无法复制到剪贴板。"
+  },
   "successCaptured": {
     "message": "已转换。"
   },

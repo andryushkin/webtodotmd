@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD नहीं खोला जा सका."
   },
+  "errClipboard": {
+    "message": "क्लिपबोर्ड पर कॉपी नहीं किया जा सका।"
+  },
   "successCaptured": {
     "message": "कन्वर्ट हो गया।"
   },

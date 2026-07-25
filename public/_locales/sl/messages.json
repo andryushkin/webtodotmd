@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD ni bilo mogoče odpreti."
   },
+  "errClipboard": {
+    "message": "Kopiranje v odložišče ni uspelo."
+  },
   "successCaptured": {
     "message": "Končano."
   },

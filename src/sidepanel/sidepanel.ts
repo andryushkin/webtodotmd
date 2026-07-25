@@ -628,9 +628,24 @@ function openTxtMenu() {
   btnTxtMenu.setAttribute('aria-expanded', 'true');
 }
 
+// writeText rejects with NotAllowedError whenever the panel does not hold
+// focus, which is routine — the user's last click is usually in the page. Left
+// unhandled it produced an inert button and no message at all, so every copy
+// path goes through here and reports the failure.
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    console.warn('clipboard write failed', err);
+    setTempStatus(t('errClipboard'), 'error', 'x');
+    return false;
+  }
+}
+
 btnCopy.addEventListener('click', async () => {
   if (!rawMd) return;
-  await navigator.clipboard.writeText(rawMd);
+  if (!await copyToClipboard(rawMd)) return;
   trackEvent('copy');
   incrementActionCount();
   setButtonContent(btnCopy, 'check', t('copied'));
@@ -667,7 +682,7 @@ btnCopyTxt.addEventListener('click', async () => {
   if (!rawMd) return;
   closeTxtMenu();
   const txt = stripMarkdown(rawMd);
-  await navigator.clipboard.writeText(txt);
+  if (!await copyToClipboard(txt)) return;
   trackEvent('copy_txt');
   incrementActionCount();
   setTempStatus(t('copiedTxt'), 'success', 'check', 1500);
@@ -689,16 +704,9 @@ btnDownloadTxt.addEventListener('click', async () => {
 // the Obsidian Web Clipper's obsidian://new?...&clipboard.
 btnEditmd.addEventListener('click', async () => {
   if (!rawMd) return;
-  // The clipboard carries the note, so a refused write is a failed handoff, not
-  // a detail: writeText rejects with NotAllowedError whenever the panel does
-  // not hold focus — a routine state, the user's last click is usually in the
-  // page. Without this the rejection was unhandled and the button looked inert.
-  try {
-    await navigator.clipboard.writeText(rawMd);
-  } catch {
-    setTempStatus(t('errEditmdOpen'), 'error', 'x');
-    return;
-  }
+  // The clipboard carries the note, so a refused write is a failed hand-off:
+  // stop before opening EditMD on an empty clipboard.
+  if (!await copyToClipboard(rawMd)) return;
   const url = `editmd://new?file=${encodeURIComponent(safeFilename(''))}&clipboard`;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

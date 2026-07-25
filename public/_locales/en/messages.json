@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Could not open EditMD."
   },
+  "errClipboard": {
+    "message": "Could not copy to the clipboard."
+  },
   "successCaptured": {
     "message": "Captured."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "باز کردن EditMD ممکن نشد."
   },
+  "errClipboard": {
+    "message": "کپی در بریده‌دان انجام نشد."
+  },
   "successCaptured": {
     "message": "تبدیل شد."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD nu a putut fi deschis."
   },
+  "errClipboard": {
+    "message": "Nu s-a putut copia în clipboard."
+  },
   "successCaptured": {
     "message": "Gata."
   },

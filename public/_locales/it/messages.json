@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Impossibile aprire EditMD."
   },
+  "errClipboard": {
+    "message": "Impossibile copiare negli appunti."
+  },
   "successCaptured": {
     "message": "Catturato."
   },

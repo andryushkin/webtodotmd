@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Kan EditMD niet openen."
   },
+  "errClipboard": {
+    "message": "Kopiëren naar het klembord is mislukt."
+  },
   "successCaptured": {
     "message": "Vastgelegd."
   },

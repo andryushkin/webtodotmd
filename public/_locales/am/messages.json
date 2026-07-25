@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD መክፈት አልተቻለም።"
   },
+  "errClipboard": {
+    "message": "ወደ ቅንጥብ ሰሌዳ መቅዳት አልተቻለም።"
+  },
   "successCaptured": {
     "message": "ተቀይሯል።"
   },

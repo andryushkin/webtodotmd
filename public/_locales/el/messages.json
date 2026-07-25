@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Δεν ήταν δυνατό το άνοιγμα του EditMD."
   },
+  "errClipboard": {
+    "message": "Δεν ήταν δυνατή η αντιγραφή στο πρόχειρο."
+  },
   "successCaptured": {
     "message": "Μετατράπηκε."
   },

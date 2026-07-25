@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD se nije mogao otvoriti."
   },
+  "errClipboard": {
+    "message": "Kopiranje u međuspremnik nije uspjelo."
+  },
   "successCaptured": {
     "message": "Gotovo."
   },

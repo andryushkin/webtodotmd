@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Imeshindwa kufungua EditMD."
   },
+  "errClipboard": {
+    "message": "Imeshindwa kunakili kwenye ubao wa kunakili."
+  },
   "successCaptured": {
     "message": "Imebadilishwa."
   },

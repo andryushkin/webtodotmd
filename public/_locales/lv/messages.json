@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Neizdevās atvērt EditMD."
   },
+  "errClipboard": {
+    "message": "Neizdevās nokopēt starpliktuvē."
+  },
   "successCaptured": {
     "message": "Konvertēts."
   },

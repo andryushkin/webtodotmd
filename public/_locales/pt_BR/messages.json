@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Não foi possível abrir o EditMD."
   },
+  "errClipboard": {
+    "message": "Não foi possível copiar para a área de transferência."
+  },
   "successCaptured": {
     "message": "Convertido."
   },

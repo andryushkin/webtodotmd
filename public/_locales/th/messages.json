@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "ไม่สามารถเปิด EditMD ได้"
   },
+  "errClipboard": {
+    "message": "คัดลอกไปยังคลิปบอร์ดไม่สำเร็จ"
+  },
   "successCaptured": {
     "message": "จับภาพแล้ว"
   },

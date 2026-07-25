@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD не можа да се отвори."
   },
+  "errClipboard": {
+    "message": "Копирането в клипборда не бе успешно."
+  },
   "successCaptured": {
     "message": "Готово."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD kunne ikke åbnes."
   },
+  "errClipboard": {
+    "message": "Kunne ikke kopiere til udklipsholderen."
+  },
   "successCaptured": {
     "message": "Fanget."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
   },
+  "errClipboard": {
+    "message": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
+  },
   "successCaptured": {
     "message": "ಪರಿವರ್ತಿಸಲಾಗಿದೆ."
   },

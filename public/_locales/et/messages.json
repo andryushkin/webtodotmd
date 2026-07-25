@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD-d ei õnnestunud avada."
   },
+  "errClipboard": {
+    "message": "Lõikelauale kopeerimine ebaõnnestus."
+  },
   "successCaptured": {
     "message": "Teisendatud."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMDని తెరవడం సాధ్యం కాలేదు."
   },
+  "errClipboard": {
+    "message": "క్లిప్‌బోర్డ్‌కు కాపీ చేయలేకపోయాం."
+  },
   "successCaptured": {
     "message": "మార్చబడింది."
   },

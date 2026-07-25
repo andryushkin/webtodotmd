@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD খোলা যায়নি।"
   },
+  "errClipboard": {
+    "message": "ক্লিপবোর্ডে কপি করা যায়নি।"
+  },
   "successCaptured": {
     "message": "রূপান্তর হয়েছে।"
   },

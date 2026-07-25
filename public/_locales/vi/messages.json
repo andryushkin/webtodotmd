@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Không thể mở EditMD."
   },
+  "errClipboard": {
+    "message": "Không thể sao chép vào bảng nhớ tạm."
+  },
   "successCaptured": {
     "message": "Đã chụp."
   },

@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "Nije moguće otvoriti EditMD."
   },
+  "errClipboard": {
+    "message": "Копирање у оставу није успело."
+  },
   "successCaptured": {
     "message": "Gotovo."
   },

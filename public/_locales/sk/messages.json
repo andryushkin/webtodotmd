@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD sa nepodarilo otvoriť."
   },
+  "errClipboard": {
+    "message": "Nepodarilo sa skopírovať do schránky."
+  },
   "successCaptured": {
     "message": "Hotovo."
   },

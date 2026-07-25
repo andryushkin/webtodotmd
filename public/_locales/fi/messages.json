@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "EditMD:tä ei voitu avata."
   },
+  "errClipboard": {
+    "message": "Leikepöydälle kopiointi epäonnistui."
+  },
   "successCaptured": {
     "message": "Kaapattu."
   },

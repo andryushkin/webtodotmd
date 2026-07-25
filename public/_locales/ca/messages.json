@@ -82,6 +82,9 @@
   "errEditmdOpen": {
     "message": "No s'ha pogut obrir EditMD."
   },
+  "errClipboard": {
+    "message": "No s'ha pogut copiar al porta-retalls."
+  },
   "successCaptured": {
     "message": "Convertit."
   },
