@@ -7,18 +7,16 @@
 //
 //   visible_text(input) === visible_text(render(convert(input)))
 //
-// Two levels, because two layers can break it independently:
-//   - core:  toMarkdown -> marked
-//   - app:   toMarkdown -> escapeHtmlTagsInMarkdown -> marked   (what preview does)
+// One level: the preview renders exactly what the core emits. It used to escape
+// tags in the finished Markdown first, which made a second measurement necessary;
+// that pass is gone, and `tests/fidelity/no-live-markup.test.ts` is what stands
+// in its place.
 //
 // DOMPurify is deliberately absent: under linkedom it does not sanitize at all
-// (a <script> passes through), and it is not needed here — if the preview escaper
-// left a <table> alone it has already claimed it as its own markup, which is the
-// defect, before DOMPurify ever sees it.
+// (a <script> passes straight through), so including it would only be theatre.
 import { parseHTML } from 'linkedom';
 import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
-import { escapeHtmlTagsInMarkdown } from '../../src/shared/escape-html-tags';
 import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
 export function installDOMAdapter(): void {
@@ -101,14 +99,9 @@ function convert(html: string): string {
   return toMarkdown(html, { ...CONVERSION_OPTIONS });
 }
 
-/** Core level: does the Markdown alone still say what the page said? */
-export function roundTripCore(html: string): RoundTrip {
+/** Does the Markdown still say what the page said? */
+export function roundTrip(html: string): RoundTrip {
   return run(html, convert(html));
-}
-
-/** App level: and does it survive the preview's tag escaping too? */
-export function roundTripApp(html: string): RoundTrip {
-  return run(html, escapeHtmlTagsInMarkdown(convert(html)));
 }
 
 /** A readable one-block report — what the page said, what the reader got. */

@@ -10,7 +10,7 @@
 // `bun tests/fidelity/survey.ts` prints what the failures actually are.
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
-import { installDOMAdapter, roundTripCore, roundTripApp, describeFailure, render } from './oracle';
+import { installDOMAdapter, roundTrip, describeFailure, render } from './oracle';
 import { generate, renderDoc } from './generator';
 import { toMarkdown } from '../../core/src/server.js';
 import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
@@ -19,19 +19,16 @@ beforeAll(() => {
   installDOMAdapter();
 });
 
-// Measured 2026-07-26 on the generator as it stands. The two layers sit within a
-// case of each other because the core now escapes HTML in page text itself: the
-// preview escaper has almost nothing left to repair, and stands as a backstop.
+// Measured 2026-07-26 on the generator as it stands.
 const SEEDS = 200;
-const CEILING = { core: 80, app: 79 };
+const CEILING = 76;
 
-function countFailures(level: 'core' | 'app'): number {
+function countFailures(): number {
   let failures = 0;
   for (let seed = 0; seed < SEEDS; seed++) {
     const html = renderDoc(generate(seed));
     try {
-      const trip = level === 'core' ? roundTripCore(html) : roundTripApp(html);
-      if (!trip.faithful) failures++;
+      if (!roundTrip(html).faithful) failures++;
     } catch {
       failures++;
     }
@@ -40,12 +37,12 @@ function countFailures(level: 'core' | 'app'): number {
 }
 
 describe('round-trip fidelity', () => {
-  it.each(['core', 'app'] as const)('%s: no more failures than the recorded ceiling', (level) => {
-    const failures = countFailures(level);
-    expect(failures).toBeLessThanOrEqual(CEILING[level]);
+  it('no more failures than the recorded ceiling', () => {
+    const failures = countFailures();
+    expect(failures).toBeLessThanOrEqual(CEILING);
     // Lower than the ceiling means something was fixed — record it, or the gate
     // silently stops protecting the ground that was just won.
-    expect(failures).toBe(CEILING[level]);
+    expect(failures).toBe(CEILING);
   });
 });
 
@@ -68,11 +65,16 @@ describe('math inside the HTML table fallback', () => {
 
   it.each([
     // tex,          builder,     cells survive, latex intact
-    ['x<!--oops', katex, false, true], // escapeTagStarts ignores a comment opener
-    ['x<!--oops', mathjaxV2, true, false], // isMathSubtree does not cover <script>
+    // A comment opener no longer breaks the cell — escapeMathTags covers it — but
+    // neutralizing it does change the LaTeX. That trade is deliberate: a formula
+    // that reads as a comment swallows the rest of the table.
+    ['x<!--oops', katex, true, false],
+    ['x<!--oops', mathjaxV2, true, false],
     ['a</td><td>b', katex, true, true],
     ['a</td><td>b', mathjaxV2, true, true],
     ['a & b_1', katex, true, true],
+    // Still wrong: isMathSubtree does not cover <script>, so the cell escaping
+    // reaches LaTeX it should have left alone.
     ['a & b_1', mathjaxV2, true, false],
     ['x < y', katex, true, true],
     ['x < y', mathjaxV2, true, false],
@@ -99,7 +101,7 @@ describe('oracle sanity', () => {
     ['code block', '<pre><code>x = 1</code></pre>'],
     ['blockquote', '<blockquote><p>quoted</p></blockquote>'],
   ])('%s round-trips', (_name, html) => {
-    const trip = roundTripCore(html);
+    const trip = roundTrip(html);
     if (!trip.faithful) throw new Error(describeFailure(html, trip));
     expect(trip.faithful).toBe(true);
   });

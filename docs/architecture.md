@@ -126,43 +126,23 @@ source textarea together; Copy always reads `rawMd`.
 
 The preview runs marked with `html: true` so injected blocks (KaTeX output,
 metadata block, content gaps, `sub`/`sup`) render — which means literal tags in
-captured text would render too, so `escapeHtmlTagsInMarkdown()` runs first and
-escapes tags outside code spans. Since the core escapes HTML in page text itself,
-this is now a backstop rather than the only guard, and it skips any `<` already
-carrying the core's backslash — escaping that again rendered the entity spelled
-out, the very thing it exists to prevent. It lives in `src/shared/escape-html-tags.ts`
-with its own tests. The exceptions are the tags the conversion core emits itself:
-`sub`, `sup`, `br`, the emphasis and link tags described above, and the table set
-of the HTML fallback — a table with merged
-cells, a nested table or preformatted text takes that path, and escaping it
-showed the user markup instead of a table. The set is not restated there: it is
-imported from `core/src/fallback-tags.ts`, the core's own declaration of what its
-fallback emits, because a restatement that drifts escapes the whole table rather
-than one tag. A candidate block is accepted only if it starts on its own line,
-nests correctly and carries nothing but those tags with a numeric
-`colspan`/`rowspan` or an `href` limited to a renderable scheme — a page can write `<table style="position:fixed">` as
-literal text, and `style` survives DOMPurify. `DOMPurify.sanitize()` is mandatory before
-any `innerHTML` assignment.
+captured text would render too. That is handled in the core, where the origin of
+the text is still known, rather than in the panel.
 
-The status bar has two layers: `setBaseStatus()` for the persistent readiness
-line and `setTempStatus()` for transient errors and confirmations, which fall
-back to the base message. Readiness is recomputed on `tabs.onActivated`,
-`tabs.onUpdated` and at the end of `init()` — restricted tabs (PDF, `file://`,
-`chrome://`, empty) get a warning instead of "Ready to capture".
+There used to be a second pass here, `escapeHtmlTagsInMarkdown()`, which walked
+the finished Markdown and escaped tags that were not the core's own output. It
+could only tell the two apart by re-parsing the string against an allow-list of
+what the core emits, so it drifted in both directions: prose about HTML slipped
+through shapes the list did not model, and the core's own multi-backtick spans and
+emphasis tags were escaped into visible entities. It is gone. `core/src/core/escape.ts`
+escapes `<` and `&` in page text, literal contexts are inert by construction (a
+fence, a code span, or the `<code>` wrapper `kbd`/`samp` now get), and LaTeX has
+`escapeMathTags()`, which neutralizes only a `<` that begins a tag or a comment so
+that `a < b` survives. `tests/fidelity/no-live-markup.test.ts` holds that line:
+every context that emits text is listed there, and a new one has to be added
+before it can be trusted.
 
-The toolbar collapses to icons only when it no longer fits:
-`updateToolbarDensity()` measures the real layout in the non-compact state and
-adds a `compact` class if anything wrapped, so there is no oscillation. In
-compact mode the visible label is gone, so `setButtonContent()` always sets
-`aria-label`.
-
-One toolbar button is platform-conditional: **Send to EditMD** targets a macOS
-app, so the panel sets `btnEditmd.hidden` from the UA platform hint at module
-scope — synchronously, before first paint, because awaiting
-`chrome.runtime.getPlatformInfo()` would make the button appear or disappear
-after the toolbar is already on screen. The node always exists, so no call site
-needs a guard, and `updateToolbarDensity()` skips children with no
-`offsetParent` so a hidden button cannot be mistaken for the top row.
+`DOMPurify.sanitize()` still runs before `innerHTML`, and is still required.
 
 ## i18n
 

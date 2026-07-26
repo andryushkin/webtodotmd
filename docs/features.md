@@ -87,10 +87,10 @@ own text are escaped, so a page displaying `**bold**`, `# heading` or
 text and not a heading. The same holds for HTML: a page showing `</td>` or
 `<!-- note -->` as characters produces `\</td>` and `\<!-- note -->`, because
 Markdown carries raw HTML through and those would otherwise vanish from the file
-— documentation and changelogs are full of them. Code, preformatted blocks and LaTeX are left verbatim,
-where a backslash would be corruption rather than protection — in a formula only
-a tag start is neutralized, since that is what could close a cell of an HTML
-fallback table. Inside such a table nothing is escaped at all: Markdown is not
+— documentation and changelogs are full of them. Code, preformatted blocks and
+LaTeX are left verbatim, where a backslash would be corruption rather than
+protection; in a formula only a `<` that begins a tag or a comment is
+neutralized, so `a < b` survives while `<img …>` cannot come back to life. Inside such a table nothing is escaped at all: Markdown is not
 parsed there, so those characters already render as themselves — and for the same
 reason bold, italics, code and links are written as HTML tags there rather than
 as Markdown, which would have reached the reader as asterisks and brackets.
@@ -114,8 +114,8 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
   as elements, do render. That HTML is built by the converter, never copied from
   the page: in a fallback table, text the page wrote — including something that
   looks like a tag — is escaped, so it cannot close a cell or add behavior.
-  Elsewhere in the output a literal tag stays literal text, as Markdown
-  normally does, and the side panel escapes it before rendering (see below).
+  Elsewhere in the output a literal tag is escaped by the converter itself, so it
+  stays literal text in the file and in the preview alike.
   A `<caption>` is kept: as a caption in the fallback, as the line above a pipe
   table.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
@@ -155,8 +155,9 @@ counter: a random install ID and an event name (`copy`, `download_md`,
 `send_editmd`, a rating value) sent to `2md.site`. No URLs, no page content, no
 personal data. See [privacy-policy.html](../privacy-policy.html).
 
-The rendered preview is sanitized with DOMPurify, and HTML tags found in
-captured text are escaped rather than rendered.
+The rendered preview is sanitized with DOMPurify, and HTML tags found in captured
+text are escaped by the converter, so they reach the file and the preview as the
+characters the page displayed.
 
 ## Technical profile
 

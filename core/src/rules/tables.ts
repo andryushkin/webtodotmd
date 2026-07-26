@@ -1,7 +1,7 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
-import { escapeInlineMarkdown, escapeTagStarts } from '../core/escape.js';
+import { escapeHtmlSyntax, escapeInlineMarkdown, escapeTagStarts } from '../core/escape.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -103,8 +103,9 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
       }
     } else if (child.nodeType === TEXT_NODE) {
       // Straight from textContent, so convert()'s escaping never saw it: a cell
-      // reading `**bold**` on the page rendered as bold.
-      text += escapeInlineMarkdown(child.textContent ?? '');
+      // reading `**bold**` on the page rendered as bold, and one reading
+      // `<img src=x onerror=…>` put working markup in the file.
+      text += escapeHtmlSyntax(escapeInlineMarkdown(child.textContent ?? ''));
     }
   }
   // A GFM row is one line: a newline anywhere inside a cell ends the row early

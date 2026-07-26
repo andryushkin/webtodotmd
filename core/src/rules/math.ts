@@ -1,4 +1,5 @@
 import type { Rule } from '../types.js';
+import { escapeMathTags } from '../core/escape.js';
 
 function extractMath(el: Element): { latex: string; display: boolean } | null {
   // 1. <annotation encoding="application/x-tex"> — KaTeX, MathJax v3, Wikipedia
@@ -29,7 +30,8 @@ function extractMath(el: Element): { latex: string; display: boolean } | null {
 }
 
 function toMathString(latex: string, display: boolean): string {
-  return display ? `$$${latex}$$` : `$${latex}$`;
+  const safe = escapeMathTags(latex);
+  return display ? `$$${safe}$$` : `$${safe}$`;
 }
 
 export const MATH_RULES: Rule[] = [

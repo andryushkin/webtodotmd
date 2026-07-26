@@ -6,17 +6,15 @@
 // This is a survey, not a gate. It answers the question that made the plan
 // necessary — how large is the tail — so the decision about phase 3 rests on a
 // number instead of on how many defects the last review happened to notice.
-import { installDOMAdapter, roundTripCore, roundTripApp, type RoundTrip } from './oracle';
+import { installDOMAdapter, roundTrip, type RoundTrip } from './oracle';
 import { generate, renderDoc, shrink, type Doc } from './generator';
 
 installDOMAdapter();
 
-type Level = 'core' | 'app';
-
-function check(doc: Doc, level: Level): RoundTrip | null {
+function check(doc: Doc): RoundTrip | null {
   const html = renderDoc(doc);
   try {
-    const trip = level === 'core' ? roundTripCore(html) : roundTripApp(html);
+    const trip = roundTrip(html);
     return trip.faithful ? null : trip;
   } catch (error) {
     // A crash is a failure too, and one worth telling apart in the report.
@@ -64,16 +62,16 @@ function axisOf(c: DefectClass): string {
   return 'other';
 }
 
-function survey(seedCount: number, level: Level): Map<string, DefectClass> {
+function survey(seedCount: number): Map<string, DefectClass> {
   const classes = new Map<string, DefectClass>();
 
   for (let seed = 0; seed < seedCount; seed++) {
     const doc = generate(seed);
-    if (!check(doc, level)) continue;
+    if (!check(doc)) continue;
 
-    const minimal = shrink(doc, (candidate) => check(candidate, level) !== null);
+    const minimal = shrink(doc, (candidate) => check(candidate) !== null);
     const html = renderDoc(minimal);
-    const trip = check(minimal, level)!;
+    const trip = check(minimal)!;
 
     const existing = classes.get(html);
     if (existing) existing.seeds.push(seed);
@@ -91,12 +89,12 @@ function survey(seedCount: number, level: Level): Map<string, DefectClass> {
 
 const seedCount = Number(process.argv[2] ?? 500);
 
-for (const level of ['core', 'app'] as Level[]) {
-  const classes = survey(seedCount, level);
+{
+  const classes = survey(seedCount);
   const failing = [...classes.values()].reduce((n, c) => n + c.seeds.length, 0);
 
   console.log(`\n${'='.repeat(78)}`);
-  console.log(`${level.toUpperCase()}: ${failing}/${seedCount} seeds failed, ${classes.size} distinct classes`);
+  console.log(`${failing}/${seedCount} seeds failed, ${classes.size} distinct classes`);
   console.log('='.repeat(78));
 
   const byAxis = new Map<string, DefectClass[]>();

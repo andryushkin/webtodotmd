@@ -153,8 +153,16 @@ export const INLINE_RULES: Rule[] = [
   },
   {
     name: 'inline-code',
-    filter: (el) =>
-      el.tagName.toLowerCase() === 'code' && el.parentElement?.tagName.toLowerCase() !== 'pre',
+    // `kbd` and `samp` belong here too. They are in the parser's literal set, so
+    // their text is never escaped — but nothing wrapped it either, and it went
+    // into the file raw: a page documenting `<div onclick=…>` inside <samp> put
+    // working markup in the output. A code span is both the right rendering and
+    // the thing that makes the text inert.
+    filter: (el) => {
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'kbd' || tag === 'samp') return true;
+      return tag === 'code' && el.parentElement?.tagName.toLowerCase() !== 'pre';
+    },
     replacement: (_el, childContent, options) => {
       const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
       if (!trimmed) return childContent;

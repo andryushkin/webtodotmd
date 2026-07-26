@@ -32,8 +32,8 @@ const BLOCK_KINDS = [
   'caption',
   'figcaption',
   // The last two force the HTML table fallback — a merged cell and a cell holding
-  // preformatted text are exactly what a pipe table cannot express. Without them
-  // the whole second layer (escapeHtmlTagsInMarkdown) is never exercised.
+  // preformatted text are exactly what a pipe table cannot express, and the
+  // fallback has escaping rules of its own.
   'td-merged',
   'td-pre',
 ] as const;

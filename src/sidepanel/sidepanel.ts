@@ -11,7 +11,6 @@ import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
 import { getRatingUrl } from '../shared/store-links';
-import { escapeHtmlTagsInMarkdown } from '../shared/escape-html-tags';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -274,7 +273,7 @@ function buildMetadata(meta: PageMeta): string {
 
 
 function renderMarkdown(md: string) {
-  const processed = preprocessMath(escapeHtmlTagsInMarkdown(md))
+  const processed = preprocessMath(md)
     .replace(METADATA_RE, (_, titleDQ, titleSQ, sourceDQ, sourceSQ, date) => {
       const rawTitle = titleSQ != null ? titleSQ.replace(/''/g, "'") : titleDQ;
       const source = sourceSQ != null ? sourceSQ.replace(/''/g, "'") : sourceDQ;

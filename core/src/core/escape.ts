@@ -81,3 +81,20 @@ export function escapeHtmlSyntax(text: string): string {
 export function escapeTagStarts(text: string): string {
   return text.replace(/<(?=[a-zA-Z/])/g, '&lt;');
 }
+
+/**
+ * The same problem outside a table cell: LaTeX is re-emitted between dollar
+ * signs, and Markdown carries raw HTML, so a formula holding `<img src=x
+ * onerror=…>` put working markup in the file.
+ *
+ * Stricter than `escapeTagStarts` because here there is no cell to protect and
+ * every escape costs a formula: `a < b` and `x <y` are ordinary mathematics and
+ * must survive untouched. Only a `<` that begins something a parser would take as
+ * a tag or a comment — a name, then a matching `>` — is neutralized.
+ */
+export function escapeMathTags(latex: string): string {
+  return latex.replace(
+    /<(?:[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][a-zA-Z0-9]*\s*>|!--)/g,
+    (match) => `&lt;${match.slice(1)}`,
+  );
+}

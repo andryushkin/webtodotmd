@@ -66,13 +66,11 @@ Each of these has cost a bug already; the reason is what makes it stick.
 - `rawMd: string` is the single source of truth, never `textarea.value`. Update
   through `setContent(md)`; Copy always reads `rawMd`.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
-  so injected KaTeX and metadata blocks render, which means literal tags in
-  captured text would render too — `escapeHtmlTagsInMarkdown()` runs first. Its
-  allow-list (`src/shared/escape-html-tags.ts`, covered by tests) is exactly what
-  the core emits: `sub`, `sup`, `br` and the table tags of the HTML fallback,
-  and only bare or carrying a numeric `colspan`/`rowspan`. A tag name alone is
-  not enough — `style` survives DOMPurify, so a literal `<table
-  style="position:fixed">` in captured text would become an overlay.
+  so injected KaTeX and metadata blocks render — literal tags in captured text
+  are made inert by the core, not here. The panel had a second escaper that
+  re-parsed the finished Markdown to guess which tags were the core's own; it
+  drifted both ways and is gone. Anything that emits text must appear in
+  `tests/fidelity/no-live-markup.test.ts` before it can be trusted.
 - Status has two layers: `setBaseStatus()` for readiness, `setTempStatus()` for
   errors and confirmations. Never call `setStatus()` directly — it uses
   `innerHTML`, so messages must pass through `escHtml()`.
