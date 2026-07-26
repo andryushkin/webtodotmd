@@ -1,7 +1,7 @@
 # Features
 
 A factual description of what the extension does — the reference behind the
-store listing, not marketing copy. Written against version 1.3.0.
+store listing, not marketing copy. Written against version 1.3.1.
 
 ## Three ways to capture
 
