@@ -32,7 +32,7 @@ beforeAll(() => {
 // merged-cell block kind had left `expandSpans` — the newest code here, and now
 // the default path for every merged table — with no generated input at all.
 const SEEDS = 200;
-const CEILING = 102;
+const CEILING = 98;
 
 function countFailures(): number {
   let failures = 0;

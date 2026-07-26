@@ -189,10 +189,14 @@ export const INLINE_RULES: Rule[] = [
       // markup. Newlines inside a span collapse to spaces when rendered anyway,
       // so folding them here changes nothing a reader would see.
       const oneLine = trimmed.replace(/\s*\n\s*/g, ' ');
-      // Если внутри есть бэктики — использовать двойные + пробелы §6.6
-      const hasBacktick = oneLine.includes('`');
-      const delim = hasBacktick ? '``' : '`';
-      const inner = hasBacktick ? ` ${oneLine} ` : oneLine;
+      // The delimiter must outrun the longest backtick run inside. Using `` for
+      // any content that merely contains a backtick closed the span early on
+      // ``a `` b``, and whatever followed — page text — was read as markup.
+      const longest = Math.max(0, ...Array.from(oneLine.matchAll(/`+/g), (m) => m[0].length));
+      const delim = '`'.repeat(longest + 1);
+      // A span whose content touches a backtick needs padding spaces; CommonMark
+      // strips one from each end, so the reader never sees them.
+      const inner = longest > 0 ? ` ${oneLine} ` : oneLine;
       return `${leading}${delim}${inner}${delim}${trailing}`;
     },
   },

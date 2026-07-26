@@ -148,3 +148,16 @@ describe('paths the first version of this file missed', () => {
     expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
   });
 });
+
+// The code-span delimiter has to outrun the backticks inside it, or the span
+// closes early and the rest of the cell is read as markup. Found in preInCell
+// first; the inline-code rule had the same defect and had had it all along.
+describe('a code span outruns the backticks inside it', () => {
+  it.each([
+    ['inline code', `<p><code>a \`\` b ${escapeHtml(PAYLOAD)}</code></p>`],
+    ['kbd', `<p><kbd>a \`\` b ${escapeHtml(PAYLOAD)}</kbd></p>`],
+    ['pre in a table cell', `<table><tr><td>h</td></tr><tr><td><pre>a \`\` b ${escapeHtml(PAYLOAD)}</pre></td></tr></table>`],
+  ])('%s', (_name, html) => {
+    expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
+  });
+});
