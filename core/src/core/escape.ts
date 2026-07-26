@@ -110,10 +110,20 @@ export function escapeTagStarts(text: string): string {
  * split anywhere in the middle defeats it. MathML splits by construction —
  * `<mo>&lt;</mo><mi>b</mi><mo>&gt;</mo>` is how a page writes `a < b > c`, and
  * with no math rule claiming it that is three text nodes joining into `<b>`.
+ *
+ * The name is a letter followed by `[\w-]` — letters, digits, underscores and
+ * hyphens — because that is what a renderer takes as a tag name: CommonMark says
+ * letters, digits and hyphens, and marked, which draws the preview, says `[\w-]`.
+ * Reading only the alphanumeric part let a custom element through, and a custom
+ * element is required to carry a hyphen: `<x-foo style="position:fixed">` was
+ * read as ordinary mathematics and reached the file as a working positioned
+ * overlay, taking the formula's text off the screen with it. Widening it does not
+ * touch a single inequality — `a < b`, `x <y`, `x <= y` have no name to widen —
+ * and it costs only `a <b-1> c`, which was already the price of `a <b> c`.
  */
 export function escapeMathTags(latex: string, continues = false): string {
   const escaped = latex.replace(
-    /<(?:[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][a-zA-Z0-9]*\s*>|!--)/g,
+    /<(?:[a-zA-Z][\w-]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][\w-]*\s*>|!--)/g,
     // Both delimiters, not just the opener: leaving the `>` behind produced
     // `&lt;b>` — half an entity, which KaTeX shows verbatim and no renderer
     // reassembles. A comment opener has no `>` to pair with and keeps its text.
@@ -127,7 +137,7 @@ export function escapeMathTags(latex: string, continues = false): string {
   // and its attributes so far, or a comment opener half typed. `x <=` keeps its
   // `<` — nothing appended after `=` can make that a tag.
   return escaped.replace(
-    /<(?:\/?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?|\/|!-?)?$/,
+    /<(?:\/?[a-zA-Z][\w-]*(?:\s[^<>]*)?|\/|!-?)?$/,
     (match) => `&lt;${match.slice(1)}`,
   );
 }
