@@ -27,6 +27,34 @@ describe('escapeHtmlTagsInMarkdown', () => {
     expect(escapeHtmlTagsInMarkdown(md)).toContain('&lt;');
   });
 
+  // Shapes the serializer legitimately produces, which a line-by-line check
+  // missed: a nested table and a multi-line <code> both span several lines.
+  test.each([
+    ['a nested table', '<table>\n<tr><td>outer<table>\n<tr><td>inner</td></tr>\n</table></td></tr>\n</table>'],
+    ['a multi-line code element', '<table>\n<tr><td colspan="2"><code>a\nb</code></td></tr>\n</table>'],
+    ['breaks inside a cell', '<table>\n<tr><td colspan="2">- a<br>- b<br><br><pre>c</pre></td></tr>\n</table>'],
+    ['a caption', '<table>\n<caption>Cap</caption>\n<tr><td>x</td></tr>\n</table>'],
+  ])('keeps %s', (_name, md) => {
+    expect(escapeHtmlTagsInMarkdown(md)).toBe(md);
+  });
+
+  test.each([
+    ['mismatched nesting', '<table>\n<tr><td>x</tr></td>\n</table>'],
+    ['a stray angle bracket in the text', '<table>\n<tr><td>a < b</td></tr>\n</table>'],
+    ['a closing tag with no opener', '<table>\n</td>\n</table>'],
+  ])('escapes %s', (_name, md) => {
+    expect(escapeHtmlTagsInMarkdown(md)).toContain('&lt;');
+  });
+
+  test('escapes prose around a real table without touching the table', () => {
+    const table = '<table>\n<tr><td colspan="2">x</td></tr>\n</table>';
+    const md = `The <table> element:\n\n${table}\n\nand <div>after</div>`;
+    const out = escapeHtmlTagsInMarkdown(md);
+    expect(out).toContain(table);
+    expect(out).toContain('The &lt;table&gt; element');
+    expect(out).toContain('&lt;div&gt;after&lt;/div&gt;');
+  });
+
   test('escapes tags the core never emits', () => {
     expect(escapeHtmlTagsInMarkdown('<script>alert(1)</script>')).toBe(
       '&lt;script&gt;alert(1)&lt;/script&gt;',

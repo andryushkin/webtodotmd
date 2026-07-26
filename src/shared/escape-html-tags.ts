@@ -3,50 +3,61 @@
 //
 //   - the three the core emits inline — `sub`, `sup`, `br` — which must render;
 //   - a whole HTML table, which the core falls back to when GFM cannot express a
-//     table (merged cells, a nested table, preformatted text). Escaping that
-//     showed the user markup instead of a table.
+//     table (merged cells, a nested table, preformatted text). Escaping it showed
+//     the user markup instead of a table.
 //
-// Everything else is the page's own text. That distinction cannot be made tag by
+// Everything else is the page's own text. The distinction cannot be made tag by
 // tag: a page written *about* HTML — the kind this extension gets used on — has
-// bare `<table>` and `<pre>` in its prose, indistinguishable from ours. So the
-// fallback is recognized as a complete block and lifted out before escaping,
-// while prose that merely mentions a tag is escaped like any other text.
+// bare `<table>` and `<pre>` in its prose, indistinguishable from ours. Nor by
+// matching the block's lines, which was tried and missed the serializer's own
+// output: a nested table and a multi-line `<code>` both span several lines.
+//
+// So a candidate block is walked tag by tag with a stack, and accepted only if it
+// opens with `<table>`, closes it, nests correctly, and contains nothing but the
+// tags and attributes the serializer emits. Prose fails on the first stray tag or
+// unbalanced close and gets escaped like any other text.
 
+const PAIRED_TAGS = new Set(['table', 'caption', 'tr', 'th', 'td', 'pre', 'code', 'sub', 'sup']);
+const VOID_TAGS = new Set(['br']);
 const INLINE_TAGS = new Set(['sub', 'sup', 'br']);
 
-// Inside a fallback table only these appear, bare or with a numeric span. An
-// attribute is enough to matter: `style` survives DOMPurify, so a literal
+// An attribute is enough to matter: `style` survives DOMPurify, so a literal
 // `<table style="position:fixed;inset:0">` in captured text becomes an overlay.
-const TABLE_TAGS = new Set(['table', 'caption', 'tr', 'th', 'td', 'pre', 'code']);
-const TABLE_ATTRS = /^(?:\s+(?:colspan|rowspan)="\d{1,5}")*$/;
+const ALLOWED_ATTRS = /^(?:\s+(?:colspan|rowspan)="\d{1,5}")*$/;
 
-const TABLE_BLOCK = /^<table>\n(?:.*\n)*?<\/table>$/gm;
 const TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g;
 
-// The shape serializeStructuralTable() produces: <table> on its own line, then
-// one <caption> or <tr> per line, then </table>. Prose does not look like this.
-function isCoreTableBlock(block: string): boolean {
-  const body = block.split('\n').slice(1, -1);
-  if (body.length === 0) return false;
-  if (!body.every((line) => /^<tr>.*<\/tr>$/.test(line) || /^<caption>.*<\/caption>$/.test(line))) {
-    return false;
-  }
-  for (const [, , tagName, attrs] of block.matchAll(TAG)) {
-    if (!TABLE_TAGS.has(String(tagName).toLowerCase())) return false;
-    if (!TABLE_ATTRS.test(attrs ?? '')) return false;
-  }
-  return true;
-}
+/** Index just past the table block starting at `start`, or null if it is not one. */
+function coreTableBlockEnd(md: string, start: number): number | null {
+  const stack: string[] = [];
+  const tag = new RegExp(TAG.source, 'g');
+  tag.lastIndex = start;
+  let textFrom = start;
+  let match: RegExpExecArray | null;
 
-// Must not occur in the input: substituting back cannot tell a placeholder the
-// page wrote from one this function inserted. Candidates grow by a character, so
-// the search ends within the length of the input.
-function mintPlaceholder(text: string): string {
-  let token = '\uE000t\uE000';
-  for (let padding = 1; text.includes(token); padding += 1) {
-    token = `\uE000t${'\uE001'.repeat(padding)}\uE000`;
+  while ((match = tag.exec(md)) !== null) {
+    // A stray '<' between tags means this is prose, not our markup: the core
+    // escapes page text inside a fallback table, so '<' only appears in tags.
+    if (md.slice(textFrom, match.index).includes('<')) return null;
+
+    const [full, slash, rawName, attrs] = match;
+    const name = String(rawName).toLowerCase();
+    if (!ALLOWED_ATTRS.test(attrs ?? '')) return null;
+
+    if (VOID_TAGS.has(name)) {
+      if (slash) return null;
+    } else if (!PAIRED_TAGS.has(name)) {
+      return null;
+    } else if (slash) {
+      if (stack.pop() !== name) return null;
+      if (stack.length === 0) return match.index + full.length;
+    } else {
+      if (stack.length === 0 && name !== 'table') return null;
+      stack.push(name);
+    }
+    textFrom = match.index + full.length;
   }
-  return token;
+  return null;
 }
 
 function escapeStrayTags(text: string): string {
@@ -56,23 +67,30 @@ function escapeStrayTags(text: string): string {
   });
 }
 
+function escapePart(part: string): string {
+  let out = '';
+  let pos = 0;
+  for (;;) {
+    const start = part.indexOf('<table', pos);
+    if (start === -1) break;
+    const end = coreTableBlockEnd(part, start);
+    if (end === null) {
+      // Not our markup: escape up to and including this tag, then keep looking.
+      const tagEnd = part.indexOf('>', start);
+      const stop = tagEnd === -1 ? part.length : tagEnd + 1;
+      out += escapeStrayTags(part.slice(pos, stop));
+      pos = stop;
+      continue;
+    }
+    out += escapeStrayTags(part.slice(pos, start)) + part.slice(start, end);
+    pos = end;
+  }
+  return out + escapeStrayTags(part.slice(pos));
+}
+
 export function escapeHtmlTagsInMarkdown(md: string): string {
-  const token = mintPlaceholder(md);
-  const blocks: string[] = [];
-
-  const withoutTables = md.replace(TABLE_BLOCK, (block) => {
-    if (!isCoreTableBlock(block)) return block;
-    blocks.push(block);
-    return `${token}${blocks.length - 1}${token}`;
-  });
-
-  const escaped = withoutTables
+  return md
     .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g)
-    .map((part, i) => (i % 2 === 1 ? part : escapeStrayTags(part))) // code span or fence — untouched
+    .map((part, i) => (i % 2 === 1 ? part : escapePart(part))) // code span or fence — untouched
     .join('');
-
-  return escaped.replace(
-    new RegExp(`${token}(\\d+)${token}`, 'g'),
-    (_match, index: string) => blocks[Number(index)] ?? '',
-  );
 }
