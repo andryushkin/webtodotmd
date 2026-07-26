@@ -219,3 +219,25 @@ describe('markdown через границу узлов', () => {
     expect(toMarkdown('<p>![alt](url)</p>').trim()).toBe('!\\[alt\\](url)');
   });
 });
+
+// Found by an agent that could not reach parser.ts: only `<br>` was asked about,
+// so any other element that ends a line left the text after it unescaped at the
+// start of one — and the page's literal `## y` became a real heading.
+describe('блочный сосед открывает строку', () => {
+  it.each([
+    ['горизонтальная линия', '<div>x<hr>## y</div>', '\\## y'],
+    ['параграф', '<div>x<p>a</p>## y</div>', '\\## y'],
+    ['список', '<div>x<ul><li>a</li></ul>- item</div>', '\\- item'],
+    ['таблица', '<div>x<table><tr><td>a</td></tr></table>> quote</div>', '\\> quote'],
+    ['перенос строки, как и раньше', '<div>x<br>## y</div>', '\\## y'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toContain(expected);
+  });
+
+  it.each([
+    ['середина предложения', '<p>mid # sentence</p>', 'mid # sentence'],
+    ['после инлайна', '<div><em>a</em> # not a heading</div>', '_a_ # not a heading'],
+  ])('не экранирует лишнего: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});

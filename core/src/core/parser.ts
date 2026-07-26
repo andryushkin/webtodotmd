@@ -43,6 +43,13 @@ const BLOCK_PARENTS = new Set([
 // unknown tag as a block boundary would cost the escape.
 const LINE_ENDS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre']);
 
+// Everything that leaves the next text at the start of a line: the blocks above,
+// plus the ones that are never a text node's parent and so are absent from them —
+// a rule, a list, a table. `<br>` is here for the same reason it is in LINE_ENDS.
+const ENDS_THE_LINE = new Set([
+  ...LINE_ENDS, 'br', 'hr', 'ul', 'ol', 'dl', 'table', 'figure', 'form',
+]);
+
 // How far the lookahead reads. A link label holds no `]`, so the search below stops
 // at the first one anyway; this only bounds the pathological case of a very long
 // run of text with no bracket in it, where nothing was ever going to be found.
@@ -131,8 +138,11 @@ function opensBlock(node: Node): boolean {
   const parent = node.parentElement;
   if (!parent || !BLOCK_PARENTS.has(parent.tagName.toLowerCase())) return false;
   for (let prev = node.previousSibling; prev; prev = prev.previousSibling) {
-    // A <br> ends the line before it, so what follows starts one.
-    if (prev.nodeType === ELEMENT_NODE && (prev as Element).tagName.toLowerCase() === 'br') {
+    // Anything that ends the line before this text leaves it opening one. Only
+    // `<br>` was asked about, so `<div>x<hr>## y</div>` and the same with a `<p>`
+    // printed the page's literal `## y` as a real heading — the block moved the
+    // text to the start of a line and nothing escaped it there.
+    if (prev.nodeType === ELEMENT_NODE && ENDS_THE_LINE.has((prev as Element).tagName.toLowerCase())) {
       return true;
     }
     if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
