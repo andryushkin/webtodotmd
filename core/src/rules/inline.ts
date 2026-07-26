@@ -6,8 +6,13 @@ import {
   followsEmphasis,
   markerWorks,
 } from '../utils/flanking.js';
-import { isHtmlContext } from '../core/parser.js';
-import { escapeBlockStarts, escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
+import { isHtmlContext, lookAhead } from '../core/parser.js';
+import {
+  escapeBlockStarts,
+  escapeHtmlSyntax,
+  escapeInlineMarkdown,
+  mayOpenLink,
+} from '../core/escape.js';
 
 /**
  * Emphasis, in the first form that will actually render.
@@ -472,7 +477,18 @@ export const INLINE_RULES: Rule[] = [
       // bullet or a number, and that sits mid-sentence rather than at the front of
       // one. The backslash renders as nothing; the heading it prevents was a
       // structural claim invented out of an attribute.
-      if (!src) return alt ? escapeBlockStarts(escapeHtmlSyntax(escapeInlineMarkdown(alt))) : '';
+      if (!src) {
+        if (!alt) return '';
+        // With the same lookahead a text node gets: this alt lands in the document
+        // as prose, so an alt ending in `[` assembled a link with the page's own
+        // text after it — `<img alt="see [">` followed by ` ](url)` gave a working
+        // link whose opener came from an attribute and whose target came from
+        // elsewhere on the page.
+        const ahead = lookAhead(el, mayOpenLink(alt));
+        return escapeBlockStarts(
+          escapeHtmlSyntax(escapeInlineMarkdown(alt, ahead.text), ahead.continues),
+        );
+      }
       const title = el.getAttribute('title');
       const dest = markdownUrl(src);
       const urlPart = title ? `${dest} '${markdownTitle(title)}'` : dest;

@@ -136,3 +136,10 @@ the commands above are `--filter`ed on purpose.
 ## License
 
 MIT
+
+## Versioning
+
+`0.2.0` changed `complexTableFallback` from `'html'` to `'flatten'`. A table GFM
+cannot express — merged cells, a nested table, a preformatted cell — now folds
+into the pipe form instead of becoming an HTML table. Pass
+`complexTableFallback: 'html'` to keep the previous output.

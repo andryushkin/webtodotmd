@@ -160,6 +160,12 @@ let translations: Record<string, string> = {};
  * exactly when the user was least able to explain it.
  */
 const settingsLoaded = new Promise<void>((resolve) => {
+  // A capture waits for this, so it must always settle. If the extension context
+  // is invalidated after the read is issued — a reload or an update while the page
+  // is open — the callback is simply dropped, and without this timer the handler
+  // would never answer and the panel would wait forever. Falling back to the
+  // defaults gives the reader the old behaviour instead of nothing.
+  setTimeout(resolve, 500);
   try {
     chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
       if (settings?.showBubble === false) showBubbleSetting = false;

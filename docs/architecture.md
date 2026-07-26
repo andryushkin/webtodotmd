@@ -25,7 +25,7 @@ an element between them — `<span>&lt;</span>img src=…&gt;` is two strings th
 each pass their own check and assemble into a tag. Since the second string does
 not exist yet when the first is escaped, a node ending mid-construct — a bare
 `<`, or an `&` and half a character reference — is escaped on suspicion instead.
-`continuesOnLine()` in the parser is what limits the suspicion to nodes that
+`lookAhead()` in the parser is what limits the suspicion to nodes that
 something is actually joined onto, which is why `<h2>Q&amp;A</h2>` keeps its
 ampersand bare.
 

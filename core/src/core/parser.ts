@@ -99,7 +99,7 @@ function absorb(node: Node, ahead: Lookahead): void {
  * *what* — because a `[` is only markup when a `](` turns up, and escaping every
  * bracket that ends a node would brand every `[1]` on the page.
  */
-function lookAhead(node: Node, wantsText: boolean): Lookahead {
+export function lookAhead(node: Node, wantsText: boolean): Lookahead {
   // Starting `done` is what makes the caller's `wantsText` a real saving: with no
   // text to gather, the walk stops the moment `continues` is answered, which is at
   // the first sibling — the whole of the question this used to ask.
@@ -107,8 +107,12 @@ function lookAhead(node: Node, wantsText: boolean): Lookahead {
   for (let current: Node | null = node; current; current = current.parentNode) {
     for (let next = current.nextSibling; next; next = next.nextSibling) {
       if (next.nodeType === ELEMENT_NODE) {
-        // A <br> ends the line here, exactly as it starts one in opensBlock().
-        if ((next as Element).tagName.toLowerCase() === 'br') return ahead;
+        // A <br> or a block ends the line here, exactly as it starts one in
+        // opensBlock(). Tested before `continues` is set: claiming it first meant
+        // `<div>Q&amp;A<h2>x</h2></div>` paid for a backslash the h2 makes
+        // unnecessary — the noise this walk exists to avoid.
+        const tag = (next as Element).tagName.toLowerCase();
+        if (tag === 'br' || LINE_ENDS.has(tag)) return ahead;
         ahead.continues = true;
       } else if ((next.textContent ?? '') !== '') {
         ahead.continues = true;

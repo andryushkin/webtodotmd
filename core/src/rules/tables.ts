@@ -1,12 +1,16 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
-import { convert } from '../core/parser.js';
+import { convert, lookAhead } from '../core/parser.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
   escapeInlineMarkdown,
   escapeTagStarts,
+  mayOpenLink,
 } from '../core/escape.js';
+
+// Wide enough for any table a person laid out by hand.
+const MAX_FLATTENED_SPAN = 32;
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -106,8 +110,13 @@ function escapeCellPipes(text: string): string {
  * beginning of a line, which a text node — or a cell — is not. Whoever builds
  * the line escapes them.
  */
-function escapeCellText(text: string): string {
-  return escapeHtmlSyntax(escapeInlineMarkdown(text));
+function escapeCellText(text: string, node?: Node): string {
+  // The same lookahead the parser gives a text node, for the same reason: a cell
+  // is not one string either. `<td>a &lt;<span>img src=…&gt;</span></td>` reached
+  // the file as a working tag, and `<td>[y<span>](url)</span></td>` as a link the
+  // page never had — this path escapes its own text nodes and so had to ask too.
+  const ahead = node ? lookAhead(node, mayOpenLink(text)) : undefined;
+  return escapeHtmlSyntax(escapeInlineMarkdown(text, ahead?.text ?? ''), ahead?.continues ?? false);
 }
 
 // A cell is one line, whichever form the table takes. The converter's hard break
@@ -231,7 +240,7 @@ function getCellContent(
       // Straight from textContent, so convert()'s escaping never saw it: a cell
       // reading `**bold**` on the page rendered as bold, and one reading
       // `<img src=x onerror=…>` put working markup in the file.
-      text += escapeCellText(child.textContent ?? '');
+      text += escapeCellText(child.textContent ?? '', child);
     }
   }
   // A GFM row is one line: a newline anywhere inside a cell ends the row early
@@ -602,8 +611,12 @@ function expandSpans(rows: Element[], table: Element): (Element | null)[][] {
     let column = 0;
     for (const cell of ownCells(row)) {
       while (taken[r]!.has(column)) column += 1;
-      const across = spanCount(spanAttribute(cell, 'colspan'));
-      const down = spanCount(resolvedRowspan(cell, row, table));
+      // Capped: a merge is written as real, empty grid positions now, so a
+      // colspan the page got wrong — or meant hostilely — costs a column of output
+      // each instead of one attribute. 400 rows of colspan="1000" produced 2.4 MB
+      // of pipes. Past the cap the cell keeps its text and stops claiming width.
+      const across = Math.min(spanCount(spanAttribute(cell, 'colspan')), MAX_FLATTENED_SPAN);
+      const down = Math.min(spanCount(resolvedRowspan(cell, row, table)), MAX_FLATTENED_SPAN);
 
       for (let dr = 0; dr < down && r + dr < rows.length; dr += 1) {
         // A rowspan stops at its row group: a browser does not let a <tbody>

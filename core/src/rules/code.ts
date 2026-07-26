@@ -54,6 +54,15 @@ function detectLang(codeEl: Element | null, preEl: Element): string {
   return LANG_TOKEN.test(lang) ? lang : '';
 }
 
+// On a clone: a <pre> with no <code> was never mutated before this rule started
+// reading it directly, and tables.ts clones for exactly this reason — the page's
+// own DOM has to come back the way it was found.
+function withoutLineNumbers(el: Element): Element {
+  const clone = el.cloneNode(true) as Element;
+  removeLineNumbers(clone);
+  return clone;
+}
+
 function removeLineNumbers(el: Element): void {
   for (const child of Array.from(el.children)) {
     const cls = child.getAttribute('class') ?? '';
@@ -130,9 +139,14 @@ export const CODE_RULES: Rule[] = [
         // the gutter goes: it can sit in either element, and text the reader
         // never saw as code belongs in neither.
         const source = codeEl && holdsNothingBut(el, codeEl) ? codeEl : el;
-        removeLineNumbers(source);
-        if (codeEl && codeEl !== source) removeLineNumbers(codeEl);
-        text = textWithLineBreaks(source);
+        // A clone, so stripping the gutter does not take it off the page too.
+        const stripped = withoutLineNumbers(source);
+        if (codeEl && codeEl !== source) {
+          for (const nested of Array.from(stripped.querySelectorAll('code'))) {
+            removeLineNumbers(nested);
+          }
+        }
+        text = textWithLineBreaks(stripped);
       }
 
       text = text.replace(/\n$/, '');
