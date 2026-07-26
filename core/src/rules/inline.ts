@@ -1,10 +1,36 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
-import { extractFlankingWhitespace } from '../utils/flanking.js';
+import {
+  charAfter,
+  charBefore,
+  extractFlankingWhitespace,
+  markerWorks,
+} from '../utils/flanking.js';
 
-function wrap(content: string, before: string, after: string): string {
+/**
+ * Emphasis, in the first form that will actually render.
+ *
+ * The preferred marker is kept wherever it works, so ordinary pages produce the
+ * source they always did. Where CommonMark's flanking rules would leave the
+ * delimiters as text — content starting or ending in punctuation, a wrapper
+ * pressed against a word — the alternative marker is tried, and failing that an
+ * HTML tag, which has no flanking rules at all. Dropping to a tag is rare and
+ * still Markdown; emitting delimiters that do nothing is a silent loss of
+ * formatting plus stray characters the reader never saw.
+ */
+function emphasis(el: Element, content: string, markers: string[], tag: string): string {
   const { leading, trimmed, trailing } = extractFlankingWhitespace(content);
   if (!trimmed) return content;
-  return `${leading}${before}${trimmed}${after}${trailing}`;
+
+  // Whitespace pulled outside the delimiters is what the marker sits against.
+  const before = leading ? ' ' : charBefore(el);
+  const after = trailing ? ' ' : charAfter(el);
+
+  for (const marker of markers) {
+    if (markerWorks(marker, trimmed, before, after)) {
+      return `${leading}${marker}${trimmed}${marker}${trailing}`;
+    }
+  }
+  return `${leading}<${tag}>${trimmed}</${tag}>${trailing}`;
 }
 
 function resolveUrl(url: string, baseUrl?: string): string {
@@ -78,17 +104,17 @@ export const INLINE_RULES: Rule[] = [
   {
     name: 'bold',
     filter: ['strong', 'b'],
-    replacement: (_el, childContent) => wrap(childContent, '**', '**'),
+    replacement: (el, childContent) => emphasis(el, childContent, ['**', '__'], 'strong'),
   },
   {
     name: 'italic',
     filter: ['em', 'i'],
-    replacement: (_el, childContent) => wrap(childContent, '_', '_'),
+    replacement: (el, childContent) => emphasis(el, childContent, ['_', '*'], 'em'),
   },
   {
     name: 'strikethrough',
     filter: ['del', 's'],
-    replacement: (_el, childContent) => wrap(childContent, '~~', '~~'),
+    replacement: (el, childContent) => emphasis(el, childContent, ['~~'], 'del'),
   },
   {
     name: 'subscript',

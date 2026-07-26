@@ -208,3 +208,29 @@ describe('flanking whitespace', () => {
     expect(toMarkdown('<p>a<del> x </del>b</p>')).toBe('a ~~x~~ b\n');
   });
 });
+
+// CommonMark decides emphasis from the two characters around the delimiters, not
+// from the tags in the source. Emitting `_x_` regardless produced text where the
+// page had italics: the reader lost the formatting and gained the underscores.
+describe('emphasis whose delimiters would not flank', () => {
+  it.each([
+    // The preferred marker is kept wherever it renders — ordinary pages are
+    // unaffected, which is what makes the fallback safe to add.
+    ['plain italic', '<p><em>italic</em></p>', '_italic_'],
+    ['plain bold', '<p><strong>bold</strong></p>', '**bold**'],
+    ['italic between spaces', '<p>a <em>b</em> c</p>', 'a _b_ c'],
+
+    // `_` cannot open against a word, and `*` cannot open against punctuation,
+    // so content that is punctuation pressed against a word has no marker left.
+    ['asterisks against a word', '<p>word<i>**</i></p>', 'word<em>\\*\\*</em>'],
+    ['equals signs before a word', '<p><em>===</em>x</p>', '<em>===</em>x'],
+    ['paren after a word', '<p>text<em>)</em></p>', 'text<em>)</em>'],
+    ['dashes before a word', '<p><strong>---</strong>a</p>', '<strong>---</strong>a'],
+    ['tildes after a word', '<p>x<strong>~~</strong></p>', 'x<strong>\\~\\~</strong>'],
+
+    // A `_` that cannot open still leaves `*`, which has no intraword rule.
+    ['italic inside a word', '<p>snake<em>case</em>word</p>', 'snake*case*word'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});

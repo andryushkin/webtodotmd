@@ -53,6 +53,12 @@ Each of these has cost a bug already; the reason is what makes it stick.
   Markdown carries raw HTML through, so without this a page *about* HTML lost the
   text it showed. This needs `sanitize()` to call `normalize()` last — a parser
   hands `&lt;/td&gt;` over as three text nodes, each harmless alone.
+- Emphasis picks the first marker that CommonMark's flanking rules let render:
+  `_`/`**`, then `*`/`__`, then an HTML tag (`core/src/utils/flanking.ts`).
+  Content starting or ending in punctuation, pressed against a word, has no
+  marker that works — emitting one anyway lost the italics and left the
+  characters. Preferred markers are kept wherever they render, so ordinary pages
+  produce the source they always did.
 - The HTML table fallback sets `escapeSyntax: false` for its cells: Markdown is
   not parsed inside an HTML block, so escaping it there protects nothing and the
   backslashes reach the reader.

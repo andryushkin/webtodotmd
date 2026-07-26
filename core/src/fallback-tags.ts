@@ -13,8 +13,13 @@
 /** Emitted by the serializer itself, plus what it lifts out of a cell. */
 export const FALLBACK_TAGS = ['table', 'caption', 'tr', 'th', 'td', 'pre', 'code'] as const;
 
-/** Emitted by the converter inside a cell's Markdown. */
-export const FALLBACK_INLINE_TAGS = ['sub', 'sup', 'br'] as const;
+/**
+ * Inline tags the converter can emit anywhere, cell or not. `sub`, `sup` and `br`
+ * have no Markdown spelling at all; `em`, `strong` and `del` are the fallback for
+ * emphasis whose delimiters CommonMark's flanking rules would leave as text
+ * (`core/src/utils/flanking.ts`).
+ */
+export const FALLBACK_INLINE_TAGS = ['sub', 'sup', 'br', 'em', 'strong', 'del'] as const;
 
 /** Of the above, the ones that never close. */
 export const FALLBACK_VOID_TAGS = ['br'] as const;

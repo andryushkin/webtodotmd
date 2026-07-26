@@ -19,11 +19,11 @@ beforeAll(() => {
   installDOMAdapter();
 });
 
-// Measured 2026-07-26 on the generator as it stands. The two layers sit at the
-// same number because the core now escapes HTML in page text itself: the preview
-// escaper has nothing left to repair, and stands only as a backstop.
+// Measured 2026-07-26 on the generator as it stands. The two layers sit within a
+// case of each other because the core now escapes HTML in page text itself: the
+// preview escaper has almost nothing left to repair, and stands as a backstop.
 const SEEDS = 200;
-const CEILING = { core: 110, app: 110 };
+const CEILING = { core: 100, app: 99 };
 
 function countFailures(level: 'core' | 'app'): number {
   let failures = 0;

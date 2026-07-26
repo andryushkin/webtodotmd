@@ -20,6 +20,16 @@ hands `&lt;/td&gt;` over as three adjacent text nodes, each harmless on its own,
 and the escaper decides one node at a time. Merging them is what lets it see the
 construct at all.
 
+Emphasis runs the same argument in reverse. CommonMark decides whether `*` or `_`
+opens emphasis from the characters on either side, so `core/src/utils/flanking.ts`
+reads those from the DOM and picks the first marker that will actually render —
+`_`/`**`, then `*`/`__`, then `<em>`/`<strong>`/`<del>`, which have no flanking
+rules. The preferred marker is kept wherever it works, so ordinary pages produce
+the source they always did; the tag is the last resort for content that begins or
+ends in punctuation and sits against a word, where no delimiter renders at all.
+Those tags are declared in `core/src/fallback-tags.ts` alongside the table set,
+because the preview escaper has to know them as the core's own output.
+
 ## Surfaces
 
 | Surface | Entry point | Role |
