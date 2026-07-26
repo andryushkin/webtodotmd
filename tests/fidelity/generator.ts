@@ -83,6 +83,37 @@ const HAZARDS = [
 
 const CALM = ['word', 'text', 'a', 'x', 'hello world', ' ', 'foo bar'];
 
+// Halves that are each harmless alone and become markup once concatenated. Picked
+// at random the two would practically never land adjacent in the right order — one
+// specific pair out of 33×33 — so they are emitted as a unit. This is the axis the
+// per-node escaper cannot see: every piece it inspects is genuinely safe.
+const PAIRS: readonly (readonly [string, string])[] = [
+  ['[text]', '(https://example.com)'],
+  ['[', 'x](https://example.com)'],
+  ['![alt]', '(https://example.com/i.png)'],
+  ['~', '~word~'],
+  ['*', '*bold*'],
+  ['_', '_under_'],
+  ['<', '!-- swallowed -->'],
+  ['a <', '!-- swallowed --> b'],
+];
+
+// Text that reaches a code span. The core widens the fence when the content holds
+// backticks, and the preview's own scanner has to agree about where that span
+// ends — these are the shapes where the two can disagree.
+const CODE_HAZARDS = ['`', '`` `', '<div> x `', 'a ` b', '<table>', '``'];
+
+// Prose *about* HTML — the kind of page this extension gets used on, and the case
+// the preview's table allow-list has to tell apart from the core's own markup.
+const HTML_PROSE = [
+  '<table>',
+  '</table>',
+  '<pre>x</pre>',
+  '<td colspan="2">',
+  '<table>\n<pre>x</pre>\n</table>',
+  '<table style="position:fixed">',
+];
+
 /** mulberry32 — small, seedable, good enough to spread choices. */
 function rng(seed: number): () => number {
   let s = seed + 0x6d2b79f5;
@@ -104,8 +135,26 @@ export function generate(seed: number): Doc {
     const parts: Part[] = [];
     const partCount = 1 + Math.floor(rand() * 4);
     for (let p = 0; p < partCount; p++) {
+      const roll = rand();
+      if (roll < 0.25) {
+        // A pair, split across two parts. The first keeps a wrapper so the halves
+        // land in separate text nodes — without one the DOM merges them, and then
+        // the escaper sees the whole construct and handles it correctly.
+        const [first, second] = pick(PAIRS);
+        parts.push({ tag: 'span', text: first });
+        parts.push({ tag: null, text: second });
+        continue;
+      }
+      if (roll < 0.32) {
+        parts.push({ tag: 'code', text: pick(CODE_HAZARDS) });
+        continue;
+      }
+      if (roll < 0.4) {
+        parts.push({ tag: null, text: pick(HTML_PROSE) });
+        continue;
+      }
       // Hazards outnumber calm text: a document of prose proves little here.
-      const text = rand() < 0.7 ? pick(HAZARDS) : pick(CALM);
+      const text = roll < 0.8 ? pick(HAZARDS) : pick(CALM);
       parts.push({ tag: pick(INLINE_TAGS), text });
     }
     blocks.push({ kind: pick(BLOCK_KINDS), parts });
@@ -113,10 +162,20 @@ export function generate(seed: number): Doc {
   return blocks;
 }
 
+// Part text is what the page *shows*, never markup: `<div>` in the dictionary
+// means a page with the characters "<div>" on it — a page about HTML, which is
+// exactly the kind this extension gets used on. Structure comes from `tag` and
+// `kind` alone. Without escaping here the generator silently built real elements
+// and measured something else entirely.
+function escapeText(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function renderPart(part: Part): string {
-  if (part.tag === null) return part.text;
-  if (part.tag === 'a') return `<a href="https://example.com">${part.text}</a>`;
-  return `<${part.tag}>${part.text}</${part.tag}>`;
+  const text = escapeText(part.text);
+  if (part.tag === null) return text;
+  if (part.tag === 'a') return `<a href="https://example.com">${text}</a>`;
+  return `<${part.tag}>${text}</${part.tag}>`;
 }
 
 /** Wraps blocks in the parent their tag requires, so the DOM is the real thing. */

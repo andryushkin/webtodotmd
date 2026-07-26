@@ -1,7 +1,7 @@
 import { toMarkdown } from '../../core/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
-import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
+import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
 // i18n: translations loaded from service worker via message passing
@@ -104,30 +104,10 @@ function expandShadowRoots(): () => void {
   return () => cleanups.forEach(fn => fn());
 }
 
-const rawMathmlRule = {
-  name: 'raw-mathml',
-  filter: (el: Element) => {
-    if (el.tagName.toLowerCase() !== 'math') return false;
-    if (el.getAttribute('alttext')) return false; // Wikipedia handled by MATH_RULES
-    if (el.querySelector('annotation[encoding="application/x-tex"]')) return false;
-    return true;
-  },
-  replacement: (el: Element) => {
-    try {
-      const latex = MathMLToLaTeX.convert(el.outerHTML);
-      if (!latex) return '';
-      const display = el.getAttribute('display') === 'block';
-      return display ? `\n\n$$${latex}$$\n\n` : `$${latex}$`;
-    } catch {
-      return '';
-    }
-  },
-};
-
 function selectionToMd(selection: Selection): string {
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, headingOffset: 1, math: true, rules: [rawMathmlRule] };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
     if (selection.rangeCount > 1) {
       const fragments: string[] = [];
       for (let i = 0; i < selection.rangeCount; i++) {
@@ -440,7 +420,7 @@ function captureHighlightsMd(): string {
 
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, headingOffset: 1, math: true, rules: [rawMathmlRule] };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
     const fragments = sorted.map(el => {
       const range = document.createRange();
       range.selectNodeContents(el);

@@ -9,8 +9,11 @@
 //
 // `bun tests/fidelity/survey.ts` prints what the failures actually are.
 import { describe, it, expect, beforeAll } from 'bun:test';
-import { installDOMAdapter, roundTripCore, roundTripApp, describeFailure } from './oracle';
+import { parseHTML } from 'linkedom';
+import { installDOMAdapter, roundTripCore, roundTripApp, describeFailure, render } from './oracle';
 import { generate, renderDoc } from './generator';
+import { toMarkdown } from '../../core/src/server.js';
+import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
 beforeAll(() => {
   installDOMAdapter();
@@ -20,7 +23,7 @@ beforeAll(() => {
 // number because every failure so far originates in the core; the preview escaper
 // neither adds nor repairs any of them.
 const SEEDS = 200;
-const CEILING = { core: 88, app: 88 };
+const CEILING = { core: 131, app: 115 };
 
 function countFailures(level: 'core' | 'app'): number {
   let failures = 0;
@@ -43,6 +46,41 @@ describe('round-trip fidelity', () => {
     // Lower than the ceiling means something was fixed — record it, or the gate
     // silently stops protecting the ground that was just won.
     expect(failures).toBe(CEILING[level]);
+  });
+});
+
+// Math cannot be judged by text fidelity: a page shows `x`, the file says `$x$`,
+// and both are correct. What must hold is that a formula does not damage the cell
+// it rides in, and that the LaTeX arrives unchanged. Both are recorded as they
+// behave today — including where they are wrong — so a repair has to come here and
+// say so.
+describe('math inside the HTML table fallback', () => {
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const katex = (tex: string) =>
+    `<span class="katex"><annotation encoding="application/x-tex">${esc(tex)}</annotation></span>`;
+  const mathjaxV2 = (tex: string) => `<script type="math/tex">${esc(tex)}</script>`;
+  // A merged cell is what forces the fallback; the formula rides inside it.
+  const table = (inner: string) =>
+    `<table><tbody><tr><td colspan="2">${inner}</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
+
+  const cellCount = (html: string): number =>
+    parseHTML(`<html><body>${html}</body></html>`).document.querySelectorAll('td,th').length;
+
+  it.each([
+    // tex,          builder,     cells survive, latex intact
+    ['x<!--oops', katex, false, true], // escapeTagStarts ignores a comment opener
+    ['x<!--oops', mathjaxV2, true, false], // isMathSubtree does not cover <script>
+    ['a</td><td>b', katex, true, true],
+    ['a</td><td>b', mathjaxV2, true, true],
+    ['a & b_1', katex, true, true],
+    ['a & b_1', mathjaxV2, true, false],
+    ['x < y', katex, true, true],
+    ['x < y', mathjaxV2, true, false],
+  ])('%s via %p', (tex, build, cellsSurvive, latexIntact) => {
+    const html = table((build as (t: string) => string)(tex as string));
+    const md = toMarkdown(html, { ...CONVERSION_OPTIONS });
+    expect(cellCount(render(md)) === cellCount(html)).toBe(cellsSurvive as boolean);
+    expect(md.includes(tex as string)).toBe(latexIntact as boolean);
   });
 });
 

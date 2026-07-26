@@ -19,6 +19,7 @@ import { parseHTML } from 'linkedom';
 import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
 import { escapeHtmlTagsInMarkdown } from '../../src/shared/escape-html-tags';
+import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
 export function installDOMAdapter(): void {
   setDOMAdapter((html: string) => parseHTML(html).document as unknown as Document);
@@ -92,14 +93,22 @@ function run(html: string, md: string): RoundTrip {
   return { markdown: md, rendered, expected, actual, faithful: expected === actual };
 }
 
+// The content script's own options, not the library defaults: with `math: false`
+// the math rules never run, and the survey would be measuring a configuration the
+// product does not ship. `baseUrl` is the only field left out — it varies per page
+// and does not affect fidelity.
+function convert(html: string): string {
+  return toMarkdown(html, { ...CONVERSION_OPTIONS });
+}
+
 /** Core level: does the Markdown alone still say what the page said? */
 export function roundTripCore(html: string): RoundTrip {
-  return run(html, toMarkdown(html));
+  return run(html, convert(html));
 }
 
 /** App level: and does it survive the preview's tag escaping too? */
 export function roundTripApp(html: string): RoundTrip {
-  return run(html, escapeHtmlTagsInMarkdown(toMarkdown(html)));
+  return run(html, escapeHtmlTagsInMarkdown(convert(html)));
 }
 
 /** A readable one-block report — what the page said, what the reader got. */
