@@ -650,9 +650,11 @@ describe('HTML fallback — своя разметка, а не разметка 
 });
 
 describe('регрессии, найденные ревью', () => {
-  it('бэктики в тексте ячейки не ломают блок для превью', () => {
+  it('бэктики из текста страницы экранируются и не образуют code span', () => {
+    // The page showed backticks as characters, so they must render as characters
+    // — and an escaped backtick no longer splits the block for the preview.
     const result = toMarkdown('<table><tr><td colspan="2">use `foo` here</td></tr></table>');
-    expect(result).toContain('<td colspan="2">use `foo` here</td>');
+    expect(result).toContain('<td colspan="2">use \\`foo\\` here</td>');
   });
 
   it('<code> в ячейке кодирует переводы строк, как и <pre>', () => {

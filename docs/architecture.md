@@ -6,6 +6,12 @@ HTML → Markdown conversion is the `core/` package — the `htmltodotmd` librar
 developed here and published from here; the content script imports it from
 source (`core/src/browser.ts`), so there is no build step between the two.
 
+The conversion escapes Markdown syntax that came from the page as text, so the
+file renders what the reader saw rather than turning `**bold**` in a tutorial
+into bold. `core/src/core/escape.ts` splits this in two on purpose: inline marks
+are safe per text node, while `#`, `>`, bullets and numbering depend on starting
+a line, which only the text node opening a block does.
+
 ## Surfaces
 
 | Surface | Entry point | Role |

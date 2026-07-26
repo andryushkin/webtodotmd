@@ -78,6 +78,15 @@ date: 2026-03-19T12:00:00Z
 The title comes from Open Graph, Twitter Card, JSON-LD or `<title>`, in that
 order of preference.
 
+## Faithfulness
+
+What the page showed is what the file renders. Markdown characters in the page's
+own text are escaped, so a page displaying `**bold**`, `# heading` or
+`[text](url)` as characters — a tutorial, a changelog, API prose — produces
+`\*\*bold\*\*` in the source and those same characters in the preview, not bold
+text and not a heading. Code, preformatted blocks and LaTeX are left verbatim,
+where a backslash would be corruption rather than protection.
+
 ## Formatting support
 
 Headings H1–H6, bold, italic, nested ordered and unordered lists, tables,
