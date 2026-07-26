@@ -111,12 +111,15 @@ function removeEmptyWrappers(root: Element | Document): void {
   }
 }
 
+// Elements that carry meaning without carrying text. Without <br> and <hr> here,
+// a page that wraps a break in a styling span — very common — lost it, and the
+// words on either side were glued together.
+const CONTENTFUL_TAGS = ['img', 'video', 'audio', 'canvas', 'picture', 'figure', 'br', 'hr', 'input'];
+
 function isEmptyWrapper(el: Element): boolean {
   const text = el.textContent ?? '';
   if (text.trim() !== '') return false;
-  // Проверяем наличие медиа-элементов
-  const MEDIA_TAGS = ['img', 'video', 'audio', 'canvas', 'picture', 'figure'];
-  for (const tag of MEDIA_TAGS) {
+  for (const tag of CONTENTFUL_TAGS) {
     if (el.querySelector(tag)) return false;
   }
   return true;

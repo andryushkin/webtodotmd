@@ -95,8 +95,9 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
     .trim()
     .replace(/\|/g, '\\|')
     // The converter's hard break is a trailing backslash plus a newline. Only a
-    // <br> directly in the cell is mapped above; one inside a <span> arrives
-    // here, and collapsing just the newline would leave the backslash visible.
+    // <br> directly in the cell is mapped above; one inside an inline wrapper —
+    // <em>, <strong>, a <span> the sanitizer kept — arrives here, and collapsing
+    // only the newline would leave the backslash visible in the cell.
     .replace(/\\\n/g, '<br>')
     .replace(/\s*\n+\s*/g, '<br>');
 }
@@ -156,6 +157,14 @@ function escapeHtmlText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// An attribute value is re-emitted by the converter inside Markdown or LaTeX
+// syntax — a link target, an image's alt, a math annotation — not as HTML. There
+// `&amp;` is corruption rather than safety: a URL gained "&amp;amp;" and a formula
+// lost its meaning. Only the characters that could close our own element go.
+function escapeAttributeValue(value: string): string {
+  return value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // A span is a number or it is not carried at all. 1 is the default, so it adds
 // nothing; anything unparseable or absurd is a page's typo, not a layout.
 function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
@@ -203,7 +212,7 @@ function escapedTextClone(el: Element): Element {
   // just as it does in a text node.
   const escapeAttributes = (element: Element): void => {
     for (const attr of Array.from(element.attributes)) {
-      element.setAttribute(attr.name, escapeHtmlText(attr.value));
+      element.setAttribute(attr.name, escapeAttributeValue(attr.value));
     }
   };
 
@@ -232,7 +241,7 @@ function escapedTextClone(el: Element): Element {
 // a nested table. Both are lifted out of the cell, the rest of the cell goes
 // through the converter untouched, and the lifted blocks are put back where they
 // were. Nothing about lists, breaks or emphasis is re-implemented here.
-const LIFTED_TAGS = ['pre', 'table', 'code', 'kbd', 'samp'];
+const LIFTED_TAGS = ['pre', 'table', 'code'];
 const LIFTED_SELECTOR = LIFTED_TAGS.join(', ');
 
 function topLevelBlocks(cell: Element): Element[] {
@@ -276,12 +285,9 @@ function htmlSafeMarkdown(md: string): string {
 function serializeCellContent(cell: Element, options: MarkItDownOptions): string {
   const originals = topLevelBlocks(cell);
   const clone = escapedTextClone(cell);
+  // A deep clone with rewritten text and attributes has the same elements in the
+  // same order, so the two lists line up index by index.
   const lifted = topLevelBlocks(clone);
-
-  // The clone is structurally identical, so the two lists line up index by
-  // index. If they ever did not, a block would be rendered from the wrong
-  // element; fall back to the converter for the whole cell instead of guessing.
-  if (lifted.length !== originals.length) return htmlSafeMarkdown(convert(clone, options));
 
   // outerHTML, not textContent: href, src, alt and title reach the output too, so
   // a placeholder written into one of them would be substituted as well.
@@ -312,6 +318,32 @@ function ownCaption(table: Element): Element | undefined {
   return Array.from(table.children).find((child) => child.tagName.toLowerCase() === 'caption');
 }
 
+// GFM has no caption, so it becomes the line above the table. Whenever a table
+// produces no rows the caption is all that is left, and dropping it is exactly
+// the silent loss this module avoids elsewhere.
+function captionLine(table: Element, options: MarkItDownOptions): string {
+  const caption = ownCaption(table);
+  if (!caption) return '';
+  return getCellContent(caption, options).replace(/<br>/g, ' ').trim();
+}
+
+function captionOnly(table: Element, options: MarkItDownOptions): string {
+  const text = captionLine(table, options);
+  return text ? `\n\n${text}\n\n` : '';
+}
+
+// rowspan="0" spans to the end of the cell's row group. The emitted table has no
+// <thead>/<tbody>/<tfoot>, so that group would become the whole table and the
+// cell would cover rows it never covered on the page — the more so because rows
+// are re-ordered by section. Resolve it to a count instead.
+function resolvedRowspan(cell: Element, row: Element, table: Element): string {
+  const attr = spanAttribute(cell, 'rowspan');
+  if (attr !== ' rowspan="0"') return attr;
+  const groupRows = ownRows(table).filter((candidate) => candidate.parentElement === row.parentElement);
+  const remaining = groupRows.length - groupRows.indexOf(row);
+  return remaining > 1 ? ` rowspan="${remaining}"` : '';
+}
+
 function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {
   const lines: string[] = ['<table>'];
   const caption = ownCaption(table);
@@ -320,7 +352,7 @@ function serializeStructuralTable(table: Element, options: MarkItDownOptions): s
     const cells = ownCells(row)
       .map((cell) => {
         const tag = cell.tagName.toLowerCase() === 'th' ? 'th' : 'td';
-        const spans = `${spanAttribute(cell, 'colspan')}${spanAttribute(cell, 'rowspan')}`;
+        const spans = `${spanAttribute(cell, 'colspan')}${resolvedRowspan(cell, row, table)}`;
         return `<${tag}${spans}>${serializeCellContent(cell, options)}</${tag}>`;
       })
       .join('');
@@ -348,7 +380,14 @@ export const TABLE_RULES: Rule[] = [
             .map((row) =>
               ownCells(row)
                 // A newline inside a cell would split the row this mode builds.
-                .map((c) => (c.textContent ?? '').trim().replace(/\s*\n+\s*/g, ' '))
+                .map((c) =>
+                  (c.textContent ?? '')
+                    .trim()
+                    .replace(/\s*\n+\s*/g, ' ')
+                    // The row is ' | ' separated, so a pipe inside a cell would
+                    // add a column that was never there.
+                    .replace(/\|/g, '\\|'),
+                )
                 .join(' | '),
             )
             .join('\n');
@@ -367,13 +406,11 @@ export const TABLE_RULES: Rule[] = [
       // dropped a totals row without a word.
       // GFM allows exactly one header row, so any further <thead> row moves into
       // the body rather than disappearing.
-      const headerRow = (analysis.hasHead ? headRows[0] : allRows[0]) ?? null;
+      // An empty <thead> — CMS and spreadsheet exports write them — reports
+      // hasHead without providing a row; the first body row is the header then.
+      const headerRow = headRows[0] ?? allRows[0] ?? null;
       if (!headerRow) {
-        // No rows at all: the caption is the only content left, and dropping it
-        // is the silent loss this code goes out of its way to avoid.
-        const only = ownCaption(el);
-        const onlyText = only ? getCellContent(only, options).replace(/<br>/g, ' ').trim() : '';
-        return onlyText ? `\n\n${onlyText}\n\n` : '';
+        return captionOnly(el, options);
       }
       const bodyRowEls = allRows.filter((row) => row !== headerRow);
 
@@ -385,7 +422,7 @@ export const TABLE_RULES: Rule[] = [
         ownCells(row).map((c) => getCellContent(c, options)),
       );
 
-      if (headers.every((h) => !h) && bodyData.length === 0) return '';
+      if (headers.every((h) => !h) && bodyData.length === 0) return captionOnly(el, options);
 
       // A body row may be wider than the header: the table widens rather than
       // dropping the extra cells.
@@ -396,8 +433,7 @@ export const TABLE_RULES: Rule[] = [
       const table = buildGFMTable(headers, bodyData, alignments);
       // GFM has no caption, so it becomes the line above the table — losing it
       // silently is worse than moving it.
-      const caption = ownCaption(el);
-      const captionText = caption ? getCellContent(caption, options).replace(/<br>/g, ' ').trim() : '';
+      const captionText = captionLine(el, options);
       return captionText ? `\n\n${captionText}\n\n${table}\n\n` : `\n\n${table}\n\n`;
     },
   },

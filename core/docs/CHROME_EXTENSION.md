@@ -1,6 +1,6 @@
 # Chrome Extension Integration Guide
 
-This guide covers using `@markitdown/core` in a Manifest V3 Chrome Extension.
+This guide covers using `htmltodotmd` in a Manifest V3 Chrome Extension.
 
 ## Why this library
 
@@ -15,7 +15,7 @@ The simplest integration. A content script runs in the page context and has dire
 **`content.ts`**
 
 ```typescript
-import { selectionToMarkdown } from '@markitdown/core';
+import { selectionToMarkdown } from 'htmltodotmd';
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type !== 'CAPTURE_SELECTION') return;
@@ -69,7 +69,7 @@ Service workers in Manifest V3 have no DOM. Use the [Offscreen API](https://deve
 **`offscreen.ts`**
 
 ```typescript
-import { toMarkdown } from '@markitdown/core';
+import { toMarkdown } from 'htmltodotmd';
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type !== 'CONVERT_HTML') return;
@@ -161,7 +161,7 @@ selectionToMarkdown(selection, { baseUrl: window.location.href });
 Add site-specific transformations. For example, strip annotation markers from a specific site:
 
 ```typescript
-import { selectionToMarkdown } from '@markitdown/core';
+import { selectionToMarkdown } from 'htmltodotmd';
 
 const md = selectionToMarkdown(selection, {
   baseUrl: window.location.href,
@@ -180,5 +180,5 @@ const md = selectionToMarkdown(selection, {
 - [ ] Add `"clipboardWrite"` permission if writing to clipboard from content script
 - [ ] Add `"offscreen"` permission if using the Offscreen API
 - [ ] Include `offscreen.html` in extension files if using background conversion
-- [ ] Use `import { toMarkdown } from '@markitdown/core'` in offscreen context (has DOM)
-- [ ] Use `import { selectionToMarkdown } from '@markitdown/core'` in content scripts
+- [ ] Use `import { toMarkdown } from 'htmltodotmd'` in offscreen context (has DOM)
+- [ ] Use `import { selectionToMarkdown } from 'htmltodotmd'` in content scripts

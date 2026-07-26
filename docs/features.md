@@ -86,7 +86,7 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
 
 - **Tables** — pipe tables, with `|` inside a cell escaped and line breaks
   turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
-  for — merged cells, a list inside a cell, a nested table, preformatted text —
+  for — merged cells, a nested table, preformatted text —
   falls back to a plain HTML table carrying `colspan`/`rowspan`, with cell
   content as Markdown, and preformatted text kept as a `<pre>` block so its
   whitespace survives. The preview renders these tables rather than showing

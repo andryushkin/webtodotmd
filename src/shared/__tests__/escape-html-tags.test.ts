@@ -12,17 +12,19 @@ describe('escapeHtmlTagsInMarkdown', () => {
     expect(escapeHtmlTagsInMarkdown(md)).toBe(md);
   });
 
-  // An allowed tag name is not enough: a page can write these as literal text,
-  // and `style` survives DOMPurify — a fixed-position table becomes an overlay
-  // over the panel.
+  // A page written about HTML has bare <table> and <pre> in its prose, which is
+  // exactly what the core's own fallback looks like tag by tag. Only a complete
+  // block in the core's shape renders; a mention stays text.
   test.each([
-    ['style', '<table style="position:fixed;inset:0">'],
-    ['class', '<table class="c">'],
-    ['event handler', '<td onclick="steal()">'],
-    ['unparseable span', '<td colspan="abc">'],
-    ['extra attribute next to a span', '<td colspan="2" title="t">'],
-  ])('escapes an allowed tag carrying %s', (_name, tag) => {
-    expect(escapeHtmlTagsInMarkdown(tag)).toBe(tag.replace('<', '&lt;').replace(/>$/, '&gt;'));
+    ['bare tag names in prose', 'The <table> element and <pre> too'],
+    ['a lone row', '<tr><td>x</td></tr>'],
+    ['an unclosed table', '<table>\n<tr><td>x</td></tr>'],
+    ['a table with a style attribute', '<table>\n<tr><td style="position:fixed">x</td></tr>\n</table>'],
+    ['a table with an event handler', '<table>\n<tr><td onclick="steal()">x</td></tr>\n</table>'],
+    ['a table holding a foreign tag', '<table>\n<tr><td><div>x</div></td></tr>\n</table>'],
+  ])('escapes %s', (_name, md) => {
+    expect(escapeHtmlTagsInMarkdown(md)).not.toContain('<table>');
+    expect(escapeHtmlTagsInMarkdown(md)).toContain('&lt;');
   });
 
   test('escapes tags the core never emits', () => {

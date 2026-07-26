@@ -1,6 +1,6 @@
-# @markitdown/core — Полная техническая спецификация библиотеки
+# htmltodotmd — Полная техническая спецификация библиотеки
 
-> Этот документ — единственный источник правды для реализации библиотеки `@markitdown/core`.
+> Этот документ — единственный источник правды для реализации библиотеки `htmltodotmd`.
 > Каждый модуль содержит пары **HTML → Markdown** (правильный и неправильный результат),
 > граничные случаи и антипаттерны. Приоритет модулей соответствует порядку реализации.
 
@@ -2258,12 +2258,12 @@ function selectionToMarkdown(selection: Selection, options?: MarkItDownOptions):
 
 ```typescript
 // Браузер — нулевой overhead, DOMParser нативный
-import { toMarkdown } from '@markitdown/core';
+import { toMarkdown } from 'htmltodotmd';
 const md = toMarkdown('<h1>Привет</h1>');
 // Результат: '# Привет\n'
 
 // Node.js / Bun — подключаем адаптер
-import { toMarkdown, setDOMAdapter } from '@markitdown/core';
+import { toMarkdown, setDOMAdapter } from 'htmltodotmd';
 import { parseHTML } from 'linkedom';
 
 setDOMAdapter((html) => {
@@ -2314,7 +2314,7 @@ function getAdapter(): DOMAdapterFn {
 
   // Авто-поиск серверных адаптеров (ленивый import)
   throw new Error(
-    '@markitdown/core: No DOM adapter found. ' +
+    'htmltodotmd: No DOM adapter found. ' +
       'Install linkedom or happy-dom, or call setDOMAdapter().',
   );
 }
@@ -2456,7 +2456,7 @@ const headingRule: Rule = {
 
 ```jsonc
 {
-  "name": "@markitdown/core",
+  "name": "htmltodotmd",
   "version": "0.1.0",
   "type": "module",
   "sideEffects": false,
@@ -2543,7 +2543,7 @@ npx @arethetypeswrong/cli --pack .
 npx publint
 
 # Проверить размер бандла
-npx bundlephobia-cli @markitdown/core
+npx bundlephobia-cli htmltodotmd
 ```
 
 ---

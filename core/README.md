@@ -1,6 +1,6 @@
 # HTML → .md
 
-[![license](https://img.shields.io/npm/l/@markitdown/core)](./LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 TypeScript/JavaScript library for converting HTML to Markdown. Zero dependencies. Works in any browser, Chrome Extension, or bundler (Vite, esbuild, webpack).
 

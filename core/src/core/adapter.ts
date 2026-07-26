@@ -15,7 +15,7 @@ export function getAdapter(): DOMAdapterFn {
   }
 
   throw new Error(
-    '@markitdown/core: No DOM adapter found. ' +
+    'htmltodotmd: No DOM adapter found. ' +
       'Install linkedom or happy-dom and call setDOMAdapter().',
   );
 }

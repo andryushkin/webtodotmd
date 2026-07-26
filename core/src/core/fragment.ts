@@ -3,6 +3,9 @@ const ELEMENT_NODE = 1;
 
 const UNWRAP_TAGS = new Set(['div', 'section', 'article', 'main', 'span', 'figure']);
 const MEDIA_TAGS = new Set(['img', 'video', 'audio', 'canvas', 'picture', 'figure']);
+// Void elements carry meaning without text: dropping them as "empty" deleted
+// every line break and rule from a selection.
+const CONTENTFUL_TAGS = new Set([...MEDIA_TAGS, 'br', 'hr', 'input']);
 
 /**
  * Нормализует DocumentFragment после cloneContents():
@@ -28,7 +31,7 @@ function removeEmptyElements(root: Element): void {
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const el = node as Element;
-      if (!MEDIA_TAGS.has(el.tagName.toLowerCase()) && isEmpty(el)) toRemove.push(el);
+      if (!CONTENTFUL_TAGS.has(el.tagName.toLowerCase()) && isEmpty(el)) toRemove.push(el);
     }
     if (toRemove.length === 0) break;
     for (const el of toRemove) {
@@ -39,7 +42,7 @@ function removeEmptyElements(root: Element): void {
 
 function isEmpty(el: Element): boolean {
   if ((el.textContent ?? '').trim() !== '') return false;
-  for (const tag of MEDIA_TAGS) {
+  for (const tag of CONTENTFUL_TAGS) {
     if (el.querySelector(tag)) return false;
   }
   return true;
