@@ -145,10 +145,12 @@ function escapeHtmlText(text: string): string {
 // A span is a number or it is not carried at all. 1 is the default, so it adds
 // nothing; anything unparseable or absurd is a page's typo, not a layout.
 function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
-  const raw = cell.getAttribute(name);
-  if (!raw) return '';
-  const value = Number(raw.trim());
-  if (!Number.isInteger(value) || value < 2 || value > MAX_SPAN) return '';
+  const raw = cell.getAttribute(name)?.trim() ?? '';
+  // Digits only: Number() would read "1e3" as 1000 and "0x2" as 2, inventing a
+  // span the page never wrote.
+  if (!/^\d{1,4}$/.test(raw)) return '';
+  const value = Number(raw);
+  if (value < 2 || value > MAX_SPAN) return '';
   return ` ${name}="${value}"`;
 }
 
@@ -159,7 +161,12 @@ function preformattedText(el: Element): string {
   return escapeHtmlText(el.textContent ?? '').replace(/\r?\n/g, '&#10;');
 }
 
-function serializeCellContent(cell: Element, options: MarkItDownOptions): string {
+// Nodes that get their own markup instead of going through the converter: a
+// nested table keeps its structure, and a <pre> keeps its whitespace, which
+// Markdown inside a cell cannot. Both are found at any depth — a <pre> wrapped
+// in a <div> is still a <pre>, and running it through the converter would turn
+// the blank lines in the code into <br><br>.
+function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
   let out = '';
   let pending: Node[] = [];
 
@@ -175,8 +182,9 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
     pending = [];
   };
 
-  for (const child of Array.from(cell.childNodes)) {
-    const tag = child.nodeType === ELEMENT_NODE ? (child as Element).tagName.toLowerCase() : '';
+  for (const child of nodes) {
+    const el = child.nodeType === ELEMENT_NODE ? (child as Element) : null;
+    const tag = el ? el.tagName.toLowerCase() : '';
     if (tag === 'br') {
       // A cell is one line of HTML: the converter's Markdown hard break (a
       // trailing backslash) means nothing here, <br> does.
@@ -184,10 +192,17 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
       out += '<br>';
     } else if (tag === 'table') {
       flushMarkdown();
-      out += serializeStructuralTable(child as Element, options);
+      out += serializeStructuralTable(el as Element, options);
     } else if (tag === 'pre') {
       flushMarkdown();
-      out += `<pre>${preformattedText(child as Element)}</pre>`;
+      out += `<pre>${preformattedText(el as Element)}</pre>`;
+    } else if (el && el.querySelector('table, pre')) {
+      // Descend past the wrapper: it is not carried anyway, and converting it
+      // whole would take the nested table or <pre> down with it. The wrapper's
+      // own Markdown (a list marker, say) is the price for keeping their content
+      // intact.
+      flushMarkdown();
+      out += serializeNodes(Array.from(el.childNodes), options);
     } else {
       pending.push(child);
     }
@@ -205,7 +220,7 @@ function serializeStructuralTable(table: Element, options: MarkItDownOptions): s
       .map((cell) => {
         const tag = cell.tagName.toLowerCase() === 'th' ? 'th' : 'td';
         const spans = `${spanAttribute(cell, 'colspan')}${spanAttribute(cell, 'rowspan')}`;
-        return `<${tag}${spans}>${serializeCellContent(cell, options)}</${tag}>`;
+        return `<${tag}${spans}>${serializeNodes(Array.from(cell.childNodes), options)}</${tag}>`;
       })
       .join('');
     lines.push(`<tr>${cells}</tr>`);

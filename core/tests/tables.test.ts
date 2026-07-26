@@ -329,6 +329,31 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe('a & b < c');
   });
 
+  it('<pre> распознаётся на любой глубине, а не только прямым ребёнком', () => {
+    // Wrapped in a <div> it used to go through the converter, and the blank line
+    // inside the code became <br><br>.
+    const source = 'a\n\nb';
+    const html = `<table><tr><td colspan="2"><div><pre>${source}</pre></div></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+    expect(result).not.toContain('<br>');
+  });
+
+  it('экспоненциальная и шестнадцатеричная запись span не принимается', () => {
+    // Number() reads "1e3" as 1000 and "0x2" as 2 — spans the page never wrote.
+    const html =
+      '<table><tr><td colspan="1e3">a</td><td colspan="0x2">b</td><td colspan="2.5">c</td><td colspan="-2">d</td><td colspan=" 3 ">e</td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('<td>a</td><td>b</td><td>c</td><td>d</td><td colspan="3">e</td>');
+  });
+
+  it('одиночный < в тексте не ломает структуру', () => {
+    const html = '<table><tr><td colspan="2">5 &lt; 7</td></tr></table>';
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('td')).toHaveLength(1);
+    expect(reparsed.querySelector('td')?.textContent).toBe('5 < 7');
+  });
+
   it('вложенная таблица сериализуется тем же генератором', () => {
     const html = '<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table>';
     const result = toMarkdown(html);
