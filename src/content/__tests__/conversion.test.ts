@@ -204,6 +204,16 @@ describe('tables', () => {
     expect(convert(html).match(/inner/g)).toHaveLength(1);
   });
 
+  // The fallback is the one path that puts page HTML into the file the user
+  // copies and downloads, so nothing executable may ride along in it.
+  test('HTML fallback carries no live markup out of an attribute value', () => {
+    const html =
+      '<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>">safe</td></tr></table>';
+    const reparsed = domAdapter(convert(html));
+    expect(reparsed.querySelectorAll('img')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('[onerror]')).toHaveLength(0);
+  });
+
   test('HTML fallback keeps markup inside the cell', () => {
     const html =
       '<table><thead><tr><th>Items</th></tr></thead><tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody></table>';
