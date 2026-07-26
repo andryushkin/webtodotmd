@@ -77,6 +77,19 @@ function analyzeTable(table: Element): TableAnalysis {
   return { level: hasHead ? 'simple' : 'medium', hasHead };
 }
 
+/**
+ * `|` ends a column, so it is escaped — except inside a formula, where `\|` is a
+ * different command. It is `\Vert`, the norm: an absolute value `|x|` silently
+ * became ‖x‖ in the file, while a GFM renderer strips the backslash before
+ * inline parsing, so the preview looked right and only the file was wrong.
+ */
+function escapeCellPipes(text: string): string {
+  return text
+    .split(/(\$\$[\s\S]*?\$\$|\$[^$\n]*\$)/)
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(/\|/g, '\\|')))
+    .join('');
+}
+
 // A cell is one line, whichever form the table takes. The converter's hard break
 // is a trailing backslash plus a newline — a <br> directly in the cell is mapped
 // before conversion, but one inside an inline wrapper (<em>, <strong>, a <span>
@@ -101,9 +114,19 @@ function preInCell(pre: Element): string {
       // Leading whitespace is the shape of the code; a code span keeps it only if
       // it is not the very first character, which a non-breaking space fixes.
       const indented = line.replace(/^ +/, (spaces) => '\u00a0'.repeat(spaces.length));
-      const fence = indented.includes('`') ? '``' : '`';
-      const padding = indented.includes('`') ? ' ' : '';
-      return `${fence}${padding}${indented.replace(/\|/g, '\\|')}${padding}${fence}`;
+      // The fence must outrun the longest backtick run inside, exactly as a
+      // fenced block does. Choosing `` because the line merely contains a
+      // backtick closed the span early on ``a `` b``, and everything after it —
+      // page text — was read as markup.
+      const longest = Math.max(0, ...Array.from(indented.matchAll(/`+/g), (m) => m[0].length));
+      const fence = '`'.repeat(longest + 1);
+      // A span whose content touches a backtick needs the padding spaces, which
+      // a reader never sees; CommonMark strips one from each end.
+      const padding = longest > 0 ? ' ' : '';
+      // No pipe escaping here: getCellContent escapes the finished cell, and
+      // doing it twice produced `\\|`, a literal backslash followed by a column
+      // separator — the row split and a cell was lost.
+      return `${fence}${padding}${indented}${padding}${fence}`;
     })
     .join('<br>');
 }
@@ -117,7 +140,9 @@ function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
   return ownRows(table)
     .map((row) =>
       ownCells(row)
-        .map((cell) => getCellContent(cell, options))
+        // `escapePipes: false`: the outer getCellContent escapes the finished
+        // cell, and escaping the inner cells first turned every `|` into `\\|`.
+        .map((cell) => getCellContent(cell, options, false))
         .filter((cell) => cell !== '')
         .join(' · '),
     )
@@ -125,7 +150,11 @@ function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
     .join('<br>');
 }
 
-function getCellContent(cell: Element, options: MarkItDownOptions): string {
+function getCellContent(
+  cell: Element,
+  options: MarkItDownOptions,
+  escapePipes = true,
+): string {
   let text = '';
   for (const child of Array.from(cell.childNodes)) {
     if (child.nodeType === ELEMENT_NODE) {
@@ -151,7 +180,7 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
   // and the rest of the table falls apart. Block children (two paragraphs in a
   // cell, say) produce exactly that, so line breaks become <br>, the only break
   // a pipe table can carry.
-  return breaksToBr(text.trim().replace(/\|/g, '\\|'));
+  return breaksToBr(escapePipes ? escapeCellPipes(text.trim()) : text.trim());
 }
 
 function getAlignment(cell: Element): string {
@@ -473,6 +502,10 @@ function expandSpans(rows: Element[], table: Element): (Element | null)[][] {
       const down = spanCount(resolvedRowspan(cell, row, table));
 
       for (let dr = 0; dr < down && r + dr < rows.length; dr += 1) {
+        // A rowspan stops at its row group: a browser does not let a <tbody>
+        // cell reach into <tfoot>, and following it there put the totals row's
+        // values one column to the right, under the wrong header.
+        if (rows[r + dr]!.parentElement !== row.parentElement) break;
         for (let dc = 0; dc < across; dc += 1) {
           taken[r + dr]!.add(column + dc);
           grid[r + dr]![column + dc] = dr === 0 && dc === 0 ? cell : null;

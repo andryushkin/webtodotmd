@@ -31,10 +31,12 @@ const BLOCK_KINDS = [
   'td',
   'caption',
   'figcaption',
-  // The last two force the HTML table fallback — a nested table and a cell
-  // holding preformatted text are what a pipe table cannot express, and the
-  // fallback has escaping rules of its own. A merged cell no longer qualifies:
-  // it is flattened onto the grid instead.
+  // The three shapes a pipe table cannot express. They no longer reach for HTML
+  // by default — they are flattened — so these are the coverage for the code
+  // that does the flattening: the grid, the nested-table fold and the code-span
+  // fold each have their own kind here.
+  'td-merged',
+  'td-rowspan',
   'td-nested',
   'td-pre',
 ] as const;
@@ -191,8 +193,15 @@ function renderBlock(block: Block): string {
       return `<table><caption>${inner}</caption><tbody><tr><td>cell</td></tr></tbody></table>`;
     case 'figcaption':
       return `<figure><figcaption>${inner}</figcaption></figure>`;
+    case 'td-merged':
+      return `<table><tbody><tr><td colspan="2">${inner}</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
+    case 'td-rowspan':
+      return `<table><tbody><tr><td rowspan="2">${inner}</td><td>a</td></tr><tr><td>b</td></tr></tbody></table>`;
+    // The payload goes in the *inner* cell: the fold's separator, its empty-cell
+    // filtering and its pipe handling are what needs the hazard, not the cell
+    // around it.
     case 'td-nested':
-      return `<table><tbody><tr><td>${inner}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`;
+      return `<table><tbody><tr><td><table><tbody><tr><td>${inner}</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>`;
     case 'td-pre':
       return `<table><tbody><tr><td><pre>${inner}</pre></td></tr></tbody></table>`;
     default:

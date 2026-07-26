@@ -724,3 +724,54 @@ describe('пустая таблица', () => {
     expect(result.trim()).toBe('');
   });
 });
+
+// Found by review of the flattening. Each is a defect that only exists because
+// the pipe form is now the default for shapes that used to become HTML.
+describe('flattening: what review caught', () => {
+  const cellOf = (md: string, row: number): string =>
+    (md.trim().split('\n')[row] ?? '').split('|')[1]?.trim() ?? '';
+
+  it('a code span outruns the backticks inside it', () => {
+    // `` was chosen whenever the line merely contained a backtick, so ``a `` b``
+    // closed early and everything after it — page text — was read as markup.
+    const md = toMarkdown('<table><tr><td>h</td></tr><tr><td><pre>a `` b</pre></td></tr></table>');
+    expect(md).toContain('``` a `` b ```');
+  });
+
+  it.each([
+    ['preformatted', '<pre>a|b</pre>', '`a\\|b`'],
+    ['nested table', '<table><tr><td>a|b</td></tr></table>', 'a\\|b'],
+  ])('a pipe in a folded %s is escaped once, not twice', (_name, inner, expected) => {
+    // `\\|` is a literal backslash followed by a column separator: the row split
+    // and a cell was lost.
+    const md = toMarkdown(`<table><tr><td>h</td></tr><tr><td>${inner}</td></tr></table>`);
+    expect(md).toContain(expected);
+    expect(md).not.toContain('\\\\|');
+  });
+
+  it('a pipe inside a formula is left alone', () => {
+    // In LaTeX `\\|` is \\Vert, the norm — an absolute value would silently become
+    // ‖x‖ in the file, while the preview looked correct.
+    const html =
+      '<table><tr><td>h</td></tr><tr><td><span class="katex">' +
+      '<annotation encoding="application/x-tex">|x| &lt; a</annotation></span></td></tr></table>';
+    expect(toMarkdown(html, { math: true })).toContain('$|x| < a$');
+  });
+
+  it('a rowspan stops at its row group', () => {
+    // A browser does not let a <tbody> cell reach into <tfoot>; following it
+    // there put the totals row one column right, under the wrong header.
+    const html =
+      '<table><thead><tr><th>H1</th><th>H2</th></tr></thead>' +
+      '<tbody><tr><td rowspan="5">wide</td><td>a</td></tr></tbody>' +
+      '<tfoot><tr><td>total</td></tr></tfoot></table>';
+    expect(cellOf(toMarkdown(html), 3)).toBe('total');
+  });
+
+  it('a rowspan inside one group still vacates the position below it', () => {
+    const html =
+      '<table><thead><tr><th>H1</th><th>H2</th></tr></thead>' +
+      '<tbody><tr><td rowspan="2">w</td><td>a</td></tr><tr><td>b</td></tr></tbody></table>';
+    expect(cellOf(toMarkdown(html), 3)).toBe('');
+  });
+});
