@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Ipakita ang floating bubble sa pagpili"
   },
+  "labelHtmlTables": {
+    "message": "Panatilihin ang mga kumplikadong talahanayan bilang HTML"
+  },
   "labelDefaultView": {
     "message": "Default na mode ng view"
   },

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Показвай бутон при избор на текст"
   },
+  "labelHtmlTables": {
+    "message": "Запазване на сложните таблици като HTML"
+  },
   "labelDefaultView": {
     "message": "Изглед по подразбиране"
   },

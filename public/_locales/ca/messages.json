@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Mostrar botó flotant en seleccionar"
   },
+  "labelHtmlTables": {
+    "message": "Mantén les taules complexes com a HTML"
+  },
   "labelDefaultView": {
     "message": "Mode de visualització predeterminat"
   },

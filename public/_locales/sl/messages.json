@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Pokaži gumb pri izbiri besedila"
   },
+  "labelHtmlTables": {
+    "message": "Ohrani zapletene tabele kot HTML"
+  },
   "labelDefaultView": {
     "message": "Privzeti prikaz"
   },

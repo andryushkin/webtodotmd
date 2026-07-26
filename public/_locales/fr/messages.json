@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Afficher la bulle flottante lors de la sélection"
   },
+  "labelHtmlTables": {
+    "message": "Conserver les tableaux complexes en HTML"
+  },
   "labelDefaultView": {
     "message": "Mode d’affichage par défaut"
   },

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Schwebende Blase bei Auswahl anzeigen"
   },
+  "labelHtmlTables": {
+    "message": "Komplexe Tabellen als HTML behalten"
+  },
   "labelDefaultView": {
     "message": "Standardansicht"
   },

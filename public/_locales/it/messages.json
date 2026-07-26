@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Mostra bolla flottante sulla selezione"
   },
+  "labelHtmlTables": {
+    "message": "Mantieni le tabelle complesse come HTML"
+  },
   "labelDefaultView": {
     "message": "Modalità vista predefinita"
   },

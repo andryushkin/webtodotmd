@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "టెక్స్ట్ ఎంచుకోవడంపై ఫ్లోటింగ్ బటన్ చూపించు"
   },
+  "labelHtmlTables": {
+    "message": "సంక్లిష్ట పట్టికలను HTML గా ఉంచు"
+  },
   "labelDefaultView": {
     "message": "డిఫాల్ట్ వ్యూ మోడ్"
   },

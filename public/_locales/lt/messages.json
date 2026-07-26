@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Rodyti slankų mygtuką pasirenkant"
   },
+  "labelHtmlTables": {
+    "message": "Sudėtingas lenteles palikti kaip HTML"
+  },
   "labelDefaultView": {
     "message": "Numatytasis rodinys"
   },

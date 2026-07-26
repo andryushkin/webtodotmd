@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "선택 시 플로팅 버블 표시"
   },
+  "labelHtmlTables": {
+    "message": "복잡한 표를 HTML로 유지"
+  },
   "labelDefaultView": {
     "message": "기본 보기 모드"
   },

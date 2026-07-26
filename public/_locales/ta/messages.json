@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "உரை தேர்வில் மிதக்கும் பொத்தான் காட்டு"
   },
+  "labelHtmlTables": {
+    "message": "சிக்கலான அட்டவணைகளை HTML ஆக வைத்திரு"
+  },
   "labelDefaultView": {
     "message": "இயல்புநிலை காட்சி முறை"
   },

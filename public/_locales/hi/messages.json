@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "टेक्स्ट चुनने पर फ़्लोटिंग बटन दिखाएँ"
   },
+  "labelHtmlTables": {
+    "message": "जटिल तालिकाओं को HTML के रूप में रखें"
+  },
   "labelDefaultView": {
     "message": "डिफ़ॉल्ट व्यू मोड"
   },

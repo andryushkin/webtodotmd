@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Afișează buton la selectarea textului"
   },
+  "labelHtmlTables": {
+    "message": "Păstrează tabelele complexe ca HTML"
+  },
   "labelDefaultView": {
     "message": "Vizualizare implicită"
   },

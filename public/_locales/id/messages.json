@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Tampilkan gelembung mengambang saat memilih"
   },
+  "labelHtmlTables": {
+    "message": "Pertahankan tabel kompleks sebagai HTML"
+  },
   "labelDefaultView": {
     "message": "Mode tampilan default"
   },

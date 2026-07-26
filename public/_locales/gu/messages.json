@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "ટેક્સ્ટ પસંદ કરતા ફ્લોટિંગ બટન દેખાડો"
   },
+  "labelHtmlTables": {
+    "message": "જટિલ કોષ્ટકોને HTML તરીકે રાખો"
+  },
   "labelDefaultView": {
     "message": "ડિફૉલ્ટ વ્યૂ મોડ"
   },

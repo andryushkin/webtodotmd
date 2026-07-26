@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Zwevende bel tonen bij selectie"
   },
+  "labelHtmlTables": {
+    "message": "Complexe tabellen als HTML behouden"
+  },
   "labelDefaultView": {
     "message": "Standaard weergavemodus"
   },

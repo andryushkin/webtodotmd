@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "ಪಠ್ಯ ಆಯ್ಕೆಯಲ್ಲಿ ತೇಲುವ ಬಟನ್ ತೋರಿಸಿ"
   },
+  "labelHtmlTables": {
+    "message": "ಸಂಕೀರ್ಣ ಕೋಷ್ಟಕಗಳನ್ನು HTML ಆಗಿ ಇರಿಸಿ"
+  },
   "labelDefaultView": {
     "message": "ಡೀಫಾಲ್ಟ್ ವೀಕ್ಷಣಾ ಮೋಡ್"
   },

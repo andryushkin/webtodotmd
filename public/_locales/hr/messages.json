@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Prikaži gumb pri odabiru teksta"
   },
+  "labelHtmlTables": {
+    "message": "Zadrži složene tablice kao HTML"
+  },
   "labelDefaultView": {
     "message": "Zadani prikaz"
   },

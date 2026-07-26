@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Mostrar burbuja flotante al seleccionar"
   },
+  "labelHtmlTables": {
+    "message": "Mantener las tablas complejas como HTML"
+  },
   "labelDefaultView": {
     "message": "Modo de vista predeterminado"
   },

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Show floating bubble on selection"
   },
+  "labelHtmlTables": {
+    "message": "Keep complex tables as HTML"
+  },
   "labelDefaultView": {
     "message": "Default view mode"
   },

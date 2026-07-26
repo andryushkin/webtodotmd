@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Prikaži dugme pri odabiru teksta"
   },
+  "labelHtmlTables": {
+    "message": "Задржи сложене табеле као HTML"
+  },
   "labelDefaultView": {
     "message": "Podrazumevani prikaz"
   },

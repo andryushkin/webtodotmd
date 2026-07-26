@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Näita hõljuvat nuppu valimisel"
   },
+  "labelHtmlTables": {
+    "message": "Säilita keerukad tabelid HTML-ina"
+  },
   "labelDefaultView": {
     "message": "Vaikevaade"
   },

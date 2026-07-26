@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Показувати кнопку при виділенні тексту"
   },
+  "labelHtmlTables": {
+    "message": "Зберігати складні таблиці як HTML"
+  },
   "labelDefaultView": {
     "message": "Режим перегляду за замовчуванням"
   },

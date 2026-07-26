@@ -103,10 +103,13 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
 
 - **Tables** — pipe tables, with `|` inside a cell escaped and line breaks
   turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
-  for — merged cells, a nested table, preformatted text —
-  falls back to a plain HTML table carrying `colspan`/`rowspan`, with cell
-  content as Markdown, and preformatted text kept as a `<pre>` block so its
-  whitespace survives. The preview renders these tables rather than showing
+  for — merged cells, a nested table, preformatted text — is folded into the
+  pipe form: a merged cell keeps its text where it starts and leaves the
+  positions it spanned empty, a nested table becomes its rows joined by a middle
+  dot, and preformatted text becomes one code span per line. Turning on **Keep
+  complex tables as HTML** emits a plain HTML table carrying `colspan`/`rowspan`
+  instead, which keeps the structure exactly — at the price that Markdown is not
+  parsed inside an HTML block, so every cell stops being Markdown. The preview renders these tables rather than showing
   their markup, but Markdown is not parsed inside an HTML block by any renderer,
   so formatting inside such a cell — emphasis, links, a heading, a quote, a list —
   stays as its Markdown syntax rather than rendering. Only tables that GFM cannot
@@ -129,6 +132,7 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
 | --- | --- | --- | --- |
 | Auto-add metadata | toggle | on | Prepend the YAML block to each capture |
 | Show floating bubble | toggle | on | Show the "add to .md" button near selections |
+| Keep complex tables as HTML | toggle | off | Emit an HTML table for merged cells, nested tables and preformatted cells instead of flattening them into the pipe form |
 | Default view mode | Preview / Source | Preview | View mode when the panel opens |
 | Highlight color | color | `#0066cc` | Highlighter mode outline and fill |
 | Language | 22 choices + Auto | English | Interface language |

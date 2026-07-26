@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "ടെക്‌സ്‌റ്റ് തിരഞ്ഞെടുക്കുമ്പോൾ ഫ്ലോട്ടിംഗ് ബട്ടൺ കാണിക്കൂ"
   },
+  "labelHtmlTables": {
+    "message": "സങ്കീർണ്ണ പട്ടികകൾ HTML ആയി നിലനിർത്തുക"
+  },
   "labelDefaultView": {
     "message": "ഡിഫോൾട്ട് വ്യൂ മോഡ്"
   },

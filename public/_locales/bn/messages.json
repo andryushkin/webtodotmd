@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "টেক্সট নির্বাচনে ফ্লোটিং বাটন দেখান"
   },
+  "labelHtmlTables": {
+    "message": "জটিল টেবিল HTML হিসেবে রাখুন"
+  },
   "labelDefaultView": {
     "message": "ডিফল্ট ভিউ মোড"
   },

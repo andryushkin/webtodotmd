@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Hiển thị bóng nổi khi chọn"
   },
+  "labelHtmlTables": {
+    "message": "Giữ bảng phức tạp ở dạng HTML"
+  },
   "labelDefaultView": {
     "message": "Chế độ xem mặc định"
   },
