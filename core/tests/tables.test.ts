@@ -649,6 +649,48 @@ describe('HTML fallback — своя разметка, а не разметка 
   });
 });
 
+describe('регрессии, найденные ревью', () => {
+  it('бэктики в тексте ячейки не ломают блок для превью', () => {
+    const result = toMarkdown('<table><tr><td colspan="2">use `foo` here</td></tr></table>');
+    expect(result).toContain('<td colspan="2">use `foo` here</td>');
+  });
+
+  it('<code> в ячейке кодирует переводы строк, как и <pre>', () => {
+    const source = 'a\n\nb';
+    const html = `<table><tr><td colspan="2"><code>${source}</code></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+    expect(parseHTML(result).document.querySelector('code')?.textContent).toBe(source);
+  });
+
+  it('LaTeX в ячейке не экранируется', () => {
+    const html =
+      '<table><tr><td colspan="2"><span class="katex"><annotation encoding="application/x-tex">a & b, x < y</annotation></span></td></tr></table>';
+    const result = toMarkdown(html, { math: true });
+    expect(result).toContain('a & b, x < y');
+    expect(result).not.toContain('&amp;');
+  });
+
+  it('rowspan="0", который сводится к отсутствию слияния, не уводит в HTML', () => {
+    // The gate must ask what the serializer will answer, as with colspan="1".
+    const html =
+      '<table><thead><tr><th rowspan="0">m</th><th>h</th></tr></thead><tbody><tr><td>a</td></tr></tbody></table>';
+    expect(toMarkdown(html)).not.toContain('<table>');
+  });
+
+  it('подпись сохраняется в режимах text и skip', () => {
+    const html = '<table><caption>C</caption><tr><td colspan="2">x</td></tr></table>';
+    expect(toMarkdown(html, { complexTableFallback: 'text' })).toContain('C');
+    expect(toMarkdown(html, { complexTableFallback: 'skip' }).trim()).toBe('C');
+  });
+
+  it('обёрнутый <br> и <hr> не удаляются как пустые', () => {
+    expect(toMarkdown('<p>line1<span><br></span>line2</p>')).toContain('line1');
+    expect(toMarkdown('<p>line1<span><br></span>line2</p>')).not.toContain('line1line2');
+    expect(toMarkdown('<div><hr></div><p>x</p>')).toContain('---');
+  });
+});
+
 describe('пустая таблица', () => {
   it('таблица без строк → пустой вывод', () => {
     const html = `<table></table>`;

@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
+import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -52,7 +53,10 @@ function analyzeTable(table: Element): TableAnalysis {
   // value used to lose its pipe form for an HTML table with no merged cells.
   const hasMergedCells = Array.from(
     table.querySelectorAll('td[colspan], th[colspan], td[rowspan], th[rowspan]'),
-  ).some((cell) => spanAttribute(cell, 'colspan') !== '' || spanAttribute(cell, 'rowspan') !== '');
+    // With the row and the table, so rowspan="0" is asked the same question the
+    // serializer will ask: resolved to a count, it can turn out to be no merge at
+    // all, and then the pipe form was the better answer.
+  ).some((cell) => cellSpans(cell, cell.parentElement ?? undefined, table) !== '');
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
@@ -170,7 +174,8 @@ function escapeAttributeValue(value: string): string {
 function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
   const raw = cell.getAttribute(name)?.trim() ?? '';
   // Digits only: Number() would read "1e3" as 1000 and "0x2" as 2, inventing a
-  // span the page never wrote.
+  // span the page never wrote. The emitted form has to satisfy
+  // FALLBACK_ATTR_PATTERN, which is what consumers match against.
   if (!/^\d{1,5}$/.test(raw)) return '';
   const value = Number(raw);
   // 1 is the default and adds nothing. Zero is meaningful for rowspan only.
@@ -179,7 +184,9 @@ function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
   } else if (value === 1 || value > MAX_ROWSPAN) {
     return '';
   }
-  return ` ${name}="${value}"`;
+  const emitted = ` ${name}="${value}"`;
+  // Cheap self-check on the contract the preview escaper matches against.
+  return FALLBACK_ATTR_PATTERN.test(emitted) ? emitted : '';
 }
 
 // Newlines inside <pre> are content: they become &#10;, which re-parses to the
@@ -204,6 +211,19 @@ function preformattedText(el: Element): string {
 // emitted from an identical one that came from the page's prose, and it has to
 // re-derive Markdown's own structure (code spans, fences of any length) to know
 // where a "tag" is not one.
+// Elements whose text the converter re-emits as LaTeX rather than HTML: escaping
+// inside them turns `a & b` into `a &amp; b` and breaks the formula. The
+// selectors mirror the math rules' own filters.
+function isMathSubtree(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  return (
+    tag === 'math' ||
+    tag === 'mjx-container' ||
+    tag === 'annotation' ||
+    el.classList?.contains('katex') === true
+  );
+}
+
 function escapedTextClone(el: Element): Element {
   const clone = el.cloneNode(true) as Element;
 
@@ -226,9 +246,13 @@ function escapedTextClone(el: Element): Element {
       if (child.nodeType !== ELEMENT_NODE) continue;
       const element = child as Element;
       // A nested table is serialized by serializeStructuralTable, which escapes
-      // its own cells; walking into it here would escape them twice.
-      if (element.tagName.toLowerCase() === 'table') escapeAttributes(element);
-      else walk(element);
+      // its own cells; walking into it here would escape them twice. A math
+      // subtree becomes LaTeX, where escaping is corruption.
+      if (element.tagName.toLowerCase() === 'table' || isMathSubtree(element)) {
+        escapeAttributes(element);
+      } else {
+        walk(element);
+      }
     }
   };
 
@@ -241,6 +265,8 @@ function escapedTextClone(el: Element): Element {
 // a nested table. Both are lifted out of the cell, the rest of the cell goes
 // through the converter untouched, and the lifted blocks are put back where they
 // were. Nothing about lists, breaks or emphasis is re-implemented here.
+// A subset of FALLBACK_TAGS: the elements lifted out of a cell rather than
+// converted, because Markdown in a cell cannot carry their whitespace or shape.
 const LIFTED_TAGS = ['pre', 'table', 'code'];
 const LIFTED_SELECTOR = LIFTED_TAGS.join(', ');
 
@@ -285,6 +311,9 @@ function htmlSafeMarkdown(md: string): string {
 function serializeCellContent(cell: Element, options: MarkItDownOptions): string {
   const originals = topLevelBlocks(cell);
   const clone = escapedTextClone(cell);
+  // Nothing to lift: skip minting a token from the cell's outerHTML, pairing the
+  // clone, and scanning the result — a large table is mostly plain cells.
+  if (originals.length === 0) return htmlSafeMarkdown(convert(clone, options));
   // A deep clone with rewritten text and attributes has the same elements in the
   // same order, so the two lists line up index by index.
   const lifted = topLevelBlocks(clone);
@@ -295,11 +324,12 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
   const blocks = originals.map((original) => {
     const tag = original.tagName.toLowerCase();
     if (tag === 'table') return serializeStructuralTable(original, options);
-    if (tag === 'pre') return `<pre>${preformattedText(original)}</pre>`;
-    // A code span would have to be escaped to keep a literal "</td>" from
+    // Both keep their text verbatim, newlines included: a blank line would end
+    // the HTML block and hand the rest of the table to the Markdown parser. A
+    // code span would also have to be escaped to keep a literal "</td>" from
     // closing the cell, and Markdown does not decode entities inside one — the
-    // reader would see &lt;/td&gt;. As an element it stays both safe and legible.
-    return `<${tag}>${escapeHtmlText(original.textContent ?? '')}</${tag}>`;
+    // reader would see &lt;/td&gt;. As an element it stays safe and legible.
+    return `<${tag}>${preformattedText(original)}</${tag}>`;
   });
 
   lifted.forEach((el, index) => {
@@ -344,6 +374,12 @@ function resolvedRowspan(cell: Element, row: Element, table: Element): string {
   return remaining > 1 ? ` rowspan="${remaining}"` : '';
 }
 
+function cellSpans(cell: Element, row?: Element, table?: Element): string {
+  const colspan = spanAttribute(cell, 'colspan');
+  const rowspan = row && table ? resolvedRowspan(cell, row, table) : spanAttribute(cell, 'rowspan');
+  return `${colspan}${rowspan}`;
+}
+
 function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {
   const lines: string[] = ['<table>'];
   const caption = ownCaption(table);
@@ -352,7 +388,7 @@ function serializeStructuralTable(table: Element, options: MarkItDownOptions): s
     const cells = ownCells(row)
       .map((cell) => {
         const tag = cell.tagName.toLowerCase() === 'th' ? 'th' : 'td';
-        const spans = `${spanAttribute(cell, 'colspan')}${resolvedRowspan(cell, row, table)}`;
+        const spans = cellSpans(cell, row, table);
         return `<${tag}${spans}>${serializeCellContent(cell, options)}</${tag}>`;
       })
       .join('');
@@ -374,7 +410,7 @@ export const TABLE_RULES: Rule[] = [
 
       if (analysis.level === 'complex') {
         const fallback = options.complexTableFallback ?? 'html';
-        if (fallback === 'skip') return '';
+        if (fallback === 'skip') return captionOnly(el, options);
         if (fallback === 'text') {
           const text = ownRows(el)
             .map((row) =>
@@ -391,7 +427,8 @@ export const TABLE_RULES: Rule[] = [
                 .join(' | '),
             )
             .join('\n');
-          return `\n\n${text}\n\n`;
+          const caption = captionLine(el, options);
+          return caption ? `\n\n${caption}\n${text}\n\n` : `\n\n${text}\n\n`;
         }
         // 'html' fallback (default)
         return `\n\n${serializeStructuralTable(el, options)}\n\n`;

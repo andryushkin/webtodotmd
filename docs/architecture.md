@@ -88,12 +88,15 @@ metadata block, content gaps, `sub`/`sup`) render — which means literal tags i
 captured text would render too, so `escapeHtmlTagsInMarkdown()` runs first and
 escapes tags outside code spans. It lives in `src/shared/escape-html-tags.ts`
 with its own tests. The exceptions are the tags the conversion core emits itself:
-`sub`, `sup`, `br`, and the table set of the HTML fallback (`table`, `tr`, `th`,
-`td`, `caption`, `pre`, `code`, `kbd`, `samp`) — a table with merged cells, a
-nested table or preformatted text takes that path, and escaping it showed the
-user markup instead of a table. The tag must be bare or carry only a numeric
-`colspan`/`rowspan`: a page can write `<table style="position:fixed">` as literal
-text, and `style` survives DOMPurify. `DOMPurify.sanitize()` is mandatory before
+`sub`, `sup`, `br`, and the table set of the HTML fallback — a table with merged
+cells, a nested table or preformatted text takes that path, and escaping it
+showed the user markup instead of a table. The set is not restated there: it is
+imported from `core/src/fallback-tags.ts`, the core's own declaration of what its
+fallback emits, because a restatement that drifts escapes the whole table rather
+than one tag. A candidate block is accepted only if it starts on its own line,
+nests correctly and carries nothing but those tags with a numeric
+`colspan`/`rowspan` — a page can write `<table style="position:fixed">` as
+literal text, and `style` survives DOMPurify. `DOMPurify.sanitize()` is mandatory before
 any `innerHTML` assignment.
 
 The status bar has two layers: `setBaseStatus()` for the persistent readiness

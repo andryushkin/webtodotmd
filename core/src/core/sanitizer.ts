@@ -1,3 +1,4 @@
+import { CONTENTFUL_TAGS } from './contentful.js';
 const REMOVE_TAGS = new Set(['style', 'noscript', 'iframe', 'object', 'embed', 'template', 'svg']);
 const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
@@ -110,11 +111,6 @@ function removeEmptyWrappers(root: Element | Document): void {
     }
   }
 }
-
-// Elements that carry meaning without carrying text. Without <br> and <hr> here,
-// a page that wraps a break in a styling span — very common — lost it, and the
-// words on either side were glued together.
-const CONTENTFUL_TAGS = ['img', 'video', 'audio', 'canvas', 'picture', 'figure', 'br', 'hr', 'input'];
 
 function isEmptyWrapper(el: Element): boolean {
   const text = el.textContent ?? '';

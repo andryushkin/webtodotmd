@@ -13,17 +13,28 @@
 // output: a nested table and a multi-line `<code>` both span several lines.
 //
 // So a candidate block is walked tag by tag with a stack, and accepted only if it
-// opens with `<table>`, closes it, nests correctly, and contains nothing but the
-// tags and attributes the serializer emits. Prose fails on the first stray tag or
-// unbalanced close and gets escaped like any other text.
+// opens with `<table>` on its own line, closes it, nests correctly, and contains
+// nothing but the tags and attributes the serializer emits. Prose fails on the
+// first stray tag or unbalanced close and gets escaped like any other text.
+//
+// The allowed set is imported from the core rather than restated: a restatement
+// drifts, and a drifted one escapes the whole table, not just the new tag.
+import {
+  FALLBACK_ATTR_PATTERN,
+  FALLBACK_INLINE_TAGS,
+  FALLBACK_TAGS,
+  FALLBACK_VOID_TAGS,
+} from '../../core/src/fallback-tags';
 
-const PAIRED_TAGS = new Set(['table', 'caption', 'tr', 'th', 'td', 'pre', 'code', 'sub', 'sup']);
-const VOID_TAGS = new Set(['br']);
-const INLINE_TAGS = new Set(['sub', 'sup', 'br']);
+const VOID_TAGS = new Set<string>(FALLBACK_VOID_TAGS);
+const INLINE_TAGS = new Set<string>(FALLBACK_INLINE_TAGS);
+const PAIRED_TAGS = new Set<string>(
+  [...FALLBACK_TAGS, ...FALLBACK_INLINE_TAGS].filter((tag) => !VOID_TAGS.has(tag)),
+);
 
 // An attribute is enough to matter: `style` survives DOMPurify, so a literal
 // `<table style="position:fixed;inset:0">` in captured text becomes an overlay.
-const ALLOWED_ATTRS = /^(?:\s+(?:colspan|rowspan)="\d{1,5}")*$/;
+const ALLOWED_ATTRS = FALLBACK_ATTR_PATTERN;
 
 const TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g;
 
@@ -34,6 +45,11 @@ function coreTableBlockEnd(md: string, start: number): number | null {
   tag.lastIndex = start;
   let textFrom = start;
   let match: RegExpExecArray | null;
+
+  // The serializer writes <table> at the start of a line and </table> at the end
+  // of one. A page quoting a snippet inside a sentence does not, and that snippet
+  // is content to show, not markup to render.
+  if (start !== 0 && md[start - 1] !== '\n') return null;
 
   while ((match = tag.exec(md)) !== null) {
     // A stray '<' between tags means this is prose, not our markup: the core
@@ -50,7 +66,10 @@ function coreTableBlockEnd(md: string, start: number): number | null {
       return null;
     } else if (slash) {
       if (stack.pop() !== name) return null;
-      if (stack.length === 0) return match.index + full.length;
+      if (stack.length === 0) {
+        const end = match.index + full.length;
+        return end === md.length || md[end] === '\n' ? end : null;
+      }
     } else {
       if (stack.length === 0 && name !== 'table') return null;
       stack.push(name);
@@ -67,30 +86,32 @@ function escapeStrayTags(text: string): string {
   });
 }
 
-function escapePart(part: string): string {
-  let out = '';
-  let pos = 0;
-  for (;;) {
-    const start = part.indexOf('<table', pos);
-    if (start === -1) break;
-    const end = coreTableBlockEnd(part, start);
-    if (end === null) {
-      // Not our markup: escape up to and including this tag, then keep looking.
-      const tagEnd = part.indexOf('>', start);
-      const stop = tagEnd === -1 ? part.length : tagEnd + 1;
-      out += escapeStrayTags(part.slice(pos, stop));
-      pos = stop;
-      continue;
-    }
-    out += escapeStrayTags(part.slice(pos, start)) + part.slice(start, end);
-    pos = end;
-  }
-  return out + escapeStrayTags(part.slice(pos));
+function escapeOutsideCode(text: string): string {
+  return text
+    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g)
+    .map((part, i) => (i % 2 === 1 ? part : escapeStrayTags(part))) // code span or fence — untouched
+    .join('');
 }
 
 export function escapeHtmlTagsInMarkdown(md: string): string {
-  return md
-    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g)
-    .map((part, i) => (i % 2 === 1 ? part : escapePart(part))) // code span or fence — untouched
-    .join('');
+  let out = '';
+  let pos = 0;
+  for (;;) {
+    const start = md.indexOf('<table', pos);
+    if (start === -1) break;
+    const end = coreTableBlockEnd(md, start);
+    if (end === null) {
+      const tagEnd = md.indexOf('>', start);
+      const stop = tagEnd === -1 ? md.length : tagEnd + 1;
+      out += escapeOutsideCode(md.slice(pos, stop));
+      pos = stop;
+      continue;
+    }
+    // A cell's text may hold backticks, so the block has to be taken out before
+    // the code-span split — otherwise the split cut the table in half and both
+    // halves were escaped as unbalanced markup.
+    out += escapeOutsideCode(md.slice(pos, start)) + md.slice(start, end);
+    pos = end;
+  }
+  return out + escapeOutsideCode(md.slice(pos));
 }

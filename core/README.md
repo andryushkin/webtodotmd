@@ -126,7 +126,7 @@ See [docs/CHROME_EXTENSION.md](./docs/CHROME_EXTENSION.md) for a complete integr
 
 ```bash
 bun install                    # from the repository root, once
-bun run --filter core build    # outputs core/dist/browser.mjs and .d.ts
+bun run --filter htmltodotmd build   # outputs core/dist/browser.mjs and .d.ts
 bun test core                  # this package's suite; bare `bun test` adds the extension's
 ```
 

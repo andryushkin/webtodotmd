@@ -224,7 +224,10 @@ function preprocessMath(text: string): string {
   text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
     const id = String(mathCounter++);
     mathMap.set(id, { latex: latex.trim().replace(INVISIBLE_MATH_CHARS, ''), display: true });
-    return `\n\n<div data-katex="${id}" data-display="1"></div>\n\n`;
+    // Single newlines, not blank ones: display math inside a fallback table's
+    // cell would otherwise end the HTML block and hand the rest of the table to
+    // the Markdown parser as prose.
+    return `\n<div data-katex="${id}" data-display="1"></div>\n`;
   });
 
   // Inline math: $...$ → placeholder span

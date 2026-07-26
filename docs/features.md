@@ -91,8 +91,10 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
   content as Markdown, and preformatted text kept as a `<pre>` block so its
   whitespace survives. The preview renders these tables rather than showing
   their markup, but Markdown is not parsed inside an HTML block by any renderer,
-  so emphasis and links inside such a cell stay as `**text**` and `[t](url)`
-  rather than rendering. Only tables that GFM cannot express take this path. That HTML is built by the converter, never copied from
+  so formatting inside such a cell — emphasis, links, a heading, a quote, a list —
+  stays as its Markdown syntax rather than rendering. Only tables that GFM cannot
+  express take this path, and preformatted text and nested tables, which are kept
+  as elements, do render. That HTML is built by the converter, never copied from
   the page: in a fallback table, text the page wrote — including something that
   looks like a tag — is escaped, so it cannot close a cell or add behavior.
   Elsewhere in the output a literal tag stays literal text, as Markdown
