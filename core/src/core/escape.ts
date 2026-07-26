@@ -18,25 +18,92 @@ function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && /\w/.test(ch);
 }
 
-/** Marks that change the render wherever they appear. */
-export function escapeInlineMarkdown(text: string): string {
-  return (
-    text
-      // Backslash first, or the escapes below would read as literal pairs.
-      .replace(/\\/g, '\\\\')
-      .replace(/([*`])/g, '\\$1')
-      // An underscore between word characters is not emphasis in CommonMark, so
-      // `snake_case` renders as itself — escaping it is noise in the source.
-      .replace(/_/g, (mark, index: number, text_: string) =>
-        isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
-      )
-      // Strikethrough needs a pair; a single tilde renders as itself.
-      .replace(/~~/g, '\\~\\~')
-      // Only a bracket followed by a paren is link or image syntax. A lone `[1]`
-      // — a footnote marker, and Wikipedia is full of them — renders as itself,
-      // so escaping it would be noise in the source for no gain.
-      .replace(/(!?\[)([^\]\n]*)(\]\()/g, '\\$1$2\\$3')
-  );
+// Link and image syntax: an opener, a label with no `]` in it, and a `](`. Only a
+// bracket that reaches a paren is markup. A lone `[1]` — a footnote marker, and
+// Wikipedia is full of them — renders as itself, so escaping it would be noise in
+// the source for no gain.
+const LINK_SYNTAX = /(!?\[)([^\]\n]*)(\]\()/g;
+
+/**
+ * Whether reading the text ahead could change what this node gets escaped. Only a
+ * match that *starts* here is this node's to escape, and every match starts at a
+ * `[` — so a node without one needs no lookahead, and that is almost every node on
+ * almost every page. The parser asks before it walks: the walk is cheap but it is
+ * per text node, and a paragraph of four thousand highlighter spans pays for it
+ * four thousand times.
+ */
+export function mayOpenLink(text: string): boolean {
+  return text.includes('[');
+}
+
+/**
+ * The one inline mark whose meaning depends on characters that may be in another
+ * node. `*` and `` ` `` are escaped wherever they appear, so a split cannot smuggle
+ * them past; a bracket is only markup when a `](` follows, and the parser hands the
+ * two halves over separately: `<span>[text]</span>(url)` was two harmless strings
+ * that became a working link once joined. The page showed the brackets and the
+ * reader lost them.
+ *
+ * So the match runs over this node's text plus `upcoming` — the page's own text
+ * that will be joined onto it, gathered by the parser — and a backslash is written
+ * only for a delimiter that lies inside this node. The other half is either its own
+ * node's business or already gone: killing one delimiter kills the link.
+ *
+ * Looking at what actually follows is what keeps the footnotes clean. The cheap
+ * defensive rule — escape a `[` that ends a node — cannot tell `[2]` in a span from
+ * the first half of a link, and would put a backslash in front of every citation
+ * marker on a wiki page. Reading the text costs a bounded walk instead, and charges
+ * a backslash only where a link really assembles.
+ *
+ * What it does cost: `upcoming` is the page's text, not the Markdown the following
+ * nodes will emit. A rule that wraps its text in markers can break a match this
+ * sees — `[a` then `<code>x](y)</code>` renders as a code span, not a link — and
+ * then the reader pays one backslash for a link that was never there. The reverse,
+ * a rule that *creates* a `](` out of nothing, would be missed; only a link or an
+ * image emits one, and both already carry their own brackets.
+ */
+export function escapeInlineMarkdown(text: string, upcoming = ''): string {
+  const marks = text
+    // Backslash first, or the escapes below would read as literal pairs.
+    .replace(/\\/g, '\\\\')
+    .replace(/([*`])/g, '\\$1')
+    // An underscore between word characters is not emphasis in CommonMark, so
+    // `snake_case` renders as itself — escaping it is noise in the source.
+    .replace(/_/g, (mark, index: number, text_: string) =>
+      isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
+    )
+    // Strikethrough needs a pair; a single tilde renders as itself.
+    .replace(/~~/g, '\\~\\~');
+  return escapeLinkSyntax(marks, upcoming);
+}
+
+/**
+ * The passes above only ever insert backslashes, so a match found here sits at the
+ * same characters it would in the raw text — and `upcoming` can be appended raw for
+ * the search, since the escaping its own node will get cannot remove a `[` or a
+ * `](` either.
+ */
+function escapeLinkSyntax(text: string, upcoming: string): string {
+  let out = '';
+  let cursor = 0;
+  for (const match of `${text}${upcoming}`.matchAll(LINK_SYNTAX)) {
+    const [, opener = '', label = '', closer = ''] = match;
+    const open = match.index ?? 0;
+    // The opener itself has crossed the seam, so the `[` belongs to the next node
+    // and is escaped there, against its own lookahead. Every later match is further
+    // right and belongs to it too.
+    if (open + opener.length > text.length) break;
+    // The backslash goes on the `[`, never on the `!` of an image: `\!` only demotes
+    // the image to a link, which is still a link the page never had.
+    out += `${text.slice(cursor, open)}${opener.slice(0, -1)}\\[`;
+    cursor = open + opener.length;
+    const close = cursor + label.length;
+    if (close + closer.length <= text.length) {
+      out += `${text.slice(cursor, close)}\\${closer}`;
+      cursor = close + closer.length;
+    }
+  }
+  return out + text.slice(cursor);
 }
 
 /** Constructs that only matter at the start of a line, escaped per line. */

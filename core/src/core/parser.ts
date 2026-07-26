@@ -5,6 +5,7 @@ import {
   escapeHtmlSyntax,
   escapeInlineMarkdown,
   escapeMathTags,
+  mayOpenLink,
 } from './escape.js';
 
 // Text inside these is emitted verbatim — as a code fence or a code span — so
@@ -42,8 +43,48 @@ const BLOCK_PARENTS = new Set([
 // unknown tag as a block boundary would cost the escape.
 const LINE_ENDS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre']);
 
+// How far the lookahead reads. A link label holds no `]`, so the search below stops
+// at the first one anyway; this only bounds the pathological case of a very long
+// run of text with no bracket in it, where nothing was ever going to be found.
+const LOOKAHEAD_LIMIT = 200;
+
+type Lookahead = {
+  /** Another string will be joined onto this one, on this line. */
+  continues: boolean;
+  /** The page's own text in it, as far as it was worth reading. */
+  text: string;
+  done: boolean;
+};
+
+/** Nothing further can change the answer: a `]` with a character after it settles
+ * every label still open, and so does a newline, which no label may contain. */
+function settled(text: string): boolean {
+  return text.length >= LOOKAHEAD_LIMIT || /\n|\][\s\S]/.test(text);
+}
+
+/** Text in document order, stopping where the line does. */
+function absorb(node: Node, ahead: Lookahead): void {
+  if (ahead.done) return;
+  if (node.nodeType === TEXT_NODE) {
+    ahead.text += node.textContent ?? '';
+    if (settled(ahead.text)) ahead.done = true;
+    return;
+  }
+  if (node.nodeType !== ELEMENT_NODE) return;
+  const tag = (node as Element).tagName.toLowerCase();
+  // A <br> or a nested block ends the line inside a sibling just as it does outside.
+  if (tag === 'br' || LINE_ENDS.has(tag)) {
+    ahead.done = true;
+    return;
+  }
+  for (const child of Array.from(node.childNodes)) {
+    absorb(child, ahead);
+    if (ahead.done) return;
+  }
+}
+
 /**
- * True when another node's text will be appended to this one's on the same line.
+ * What follows this text node on its line: whether anything does, and what it says.
  *
  * The escapers decide per text node, and a text node is not a line: an element
  * between two of them survives `normalize()`, so `&lt;` in a highlighter's span
@@ -51,22 +92,35 @@ const LINE_ENDS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
  * afterwards. Asking here whether there is a next string is what lets the escaper
  * treat an unfinished tail as dangerous — and asking only within the line is what
  * keeps `<h2>Q&amp;A</h2>` free of a backslash it does not need.
+ *
+ * `continues` is that question, and it says yes for an element sibling whatever its
+ * text: an `<img>` holds none and still writes `![alt](…)` into the join. `text` is
+ * the narrower question the bracket rule asks — not *whether* something follows but
+ * *what* — because a `[` is only markup when a `](` turns up, and escaping every
+ * bracket that ends a node would brand every `[1]` on the page.
  */
-function continuesOnLine(node: Node): boolean {
+function lookAhead(node: Node, wantsText: boolean): Lookahead {
+  // Starting `done` is what makes the caller's `wantsText` a real saving: with no
+  // text to gather, the walk stops the moment `continues` is answered, which is at
+  // the first sibling — the whole of the question this used to ask.
+  const ahead: Lookahead = { continues: false, text: '', done: !wantsText };
   for (let current: Node | null = node; current; current = current.parentNode) {
     for (let next = current.nextSibling; next; next = next.nextSibling) {
       if (next.nodeType === ELEMENT_NODE) {
         // A <br> ends the line here, exactly as it starts one in opensBlock().
-        if ((next as Element).tagName.toLowerCase() === 'br') return false;
-        return true;
+        if ((next as Element).tagName.toLowerCase() === 'br') return ahead;
+        ahead.continues = true;
+      } else if ((next.textContent ?? '') !== '') {
+        ahead.continues = true;
       }
-      if ((next.textContent ?? '') !== '') return true;
+      absorb(next, ahead);
+      if (ahead.done && ahead.continues) return ahead;
     }
     const parent = current.parentNode;
-    if (!parent || parent.nodeType !== ELEMENT_NODE) return false;
-    if (LINE_ENDS.has((parent as Element).tagName.toLowerCase())) return false;
+    if (!parent || parent.nodeType !== ELEMENT_NODE) return ahead;
+    if (LINE_ENDS.has((parent as Element).tagName.toLowerCase())) return ahead;
   }
-  return false;
+  return ahead;
 }
 
 function opensBlock(node: Node): boolean {
@@ -111,13 +165,14 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // A fence or a code span already makes code inert; LaTeX does not, so only
     // what could open a tag is neutralized there.
     if (literal === 'code') return text;
-    // Both escapers judge a construct by what follows it, and neither can see
-    // past the end of this node — so they are told whether anything follows.
-    const continues = continuesOnLine(node);
-    if (literal === 'math') return escapeMathTags(text, continues);
+    // Every escaper judges a construct by what follows it, and none can see past
+    // the end of this node — so they are told what does. Only the bracket rule
+    // reads the text itself, so a node it has no use for skips gathering it.
+    const ahead = lookAhead(node, literal === 'none' && mayOpenLink(text));
+    if (literal === 'math') return escapeMathTags(text, ahead.continues);
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
-    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text), continues);
+    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text, ahead.text), ahead.continues);
     return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
   }
   if (node.nodeType === ELEMENT_NODE) {
