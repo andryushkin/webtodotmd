@@ -20,8 +20,15 @@ beforeAll(() => {
 });
 
 // Measured 2026-07-26 on the generator as it stands.
+//
+// It rose from 76 when tables stopped falling back to HTML. Folding a nested
+// table into its cell joins the cells with ` · `, and folding preformatted text
+// indents with non-breaking spaces — characters the page did not show, which is
+// exactly what this oracle reports. Both are deliberate: without a separator the
+// cells of the inner table run together into one word. The number is the price
+// of that choice, not a defect to chase.
 const SEEDS = 200;
-const CEILING = 76;
+const CEILING = 96;
 
 function countFailures(): number {
   let failures = 0;
@@ -82,7 +89,7 @@ describe('math inside the HTML table fallback', () => {
     ['x < y', mathjaxV2, true, false],
   ])('%s via %p', (tex, build, cellsSurvive, latexIntact) => {
     const html = table((build as (t: string) => string)(tex as string));
-    const md = toMarkdown(html, { ...CONVERSION_OPTIONS });
+    const md = toMarkdown(html, { ...CONVERSION_OPTIONS, complexTableFallback: 'html' });
     expect(cellCount(render(md)) === cellCount(html)).toBe(cellsSurvive as boolean);
     expect(md.includes(tex as string)).toBe(latexIntact as boolean);
   });

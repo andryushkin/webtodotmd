@@ -71,13 +71,13 @@ describe('экранирование markdown из текста страницы
 
   it('в HTML-ячейке синтаксис не экранируется', () => {
     const html = '<table><tr><td colspan="2">snake_case and *lit*</td></tr></table>';
-    expect(toMarkdown(html)).toContain('<td colspan="2">snake_case and *lit*</td>');
+    expect(toMarkdown(html, { complexTableFallback: 'html' })).toContain('<td colspan="2">snake_case and *lit*</td>');
   });
 
   it('формула в ячейке не может закрыть её', () => {
     const payload = 'x&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;img src=q onerror="alert(1)"&gt;';
     const html = `<table><tr><td colspan="2"><span class="katex"><annotation encoding="application/x-tex">${payload}</annotation></span></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html, { math: true })).document;
+    const reparsed = parseHTML(toMarkdown(html, { math: true, complexTableFallback: 'html' })).document;
     expect(reparsed.querySelectorAll('img, [onerror]')).toHaveLength(0);
     expect(reparsed.querySelectorAll('td')).toHaveLength(1);
   });

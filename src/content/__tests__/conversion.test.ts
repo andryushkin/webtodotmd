@@ -192,9 +192,17 @@ describe('tables', () => {
     expect(lines[2]).toContain('para one<br>two');
   });
 
-  test('colspan falls back to HTML rather than flattening', () => {
+  test('colspan is flattened onto the grid, not turned into HTML', () => {
     const html = '<table><tr><th colspan="2">Header</th></tr><tr><td>A</td><td>B</td></tr></table>';
     const md = convert(html);
+    expect(md).not.toContain('<table>');
+    // The header keeps its text where it starts; the position it spanned is empty.
+    expect(md.split('\n')[0]).toMatch(/^\| Header\s*\|\s*\|$/);
+  });
+
+  test('colspan still reaches HTML when it is asked for', () => {
+    const html = '<table><tr><th colspan="2">Header</th></tr><tr><td>A</td><td>B</td></tr></table>';
+    const md = convert(html, { complexTableFallback: 'html' });
     expect(md).toContain('<table>');
     expect(md).toContain('colspan="2"');
   });
@@ -212,7 +220,7 @@ describe('tables', () => {
       '<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>" onclick="steal()">' +
       '<form><input autofocus><button>go</button></form>' +
       '<div style="position:fixed;inset:0">overlay</div></td></tr></table>';
-    const md = convert(html);
+    const md = convert(html, { complexTableFallback: 'html' });
     const reparsed = domAdapter(md);
     expect(reparsed.querySelectorAll('img')).toHaveLength(0);
     expect(reparsed.querySelectorAll('form, input, button, div')).toHaveLength(0);
@@ -225,7 +233,7 @@ describe('tables', () => {
   test('HTML fallback keeps preformatted text byte for byte', () => {
     const source = 'def f():\n\n\treturn 1\n';
     const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-    const md = convert(html);
+    const md = convert(html, { complexTableFallback: 'html' });
     expect(domAdapter(md).querySelector('pre')?.textContent).toBe(source);
     // A blank line here would end the HTML block and hand the rest of the table
     // to the Markdown parser as text.

@@ -250,6 +250,8 @@ describe('link scheme check in an HTML fallback cell', () => {
   const cell = (href: string) =>
     `<table><tbody><tr><td colspan="2"><a href="${href}">t</a></td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
 
+  const toHtmlTable = (html: string) => toMarkdown(html, { complexTableFallback: 'html' });
+
   it.each([
     ['https', 'https://e.com', true],
     ['mailto', 'mailto:a@e.com', true],
@@ -258,7 +260,7 @@ describe('link scheme check in an HTML fallback cell', () => {
     ['query with a colon', '?filter=a:b', true],
     ['javascript', 'javascript:alert(1)', false],
   ])('%s', (_name, href, kept) => {
-    const md = toMarkdown(cell(href));
+    const md = toHtmlTable(cell(href));
     expect(md.includes('<a href=')).toBe(kept);
     expect(md).toContain('t');
   });

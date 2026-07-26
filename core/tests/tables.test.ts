@@ -207,7 +207,9 @@ describe('строки, колонки и подпись в pipe-таблице'
   });
 
   it('<caption> сохраняется и в HTML-fallback', () => {
-    const result = toMarkdown('<table><caption>Cap</caption><tr><td colspan="2">x</td></tr></table>');
+    const result = toMarkdown(
+      '<table><caption>Cap</caption><tr><td colspan="2">x</td></tr></table>', { complexTableFallback: 'html' },
+    );
     expect(result).toContain('<caption>Cap</caption>');
   });
 
@@ -231,13 +233,15 @@ describe('строки, колонки и подпись в pipe-таблице'
 });
 
 describe('complex table — HTML fallback', () => {
+  // Opt-in now; the default is the pipe form, covered by the block below.
+  const toHtmlTable = (html: string) => toMarkdown(html, { complexTableFallback: 'html' });
   it('colspan → HTML fallback', () => {
     const html = `
       <table>
         <tr><th colspan="2">Header</th></tr>
         <tr><td>A</td><td>B</td></tr>
       </table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<table>');
     expect(result).toContain('colspan');
   });
@@ -248,7 +252,7 @@ describe('complex table — HTML fallback', () => {
         <tr><td rowspan="2">Span</td><td>A</td></tr>
         <tr><td>B</td></tr>
       </table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<table>');
     expect(result).toContain('rowspan');
   });
@@ -259,7 +263,7 @@ describe('complex table — HTML fallback', () => {
         <thead><tr><th>Code</th></tr></thead>
         <tbody><tr><td><pre>one</pre></td></tr></tbody>
       </table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<table>');
     expect(result).toContain('<pre>one</pre>');
   });
@@ -327,7 +331,7 @@ describe('вложенные таблицы', () => {
 
   it('вложенная таблица остаётся вложенной после повторного разбора', () => {
     const html = `<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toMarkdown(html, { complexTableFallback: 'html' })).document;
     const outerCell = reparsed.querySelector('td');
     expect(outerCell?.querySelector('table td')?.textContent).toBe('inner');
   });
@@ -353,6 +357,11 @@ describe('блочный контент в ячейке', () => {
 });
 
 describe('HTML fallback — своя разметка, а не разметка страницы', () => {
+  // The HTML form is opt-in now: by default a table GFM cannot express is
+  // flattened into the pipe form. This block is about the HTML form itself, so
+  // every case asks for it.
+  const toHtmlTable = (html: string, options: Record<string, unknown> = {}) =>
+    toMarkdown(html, { complexTableFallback: 'html', ...options });
   // The fallback emits table/tr/td/th/pre built here and nothing else. Filtering
   // the page's own markup was tried: everything not on the deny list survived.
   it('интерактивные и медийные элементы сводятся к тексту, как и вне таблиц', () => {
@@ -361,7 +370,7 @@ describe('HTML fallback — своя разметка, а не разметка 
       ['<div style="position:fixed;inset:0">overlay</div>', 'overlay'],
     ];
     for (const [cell, expected] of cases) {
-      const result = toMarkdown(`<table><tr><td colspan="2">${cell}</td></tr></table>`);
+      const result = toHtmlTable(`<table><tr><td colspan="2">${cell}</td></tr></table>`);
       expect(result).toContain(`<td colspan="2">${expected}</td>`);
       expect(result).not.toContain('<form');
       expect(result).not.toContain('style=');
@@ -370,7 +379,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('<video autoplay> не переносится вовсе', () => {
     const html = '<table><tr><td colspan="2"><video autoplay src="https://example.com/x.mp4"></video></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).not.toContain('video');
     expect(result).not.toContain('autoplay');
     expect(result).toContain('<td colspan="2"></td>');
@@ -379,7 +388,7 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('атрибуты страницы не переносятся, кроме colspan и rowspan', () => {
     const html =
       '<table><tr><td colspan="2" rowspan="3" title="t" class="c" id="i" onclick="steal()">x</td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<td colspan="2" rowspan="3">x</td>');
     for (const attr of ['title', 'class', 'id', 'onclick']) expect(result).not.toContain(attr);
   });
@@ -387,18 +396,18 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('нечисловой, чрезмерный и единичный span опускаются', () => {
     const html =
       '<table><tr><td colspan="abc">a</td><td colspan="99999999">b</td><td colspan="1">c</td><td colspan="2">d</td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<td>a</td><td>b</td><td>c</td><td colspan="2">d</td>');
   });
 
   it('th остаётся th', () => {
-    const result = toMarkdown('<table><tr><th colspan="2">H</th></tr><tr><td>a</td></tr></table>');
+    const result = toHtmlTable('<table><tr><th colspan="2">H</th></tr><tr><td>a</td></tr></table>');
     expect(result).toContain('<th colspan="2">H</th>');
   });
 
   it('список в ячейке разделён, а не склеен в "ab"', () => {
     const html = '<table><tr><td colspan="2"><ul><li>a</li><li>b</li></ul></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('- a');
     expect(result).toContain('- b');
     expect(result).not.toContain('>ab<');
@@ -406,7 +415,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('инлайн-разметка ячейки — элементы, а не markdown', () => {
     const html = '<table><tr><td colspan="2"><strong>t</strong> and <code>x|y</code></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     // Markdown is not parsed inside an HTML block, so `**t**` reached the reader
     // as asterisks — the cell showed markup where the page showed bold text.
     expect(result).toContain('<strong>t</strong>');
@@ -417,10 +426,10 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('ссылка в ячейке — элемент, чужая схема теряет ссылку, но не текст', () => {
     const safe = '<table><tr><td colspan="2"><a href="https://e.com">t</a></td></tr></table>';
-    expect(toMarkdown(safe)).toContain('<a href="https://e.com">t</a>');
+    expect(toHtmlTable(safe)).toContain('<a href="https://e.com">t</a>');
 
     const unsafe = '<table><tr><td colspan="2"><a href="javascript:alert(1)">t</a></td></tr></table>';
-    const result = toMarkdown(unsafe);
+    const result = toHtmlTable(unsafe);
     expect(result).not.toContain('javascript:');
     expect(result).toContain('t');
   });
@@ -428,7 +437,7 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('<pre> сохраняется точно, включая пустые строки и табы', () => {
     const source = 'def f():\n\n\treturn 1\n';
     const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
     // A blank line would end the HTML block and give the rest to Markdown as prose.
     expect(result).not.toMatch(/\n[ \t]*\n/);
@@ -436,7 +445,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('& и < внутри <pre> экранируются', () => {
     const html = '<table><tr><td colspan="2"><pre>a & b < c</pre></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('a &amp; b &lt; c');
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe('a & b < c');
   });
@@ -446,7 +455,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     // inside the code became <br><br>.
     const source = 'a\n\nb';
     const html = `<table><tr><td colspan="2"><div><pre>${source}</pre></div></td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     // Wrapped, it reaches the converter as a fence, so the newlines are encoded
     // rather than collapsed — the text comes back either way.
     expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(source);
@@ -457,20 +466,20 @@ describe('HTML fallback — своя разметка, а не разметка 
     // Number() reads "1e3" as 1000 and "0x2" as 2 — spans the page never wrote.
     const html =
       '<table><tr><td colspan="1e3">a</td><td colspan="0x2">b</td><td colspan="2.5">c</td><td colspan="-2">d</td><td colspan=" 3 ">e</td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<td>a</td><td>b</td><td>c</td><td>d</td><td colspan="3">e</td>');
   });
 
   it('одиночный < в тексте не ломает структуру', () => {
     const html = '<table><tr><td colspan="2">5 &lt; 7</td></tr></table>';
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelectorAll('td')).toHaveLength(1);
     expect(reparsed.querySelector('td')?.textContent).toBe('5 < 7');
   });
 
   it('вложенная таблица сериализуется тем же генератором', () => {
     const html = '<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result.match(/inner/g)).toHaveLength(1);
     expect(result).toContain('<td>inner</td>');
     expect(result).toContain('outer');
@@ -478,7 +487,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('литеральные теги из текста страницы не закрывают наши элементы', () => {
     const html = '<table><tr><td colspan="2">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;script&gt;alert(1)&lt;/script&gt;</td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     const reparsed = parseHTML(result).document;
     expect(reparsed.querySelectorAll('td')).toHaveLength(1);
     expect(reparsed.querySelectorAll('script')).toHaveLength(0);
@@ -487,7 +496,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('теги, которые выпускает сам конвертер, не экранируются', () => {
     const html = '<table><tr><td colspan="2">x<sub>1</sub><sup>2</sup><br>y</td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<sub>1</sub>');
     expect(result).toContain('<sup>2</sup>');
     expect(result).toContain('<br>');
@@ -505,7 +514,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     ['img с обработчиком', '&lt;img src=x onerror=alert(1)&gt;', '<img src=x onerror=alert(1)>'],
   ])('литеральный %s остаётся текстом', (_name, input, expectedText) => {
     const html = `<table><tr><td colspan="2">${input}</td><td>next</td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     const reparsed = parseHTML(result).document;
     // The second cell proves nothing swallowed the rest of the row.
     expect(reparsed.querySelectorAll('td')).toHaveLength(2);
@@ -521,7 +530,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     // The converter puts attribute values into its own syntax — [t](href),
     // ![alt](src 'title') — so they reach the file just like text does.
     const html = `<table><tr><td colspan="2">${cell}</td><td>next</td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelectorAll('td')).toHaveLength(2);
     expect(reparsed.querySelectorAll('script, img, [onerror]')).toHaveLength(0);
   });
@@ -529,13 +538,13 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('вложенная таблица через обёртку не экранируется дважды', () => {
     const html =
       '<table><tr><td colspan="2"><div><table><tr><td colspan="2">a &amp; b</td></tr></table></div></td></tr></table>';
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelectorAll('table table td')[0]?.textContent).toBe('a & b');
   });
 
   it('прозаический </sub> внутри inline-кода не закрывает настоящий <sub>', () => {
     const html = '<table><tr><td colspan="2"><sub>real <code>&lt;/sub&gt;</code> tail</sub></td></tr></table>';
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelectorAll('sub')).toHaveLength(1);
     expect(reparsed.querySelector('sub')?.textContent).toBe('real </sub> tail');
     expect(reparsed.querySelector('code')?.textContent).toBe('</sub>');
@@ -543,14 +552,14 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('амперсанд и литеральная сущность проходят round-trip', () => {
     const html = '<table><tr><td colspan="2">a &amp; b, literal &amp;lt; stays</td></tr></table>';
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelector('td')?.textContent).toBe('a & b, literal &lt; stays');
   });
 
   it('код с тройными бэктиками внутри проходит round-trip', () => {
     const code = 'a\n```\n\nb';
     const html = `<table><tr><td colspan="2"><div><pre><code>${code}</code></pre></div></td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(code);
     expect(result).not.toMatch(/\n[ \t]*\n/);
   });
@@ -560,13 +569,13 @@ describe('HTML fallback — своя разметка, а не разметка 
     // the element itself has to survive.
     const source = 'def f():\n\n\treturn 1';
     const html = `<table><tr><td colspan="2"><div><pre>${source}</pre></div></td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<pre>');
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
   });
 
   it('<br> ниже уровня ячейки не оставляет обратный слеш в fallback', () => {
-    const result = toMarkdown('<table><tr><td colspan="2"><span>a<br>b</span></td></tr></table>');
+    const result = toHtmlTable('<table><tr><td colspan="2"><span>a<br>b</span></td></tr></table>');
     expect(result).toContain('a<br>b');
     expect(result).not.toContain('\\');
   });
@@ -574,13 +583,13 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('обратный слеш внутри <pre> не трогается нормализацией переноса', () => {
     const source = 'a\\\nb';
     const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-    expect(parseHTML(toMarkdown(html)).document.querySelector('pre')?.textContent).toBe(source);
+    expect(parseHTML(toHtmlTable(html)).document.querySelector('pre')?.textContent).toBe(source);
   });
 
   it('нумерация ol start сохраняется при собственной сериализации списка', () => {
     const html =
       '<table><tr><td colspan="2"><ol start="5"><li>a<pre>x</pre></li><li>b</li></ol></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('5. a');
     expect(result).toContain('6. b');
   });
@@ -588,7 +597,7 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('чекбоксы task-list сохраняются при собственной сериализации списка', () => {
     const html =
       '<table><tr><td colspan="2"><ul><li><input type="checkbox" checked> done<pre>x</pre></li><li><input type="checkbox"> todo</li></ul></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('[x] done');
     expect(result).toContain('[ ] todo');
   });
@@ -599,7 +608,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     // regression test for that approach.
     const html =
       '<table><tr><td colspan="2"><ul><li>a<ul><li>b<pre>c</pre></li></ul></li></ul></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('- a<br>  - b');
     expect(result).not.toContain('- a- b');
   });
@@ -607,7 +616,7 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('плейсхолдер, написанный самой страницей, не подменяется блоком', () => {
     const literal = '\uE000b\uE000';
     const html = `<table><tr><td colspan="2">before${literal}0${literal}after<pre>c</pre></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    const reparsed = parseHTML(toHtmlTable(html)).document;
     expect(reparsed.querySelector('td')?.textContent).toContain(`before${literal}0${literal}after`);
     expect(reparsed.querySelector('pre')?.textContent).toBe('c');
   });
@@ -618,7 +627,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     Math.random = () => 0;
     try {
       const html = `<table><tr><td colspan="2">x${literal}y<pre>c</pre></td></tr></table>`;
-      const reparsed = parseHTML(toMarkdown(html)).document;
+      const reparsed = parseHTML(toHtmlTable(html)).document;
       expect(reparsed.querySelector('td')?.textContent).toContain(`x${literal}y`);
     } finally {
       Math.random = real;
@@ -627,7 +636,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('обёртка сохраняет свой маркер списка вокруг <pre>', () => {
     const html = '<table><tr><td colspan="2"><ol><li>a<pre>x</pre></li><li>b</li></ol></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('1. a<pre>x</pre>');
     expect(result).toContain('2. b');
   });
@@ -637,7 +646,7 @@ describe('HTML fallback — своя разметка, а не разметка 
     // table and the blank line in the code became a <br>.
     const source = 'a\n\nb';
     const html = `<table><tr><td><div><pre>${source}</pre></div></td><td>x</td></tr><tr><td>y</td><td>z</td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('<table>');
     expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(source);
     expect(result).not.toMatch(/\n[ \t]*\n/);
@@ -646,7 +655,7 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('обёртка вокруг <pre> сохраняет свою разметку списка', () => {
     const html =
       '<table><tr><td colspan="2"><ul><li>one<pre>code</pre>tail</li><li>two</li></ul></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('- one');
     expect(result).toContain('- two');
     expect(parseHTML(result).document.querySelector('td')?.textContent).toContain('code');
@@ -655,7 +664,7 @@ describe('HTML fallback — своя разметка, а не разметка 
 
   it('блочный контент даёт разрыв, но не пустую строку', () => {
     const html = '<table><tr><td colspan="2"><p>one</p><p>two</p></td></tr></table>';
-    const result = toMarkdown(html);
+    const result = toHtmlTable(html);
     expect(result).toContain('one<br><br>two');
     expect(result).not.toMatch(/\n[ \t]*\n/);
   });
@@ -666,14 +675,16 @@ describe('регрессии, найденные ревью', () => {
     // Markdown is not parsed inside an HTML block, so escaping there protects
     // nothing and the backslashes would be shown to the reader. The characters
     // render as themselves either way.
-    const result = toMarkdown('<table><tr><td colspan="2">use `foo` and snake_case</td></tr></table>');
+    const result = toMarkdown(
+      '<table><tr><td colspan="2">use `foo` and snake_case</td></tr></table>', { complexTableFallback: 'html' },
+    );
     expect(result).toContain('<td colspan="2">use `foo` and snake_case</td>');
   });
 
   it('<code> в ячейке кодирует переводы строк, как и <pre>', () => {
     const source = 'a\n\nb';
     const html = `<table><tr><td colspan="2"><code>${source}</code></td></tr></table>`;
-    const result = toMarkdown(html);
+    const result = toMarkdown(html, { complexTableFallback: 'html' });
     expect(result).not.toMatch(/\n[ \t]*\n/);
     expect(parseHTML(result).document.querySelector('code')?.textContent).toBe(source);
   });
