@@ -48,12 +48,11 @@ function ownCells(row: Element): Element[] {
 }
 
 function analyzeTable(table: Element): TableAnalysis {
-  // Merged cells no longer send a table to the HTML fallback. They are flattened
-  // onto a grid instead: the cell keeps its text where it starts, and the
-  // positions it spanned become empty. That loses the fact of the merge — a
-  // reader cannot tell `| 120 | |` from a genuinely empty neighbour — and it is
-  // the chosen trade: an HTML table renders nowhere that Markdown alone is read,
-  // and every cell inside one stops being Markdown.
+  // What the shape *is*; what to do about it is the rule's decision, and by
+  // default it is to flatten rather than to emit HTML.
+  const hasMergedCells = Array.from(
+    table.querySelectorAll('td[colspan], th[colspan], td[rowspan], th[rowspan]'),
+  ).some((cell) => cellSpans(cell, cell.parentElement, table) !== '');
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
@@ -71,7 +70,7 @@ function analyzeTable(table: Element): TableAnalysis {
     );
   const hasHead = !!table.querySelector('thead');
 
-  if (hasNestedTable || hasPreformatted) {
+  if (hasMergedCells || hasNestedTable || hasPreformatted) {
     return { level: 'complex', hasHead };
   }
 
@@ -87,13 +86,57 @@ function breaksToBr(md: string): string {
   return md.replace(/\\\r?\n/g, '<br>').replace(/\s*\r?\n+\s*/g, '<br>');
 }
 
+/**
+ * Preformatted text folded into one pipe cell: every line keeps its own code span
+ * and its own indentation, and the lines are joined with the only break a pipe
+ * cell can carry. A single span across the whole thing would lose the newlines —
+ * a code span renders them as spaces — and a fence cannot live in a cell at all.
+ */
+function preInCell(pre: Element): string {
+  const text = (pre.textContent ?? '').replace(/\n$/, '');
+  return text
+    .split('\n')
+    .map((line) => {
+      if (line.trim() === '') return '';
+      // Leading whitespace is the shape of the code; a code span keeps it only if
+      // it is not the very first character, which a non-breaking space fixes.
+      const indented = line.replace(/^ +/, (spaces) => '\u00a0'.repeat(spaces.length));
+      const fence = indented.includes('`') ? '``' : '`';
+      const padding = indented.includes('`') ? ' ' : '';
+      return `${fence}${padding}${indented.replace(/\|/g, '\\|')}${padding}${fence}`;
+    })
+    .join('<br>');
+}
+
+/**
+ * A nested table folded into its cell: the rows it held, one per line, cells
+ * separated by a middle dot. A pipe table cannot nest, and the alternative — the
+ * inner table's own pipe syntax, separator row and all — arrives as noise.
+ */
+function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
+  return ownRows(table)
+    .map((row) =>
+      ownCells(row)
+        .map((cell) => getCellContent(cell, options))
+        .filter((cell) => cell !== '')
+        .join(' · '),
+    )
+    .filter((row) => row !== '')
+    .join('<br>');
+}
+
 function getCellContent(cell: Element, options: MarkItDownOptions): string {
   let text = '';
   for (const child of Array.from(cell.childNodes)) {
     if (child.nodeType === ELEMENT_NODE) {
       const el = child as Element;
-      if (el.tagName.toLowerCase() === 'br') {
+      const childTag = el.tagName.toLowerCase();
+      if (childTag === 'br') {
         text += '<br>';
+      } else if (childTag === 'pre') {
+        text += preInCell(el);
+      } else if (childTag === 'table') {
+        text += nestedTableInCell(el, options);
       } else {
         text += convert(child, options);
       }
@@ -474,8 +517,11 @@ export const TABLE_RULES: Rule[] = [
     replacement(el, _childContent, options) {
       const analysis = analyzeTable(el);
 
-      if (analysis.level === 'complex') {
-        const fallback = options.complexTableFallback ?? 'html';
+      // 'flatten' is the default: an HTML table renders nowhere that Markdown
+      // alone is read, and every cell inside one stops being Markdown, so the
+      // structure is folded into the pipe form unless HTML is asked for.
+      if (analysis.level === 'complex' && (options.complexTableFallback ?? 'flatten') !== 'flatten') {
+        const fallback = options.complexTableFallback ?? 'flatten';
         if (fallback === 'skip') return captionOnly(el, options);
         if (fallback === 'text') {
           const text = ownRows(el)

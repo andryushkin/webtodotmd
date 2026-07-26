@@ -108,10 +108,15 @@ function expandShadowRoots(): () => void {
   return () => cleanups.forEach(fn => fn());
 }
 
+/** The one conversion option the user can change; see Settings.htmlTables. */
+function tableOptions(): { complexTableFallback: 'flatten' | 'html' } {
+  return { complexTableFallback: htmlTablesSetting ? 'html' : 'flatten' };
+}
+
 function selectionToMd(selection: Selection): string {
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
     if (selection.rangeCount > 1) {
       const fragments: string[] = [];
       for (let i = 0; i < selection.rangeCount; i++) {
@@ -141,10 +146,12 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
 // ---- Settings & i18n ----
 
 let showBubbleSetting = true;
+let htmlTablesSetting = false;
 let translations: Record<string, string> = {};
 
 chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
   if (settings?.showBubble === false) showBubbleSetting = false;
+  htmlTablesSetting = settings?.htmlTables === true;
   if (contentI18n) translations = contentI18n;
 });
 
@@ -152,6 +159,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   if (changes.settings) {
     showBubbleSetting = changes.settings.newValue?.showBubble !== false;
+    htmlTablesSetting = changes.settings.newValue?.htmlTables === true;
   }
   if (changes.contentI18n) {
     translations = changes.contentI18n.newValue ?? {};
@@ -424,7 +432,7 @@ function captureHighlightsMd(): string {
 
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
     const fragments = sorted.map(el => {
       const range = document.createRange();
       range.selectNodeContents(el);
