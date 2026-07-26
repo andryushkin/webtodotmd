@@ -534,6 +534,38 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(result).toContain('[ ] todo');
   });
 
+  it('вложенный список сохраняет разделители и отступ', () => {
+    // Serializing list structure by hand glued the markers together as "- a- b";
+    // the content now goes through the converter whole, so this is its own
+    // regression test for that approach.
+    const html =
+      '<table><tr><td colspan="2"><ul><li>a<ul><li>b<pre>c</pre></li></ul></li></ul></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('- a<br>  - b');
+    expect(result).not.toContain('- a- b');
+  });
+
+  it('плейсхолдер, написанный самой страницей, не подменяется блоком', () => {
+    const literal = '\uE000b\uE000';
+    const html = `<table><tr><td colspan="2">before${literal}0${literal}after<pre>c</pre></td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelector('td')?.textContent).toContain(`before${literal}0${literal}after`);
+    expect(reparsed.querySelector('pre')?.textContent).toBe('c');
+  });
+
+  it('минтинг плейсхолдера не зависит от Math.random', () => {
+    const literal = '\uE000b\uE000';
+    const real = Math.random;
+    Math.random = () => 0;
+    try {
+      const html = `<table><tr><td colspan="2">x${literal}y<pre>c</pre></td></tr></table>`;
+      const reparsed = parseHTML(toMarkdown(html)).document;
+      expect(reparsed.querySelector('td')?.textContent).toContain(`x${literal}y`);
+    } finally {
+      Math.random = real;
+    }
+  });
+
   it('обёртка сохраняет свой маркер списка вокруг <pre>', () => {
     const html = '<table><tr><td colspan="2"><ol><li>a<pre>x</pre></li><li>b</li></ol></td></tr></table>';
     const result = toMarkdown(html);

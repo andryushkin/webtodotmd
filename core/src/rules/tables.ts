@@ -1,6 +1,5 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
-import { listItemPrefix } from './lists.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -160,62 +159,6 @@ function preformattedText(el: Element): string {
 // converter as a fence (the wrapper's own Markdown, a list marker for instance,
 // is worth keeping), so its newlines are encoded rather than collapsed: &#10;
 // re-parses to the same text.
-function fenceMarker(line: string): string | undefined {
-  return line.trim().match(/^(`{3,}|~{3,})/)?.[1];
-}
-
-function htmlSafeMarkdown(md: string): string {
-  const lines = md.split(/\r?\n/);
-
-  // Which lines belong to a fenced block. Length matters: code.ts deliberately
-  // emits four or more backticks when the code itself contains three, so pairing
-  // by a fixed ``` would cut such a block open at its own content.
-  const fenced: boolean[] = [];
-  let open: string | undefined;
-  for (const line of lines) {
-    const marker = fenceMarker(line);
-    if (open === undefined) {
-      fenced.push(marker !== undefined);
-      if (marker !== undefined) open = marker;
-      continue;
-    }
-    fenced.push(true);
-    if (marker !== undefined && marker[0] === open[0] && marker.length >= open.length && line.trim() === marker) {
-      open = undefined;
-    }
-  }
-
-  let out = '';
-  let blankRun = false;
-  let previousFenced = false;
-  let previousHardBreak = false;
-  for (const [index, line] of lines.entries()) {
-    const insideFence = fenced[index] ?? false;
-    if (!insideFence && line.trim() === '') {
-      // A blank line ends the HTML block and hands the rest of the table to the
-      // Markdown parser as prose. Outside a fence it is formatting, so it turns
-      // into a break; inside, it is content and is kept as &#10;.
-      blankRun = true;
-      continue;
-    }
-    // The converter's hard break is a trailing backslash: a <br> below the cell
-    // level (inside a <span>, say) arrives here as one, and a backslash means
-    // nothing in HTML — it would just show up in the cell.
-    const hardBreak = !insideFence && line.endsWith('\\');
-    const text = hardBreak ? `${line.slice(0, -1)}<br>` : line;
-    if (out !== '') {
-      if (blankRun) out += '<br><br>';
-      else if (previousHardBreak) out += '';
-      else out += insideFence && previousFenced ? '&#10;' : '\n';
-    }
-    out += text;
-    blankRun = false;
-    previousFenced = insideFence;
-    previousHardBreak = hardBreak;
-  }
-  return out;
-}
-
 // Inside a <td> the converter's Markdown sits next to real markup, so text the
 // page wrote must not be able to look like markup: a literal "</td></table>",
 // "<sub onclick=…>" or "<!--" would close our elements, add behavior, or comment
@@ -257,74 +200,77 @@ function escapedTextClone(el: Element): Element {
   return clone;
 }
 
-function serializeWrapper(el: Element, options: MarkItDownOptions): string {
-  const tag = el.tagName.toLowerCase();
-  const children = Array.from(el.childNodes);
-
-  if (tag === 'ul' || tag === 'ol') {
-    const items = children.filter(
-      (node) => node.nodeType === ELEMENT_NODE && (node as Element).tagName.toLowerCase() === 'li',
-    ) as Element[];
-    // The marker comes from the list rule itself — numbering from `start`, task
-    // list checkboxes — so serializing here cannot drift from the normal path.
-    return items
-      .map((li) => `${listItemPrefix(li)}${serializeNodes(Array.from(li.childNodes), options)}`)
-      .join('<br>');
-  }
-
-  if (tag === 'blockquote') return `> ${serializeNodes(children, options)}`;
-
-  return serializeNodes(children, options);
+// Two things Markdown inside a <td> cannot carry: the whitespace of a <pre>
+// (a fenced block collapses when the cell is rendered as HTML) and the shape of
+// a nested table. Both are lifted out of the cell, the rest of the cell goes
+// through the converter untouched, and the lifted blocks are put back where they
+// were. Nothing about lists, breaks or emphasis is re-implemented here.
+function topLevelBlocks(cell: Element): Element[] {
+  return Array.from(cell.querySelectorAll('pre, table')).filter((el) => {
+    let node = el.parentElement;
+    while (node && node !== cell) {
+      const tag = node.tagName.toLowerCase();
+      if (tag === 'pre' || tag === 'table') return false;
+      node = node.parentElement;
+    }
+    return true;
+  });
 }
 
-// Nodes that get their own markup instead of going through the converter: a
-// nested table keeps its structure, and a <pre> keeps its whitespace, which
-// Markdown inside a cell cannot. Both are found at any depth — a <pre> wrapped
-// in a <div> is still a <pre>, and running it through the converter would turn
-// the blank lines in the code into <br><br>.
-function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
-  let out = '';
-  let pending: Node[] = [];
-
-  const flushMarkdown = (): void => {
-    if (pending.length === 0) return;
-    let md = '';
-    for (const node of pending) {
-      if (node.nodeType === TEXT_NODE) md += escapeHtmlText(node.textContent ?? '');
-      else if (node.nodeType === ELEMENT_NODE) md += convert(escapedTextClone(node as Element), options);
-    }
-    out += htmlSafeMarkdown(md);
-    pending = [];
-  };
-
-  for (const child of nodes) {
-    const el = child.nodeType === ELEMENT_NODE ? (child as Element) : null;
-    const tag = el ? el.tagName.toLowerCase() : '';
-    if (tag === 'br') {
-      // A cell is one line of HTML: the converter's Markdown hard break (a
-      // trailing backslash) means nothing here, <br> does.
-      flushMarkdown();
-      out += '<br>';
-    } else if (tag === 'table') {
-      flushMarkdown();
-      out += serializeStructuralTable(el as Element, options);
-    } else if (tag === 'pre') {
-      flushMarkdown();
-      out += `<pre>${preformattedText(el as Element)}</pre>`;
-    } else if (el && el.querySelector('pre, table')) {
-      // A <pre> only keeps its whitespace as a real <pre>: as a fenced block
-      // inside a <td> the renderer collapses it. So descend to reach it — and
-      // emit the wrapper's own marker, which the converter would have produced.
-      flushMarkdown();
-      out += serializeWrapper(el, options);
-    } else {
-      pending.push(child);
-    }
+// The placeholder must not occur in the cell's own text: the substitution back
+// cannot tell one the page wrote from one we inserted. Candidates grow by a
+// character, so the search ends within the length of the input.
+function mintPlaceholder(text: string): string {
+  let token = '\uE000b\uE000';
+  for (let padding = 1; text.includes(token); padding += 1) {
+    token = `\uE000b${'\uE001'.repeat(padding)}\uE000`;
   }
-  flushMarkdown();
-  // Blank lines around block content became <br><br>; at the cell's edges they
-  // are padding from the page's indentation, not content.
-  return out.trim().replace(/^(?:<br>)+/, '').replace(/(?:<br>)+$/, '');
+  return token;
+}
+
+// A blank line ends the HTML block and hands the rest of the table to the
+// Markdown parser as prose; a trailing backslash is the converter's hard break,
+// which means nothing in HTML. Both become <br>. No fenced block reaches here —
+// every <pre> was lifted out first.
+function htmlSafeMarkdown(md: string): string {
+  return md
+    .replace(/\\\n/g, '<br>')
+    .replace(/\r?\n[ \t]*(?:\r?\n)+/g, '<br><br>')
+    // A cell is one line of HTML, so what is left of the Markdown's line
+    // structure — list items, one per line — becomes breaks as well.
+    .replace(/\r?\n/g, '<br>')
+    .trim()
+    .replace(/^(?:<br>)+/, '')
+    .replace(/(?:<br>)+$/, '');
+}
+
+function serializeCellContent(cell: Element, options: MarkItDownOptions): string {
+  const originals = topLevelBlocks(cell);
+  const clone = escapedTextClone(cell);
+  const lifted = topLevelBlocks(clone);
+
+  // The clone is structurally identical, so the two lists line up index by
+  // index. If they ever did not, a block would be rendered from the wrong
+  // element; fall back to the converter for the whole cell instead of guessing.
+  if (lifted.length !== originals.length) return htmlSafeMarkdown(convert(clone, options));
+
+  const token = mintPlaceholder(cell.textContent ?? '');
+  const blocks = originals.map((original) =>
+    original.tagName.toLowerCase() === 'pre'
+      ? `<pre>${preformattedText(original)}</pre>`
+      : serializeStructuralTable(original, options),
+  );
+
+  lifted.forEach((el, index) => {
+    const placeholder = el.ownerDocument?.createTextNode(`${token}${index}${token}`);
+    if (placeholder) el.replaceWith(placeholder);
+  });
+
+  const md = htmlSafeMarkdown(convert(clone, options));
+  return md.replace(
+    new RegExp(`${token}(\\d+)${token}`, 'g'),
+    (_match, index: string) => blocks[Number(index)] ?? '',
+  );
 }
 
 function ownCaption(table: Element): Element | undefined {
@@ -334,13 +280,13 @@ function ownCaption(table: Element): Element | undefined {
 function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {
   const lines: string[] = ['<table>'];
   const caption = ownCaption(table);
-  if (caption) lines.push(`<caption>${serializeNodes(Array.from(caption.childNodes), options)}</caption>`);
+  if (caption) lines.push(`<caption>${serializeCellContent(caption, options)}</caption>`);
   for (const row of ownRows(table)) {
     const cells = ownCells(row)
       .map((cell) => {
         const tag = cell.tagName.toLowerCase() === 'th' ? 'th' : 'td';
         const spans = `${spanAttribute(cell, 'colspan')}${spanAttribute(cell, 'rowspan')}`;
-        return `<${tag}${spans}>${serializeNodes(Array.from(cell.childNodes), options)}</${tag}>`;
+        return `<${tag}${spans}>${serializeCellContent(cell, options)}</${tag}>`;
       })
       .join('');
     lines.push(`<tr>${cells}</tr>`);
