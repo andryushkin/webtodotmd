@@ -129,20 +129,24 @@ function breaksToBr(md: string): string {
 }
 
 /**
- * The text of a preformatted block, with its lines still in it.
+ * The text of an element, with the lines a `<br>` draws still in it.
  *
  * `textContent` reads a `<br>` as nothing, so `a<br>b` — how plenty of pages
  * write a code sample, and what anything that pasted HTML into one produces —
- * arrived as `ab` and the reader lost the line. Both table fallbacks read a
- * `<pre>` this way, so both lost it.
+ * arrived as `ab` and the reader lost the line with no trace of it. All three
+ * table fallbacks read the page this way and all three lost it: the `html` one
+ * through `preformattedText`, the flattening one through `preInCell`, and the
+ * `text` one straight off the cell, which is why this is named for text rather
+ * than for a `<pre>`.
  *
- * Deliberately a copy of `textWithLineBreaks` in `rules/code.ts` rather than an
- * import: that rule owns the fenced block and this module owns the cell, and a
- * two-line helper is a smaller thing to keep in step than a dependency between
- * two rule files. Read from a clone either way — the page's own DOM must come
- * back unchanged, and here the element handed over is the page's, not a clone.
+ * Deliberately a copy of the function of the same name in `rules/code.ts` rather
+ * than an import: that rule owns the fenced block and this module owns the cell,
+ * and a two-line helper is a smaller thing to keep in step than a dependency
+ * between two rule files. Read from a clone either way — the page's own DOM must
+ * come back unchanged, and here the element handed over is the page's, not a
+ * clone.
  */
-function preformattedLines(el: Element): string {
+function textWithLineBreaks(el: Element): string {
   if (!el.querySelector('br')) return el.textContent ?? '';
   const clone = el.cloneNode(true) as Element;
   for (const br of Array.from(clone.querySelectorAll('br'))) {
@@ -158,7 +162,7 @@ function preformattedLines(el: Element): string {
  * a code span renders them as spaces — and a fence cannot live in a cell at all.
  */
 function preInCell(pre: Element): string {
-  const text = preformattedLines(pre).replace(/\n$/, '');
+  const text = textWithLineBreaks(pre).replace(/\n$/, '');
   return text
     .split('\n')
     .map((line) => {
@@ -184,6 +188,93 @@ function preInCell(pre: Element): string {
 }
 
 /**
+ * The outermost elements matching `selector` under `root`. One that sits inside
+ * an element of `containers` is that container's business, not the caller's —
+ * and `root` counts, because a caller may hand over a container itself.
+ *
+ * Both places that lift a block out of a cell ask this, with the list of what
+ * counts as a container being the only difference between them.
+ */
+function outermostWithin(root: Element, selector: string, containers: string[]): Element[] {
+  const isContainer = (el: Element): boolean => containers.includes(el.tagName.toLowerCase());
+  if (isContainer(root)) return [];
+  return Array.from(root.querySelectorAll(selector)).filter((el) => {
+    let node = el.parentElement;
+    while (node && node !== root) {
+      if (isContainer(node)) return false;
+      node = node.parentElement;
+    }
+    return true;
+  });
+}
+
+// What owns a <pre> instead of the cell's walk: another <pre>, and a nested
+// <table>, which folds its own cells and reaches them through getCellContent
+// again. <code> is left off — a <pre> inside one is not a content model any page
+// writes on purpose, and the inline rule reads text either way.
+const PRE_CONTAINERS = ['pre', 'table'];
+
+/**
+ * A cell's child that holds a `<pre>` somewhere below it, converted with every
+ * such block folded into the line rather than fenced.
+ *
+ * `getCellContent` named `pre` among the cell's *own* children, so a `<div>`
+ * around one — ordinary page markup, not a decision about format — hid it, and
+ * the fenced block the code rule emits landed inside a pipe cell. There a fence
+ * is not a fence: ``| ```<br>a<br>b<br>``` |`` reparses as a code span holding
+ * the literal text `<br>a<br>b<br>`, so the reader lost the lines *and* got the
+ * breaks as characters. `analyzeTable` flags a `td pre` at any depth, so this
+ * shape reaches the flattening path by construction.
+ *
+ * The nested table behind a wrapper was the same defect, and the cure there was
+ * symmetrical — the table rule reads its own ancestry, which no wrapper can hide.
+ * That remedy is not available here: the fenced block belongs to `rules/code.ts`,
+ * and teaching it to fold when it stands in a cell would make it import
+ * `preInCell` from this module — a dependency between two rule files, which is
+ * the very thing `textWithLineBreaks` above is duplicated to avoid. So the fold
+ * stays this module's decision. The `<pre>`s are lifted out of a clone, the
+ * wrapper converts without them, and each is put back folded — the technique the
+ * HTML fallback already uses on a whole cell. Converting the wrapper rather than
+ * walking it is what keeps its own Markdown: a list marker or emphasis around the
+ * block still reaches the reader.
+ *
+ * A `<pre>` under a nested `<table>` is left where it is: that table folds itself,
+ * and its cells come back through this same walk.
+ */
+function wrapperWithPre(el: Element, options: MarkItDownOptions): string {
+  // The cheap question first: this stands on the path of every element child of
+  // every cell, and hardly any of them hold a <pre> at all. The second check is a
+  // different one — every <pre> below this element may belong to a container that
+  // folds it itself — and it earns skipping the clone and the token.
+  if (!el.querySelector('pre')) return convert(el, options);
+  const originals = outermostWithin(el, 'pre', PRE_CONTAINERS);
+  if (originals.length === 0) return convert(el, options);
+
+  // A deep clone has the same elements in the same order, so the two lists line
+  // up index by index.
+  const clone = el.cloneNode(true) as Element;
+  const lifted = outermostWithin(clone, 'pre', PRE_CONTAINERS);
+  // outerHTML, not textContent: an href, an alt or a title reaches the output
+  // too, so a placeholder written into one would be substituted as well.
+  const token = mintPlaceholder(el.outerHTML);
+  lifted.forEach((pre, index) => {
+    const placeholder = pre.ownerDocument?.createTextNode(`${token}${index}${token}`);
+    if (placeholder) pre.replaceWith(placeholder);
+  });
+
+  // Folded from the page's own element rather than the clone, and put back before
+  // getCellContent escapes the finished cell — which is what the direct-child
+  // branch relies on too, and why preInCell escapes no pipes of its own.
+  return convert(clone, options).replace(
+    new RegExp(`${token}(\\d+)${token}`, 'g'),
+    (_match, index: string) => {
+      const original = originals[Number(index)];
+      return original ? preInCell(original) : '';
+    },
+  );
+}
+
+/**
  * A nested table folded into its cell: its caption on the first line, then the
  * rows it held, one per line, cells separated by a middle dot. A pipe table
  * cannot nest, and the alternative — the inner table's own pipe syntax,
@@ -201,16 +292,35 @@ function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
   // `escapePipes: false` throughout: the outer getCellContent escapes the
   // finished cell, and escaping the inner cells first turned every `|` into
   // `\\|`.
-  const lines = caption ? [getCellContent(caption, options, false)] : [];
+  const captionText = caption ? getCellContent(caption, options, false) : '';
+  // A caption is not a row, and an empty one is not a line: the page showed
+  // nothing there, so all it could add is a leading break.
+  const lines = captionText ? [captionText] : [];
   for (const row of ownRows(table)) {
+    // Every cell, the empty ones included. Dropping them was a third loss in this
+    // fold and the only silent one: a row reading `a`, nothing, `b` came out
+    // `a · b`, which is exactly what a genuine two-cell row produces, and nothing
+    // was left to tell the reader that `b` had stood in the third column. Down
+    // here a cell carries no header — its neighbours are the whole of what says
+    // where it was — so closing the gap does not shorten the line, it moves the
+    // values. The flattening path one level up answers the same question the same
+    // way, writing `| 120 |  |` for a merge rather than pulling the row together;
+    // a fold that disagreed with the table around it would report two different
+    // grids in one document.
+    //
+    // Whole rows are kept for the same reason, and keeping both is what lets
+    // `types.ts` go on naming the merge as the one thing this fold costs: what it
+    // promises is the inner table's rows, one per line, and a row it declines to
+    // emit is a row the reader cannot count. Dropping only the empty rows would
+    // also draw a line no page ever meant — with the cells preserved, a wholly
+    // empty row of two survives as ` · ` while a wholly empty row of one does not.
     lines.push(
       ownCells(row)
         .map((cell) => getCellContent(cell, options, false))
-        .filter((cell) => cell !== '')
         .join(' · '),
     );
   }
-  return lines.filter((line) => line !== '').join('<br>');
+  return lines.join('<br>');
 }
 
 function getCellContent(
@@ -234,7 +344,10 @@ function getCellContent(
         // landed inside a pipe cell, where the reader got `| x | y |` and a row
         // of dashes as literal text. The fold is the table rule's own decision
         // now, taken from the element's ancestry, which a wrapper cannot hide.
-        text += convert(child, options);
+        // A <pre> could not be moved the same way — see wrapperWithPre — so the
+        // wrapper is asked about one here instead. It converts as before when it
+        // holds none, which is nearly every cell there is.
+        text += wrapperWithPre(el, options);
       }
     } else if (child.nodeType === TEXT_NODE) {
       // Straight from textContent, so convert()'s escaping never saw it: a cell
@@ -337,7 +450,7 @@ function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
 // same text. A blank line would end the HTML block and hand the rest of the
 // table to the Markdown parser as prose.
 function preformattedText(el: Element): string {
-  return escapeHtmlText(preformattedLines(el)).replace(/\r?\n/g, '&#10;');
+  return escapeHtmlText(textWithLineBreaks(el)).replace(/\r?\n/g, '&#10;');
 }
 
 // A blank line ends the HTML block and hands the rest of the table to the
@@ -476,14 +589,7 @@ const LIFTED_TAGS = ['pre', 'table', 'code'];
 const LIFTED_SELECTOR = LIFTED_TAGS.join(', ');
 
 function topLevelBlocks(cell: Element): Element[] {
-  return Array.from(cell.querySelectorAll(LIFTED_SELECTOR)).filter((el) => {
-    let node = el.parentElement;
-    while (node && node !== cell) {
-      if (LIFTED_TAGS.includes(node.tagName.toLowerCase())) return false;
-      node = node.parentElement;
-    }
-    return true;
-  });
+  return outermostWithin(cell, LIFTED_SELECTOR, LIFTED_TAGS);
 }
 
 // The placeholder must not occur in the cell's own text: the substitution back
@@ -706,8 +812,16 @@ export const TABLE_RULES: Rule[] = [
                 // `\\|` — a literal backslash next to a live separator.
                 escapeCellPipes(
                   escapeCellText(
+                    // Read with the <br>s the page drew, not off textContent,
+                    // which sees one as nothing: `a<br>b` in a <pre> arrived as
+                    // `ab`, two lines welded into a word the page never showed.
+                    // The other two fallbacks were repaired and this call site
+                    // was missed. What the line becomes here is a space, the same
+                    // as a real newline in a <pre> — this mode writes a row on
+                    // one line, so a break has nowhere else to go, but a space
+                    // still marks where it was.
                     // A newline inside a cell would split the row this mode builds.
-                    (c.textContent ?? '').trim().replace(/\s*\n+\s*/g, ' '),
+                    textWithLineBreaks(c).trim().replace(/\s*\n+\s*/g, ' '),
                   ),
                 ),
               )

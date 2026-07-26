@@ -1045,3 +1045,191 @@ describe('формула в HTML-ячейке', () => {
     expect(parseHTML(result).document.querySelector('td')?.textContent).toBe('a<b');
   });
 });
+
+// getCellContent называл `pre` среди собственных детей ячейки, поэтому <div>
+// вокруг блока прятал его — а <div> вокруг <pre> это обычная разметка страницы, а
+// не решение о формате. Конвертер выдавал внутри pipe-ячейки настоящий
+// огороженный блок, где ограда оградой не является: она перечитывается как
+// код-спан с буквальным текстом `<br>a<br>b<br>`, и читатель терял и строки, и
+// сам код.
+describe('pre за обёрткой в ячейке', () => {
+  const table = (cell: string) => `<table><tr><td>h</td></tr><tr><td>${cell}</td></tr></table>`;
+
+  it.each([
+    ['<div>', '<div><pre>a\nb</pre></div>'],
+    ['<figure>', '<figure><pre>a\nb</pre></figure>'],
+    ['две обёртки', '<div><div><pre>a\nb</pre></div></div>'],
+  ])('%s сворачивается так же, как <pre> без обёртки', (_name, cell) => {
+    expect(toMarkdown(table(cell))).toBe(toMarkdown(table('<pre>a\nb</pre>')));
+  });
+
+  it('в ячейку не попадает ограда', () => {
+    const result = toMarkdown(table('<div><pre>a\nb</pre></div>'));
+    expect(result).toContain('| `a`<br>`b` |');
+    expect(result).not.toContain('```');
+  });
+
+  it('<br> внутри обёрнутого <pre> тоже даёт строки', () => {
+    expect(toMarkdown(table('<div><pre>a<br>b</pre></div>'))).toContain('`a`<br>`b`');
+  });
+
+  it('текст рядом с обёрнутым блоком не теряется', () => {
+    expect(toMarkdown(table('<div>before<pre>a\nb</pre>after</div>'))).toContain(
+      'before`a`<br>`b`after',
+    );
+  });
+
+  // Обёртка конвертируется целиком, а блок вынимается и возвращается на место:
+  // её собственная разметка — маркер списка, выделение — доходит до читателя.
+  it('маркер списка вокруг блока сохраняется', () => {
+    expect(toMarkdown(table('<ul><li>x<pre>a\nb</pre></li></ul>'))).toContain('- x`a`<br>`b`');
+  });
+
+  it('несколько блоков в одной обёртке', () => {
+    expect(toMarkdown(table('<div><pre>a</pre><pre>b</pre></div>'))).toBe(
+      toMarkdown(table('<pre>a</pre><pre>b</pre>')),
+    );
+  });
+
+  // Вложенная таблица сворачивает свои ячейки сама, и её <pre> проходит этот же
+  // обход уже на своём уровне: вынуть его из обёртки значило бы свернуть его не
+  // туда.
+  it('<pre> внутри вложенной таблицы остаётся её делом', () => {
+    const result = toMarkdown(table('<div><table><tr><td><pre>a\nb</pre></td></tr></table></div>'));
+    expect(result).toBe(toMarkdown(table('<table><tr><td><pre>a\nb</pre></td></tr></table>')));
+    expect(result).toContain('`a`<br>`b`');
+  });
+
+  it('ограда по-прежнему длиннее самой длинной серии бэктиков', () => {
+    expect(toMarkdown(table('<div><pre>a `` b</pre></div>'))).toContain('``` a `` b ```');
+  });
+
+  it('pipe в обёрнутом блоке экранируется ровно один раз', () => {
+    const result = toMarkdown(table('<div><pre>a | b</pre></div>'));
+    expect(result).toContain('`a \\| b`');
+    expect(result).not.toContain('\\\\|');
+  });
+
+  it('DOM страницы возвращается неизменным', () => {
+    const doc = parseHTML(table('<div><pre>a<br>b</pre></div>')).document;
+    setDOMAdapter(() => doc);
+    try {
+      toMarkdown('');
+      expect(doc.querySelectorAll('br')).toHaveLength(1);
+      expect(doc.querySelectorAll('pre')).toHaveLength(1);
+    } finally {
+      setDOMAdapter((html) => parseHTML(html).document as unknown as Document);
+    }
+  });
+
+  it('HTML-форма по-прежнему сохраняет обёрнутый <pre>', () => {
+    const result = toMarkdown(table('<div><pre>a\nb</pre></div>'), {
+      complexTableFallback: 'html',
+    });
+    expect(parseHTML(result).document.querySelector('td pre')?.textContent).toBe('a\nb');
+  });
+});
+
+// Режим text читал cell.textContent, который видит <br> как ничто: `a<br>b`
+// приезжало как `ab` — две строки, сваренные в слово, которого страница не
+// показывала. Две другие формы таблицы это уже чинили, а этот вызов пропустили.
+describe('режим text сохраняет строки pre', () => {
+  const text = (html: string) => toMarkdown(html, { complexTableFallback: 'text' });
+
+  it('<br> внутри <pre> становится пробелом, а не исчезает', () => {
+    const result = text('<table><tr><td colspan="2"><pre>a<br>b</pre></td><td>n</td></tr></table>');
+    expect(result).toContain('a b | n');
+    expect(result).not.toContain('ab');
+  });
+
+  it('<br> прямо в ячейке читается так же', () => {
+    expect(text('<table><tr><td colspan="2">a<br>b</td><td>n</td></tr></table>')).toContain(
+      'a b | n',
+    );
+  });
+
+  it('строка остаётся одной строкой документа', () => {
+    const md = text('<table><tr><td colspan="2"><pre>a<br>b</pre></td><td>n</td></tr></table>');
+    expect(md.trim().split('\n')).toHaveLength(1);
+  });
+
+  // Перенос здесь становится пробелом — режим пишет строку таблицы одной строкой
+  // документа, и деться переносу больше некуда, — но пробел всё же помечает, где
+  // он был.
+  it('настоящий перевод строки в <pre> ведёт себя так же', () => {
+    const withBr = text('<table><tr><td colspan="2"><pre>a<br>b</pre></td><td>n</td></tr></table>');
+    const withNewline = text(
+      '<table><tr><td colspan="2"><pre>a\nb</pre></td><td>n</td></tr></table>',
+    );
+    expect(withBr).toBe(withNewline);
+  });
+
+  it('DOM страницы возвращается неизменным', () => {
+    const doc = parseHTML(
+      '<table><tr><td colspan="2"><pre>a<br>b</pre></td><td>n</td></tr></table>',
+    ).document;
+    setDOMAdapter(() => doc);
+    try {
+      toMarkdown('', { complexTableFallback: 'text' });
+      expect(doc.querySelectorAll('br')).toHaveLength(1);
+    } finally {
+      setDOMAdapter((html) => parseHTML(html).document as unknown as Document);
+    }
+  });
+});
+
+// Свёртка выбрасывала пустые ячейки перед склейкой через ` · `, и это была
+// единственная её потеря, о которой читатель не мог догадаться: строка `a`,
+// пусто, `b` приезжала как `a · b` — ровно то, что даёт настоящая строка из двух
+// ячеек. Внизу у ячейки нет заголовка, соседи — это всё, что говорит, где она
+// стояла, поэтому закрытая дыра не укорачивает строку, а переставляет значения.
+describe('пустые ячейки вложенной таблицы', () => {
+  const outer = (inner: string) =>
+    `<table><tr><td>${inner}</td></tr><tr><td>outer</td></tr></table>`;
+
+  it('пустая ячейка в середине сохраняет позицию', () => {
+    const result = toMarkdown(outer('<table><tr><td>a</td><td></td><td>b</td></tr></table>'));
+    expect(result).toContain('| a ·  · b |');
+  });
+
+  it('строка из трёх ячеек не читается как строка из двух', () => {
+    const three = toMarkdown(outer('<table><tr><td>a</td><td></td><td>b</td></tr></table>'));
+    const two = toMarkdown(outer('<table><tr><td>a</td><td>b</td></tr></table>'));
+    expect(three).not.toBe(two);
+  });
+
+  it('пустая ячейка в начале и в конце тоже сохраняется', () => {
+    expect(
+      toMarkdown(outer('<table><tr><td></td><td>x</td><td></td></tr></table>')),
+    ).toContain('· x ·');
+  });
+
+  // Обещание свёртки — строки внутренней таблицы, по одной на строку; строка,
+  // которую свёртка не выдаёт, это строка, которую читателю не пересчитать.
+  it('целиком пустая строка остаётся строкой', () => {
+    const result = toMarkdown(
+      outer('<table><tr><td>a</td></tr><tr><td></td></tr><tr><td>b</td></tr></table>'),
+    );
+    expect(result).toContain('a<br><br>b');
+  });
+
+  it('пустая строка из одной ячейки не пропадает молча', () => {
+    const withGap = toMarkdown(
+      outer('<table><tr><td>a</td></tr><tr><td></td></tr><tr><td>b</td></tr></table>'),
+    );
+    const without = toMarkdown(outer('<table><tr><td>a</td></tr><tr><td>b</td></tr></table>'));
+    expect(withGap).not.toBe(without);
+  });
+
+  // Подпись — не строка: пустую показывать нечем, и всё, что она добавила бы, это
+  // ведущий перенос.
+  it('пустая подпись по-прежнему не добавляет строку', () => {
+    expect(
+      toMarkdown(outer('<table><caption> </caption><tr><td>x</td></tr></table>')),
+    ).not.toContain('<br>');
+  });
+
+  it('пустые ячейки не приносят лишнего экранирования', () => {
+    expect(toMarkdown(outer('<table><tr><td></td><td>x</td></tr></table>'))).not.toContain('\\');
+  });
+});
