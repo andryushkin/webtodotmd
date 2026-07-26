@@ -227,10 +227,11 @@ describe('вложенные таблицы', () => {
     expect(result.match(/inner/g)).toHaveLength(1);
   });
 
-  it('вложенная таблица сохраняется целиком внутри ячейки', () => {
+  it('вложенная таблица остаётся вложенной после повторного разбора', () => {
     const html = `<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>`;
-    const result = toMarkdown(html);
-    expect(result).toContain('<td><table><tr><td>inner</td></tr></table></td>');
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    const outerCell = reparsed.querySelector('td');
+    expect(outerCell?.querySelector('table td')?.textContent).toBe('inner');
   });
 
   it('строки вложенной таблицы не попадают во внешнюю при fallback text', () => {
@@ -253,146 +254,110 @@ describe('блочный контент в ячейке', () => {
   });
 });
 
-describe('HTML fallback сохраняет разметку ячейки', () => {
-  it('список в ячейке не схлопывается в текст', () => {
-    const html = `
-      <table>
-        <thead><tr><th>Items</th></tr></thead>
-        <tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody>
-      </table>`;
+describe('HTML fallback — своя разметка, а не разметка страницы', () => {
+  // The fallback emits table/tr/td/th/pre built here and nothing else. Filtering
+  // the page's own markup was tried: everything not on the deny list survived.
+  it('интерактивные и медийные элементы сводятся к тексту, как и вне таблиц', () => {
+    const cases: Array<[string, string]> = [
+      ['<form><input autofocus><button>go</button></form>', 'go'],
+      ['<div style="position:fixed;inset:0">overlay</div>', 'overlay'],
+    ];
+    for (const [cell, expected] of cases) {
+      const result = toMarkdown(`<table><tr><td colspan="2">${cell}</td></tr></table>`);
+      expect(result).toContain(`<td colspan="2">${expected}</td>`);
+      expect(result).not.toContain('<form');
+      expect(result).not.toContain('style=');
+    }
+  });
+
+  it('<video autoplay> не переносится вовсе', () => {
+    const html = '<table><tr><td colspan="2"><video autoplay src="https://example.com/x.mp4"></video></td></tr></table>';
     const result = toMarkdown(html);
-    expect(result).toContain('<ul><li>a</li><li>b</li></ul>');
+    expect(result).not.toContain('video');
+    expect(result).not.toContain('autoplay');
+    expect(result).toContain('<td colspan="2"></td>');
+  });
+
+  it('атрибуты страницы не переносятся, кроме colspan и rowspan', () => {
+    const html =
+      '<table><tr><td colspan="2" rowspan="3" title="t" class="c" id="i" onclick="steal()">x</td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('<td colspan="2" rowspan="3">x</td>');
+    for (const attr of ['title', 'class', 'id', 'onclick']) expect(result).not.toContain(attr);
+  });
+
+  it('нечисловой, чрезмерный и единичный span опускаются', () => {
+    const html =
+      '<table><tr><td colspan="abc">a</td><td colspan="99999999">b</td><td colspan="1">c</td><td colspan="2">d</td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('<td>a</td><td>b</td><td>c</td><td colspan="2">d</td>');
+  });
+
+  it('th остаётся th', () => {
+    const result = toMarkdown('<table><tr><th colspan="2">H</th></tr><tr><td>a</td></tr></table>');
+    expect(result).toContain('<th colspan="2">H</th>');
+  });
+
+  it('список в ячейке разделён, а не склеен в "ab"', () => {
+    const html = '<table><tr><td colspan="2"><ul><li>a</li><li>b</li></ul></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('- a');
+    expect(result).toContain('- b');
     expect(result).not.toContain('>ab<');
   });
 
-  // A blank line would end the HTML block and give the rest of the table to the
-  // Markdown parser as text — but newlines inside <pre> and inside attribute
-  // values are content, so they are encoded rather than dropped.
-  it('пустая строка внутри <pre> сохраняется, а не удаляется', () => {
-    const html = `<table><tr><td colspan="2"><pre>line 1\n\nline 3</pre></td></tr></table>`;
+  it('инлайн-разметка ячейки становится markdown', () => {
+    const html = '<table><tr><td colspan="2"><strong>t</strong> and <code>x|y</code></td></tr></table>';
     const result = toMarkdown(html);
-    const reparsed = parseHTML(result).document;
-    expect(reparsed.querySelector('pre')?.textContent).toBe('line 1\n\nline 3');
-    expect(result).not.toMatch(/\n[ \t]*\n/);
+    expect(result).toContain('**t**');
+    expect(result).toContain('`x|y`');
   });
 
-  it('отступы и пустые строки в <pre> проходят round-trip точно', () => {
+  it('<pre> сохраняется точно, включая пустые строки и табы', () => {
     const source = 'def f():\n\n\treturn 1\n';
-    const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
-    expect(reparsed.querySelector('pre')?.textContent).toBe(source);
-  });
-
-  it('перевод строки в значении атрибута сохраняется', () => {
-    const html = `<table><tr><td colspan="2" title="a\n\nb">x</td></tr></table>`;
-    const result = toMarkdown(html);
-    expect(parseHTML(result).document.querySelector('td')?.getAttribute('title')).toBe('a\n\nb');
-    expect(result).not.toMatch(/\n[ \t]*\n/);
-  });
-
-  it('форматирующие пустые строки вне <pre> схлопываются, структура цела', () => {
-    const html = `<table><tr><td colspan="2">\n\n  <ul>\n\n    <li>a</li>\n\n  </ul>\n\n</td></tr></table>`;
-    const result = toMarkdown(html);
-    expect(result).not.toMatch(/\n[ \t]*\n/);
-    expect(parseHTML(result).document.querySelectorAll('li')).toHaveLength(1);
-  });
-
-  it('служебный токен не протекает в вывод', () => {
-    // Input free of private-use characters: any in the output would be a
-    // placeholder that was never substituted back.
-    const html = `<table><tr><td colspan="2"><pre>a\n\nb</pre></td></tr></table>`;
-    expect(toMarkdown(html)).not.toMatch(/[\uE000-\uF8FF]/);
-  });
-
-  // The page can write the placeholder itself: a fixed token sits in the bundle
-  // for anyone to copy, and the final substitution cannot tell the page's copy
-  // from ours. The token is therefore minted per cell against its own markup.
-  it('литеральный токен со страницы не превращается в перевод строки', () => {
-    const literal = '\uE000nl\uE000';
-    const html = `<table><tr><td colspan="2"><pre>before${literal}after</pre></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
-    expect(reparsed.querySelector('pre')?.textContent).toBe(`before${literal}after`);
-  });
-
-  it('литеральный токен рядом с настоящими переводами строк', () => {
-    const literal = '\uE000nl\uE000';
-    const source = `a\n\nb${literal}c`;
     const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
     const result = toMarkdown(html);
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+    // A blank line would end the HTML block and give the rest to Markdown as prose.
     expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
-  it('литеральный токен в значении атрибута вместе с переводом строки', () => {
-    const literal = '\uE000nl\uE000';
-    const value = `x${literal}y\n\nz`;
-    const html = `<table><tr><td colspan="2" title="${value}">t</td></tr></table>`;
+  it('& и < внутри <pre> экранируются', () => {
+    const html = '<table><tr><td colspan="2"><pre>a & b < c</pre></td></tr></table>';
     const result = toMarkdown(html);
-    expect(parseHTML(result).document.querySelector('td')?.getAttribute('title')).toBe(value);
-    expect(result).not.toMatch(/\n[ \t]*\n/);
+    expect(result).toContain('a &amp; b &lt; c');
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe('a & b < c');
   });
 
-  // The mint loop must not depend on the calling realm's RNG: a stub returning 0
-  // once produced the same candidate forever. Both cases below run with Math.random
-  // pinned to 0 and would hang, not fail, on a regression.
-  it('минтинг токена не зависит от Math.random', () => {
-    const literal = '\uE000nl\uE000';
-    const source = `before${literal}after`;
-    const real = Math.random;
-    Math.random = () => 0;
-    try {
-      const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-      const reparsed = parseHTML(toMarkdown(html)).document;
-      expect(reparsed.querySelector('pre')?.textContent).toBe(source);
-    } finally {
-      Math.random = real;
-    }
+  it('вложенная таблица сериализуется тем же генератором', () => {
+    const html = '<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result.match(/inner/g)).toHaveLength(1);
+    expect(result).toContain('<td>inner</td>');
+    expect(result).toContain('outer');
   });
 
-  it('занятые базовый и удлинённый кандидаты обходятся', () => {
-    const base = '\uE000nl\uE000';
-    const padded = '\uE000nl\uE001\uE000';
-    const source = `a${base}b${padded}c\n\nd`;
-    const real = Math.random;
-    Math.random = () => 0;
-    try {
-      const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
-      const result = toMarkdown(html);
-      expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
-      expect(result).not.toMatch(/\n[ \t]*\n/);
-    } finally {
-      Math.random = real;
-    }
-  });
-
-  it('кавычка в значении атрибута не разрывает сериализацию', () => {
-    // The page writes &quot;, the parser hands back a literal quote: hand-built
-    // `name="value"` would let it close the attribute and inject live markup.
-    const html = `<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>">safe</td></tr></table>`;
+  it('литеральные теги из текста страницы не закрывают наши элементы', () => {
+    const html = '<table><tr><td colspan="2">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;script&gt;alert(1)&lt;/script&gt;</td></tr></table>';
     const result = toMarkdown(html);
     const reparsed = parseHTML(result).document;
-    expect(reparsed.querySelectorAll('img')).toHaveLength(0);
-    expect(reparsed.querySelectorAll('[onerror]')).toHaveLength(0);
-    expect(result).toContain('&quot;');
-    expect(result).toContain('safe');
-  });
-
-  it('скрипт в значении атрибута тоже не оживает', () => {
-    const html = `<table><tr><td colspan="2" title="&quot;><script>alert(1)</script>">safe</td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('td')).toHaveLength(1);
     expect(reparsed.querySelectorAll('script')).toHaveLength(0);
+    expect(result).toContain('&lt;script&gt;');
   });
 
-  it('скрипты и обработчики событий не переносятся', () => {
-    const html = `
-      <table>
-        <tr><td onclick="steal()" colspan="2"><script>steal()</script><ul><li>a</li></ul></td></tr>
-      </table>`;
+  it('теги, которые выпускает сам конвертер, не экранируются', () => {
+    const html = '<table><tr><td colspan="2">x<sub>1</sub><br>y</td></tr></table>';
     const result = toMarkdown(html);
-    expect(result).not.toContain('script');
-    expect(result).not.toContain('onclick');
-    expect(result).toContain('colspan="2"');
-    expect(result).toContain('<li>a</li>');
+    expect(result).toContain('<sub>1</sub>');
+    expect(result).toContain('<br>');
+  });
+
+  it('блочный контент даёт разрыв, но не пустую строку', () => {
+    const html = '<table><tr><td colspan="2"><p>one</p><p>two</p></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('one<br><br>two');
+    expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 });
 

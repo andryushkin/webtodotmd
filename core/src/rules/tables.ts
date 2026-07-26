@@ -118,97 +118,97 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
   return [headerLine, separatorLine, ...bodyLines].join('\n');
 }
 
-const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
+// The HTML fallback carries what a pipe table has no syntax for: merged cells,
+// a nested table, block content in a cell. It emits markup this module builds
+// itself — table, tr, td, th, pre and nothing else — rather than passing the
+// page's own markup through. Filtering the page's HTML was tried and is the
+// wrong shape: every tag not on the deny list survived, so <form>, <video
+// autoplay>, inline styles and event-carrying attributes reached the .md file,
+// while the rest of the converter reduces all of them to text.
+const MAX_SPAN = 1000;
 
-// A blank line anywhere in the serialized cell ends the HTML block and hands the
-// rest of the table to the Markdown parser as text — including a blank line
-// inside an attribute value, which Markdown cannot see is inside a tag. Deleting
-// those newlines would be data loss: they are content inside <pre> and inside
-// attributes. So they ride through serialization as a token and come
-// out as &#10;, which re-parses to the same text.
-//
-// The token is minted per cell and verified absent from that cell's own markup.
-// The final substitution cannot tell a token we inserted from an identical
-// string the page wrote itself, and a fixed token would sit in the bundle for
-// any page to copy — so the only safe token is one the input does not contain.
-//
-// Each candidate is one character longer than the last, so the search ends after
-// at most one candidate per character of input: the first candidate longer than
-// the input cannot occur in it. No randomness — this ships as a library artifact
-// and Math.random belongs to the calling realm, where a stub returning 0 would
-// hand back the same candidate forever.
-function mintNewlineToken(html: string): string {
-  let token = '\uE000nl\uE000';
-  for (let padding = 1; html.includes(token); padding += 1) {
-    token = `\uE000nl${'\uE001'.repeat(padding)}\uE000`;
-  }
-  return token;
+// The converter emits these three itself; everything else that looks like a tag
+// is prose from the page. Inside a <td> that prose sits next to real markup, so
+// a literal "</td></table>" in the text would close our own elements.
+const CONVERTER_TAGS = new Set(['br', 'sub', 'sup']);
+
+function escapeStrayTags(md: string): string {
+  return md.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (match, slash, tag, rest) =>
+    CONVERTER_TAGS.has(String(tag).toLowerCase()) ? match : `&lt;${slash}${tag}${rest}&gt;`,
+  );
 }
 
-function isPreformatted(el: Element): boolean {
-  let node: Element | null = el;
-  while (node) {
-    const tag = node.tagName?.toLowerCase();
-    if (tag === 'pre' || tag === 'textarea') return true;
-    node = node.parentElement;
-  }
-  return false;
+function escapeHtmlText(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function protectNewlines(root: Element, token: string): void {
-  for (const el of [root, ...Array.from(root.querySelectorAll('*'))]) {
-    for (const attr of Array.from(el.attributes)) {
-      if (/\r?\n/.test(attr.value)) {
-        el.setAttribute(attr.name, attr.value.replace(/\r?\n/g, token));
-      }
-    }
-  }
+// A span is a number or it is not carried at all. 1 is the default, so it adds
+// nothing; anything unparseable or absurd is a page's typo, not a layout.
+function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
+  const raw = cell.getAttribute(name);
+  if (!raw) return '';
+  const value = Number(raw.trim());
+  if (!Number.isInteger(value) || value < 2 || value > MAX_SPAN) return '';
+  return ` ${name}="${value}"`;
+}
 
-  const walk = (parent: Element): void => {
-    const preformatted = isPreformatted(parent);
-    for (const child of Array.from(parent.childNodes)) {
-      if (child.nodeType === TEXT_NODE) {
-        const text = child.textContent ?? '';
-        // Outside <pre> a blank line is formatting, not content: collapse it.
-        // Inside, every newline is data and gets encoded instead.
-        child.textContent = preformatted
-          ? text.replace(/\r?\n/g, token)
-          : text.replace(/\r?\n[ \t]*(?:\r?\n)+/g, '\n');
-      } else if (child.nodeType === ELEMENT_NODE) {
-        walk(child as Element);
-      }
+// Newlines inside <pre> are content: they become &#10;, which re-parses to the
+// same text. A blank line would end the HTML block and hand the rest of the
+// table to the Markdown parser as prose.
+function preformattedText(el: Element): string {
+  return escapeHtmlText(el.textContent ?? '').replace(/\r?\n/g, '&#10;');
+}
+
+function serializeCellContent(cell: Element, options: MarkItDownOptions): string {
+  let out = '';
+  let pending: Node[] = [];
+
+  const flushMarkdown = (): void => {
+    if (pending.length === 0) return;
+    let md = '';
+    for (const node of pending) {
+      if (node.nodeType === TEXT_NODE) md += node.textContent ?? '';
+      else if (node.nodeType === ELEMENT_NODE) md += convert(node, options);
     }
+    // Single newlines are safe inside an HTML block; a blank line is not.
+    out += escapeStrayTags(md).replace(/\r?\n[ \t]*(?:\r?\n)+/g, '<br><br>');
+    pending = [];
   };
-  walk(root);
-}
 
-// The fallback claims to keep what a pipe table cannot express, so it has to
-// keep the markup: textContent turned a list in a cell into "ab", losing both
-// the structure and the separation between items. Scripts and event handlers do
-// not survive the trip — nothing here should carry behavior into a .md file.
-//
-// Serialization goes through the DOM rather than string concatenation. An
-// attribute value can hold a quote — a page writes it as &quot; and the parser
-// hands it back decoded — so building `name="value"` by hand lets that value
-// close its own attribute and inject live markup into the file. outerHTML
-// re-escapes it.
-function serializeCell(cell: Element): string {
-  const clone = cell.cloneNode(true) as Element;
-  for (const el of Array.from(clone.querySelectorAll(UNSAFE_CELL_TAGS))) el.remove();
-  for (const el of [clone, ...Array.from(clone.querySelectorAll('*'))]) {
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name.toLowerCase().startsWith('on')) el.removeAttribute(attr.name);
+  for (const child of Array.from(cell.childNodes)) {
+    const tag = child.nodeType === ELEMENT_NODE ? (child as Element).tagName.toLowerCase() : '';
+    if (tag === 'br') {
+      // A cell is one line of HTML: the converter's Markdown hard break (a
+      // trailing backslash) means nothing here, <br> does.
+      flushMarkdown();
+      out += '<br>';
+    } else if (tag === 'table') {
+      flushMarkdown();
+      out += serializeStructuralTable(child as Element, options);
+    } else if (tag === 'pre') {
+      flushMarkdown();
+      out += `<pre>${preformattedText(child as Element)}</pre>`;
+    } else {
+      pending.push(child);
     }
   }
-  const token = mintNewlineToken(clone.outerHTML);
-  protectNewlines(clone, token);
-  return clone.outerHTML.split(token).join('&#10;');
+  flushMarkdown();
+  // Blank lines around block content became <br><br>; at the cell's edges they
+  // are padding from the page's indentation, not content.
+  return out.trim().replace(/^(?:<br>)+/, '').replace(/(?:<br>)+$/, '');
 }
 
-function serializeComplexTable(table: Element): string {
+function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {
   const lines: string[] = ['<table>'];
   for (const row of ownRows(table)) {
-    lines.push(`<tr>${ownCells(row).map(serializeCell).join('')}</tr>`);
+    const cells = ownCells(row)
+      .map((cell) => {
+        const tag = cell.tagName.toLowerCase() === 'th' ? 'th' : 'td';
+        const spans = `${spanAttribute(cell, 'colspan')}${spanAttribute(cell, 'rowspan')}`;
+        return `<${tag}${spans}>${serializeCellContent(cell, options)}</${tag}>`;
+      })
+      .join('');
+    lines.push(`<tr>${cells}</tr>`);
   }
   lines.push('</table>');
   return lines.join('\n');
@@ -231,7 +231,7 @@ export const TABLE_RULES: Rule[] = [
           return `\n\n${text}\n\n`;
         }
         // 'html' fallback (default)
-        return `\n\n${serializeComplexTable(el)}\n\n`;
+        return `\n\n${serializeStructuralTable(el, options)}\n\n`;
       }
 
       // Simple or medium: build GFM pipe table

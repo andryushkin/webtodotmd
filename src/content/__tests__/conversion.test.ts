@@ -204,14 +204,22 @@ describe('tables', () => {
     expect(convert(html).match(/inner/g)).toHaveLength(1);
   });
 
-  // The fallback is the one path that puts page HTML into the file the user
-  // copies and downloads, so nothing executable may ride along in it.
-  test('HTML fallback carries no live markup out of an attribute value', () => {
+  // The fallback is the one path that emits HTML into the file the user copies
+  // and downloads. It builds that HTML here — table, tr, td, th, pre — and
+  // carries nothing from the page, so the .md cannot gain behavior or layout.
+  test('HTML fallback carries no page markup or attributes', () => {
     const html =
-      '<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>">safe</td></tr></table>';
-    const reparsed = domAdapter(convert(html));
+      '<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>" onclick="steal()">' +
+      '<form><input autofocus><button>go</button></form>' +
+      '<div style="position:fixed;inset:0">overlay</div></td></tr></table>';
+    const md = convert(html);
+    const reparsed = domAdapter(md);
     expect(reparsed.querySelectorAll('img')).toHaveLength(0);
-    expect(reparsed.querySelectorAll('[onerror]')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('form, input, button, div')).toHaveLength(0);
+    for (const attr of ['onerror', 'onclick', 'title', 'style']) expect(md).not.toContain(attr);
+    expect(md).toContain('<td colspan="2">');
+    expect(md).toContain('go');
+    expect(md).toContain('overlay');
   });
 
   test('HTML fallback keeps preformatted text byte for byte', () => {
@@ -224,10 +232,13 @@ describe('tables', () => {
     expect(md).not.toMatch(/\n[ \t]*\n/);
   });
 
-  test('HTML fallback keeps markup inside the cell', () => {
+  test('HTML fallback keeps list items separate instead of gluing them', () => {
     const html =
       '<table><thead><tr><th>Items</th></tr></thead><tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody></table>';
-    expect(convert(html)).toContain('<ul><li>a</li><li>b</li></ul>');
+    const md = convert(html);
+    expect(md).toContain('- a');
+    expect(md).toContain('- b');
+    expect(md).not.toContain('>ab<');
   });
 });
 
