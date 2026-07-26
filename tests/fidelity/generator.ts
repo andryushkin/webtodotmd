@@ -10,6 +10,11 @@
 // no node_modules, so a property-testing library would be a new constraint on the
 // build for a test-only gain. A seed plus a shrinker gives the same reproduction.
 
+// The one import: the snapshot attribute's name, taken from the core rather than
+// spelled again, so a rename cannot leave the generator quietly measuring an
+// attribute nothing reads.
+import { SNAPSHOT_ATTR } from '../../core/src/utils/inline-style';
+
 /** Documents are generated as data, so the shrinker can take them apart. */
 export interface Part {
   /** Inline wrapper around the text, or null for a bare text node. */
@@ -17,13 +22,21 @@ export interface Part {
   text: string;
   /** Attribute value for the tags that carry one — `href` on `a`, `src` on `img`. */
   attr?: string;
+  /** CSS declarations on the wrapper — see `STYLE_HAZARDS`. */
+  style?: string;
+  /** Which attribute carries them: the page's own, or the content script's snapshot. */
+  styleVia?: StyleVia;
 }
 export interface Block {
   kind: BlockKind;
   parts: Part[];
   /** Attribute value for the kinds that carry one — the fence info string. */
   attr?: string;
+  /** CSS declarations on the block, for the kinds rendered as a plain wrapper. */
+  style?: string;
+  styleVia?: StyleVia;
 }
+export type StyleVia = 'attr' | 'snapshot';
 export type Doc = Block[];
 
 const BLOCK_KINDS = [
@@ -167,6 +180,34 @@ const ATTR_HAZARDS = [
 // immediately, and everything the page put in the block lands in prose.
 const LANG_HAZARDS = ['js', 'js x', 'js\n```\n<div>', '```', '<div>', 'a`b'];
 
+// Declarations that decide a mark, which is the axis a tag cannot reach: a style
+// writes emphasis where no tag says any, and it takes a tag's emphasis away again.
+// Both halves matter to the oracle, because a mark that appears and a mark that
+// vanishes are the same defect seen from opposite sides.
+//
+// The hazard is the meeting of the two escapers. A declaration puts `**` around
+// text the per-node escaper already decided how to spell, and neither can see the
+// other: `*` inside a bold run is a marker pressed against a marker, and the
+// flanking rules that pick between `_` and `**` never learn a delimiter is coming.
+const STYLE_HAZARDS = [
+  'font-weight:700',
+  'font-weight:normal',
+  'font-style:italic',
+  'font-style:normal',
+  'text-decoration-line:line-through',
+  'font-weight:700;font-style:italic',
+  'font-weight:700;text-decoration-line:line-through',
+  // Not a mark but a boundary: an inline element that lays out as a block splits
+  // the text around it, which is where a block-opening hazard lands mid-paragraph.
+  'display:block',
+];
+
+// The two ways declarations reach the converter, and they are read as one: the
+// page's own attribute (what an editor pastes) and the attribute the content
+// script writes after reading the cascade. Generating both is what keeps the
+// snapshot path measured rather than assumed.
+const STYLE_VIA: readonly StyleVia[] = ['attr', 'snapshot'];
+
 // Emphasis pressed against an emoji. CommonMark decides whether a marker may open
 // or close by the Unicode category on each side, and an emoji is neither a letter
 // nor ASCII punctuation — so this is where "is this marker allowed here" is least
@@ -228,12 +269,45 @@ export function generate(seed: number): Doc {
         parts.push({ tag: rand() < 0.5 ? 'a' : 'img', text: pick(CALM), attr: pick(ATTR_HAZARDS) });
         continue;
       }
+      if (roll < 0.60) {
+        // A mark with no tag behind it: the span is only somewhere to hang the
+        // declaration, and the hazard text is what the mark closes around.
+        parts.push({
+          tag: 'span',
+          text: rand() < 0.75 ? pick(HAZARDS) : pick(CALM),
+          style: pick(STYLE_HAZARDS),
+          styleVia: pick(STYLE_VIA),
+        });
+        continue;
+      }
       // Hazards outnumber calm text: a document of prose proves little here.
-      const text = roll < 0.8 ? pick(HAZARDS) : pick(CALM);
+      const text = roll < 0.84 ? pick(HAZARDS) : pick(CALM);
       parts.push({ tag: pick(INLINE_TAGS), text });
     }
+
+    // A second pass, so a declaration can also land *on top of* a tag rather than
+    // instead of one. That is where the two disagree: over `<strong>` it is a
+    // duplicate the core must not write twice, and `font-weight:normal` there has
+    // to take the tag's own mark away.
+    for (const part of parts) {
+      if (part.tag === null || part.tag === 'img' || part.style !== undefined) continue;
+      if (rand() < 0.14) {
+        part.style = pick(STYLE_HAZARDS);
+        part.styleVia = pick(STYLE_VIA);
+      }
+    }
+
     const kind = pick(BLOCK_KINDS);
-    blocks.push(kind === 'pre-lang' ? { kind, parts, attr: pick(LANG_HAZARDS) } : { kind, parts });
+    const block: Block =
+      kind === 'pre-lang' ? { kind, parts, attr: pick(LANG_HAZARDS) } : { kind, parts };
+    // A block's own weight is the baseline every part is judged against, so a
+    // heading told it is not bold, or a paragraph told it is, moves the line for
+    // everything inside it.
+    if (rand() < 0.12) {
+      block.style = pick(STYLE_HAZARDS);
+      block.styleVia = pick(STYLE_VIA);
+    }
+    blocks.push(block);
   }
   return blocks;
 }
@@ -253,11 +327,22 @@ function escapeAttr(value: string): string {
   return escapeText(value).replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
 }
 
+/**
+ * The style attribute, or nothing. `snapshot` writes the attribute the content
+ * script leaves behind after reading the cascade — the core answers both through
+ * the same reader, and a fixture that only ever used one would measure half of it.
+ */
+function styleAttr(styled: { style?: string; styleVia?: StyleVia }): string {
+  if (styled.style === undefined) return '';
+  const name = styled.styleVia === 'snapshot' ? SNAPSHOT_ATTR : 'style';
+  return ` ${name}="${escapeAttr(styled.style)}"`;
+}
+
 function renderPart(part: Part): string {
   const text = escapeText(part.text);
   if (part.tag === null) return text;
   if (part.tag === 'a') {
-    return `<a href="${escapeAttr(part.attr ?? 'https://example.com')}">${text}</a>`;
+    return `<a href="${escapeAttr(part.attr ?? 'https://example.com')}"${styleAttr(part)}>${text}</a>`;
   }
   // An image shows no text of its own, so the part's text is its alt — the other
   // attribute that reaches the file inside the converter's own syntax.
@@ -265,7 +350,7 @@ function renderPart(part: Part): string {
     const src = escapeAttr(part.attr ?? 'https://example.com/i.png');
     return `<img src="${src}" alt="${escapeAttr(part.text)}">`;
   }
-  return `<${part.tag}>${text}</${part.tag}>`;
+  return `<${part.tag}${styleAttr(part)}>${text}</${part.tag}>`;
 }
 
 /** Wraps blocks in the parent their tag requires, so the DOM is the real thing. */
@@ -307,8 +392,12 @@ function renderBlock(block: Block): string {
       return `<pre>${block.parts.map(renderPart).join('<br>')}</pre>`;
     case 'pre-lang':
       return `<pre><code data-lang="${escapeAttr(block.attr ?? 'js')}">${inner}</code></pre>`;
+    // Only the kinds rendered as one plain wrapper carry a block style. The rest
+    // build a table around themselves, where "the block" is several elements and
+    // which of them the declaration belongs on is a question this file should not
+    // be answering.
     default:
-      return `<${block.kind}>${inner}</${block.kind}>`;
+      return `<${block.kind}${styleAttr(block)}>${inner}</${block.kind}>`;
   }
 }
 
@@ -369,6 +458,35 @@ export function shrink(doc: Doc, stillFails: (doc: Doc) => boolean): Doc {
     for (let b = 0; b < current.length; b++) {
       if (current[b]!.kind === 'p') continue;
       tryReplace(current.map((blk, j) => (j === b ? { ...blk, kind: 'p' as BlockKind } : blk)));
+    }
+    // Drop declarations — on a part, then on the block. Same rule as unwrapping a
+    // tag: a style earns its place in the minimal case only by changing the
+    // outcome, or every defect it merely rode along with would be reported as a
+    // style defect.
+    for (let b = 0; b < current.length; b++) {
+      for (let p = 0; p < current[b]!.parts.length; p++) {
+        if (current[b]!.parts[p]!.style === undefined) continue;
+        tryReplace(
+          current.map((blk, j) =>
+            j === b
+              ? {
+                  ...blk,
+                  parts: blk.parts.map((part, q) =>
+                    q === p ? { tag: part.tag, text: part.text, attr: part.attr } : part,
+                  ),
+                }
+              : blk,
+          ),
+        );
+      }
+    }
+    for (let b = 0; b < current.length; b++) {
+      if (current[b]!.style === undefined) continue;
+      tryReplace(
+        current.map((blk, j) =>
+          j === b ? { kind: blk.kind, parts: blk.parts, attr: blk.attr } : blk,
+        ),
+      );
     }
 
     if (current !== before) changed = true;

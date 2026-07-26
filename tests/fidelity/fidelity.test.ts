@@ -100,8 +100,24 @@ beforeAll(() => {
 // produced, and the reader could not tell which column a value sat in. Keeping
 // the positions costs a separator the page did not show — the same trade the
 // separator itself was accepted on — and every one of the 15 added seeds is that.
+//
+// Then 91 -> 89, and this fall is *not* ground won. The generator learned to emit
+// CSS declarations — `style` and the content script's snapshot attribute, the two
+// ways a mark now reaches the converter without a tag — and a new draw from the
+// same rng reshuffles every seed. The number is a different measurement, not a
+// better one, and comparing it to 91 says nothing. What it did buy is 8 classes on
+// an axis that had none, all of them the meeting of the two escapers: a delimiter
+// the style writes lands against text the per-node escaper already spelled, and
+// neither can see the other. `<p>~<span style="text-decoration-line:line-through">
+// x</span></p>` is the sharpest — `~~~x~~` renders as nothing at all, so the
+// reader loses the text outright rather than seeing a stray marker.
+//
+// Two of those 8 are the same document written both ways, once with `style` and
+// once with the snapshot attribute. That pair is deliberate: it is the standing
+// proof that the two paths are read as one, and repairing the defect must move
+// both lines or the seam has come apart.
 const SEEDS = 200;
-const CEILING = 91;
+const CEILING = 89;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -110,80 +126,74 @@ const CEILING = 91;
 //
 // Regenerate with `bun tests/fidelity/survey.ts 200` after a deliberate change.
 const RECORDED_CLASSES: readonly string[] = [
+  "<p style=\"font-weight:700;font-style:italic\"><b>**</b></p>",
   "<p>(https://example.com)&lt;div&gt; x `</p>",
   "<p>(https://example.com)&lt;table&gt;</p>",
-  "<p>(https://example.com)<a href=\"https://example.com\">!</a></p>",
-  "<p>(https://example.com)<a href=\"https://example.com/a`b`\">hello world</a></p>",
-  "<p>(https://example.com/i.png)&lt;div&gt; x `</p>",
-  "<p>(https://example.com/i.png)&lt;td colspan=\"2\"&gt;</p>",
+  "<p>(https://example.com)<b>text</b></p>",
+  "<p>(https://example.com)<i>word</i></p>",
+  "<p>(https://example.com)<img src=\"https://example.com/a&quot;b\" alt=\"word\"></p>",
+  "<p>(https://example.com)[x](https://example.com)</p>",
+  "<p>(https://example.com)_</p>",
   "<p>(https://example.com/i.png)<b>x</b></p>",
   "<p>(https://example.com/i.png)<kbd>word</kbd></p>",
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
-  "<p>(https://example.com/i.png)<strong>hello world</strong></p>",
   "<p>(https://example.com/i.png)\\</p>",
-  "<p>(https://example.com/i.png)_</p>",
-  "<p>(https://example.com/i.png)`` `</p>",
+  "<p>(https://example.com/i.png)_under_</p>",
+  "<p><code data-s2md-style=\"display:block\">``</code>&lt;/table&gt;</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
-  "<p><img src=\"\" alt=\"x\"></p>",
+  "<p><img src=\"\" alt=\"foo bar\"></p>",
+  "<p><samp data-s2md-style=\"display:block\">x</samp>x](https://example.com)</p>",
+  "<p><span data-s2md-style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
+  "<p><span style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
+  "<p><span># </span></p>",
   "<p><span>1. </span></p>",
-  "<p>x](https://example.com)**</p>",
-  "<p>x](https://example.com)<samp>![</samp></p>",
-  "<p>x](https://example.com)<strong>text</strong></p>",
+  "<p>x](https://example.com)&lt;/table&gt;</p>",
+  "<p>~<span style=\"text-decoration-line:line-through\">x</span></p>",
   "<p>~word~</p>",
-  "<p>\ud83c\udf89<i>~</i></p>",
-  "<p>\ud83d\udc69\u200d\ud83d\udcbb<b>&lt;div&gt;</b></p>",
+  "<p>🇺🇸<i data-s2md-style=\"font-weight:700\">x</i></p>",
+  "<p>🎉<b>:</b></p>",
+  "<table><tbody><tr><td colspan=\"2\"><span data-s2md-style=\"display:block\">\\</span>foo bar</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>!-- swallowed --&gt; b</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><div><table><tbody><tr><td>&lt;/td&gt;</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>(</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>(https://example.com)</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>--&gt;</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>1. </td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>[</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><div><table><tbody><tr><td>`</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>a</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>hello world</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><div><table><tbody><tr><td>text</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>word</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>x</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>🎉</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption> </caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>!-- swallowed --&gt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>!</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>![alt]</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>&lt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>&lt;pre&gt;x&lt;/pre&gt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>##</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>&amp;amp;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>&lt;!--</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>(https://example.com)</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>*bold*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>--&gt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>]</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>__</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>a ` b</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>===</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>a</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>text</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>word</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>x</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>\ud83d\udc4d\ud83c\udffd</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>\ud83d\udc69\u200d\ud83d\udcbb</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>&lt;table style=\"position:fixed\"&gt;</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>(https://example.com/i.png)</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>)</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>**</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>*</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td> </td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>##</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>~</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>❤️</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>&lt;td colspan=\"2\"&gt;</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>*bold*</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>--&gt;</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>#</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>&lt;pre&gt;x&lt;/pre&gt;</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>*</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>_</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>&lt;/td&gt;</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>)</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>===</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>foo bar</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>hello world</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>text</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>word</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>x</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>\u2764\ufe0f</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td></td><td>\ud83c\uddfa\ud83c\uddf8</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>[</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>\\</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>]</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>_</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>hello world</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>❤️</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>===</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>word</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>x](https://example.com)</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><tbody><tr><td>~</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
 ];
 
 // The survey shrinks every failing seed, so it is measured once and shared.
