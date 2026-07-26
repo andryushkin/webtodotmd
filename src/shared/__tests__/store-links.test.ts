@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { CWS_REVIEWS_URL } from '../store-links';
+import { CWS_REVIEWS_URL, getRatingUrl } from '../store-links';
 
 describe('CWS_REVIEWS_URL', () => {
   test('points at the store review form for this item', () => {
@@ -7,11 +7,19 @@ describe('CWS_REVIEWS_URL', () => {
       'https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego/reviews',
     );
   });
+});
 
-  // Rating stars must never route anywhere but the store: a private form for
-  // low scores held zero entries while suppressing the public rating volume the
-  // store's ranking heuristic reads.
-  test('is not the developer site', () => {
-    expect(CWS_REVIEWS_URL).not.toContain('2md.site');
+describe('getRatingUrl', () => {
+  // The regression this pins: low scores used to open a private form on the
+  // developer site, which held zero entries while suppressing the public rating
+  // volume the store's ranking heuristic reads.
+  test.each([1, 2, 3, 4, 5])('a %i-star click opens the store review form', (stars) => {
+    expect(getRatingUrl(stars)).toBe(CWS_REVIEWS_URL);
+  });
+
+  test('no score routes to the developer site', () => {
+    for (const stars of [1, 2, 3, 4, 5]) {
+      expect(getRatingUrl(stars)).not.toContain('2md.site');
+    }
   });
 });

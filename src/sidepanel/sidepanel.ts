@@ -10,7 +10,7 @@ import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '.
 import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
-import { CWS_REVIEWS_URL } from '../shared/store-links';
+import { getRatingUrl } from '../shared/store-links';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -162,7 +162,7 @@ async function incrementActionCount() {
       const val = parseInt(star.dataset.value!);
       trackEvent(`rating_${val}`);
       hideRatingRow(true);
-      chrome.tabs.create({ url: CWS_REVIEWS_URL });
+      chrome.tabs.create({ url: getRatingUrl(val) });
     });
   });
 

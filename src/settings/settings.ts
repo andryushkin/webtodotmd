@@ -1,6 +1,6 @@
 import { getSettings, saveSettings } from '../shared/settings-store';
 import { initI18n, applyI18n, t } from '../shared/i18n';
-import { CWS_REVIEWS_URL } from '../shared/store-links';
+import { getRatingUrl } from '../shared/store-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
@@ -58,7 +58,7 @@ function initRatingStars() {
       stars.forEach(s => s.classList.toggle('highlighted', parseInt(s.dataset.value!) <= val));
     });
     star.addEventListener('click', () => {
-      chrome.tabs.create({ url: CWS_REVIEWS_URL });
+      chrome.tabs.create({ url: getRatingUrl(parseInt(star.dataset.value!)) });
     });
   });
 

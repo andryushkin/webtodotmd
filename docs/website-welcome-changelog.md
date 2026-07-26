@@ -51,6 +51,11 @@ should serve the English content rather than fail.
 - `/<locale>/changelog` — what changed in the current release. The version can
   be read from `manifest.json`.
 
-Two more pages are linked from inside the extension and follow the same locale
-scheme: `/<locale>/feedback` (opened by a rating of three stars or less) and
-the privacy policy.
+The privacy policy is the other page linked from inside the extension, and it
+follows the same locale scheme.
+
+`/<locale>/feedback` is no longer part of the contract. The rating widget used
+to send scores of three stars or less there instead of to the store; every star
+now opens the Chrome Web Store review form (`src/shared/store-links.ts`). The
+extension links nothing to `/feedback` — whether the site keeps the page is its
+own decision.
