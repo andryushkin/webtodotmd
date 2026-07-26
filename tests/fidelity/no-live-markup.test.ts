@@ -197,3 +197,32 @@ describe('a code span outruns the backticks inside it', () => {
     expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
   });
 });
+
+// The one path that reached the file from cell.textContent, with no rule
+// between it and the reader. The extension never selects this mode, but the
+// library ships it, and "the page's markup stays text" is not a promise the
+// library gets to keep only in its default configuration.
+describe('text fallback mode', () => {
+  const TEXT_MODE = { ...CONVERSION_OPTIONS, complexTableFallback: 'text' as const };
+
+  it.each([
+    // colspan is what sends the table down the fallback in the first place.
+    ['merged cell', `<table><tbody><tr><td colspan="2">${SHOWN}</td><td>b</td></tr></tbody></table>`],
+    ['caption', `<table><caption>${SHOWN}</caption><tbody><tr><td colspan="2">a</td></tr></tbody></table>`],
+    // Literal contexts lose their code span in this mode, so the text lands in
+    // prose and has to be escaped rather than fenced.
+    ['pre in a cell', `<table><tbody><tr><td colspan="2"><pre>${SHOWN}</pre></td></tr></tbody></table>`],
+    ['code in a cell', `<table><tbody><tr><td colspan="2"><code>${SHOWN}</code></td></tr></tbody></table>`],
+    [
+      'nested table',
+      `<table><tbody><tr><td colspan="2"><table><tbody><tr><td>${SHOWN}</td></tr></tbody></table></td></tr></tbody></table>`,
+    ],
+    [
+      'katex',
+      `<table><tbody><tr><td colspan="2"><span class="katex">` +
+        `<annotation encoding="application/x-tex">${SHOWN}</annotation></span></td></tr></tbody></table>`,
+    ],
+  ])('%s', (_name, html) => {
+    expect(liveMarkup(render(toMarkdown(html, TEXT_MODE)))).toEqual([]);
+  });
+});

@@ -1,7 +1,12 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
-import { escapeHtmlSyntax, escapeInlineMarkdown, escapeTagStarts } from '../core/escape.js';
+import {
+  escapeBlockStarts,
+  escapeHtmlSyntax,
+  escapeInlineMarkdown,
+  escapeTagStarts,
+} from '../core/escape.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -91,6 +96,20 @@ function escapeCellPipes(text: string): string {
   return text.replace(/\|/g, '\\|');
 }
 
+/**
+ * What the converter applies to any text node it emits: the page's own
+ * characters, made to render as themselves. Named because two places need the
+ * same answer — the text node of a cell the converter walks, and the flattened
+ * cell of the `text` fallback, which never reaches the converter at all.
+ *
+ * Block starts are not here, and deliberately: they depend on standing at the
+ * beginning of a line, which a text node — or a cell — is not. Whoever builds
+ * the line escapes them.
+ */
+function escapeCellText(text: string): string {
+  return escapeHtmlSyntax(escapeInlineMarkdown(text));
+}
+
 // A cell is one line, whichever form the table takes. The converter's hard break
 // is a trailing backslash plus a newline — a <br> directly in the cell is mapped
 // before conversion, but one inside an inline wrapper (<em>, <strong>, a <span>
@@ -174,7 +193,7 @@ function getCellContent(
       // Straight from textContent, so convert()'s escaping never saw it: a cell
       // reading `**bold**` on the page rendered as bold, and one reading
       // `<img src=x onerror=…>` put working markup in the file.
-      text += escapeHtmlSyntax(escapeInlineMarkdown(child.textContent ?? ''));
+      text += escapeCellText(child.textContent ?? '');
     }
   }
   // A GFM row is one line: a newline anywhere inside a cell ends the row early
@@ -456,7 +475,15 @@ function ownCaption(table: Element): Element | undefined {
 function captionLine(table: Element, options: MarkItDownOptions): string {
   const caption = ownCaption(table);
   if (!caption) return '';
-  return getCellContent(caption, options).replace(/<br>/g, ' ').trim();
+  // getCellContent escapes the inline marks of every text node but not the
+  // block starts — inside a pipe cell nothing opens a block, so escaping them
+  // there would be backslashes for nothing. Here the caption *is* a line of the
+  // document, standing on its own above the table, so a caption reading
+  // "# Table 1" or "- totals" opened a heading or a list the page never had.
+  // The whole line is escaped, not its first text node: everything blockish in
+  // the caption has already been folded onto this one line, so nothing on it is
+  // still a block that escaping could cost.
+  return escapeBlockStarts(getCellContent(caption, options).replace(/<br>/g, ' ').trim());
 }
 
 function captionOnly(table: Element, options: MarkItDownOptions): string {
@@ -558,21 +585,41 @@ export const TABLE_RULES: Rule[] = [
         const fallback = options.complexTableFallback ?? 'flatten';
         if (fallback === 'skip') return captionOnly(el, options);
         if (fallback === 'text') {
-          const text = ownRows(el)
-            .map((row) =>
-              ownCells(row)
-                // A newline inside a cell would split the row this mode builds.
-                .map((c) =>
-                  (c.textContent ?? '')
-                    .trim()
-                    .replace(/\s*\n+\s*/g, ' ')
-                    // The row is ' | ' separated, so a pipe inside a cell would
-                    // add a column that was never there.
-                    .replace(/\|/g, '\\|'),
-                )
-                .join(' | '),
-            )
-            .join('\n');
+          // The cell's characters, escaped here rather than converted. Routing
+          // this mode through getCellContent was the other candidate and is the
+          // wrong one: the converter answers with markup — **bold** for a
+          // <strong>, a link for an <a>, a code span per line of a <pre> — and
+          // this mode exists to produce none. What it does owe the reader is the
+          // rest of the contract every other path keeps: text the page merely
+          // *showed* must render as itself. Before this, `**bold**` on the page
+          // came back as real bold and `<img src=x onerror=…>` as working
+          // markup, because textContent reaches the file without ever passing a
+          // rule that escapes.
+          //
+          // Escaping inside a <pre>, <code> or a formula is corruption
+          // elsewhere, but not here: this mode strips the code span and the
+          // dollar signs too, so the text lands in ordinary prose where a lone
+          // `*` really would start emphasis.
+          const rows = ownRows(el).map((row) =>
+            ownCells(row)
+              .map((c) =>
+                // After the escaping, not before: escapeCellText doubles the
+                // backslashes it finds, so escaping the pipe first produced
+                // `\\|` — a literal backslash next to a live separator.
+                escapeCellPipes(
+                  escapeCellText(
+                    // A newline inside a cell would split the row this mode builds.
+                    (c.textContent ?? '').trim().replace(/\s*\n+\s*/g, ' '),
+                  ),
+                ),
+              )
+              .join(' | '),
+          );
+          // Once per row, on the finished line: a row is a line of the document
+          // here, so a leading `#`, `>`, `- ` or a row that is nothing but
+          // dashes opens a block. A `#` in the second cell is mid-sentence and
+          // needs nothing, which is why this cannot be done per cell.
+          const text = escapeBlockStarts(rows.join('\n'));
           const caption = captionLine(el, options);
           return caption ? `\n\n${caption}\n${text}\n\n` : `\n\n${text}\n\n`;
         }
