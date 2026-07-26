@@ -214,6 +214,16 @@ describe('tables', () => {
     expect(reparsed.querySelectorAll('[onerror]')).toHaveLength(0);
   });
 
+  test('HTML fallback keeps preformatted text byte for byte', () => {
+    const source = 'def f():\n\n\treturn 1\n';
+    const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+    const md = convert(html);
+    expect(domAdapter(md).querySelector('pre')?.textContent).toBe(source);
+    // A blank line here would end the HTML block and hand the rest of the table
+    // to the Markdown parser as text.
+    expect(md).not.toMatch(/\n[ \t]*\n/);
+  });
+
   test('HTML fallback keeps markup inside the cell', () => {
     const html =
       '<table><thead><tr><th>Items</th></tr></thead><tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody></table>';
