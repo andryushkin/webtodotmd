@@ -1,0 +1,20 @@
+<div class="answer">
+  <div class="post-text">
+    <p>You can use the <code>Array.from()</code> method to convert a NodeList to an array:</p>
+    <pre><code class="language-javascript">const elements = document.querySelectorAll('.item');
+const arr = Array.from(elements);
+arr.forEach(el =&gt; console.log(el.textContent));</code></pre>
+    <p>Alternatively, use the spread operator:</p>
+    <pre><code class="language-javascript">const arr = [...document.querySelectorAll('.item')];</code></pre>
+    <p>
+      Both approaches work in modern browsers. For older browser support, use
+      <code>Array.prototype.slice.call(nodeList)</code>.
+    </p>
+    <h2>Why not <code>for...of</code> directly?</h2>
+    <p>
+      In older TypeScript configurations without <code>lib: dom</code>,
+      <code>NodeListOf&lt;T&gt;</code> is not considered iterable. Always use
+      <code>Array.from()</code> to be safe.
+    </p>
+  </div>
+</div>

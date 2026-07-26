@@ -1,0 +1,77 @@
+{
+  "name": "@markitdown/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/server.cjs",
+  "types": "./dist/server.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.mjs"
+      },
+      "bun": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.mjs"
+      },
+      "node": {
+        "import": {
+          "types": "./dist/server.d.ts",
+          "default": "./dist/server.mjs"
+        },
+        "require": {
+          "types": "./dist/server.d.cts",
+          "default": "./dist/server.cjs"
+        }
+      },
+      "default": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.mjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "tsc": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "benchmark": "bun bench/index.ts",
+    "size-check": "bun run build && bun scripts/size-check.ts",
+    "publint": "bunx publint",
+    "attw": "bunx @arethetypeswrong/cli --pack ."
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/browser": "^1.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^9.0.0",
+    "linkedom": "*",
+    "prettier": "^3.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "linkedom": "",
+    "happy-dom": ">=14"
+  },
+  "peerDependenciesMeta": {
+    "linkedom": {
+      "optional": true
+    },
+    "happy-dom": {
+      "optional": true
+    }
+  }
+}
