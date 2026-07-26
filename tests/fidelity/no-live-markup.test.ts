@@ -149,6 +149,42 @@ describe('paths the first version of this file missed', () => {
   });
 });
 
+// Escaping decides per text node, so a tag written across two of them was checked
+// twice and caught neither time: `<` ends the first string with nothing after it
+// to judge, and the second starts with a name that on its own is only a word.
+// `normalize()` merges adjacent text nodes but cannot merge across an element, and
+// an element between the two halves is exactly what syntax highlighting produces.
+describe('split across nodes', () => {
+  // Where a highlighter would put the token boundary: right after the bracket,
+  // and inside the tag name.
+  const split = (at: number): string => `<span>${SHOWN.slice(0, at)}</span>${SHOWN.slice(at)}`;
+
+  it.each([
+    ['at the bracket', `<p>${split(4)}</p>`],
+    ['inside the tag name', `<p>${split(6)}</p>`],
+    ['mid sentence', `<p>before ${split(4)} after</p>`],
+    ['in a list item', `<li>${split(4)}</li>`],
+    ['in a table cell', `<table><tbody><tr><td>${split(4)}</td><td>b</td></tr></tbody></table>`],
+    // The converter writes its own text straight after the page's: `![` from an
+    // image turns a dangling `<` into a comment opener.
+    ['completed by the converter', `<p>a &lt;<img src="${OWN_IMAGE}" alt="t"> ${SHOWN}</p>`],
+    // MathML splits by construction — `<mo>&lt;</mo>` is how a page writes the
+    // less-than operator — and with no math rule claiming it the text nodes join.
+    ['mathml operators', '<p><math><mi>a</mi><mo>&lt;</mo><mi>img</mi><mo>&gt;</mo></math></p>'],
+  ])('%s', (_name, html) => {
+    expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
+    expect(liveMarkup(render(toMarkdown(html, {})))).toEqual([]);
+  });
+
+  // A comment hides rather than executes, so `liveMarkup` cannot see it: what it
+  // costs is the text, which the reader was shown and has to still be there.
+  it('a comment opener does not swallow the sentence', () => {
+    const html = '<p>before <span>&lt;</span>!-- note --&gt; after</p>';
+    const rendered = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));
+    for (const word of ['before', 'note', 'after']) expect(rendered).toContain(word);
+  });
+});
+
 // The code-span delimiter has to outrun the backticks inside it, or the span
 // closes early and the rest of the cell is read as markup. Found in preInCell
 // first; the inline-code rule had the same defect and had had it all along.

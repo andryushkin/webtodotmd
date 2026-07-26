@@ -20,6 +20,15 @@ hands `&lt;/td&gt;` over as three adjacent text nodes, each harmless on its own,
 and the escaper decides one node at a time. Merging them is what lets it see the
 construct at all.
 
+Merging reaches only *adjacent* text nodes, though, and syntax highlighting puts
+an element between them — `<span>&lt;</span>img src=…&gt;` is two strings that
+each pass their own check and assemble into a tag. Since the second string does
+not exist yet when the first is escaped, a node ending mid-construct — a bare
+`<`, or an `&` and half a character reference — is escaped on suspicion instead.
+`continuesOnLine()` in the parser is what limits the suspicion to nodes that
+something is actually joined onto, which is why `<h2>Q&amp;A</h2>` keeps its
+ampersand bare.
+
 Emphasis runs the same argument in reverse. CommonMark decides whether `*` or `_`
 opens emphasis from the characters on either side, so `core/src/utils/flanking.ts`
 reads those from the DOM and picks the first marker that will actually render —
