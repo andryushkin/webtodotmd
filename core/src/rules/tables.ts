@@ -78,16 +78,17 @@ function analyzeTable(table: Element): TableAnalysis {
 }
 
 /**
- * `|` ends a column, so it is escaped — except inside a formula, where `\|` is a
- * different command. It is `\Vert`, the norm: an absolute value `|x|` silently
- * became ‖x‖ in the file, while a GFM renderer strips the backslash before
- * inline parsing, so the preview looked right and only the file was wrong.
+ * `|` ends a column and is escaped everywhere in a cell, formulas included.
+ *
+ * Sparing `$…$` was tried and was worse: GFM splits a row into columns before
+ * anything looks at maths, so `| $|x| < 2$ | ok |` reparsed as two cells reading
+ * `$` and `x` — the formula and the neighbouring cell both vanished. Escaping
+ * costs the formula instead (`\|` is `\Vert`, the norm, not an absolute value),
+ * and a damaged formula is a smaller loss than a destroyed row. A cell holding a
+ * `|` inside maths has no faithful pipe-table form at all; `htmlTables` does.
  */
 function escapeCellPipes(text: string): string {
-  return text
-    .split(/(\$\$[\s\S]*?\$\$|\$[^$\n]*\$)/)
-    .map((part, index) => (index % 2 === 1 ? part : part.replace(/\|/g, '\\|')))
-    .join('');
+  return text.replace(/\|/g, '\\|');
 }
 
 // A cell is one line, whichever form the table takes. The converter's hard break

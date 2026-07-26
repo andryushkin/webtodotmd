@@ -749,13 +749,18 @@ describe('flattening: what review caught', () => {
     expect(md).not.toContain('\\\\|');
   });
 
-  it('a pipe inside a formula is left alone', () => {
-    // In LaTeX `\\|` is \\Vert, the norm — an absolute value would silently become
-    // ‖x‖ in the file, while the preview looked correct.
+  it('a pipe inside a formula is escaped, because the row comes first', () => {
+    // Sparing `$…$` destroyed the row: GFM splits columns before anything looks
+    // at maths, so `| $|x| < 2$ | ok |` reparsed as `$` and `x` and the
+    // neighbouring cell was lost. A damaged formula is the smaller loss.
     const html =
-      '<table><tr><td>h</td></tr><tr><td><span class="katex">' +
-      '<annotation encoding="application/x-tex">|x| &lt; a</annotation></span></td></tr></table>';
-    expect(toMarkdown(html, { math: true })).toContain('$|x| < a$');
+      '<table><thead><tr><th>F</th><th>N</th></tr></thead><tbody><tr><td><span class="katex">' +
+      '<annotation encoding="application/x-tex">|x| &lt; 2</annotation></span></td><td>ok</td></tr></tbody></table>';
+    const md = toMarkdown(html, { math: true });
+    const rows = md.trim().split('\n');
+    // Two columns in every row is what was actually at stake.
+    expect(rows[2]?.match(/(?<!\\)\|/g)).toHaveLength(3);
+    expect(rows[2]).toContain('ok');
   });
 
   it('a rowspan stops at its row group', () => {
