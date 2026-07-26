@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
+import { listItemPrefix } from './lists.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -187,6 +188,7 @@ function htmlSafeMarkdown(md: string): string {
   let out = '';
   let blankRun = false;
   let previousFenced = false;
+  let previousHardBreak = false;
   for (const [index, line] of lines.entries()) {
     const insideFence = fenced[index] ?? false;
     if (!insideFence && line.trim() === '') {
@@ -196,13 +198,20 @@ function htmlSafeMarkdown(md: string): string {
       blankRun = true;
       continue;
     }
+    // The converter's hard break is a trailing backslash: a <br> below the cell
+    // level (inside a <span>, say) arrives here as one, and a backslash means
+    // nothing in HTML — it would just show up in the cell.
+    const hardBreak = !insideFence && line.endsWith('\\');
+    const text = hardBreak ? `${line.slice(0, -1)}<br>` : line;
     if (out !== '') {
       if (blankRun) out += '<br><br>';
+      else if (previousHardBreak) out += '';
       else out += insideFence && previousFenced ? '&#10;' : '\n';
     }
-    out += line;
+    out += text;
     blankRun = false;
     previousFenced = insideFence;
+    previousHardBreak = hardBreak;
   }
   return out;
 }
@@ -256,11 +265,10 @@ function serializeWrapper(el: Element, options: MarkItDownOptions): string {
     const items = children.filter(
       (node) => node.nodeType === ELEMENT_NODE && (node as Element).tagName.toLowerCase() === 'li',
     ) as Element[];
+    // The marker comes from the list rule itself — numbering from `start`, task
+    // list checkboxes — so serializing here cannot drift from the normal path.
     return items
-      .map((li, index) => {
-        const marker = tag === 'ol' ? `${index + 1}. ` : '- ';
-        return `${marker}${serializeNodes(Array.from(li.childNodes), options)}`;
-      })
+      .map((li) => `${listItemPrefix(li)}${serializeNodes(Array.from(li.childNodes), options)}`)
       .join('<br>');
   }
 
@@ -368,9 +376,11 @@ export const TABLE_RULES: Rule[] = [
       // Every row that is not a header row is a body row — including <tfoot>,
       // and including rows outside any section. Selecting 'tbody tr' instead
       // dropped a totals row without a word.
+      // GFM allows exactly one header row, so any further <thead> row moves into
+      // the body rather than disappearing.
       const headerRow = (analysis.hasHead ? headRows[0] : allRows[0]) ?? null;
       if (!headerRow) return '';
-      const bodyRowEls = allRows.filter((row) => row !== headerRow && !headRows.includes(row));
+      const bodyRowEls = allRows.filter((row) => row !== headerRow);
 
       const headerCells = ownCells(headerRow);
       const headers = headerCells.map((c) => getCellContent(c, options));

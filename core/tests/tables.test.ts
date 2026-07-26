@@ -142,6 +142,16 @@ describe('строки, колонки и подпись в pipe-таблице'
     expect(lines[3]).toContain('total');
   });
 
+  it('вторая строка <thead> уходит в тело, а не теряется', () => {
+    const html =
+      '<table><thead><tr><th>A</th></tr><tr><th>B</th></tr></thead><tbody><tr><td>C</td></tr></tbody></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toContain('A');
+    expect(lines[2]).toContain('B');
+    expect(lines[3]).toContain('C');
+  });
+
   it('строка шире заголовка расширяет таблицу, а не теряет ячейку', () => {
     const html =
       '<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr></tbody></table>';
@@ -494,6 +504,34 @@ describe('HTML fallback — своя разметка, а не разметка 
     const result = toMarkdown(html);
     expect(result).toContain('<pre>');
     expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+  });
+
+  it('<br> ниже уровня ячейки не оставляет обратный слеш в fallback', () => {
+    const result = toMarkdown('<table><tr><td colspan="2"><span>a<br>b</span></td></tr></table>');
+    expect(result).toContain('a<br>b');
+    expect(result).not.toContain('\\');
+  });
+
+  it('обратный слеш внутри <pre> не трогается нормализацией переноса', () => {
+    const source = 'a\\\nb';
+    const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+    expect(parseHTML(toMarkdown(html)).document.querySelector('pre')?.textContent).toBe(source);
+  });
+
+  it('нумерация ol start сохраняется при собственной сериализации списка', () => {
+    const html =
+      '<table><tr><td colspan="2"><ol start="5"><li>a<pre>x</pre></li><li>b</li></ol></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('5. a');
+    expect(result).toContain('6. b');
+  });
+
+  it('чекбоксы task-list сохраняются при собственной сериализации списка', () => {
+    const html =
+      '<table><tr><td colspan="2"><ul><li><input type="checkbox" checked> done<pre>x</pre></li><li><input type="checkbox"> todo</li></ul></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('[x] done');
+    expect(result).toContain('[ ] todo');
   });
 
   it('обёртка сохраняет свой маркер списка вокруг <pre>', () => {

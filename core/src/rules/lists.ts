@@ -1,30 +1,38 @@
 import type { Rule } from '../types.js';
 
+// The marker for a list item: ordered numbering honours `start`, and a task list
+// keeps its checkbox. The table fallback serializes list items itself when they
+// contain a <pre> or a nested table, and calls this so the two cannot drift.
+export function listItemPrefix(el: Element): string {
+  const parent = el.parentElement;
+  const isOrdered = parent?.tagName.toLowerCase() === 'ol';
+
+  let prefix: string;
+  if (isOrdered) {
+    const start = parseInt(parent?.getAttribute('start') ?? '1', 10);
+    const siblings = Array.from(parent?.children ?? []).filter(
+      (c) => c.tagName.toLowerCase() === 'li',
+    );
+    const index = siblings.indexOf(el);
+    prefix = `${start + index}. `;
+  } else {
+    prefix = '- ';
+  }
+
+  // Task list: <input type="checkbox"> → [x] / [ ]
+  const checkbox = el.querySelector('input[type="checkbox"]');
+  if (checkbox) {
+    prefix += checkbox.hasAttribute('checked') ? '[x] ' : '[ ] ';
+  }
+  return prefix;
+}
+
 export const LIST_RULES: Rule[] = [
   {
     name: 'list-item',
     filter: 'li',
     replacement(el, childContent) {
-      const parent = el.parentElement;
-      const isOrdered = parent?.tagName.toLowerCase() === 'ol';
-
-      let prefix: string;
-      if (isOrdered) {
-        const start = parseInt(parent?.getAttribute('start') ?? '1', 10);
-        const siblings = Array.from(parent?.children ?? []).filter(
-          (c) => c.tagName.toLowerCase() === 'li',
-        );
-        const index = siblings.indexOf(el as Element);
-        prefix = `${start + index}. `;
-      } else {
-        prefix = '- ';
-      }
-
-      // Task list: <input type="checkbox"> → [x] / [ ]
-      const checkbox = el.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        prefix += checkbox.hasAttribute('checked') ? '[x] ' : '[ ] ';
-      }
+      const prefix = listItemPrefix(el as Element);
 
       const trimmed = childContent.trim();
       if (!trimmed) return '';
