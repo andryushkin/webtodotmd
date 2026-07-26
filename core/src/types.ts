@@ -15,10 +15,18 @@ export interface Rule {
 
 export interface MarkItDownOptions {
   /**
-   * Internal. False while serializing a cell of the HTML table fallback: Markdown
-   * is not parsed inside an HTML block, so escaping its syntax there protects
-   * nothing and the backslashes are displayed to the reader.
+   * Internal. The language the output is being written in. Inside a cell of the
+   * HTML table fallback it is `'html'`, because an HTML block is not parsed as
+   * Markdown: escaping Markdown syntax there protects nothing and shows the
+   * reader backslashes, and emitting `**bold**` shows them asterisks. Rules that
+   * have both spellings pick by this.
+   *
+   * Replaces the older `escapeSyntax: false`, which said only half of it — the
+   * escaping stopped, but the emphasis, code and link rules went on writing
+   * Markdown into markup that would never parse it.
    */
+  outputContext?: 'markdown' | 'html';
+  /** @deprecated Use `outputContext: 'html'`. Kept so existing callers still work. */
   escapeSyntax?: boolean;
   baseUrl?: string;
   math?: boolean;

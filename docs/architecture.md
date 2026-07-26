@@ -30,6 +30,13 @@ ends in punctuation and sits against a word, where no delimiter renders at all.
 Those tags are declared in `core/src/fallback-tags.ts` alongside the table set,
 because the preview escaper has to know them as the core's own output.
 
+The same question — which language is being written — is what `outputContext`
+answers. Inside a cell of the HTML table fallback it is `'html'`, and emphasis,
+inline code and links emit tags rather than Markdown that the surrounding HTML
+block would never parse. It replaced a boolean `escapeSyntax: false`, which said
+only half of it: escaping stopped, but the rules kept writing `**bold**` into
+markup that showed the reader asterisks.
+
 ## Surfaces
 
 | Surface | Entry point | Role |
@@ -115,14 +122,15 @@ this is now a backstop rather than the only guard, and it skips any `<` already
 carrying the core's backslash — escaping that again rendered the entity spelled
 out, the very thing it exists to prevent. It lives in `src/shared/escape-html-tags.ts`
 with its own tests. The exceptions are the tags the conversion core emits itself:
-`sub`, `sup`, `br`, and the table set of the HTML fallback — a table with merged
+`sub`, `sup`, `br`, the emphasis and link tags described above, and the table set
+of the HTML fallback — a table with merged
 cells, a nested table or preformatted text takes that path, and escaping it
 showed the user markup instead of a table. The set is not restated there: it is
 imported from `core/src/fallback-tags.ts`, the core's own declaration of what its
 fallback emits, because a restatement that drifts escapes the whole table rather
 than one tag. A candidate block is accepted only if it starts on its own line,
 nests correctly and carries nothing but those tags with a numeric
-`colspan`/`rowspan` — a page can write `<table style="position:fixed">` as
+`colspan`/`rowspan` or an `href` limited to a renderable scheme — a page can write `<table style="position:fixed">` as
 literal text, and `style` survives DOMPurify. `DOMPurify.sanitize()` is mandatory before
 any `innerHTML` assignment.
 

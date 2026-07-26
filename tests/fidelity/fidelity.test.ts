@@ -23,7 +23,7 @@ beforeAll(() => {
 // case of each other because the core now escapes HTML in page text itself: the
 // preview escaper has almost nothing left to repair, and stands as a backstop.
 const SEEDS = 200;
-const CEILING = { core: 100, app: 99 };
+const CEILING = { core: 80, app: 79 };
 
 function countFailures(level: 'core' | 'app'): number {
   let failures = 0;

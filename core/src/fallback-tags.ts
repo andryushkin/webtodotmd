@@ -19,10 +19,19 @@ export const FALLBACK_TAGS = ['table', 'caption', 'tr', 'th', 'td', 'pre', 'code
  * emphasis whose delimiters CommonMark's flanking rules would leave as text
  * (`core/src/utils/flanking.ts`).
  */
-export const FALLBACK_INLINE_TAGS = ['sub', 'sup', 'br', 'em', 'strong', 'del'] as const;
+export const FALLBACK_INLINE_TAGS = [
+  'sub', 'sup', 'br', 'em', 'strong', 'del', 'a', 'code',
+] as const;
 
 /** Of the above, the ones that never close. */
 export const FALLBACK_VOID_TAGS = ['br'] as const;
 
-/** Every attribute the serializer writes: a cell's span, always numeric. */
-export const FALLBACK_ATTR_PATTERN = /^(?:\s+(?:colspan|rowspan)="\d{1,5}")*$/;
+/**
+ * Every attribute the converter writes, and nothing else. A cell's span is always
+ * numeric; a URL is restricted to schemes that are safe to render, because this
+ * is what decides whether the preview treats a tag as the core's own output.
+ * `style` is deliberately absent: it survives DOMPurify, so a literal
+ * `<table style="position:fixed">` in captured text would become an overlay.
+ */
+export const FALLBACK_ATTR_PATTERN =
+  /^(?:\s+(?:colspan|rowspan)="\d{1,5}"|\s+href="(?:https?:|mailto:)[^"<>]*")*$/;

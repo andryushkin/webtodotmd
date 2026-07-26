@@ -404,13 +404,25 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(result).not.toContain('>ab<');
   });
 
-  it('инлайн-разметка ячейки становится markdown, код — элементом', () => {
+  it('инлайн-разметка ячейки — элементы, а не markdown', () => {
     const html = '<table><tr><td colspan="2"><strong>t</strong> and <code>x|y</code></td></tr></table>';
     const result = toMarkdown(html);
-    expect(result).toContain('**t**');
+    // Markdown is not parsed inside an HTML block, so `**t**` reached the reader
+    // as asterisks — the cell showed markup where the page showed bold text.
+    expect(result).toContain('<strong>t</strong>');
     // A code span would need escaping to stay safe, and Markdown does not decode
     // entities inside one; as an element the text stays readable.
     expect(result).toContain('<code>x|y</code>');
+  });
+
+  it('ссылка в ячейке — элемент, чужая схема теряет ссылку, но не текст', () => {
+    const safe = '<table><tr><td colspan="2"><a href="https://e.com">t</a></td></tr></table>';
+    expect(toMarkdown(safe)).toContain('<a href="https://e.com">t</a>');
+
+    const unsafe = '<table><tr><td colspan="2"><a href="javascript:alert(1)">t</a></td></tr></table>';
+    const result = toMarkdown(unsafe);
+    expect(result).not.toContain('javascript:');
+    expect(result).toContain('t');
   });
 
   it('<pre> сохраняется точно, включая пустые строки и табы', () => {

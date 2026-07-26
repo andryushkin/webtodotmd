@@ -344,7 +344,7 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
   const clone = escapedTextClone(cell);
   // Nothing to lift: skip minting a token from the cell's outerHTML, pairing the
   // clone, and scanning the result — a large table is mostly plain cells.
-  const cellOptions = { ...options, escapeSyntax: false };
+  const cellOptions = { ...options, outputContext: 'html' as const };
   if (originals.length === 0) return htmlSafeMarkdown(convert(clone, cellOptions));
   // A deep clone with rewritten text and attributes has the same elements in the
   // same order, so the two lists line up index by index.

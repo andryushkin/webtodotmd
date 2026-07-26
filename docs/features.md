@@ -91,7 +91,9 @@ Markdown carries raw HTML through and those would otherwise vanish from the file
 where a backslash would be corruption rather than protection — in a formula only
 a tag start is neutralized, since that is what could close a cell of an HTML
 fallback table. Inside such a table nothing is escaped at all: Markdown is not
-parsed there, so those characters already render as themselves.
+parsed there, so those characters already render as themselves — and for the same
+reason bold, italics, code and links are written as HTML tags there rather than
+as Markdown, which would have reached the reader as asterisks and brackets.
 
 ## Formatting support
 

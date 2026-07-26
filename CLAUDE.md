@@ -59,9 +59,13 @@ Each of these has cost a bug already; the reason is what makes it stick.
   marker that works — emitting one anyway lost the italics and left the
   characters. Preferred markers are kept wherever they render, so ordinary pages
   produce the source they always did.
-- The HTML table fallback sets `escapeSyntax: false` for its cells: Markdown is
-  not parsed inside an HTML block, so escaping it there protects nothing and the
-  backslashes reach the reader.
+- The HTML table fallback sets `outputContext: 'html'` for its cells, and that is
+  the whole switch: an HTML block is not parsed as Markdown, so escaping there
+  shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
+  emit tags instead; an image emits its alt text, because allowing `src`/`alt`
+  through the preview's allow-list would widen it for a case that already
+  rendered nothing. A link's scheme is checked — an unusable one costs the link,
+  not the text.
 
 **Side panel**
 

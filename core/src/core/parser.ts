@@ -37,6 +37,11 @@ function opensBlock(node: Node): boolean {
   return true;
 }
 
+/** True while writing into an HTML block, where Markdown is not parsed. */
+export function isHtmlContext(options: MarkItDownOptions): boolean {
+  return options.outputContext === 'html' || options.escapeSyntax === false;
+}
+
 function isLiteralContext(node: Node): boolean {
   let el = node.parentElement;
   while (el) {
@@ -55,7 +60,7 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const text = node.textContent ?? '';
     // Markdown the page showed as characters must render as characters — unless
     // this text is headed for an HTML block, where Markdown does not apply.
-    if (options.escapeSyntax === false || isLiteralContext(node)) return text;
+    if (isHtmlContext(options) || isLiteralContext(node)) return text;
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
     const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text));

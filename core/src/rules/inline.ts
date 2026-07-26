@@ -5,6 +5,7 @@ import {
   extractFlankingWhitespace,
   markerWorks,
 } from '../utils/flanking.js';
+import { isHtmlContext } from '../core/parser.js';
 
 /**
  * Emphasis, in the first form that will actually render.
@@ -17,20 +18,44 @@ import {
  * still Markdown; emitting delimiters that do nothing is a silent loss of
  * formatting plus stray characters the reader never saw.
  */
-function emphasis(el: Element, content: string, markers: string[], tag: string): string {
+function emphasis(
+  el: Element,
+  content: string,
+  markers: string[],
+  tag: string,
+  options: MarkItDownOptions,
+): string {
   const { leading, trimmed, trailing } = extractFlankingWhitespace(content);
   if (!trimmed) return content;
 
-  // Whitespace pulled outside the delimiters is what the marker sits against.
-  const before = leading ? ' ' : charBefore(el);
-  const after = trailing ? ' ' : charAfter(el);
+  // Inside an HTML block no delimiter would ever be parsed, so there is nothing
+  // to choose between: the tag is the only spelling that renders.
+  if (!isHtmlContext(options)) {
+    // Whitespace pulled outside the delimiters is what the marker sits against.
+    const before = leading ? ' ' : charBefore(el);
+    const after = trailing ? ' ' : charAfter(el);
 
-  for (const marker of markers) {
-    if (markerWorks(marker, trimmed, before, after)) {
-      return `${leading}${marker}${trimmed}${marker}${trailing}`;
+    for (const marker of markers) {
+      if (markerWorks(marker, trimmed, before, after)) {
+        return `${leading}${marker}${trimmed}${marker}${trailing}`;
+      }
     }
   }
   return `${leading}<${tag}>${trimmed}</${tag}>${trailing}`;
+}
+
+// Only schemes that are safe to write into an href the preview will render. The
+// side panel runs DOMPurify too, but this library is published on its own, and a
+// converter that can emit `javascript:` from page input is a converter that must
+// not be trusted alone.
+const SAFE_SCHEME = /^(?:https?:|mailto:|[#/.]|[^:]*$)/i;
+
+function htmlAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function resolveUrl(url: string, baseUrl?: string): string {
@@ -104,17 +129,17 @@ export const INLINE_RULES: Rule[] = [
   {
     name: 'bold',
     filter: ['strong', 'b'],
-    replacement: (el, childContent) => emphasis(el, childContent, ['**', '__'], 'strong'),
+    replacement: (el, childContent, options) => emphasis(el, childContent, ['**', '__'], 'strong', options),
   },
   {
     name: 'italic',
     filter: ['em', 'i'],
-    replacement: (el, childContent) => emphasis(el, childContent, ['_', '*'], 'em'),
+    replacement: (el, childContent, options) => emphasis(el, childContent, ['_', '*'], 'em', options),
   },
   {
     name: 'strikethrough',
     filter: ['del', 's'],
-    replacement: (el, childContent) => emphasis(el, childContent, ['~~'], 'del'),
+    replacement: (el, childContent, options) => emphasis(el, childContent, ['~~'], 'del', options),
   },
   {
     name: 'subscript',
@@ -130,9 +155,10 @@ export const INLINE_RULES: Rule[] = [
     name: 'inline-code',
     filter: (el) =>
       el.tagName.toLowerCase() === 'code' && el.parentElement?.tagName.toLowerCase() !== 'pre',
-    replacement: (_el, childContent) => {
+    replacement: (_el, childContent, options) => {
       const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
       if (!trimmed) return childContent;
+      if (isHtmlContext(options)) return `${leading}<code>${trimmed}</code>${trailing}`;
       // Если внутри есть бэктики — использовать двойные + пробелы §6.6
       const hasBacktick = trimmed.includes('`');
       const delim = hasBacktick ? '``' : '`';
@@ -147,6 +173,11 @@ export const INLINE_RULES: Rule[] = [
       const href = resolveUrl(el.getAttribute('href') ?? '', options.baseUrl);
       const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
       if (!trimmed) return childContent;
+      if (isHtmlContext(options)) {
+        // An unusable scheme costs the link, not the text it was wrapping.
+        if (!SAFE_SCHEME.test(href)) return `${leading}${trimmed}${trailing}`;
+        return `${leading}<a href="${htmlAttr(href)}">${trimmed}</a>${trailing}`;
+      }
       return `${leading}[${trimmed}](${href})${trailing}`;
     },
   },
@@ -167,6 +198,12 @@ export const INLINE_RULES: Rule[] = [
       const src = resolveUrl(extractImageUrl(el), options.baseUrl);
       const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
       if (!src) return alt || '';
+      // Inside an HTML block `![alt](src)` would not render, but emitting an
+      // <img> would mean allowing `src` and `alt` through the preview's
+      // allow-list — a real widening of what counts as the core's own markup,
+      // for a case that is rare and already showed nothing. The alt text is what
+      // a reader would have got from a broken image anyway.
+      if (isHtmlContext(options)) return alt || '';
       const title = el.getAttribute('title');
       const urlPart = title ? `${src} '${title}'` : src;
       return `![${alt}](${urlPart})`;
