@@ -195,7 +195,11 @@ describe('math inside the HTML table fallback', () => {
   const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const katex = (tex: string) =>
     `<span class="katex"><annotation encoding="application/x-tex">${esc(tex)}</annotation></span>`;
-  const mathjaxV2 = (tex: string) => `<script type="math/tex">${esc(tex)}</script>`;
+  // No `esc()` here, unlike katex: <script> is a raw-text element, so entities
+  // inside it are never decoded and the LaTeX would arrive doubly encoded. Every
+  // mathjaxV2 row below was measuring that instead of the escaping it names, and
+  // `md.includes(tex)` was false whatever the converter did.
+  const mathjaxV2 = (tex: string) => `<script type="math/tex">${tex}</script>`;
   // A nested table is what forces the fallback; the formula rides beside it.
   const table = (inner: string) =>
     `<table><tbody><tr><td>${inner}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`;
@@ -215,11 +219,9 @@ describe('math inside the HTML table fallback', () => {
     ['a</td><td>b', katex, true, false],
     ['a</td><td>b', mathjaxV2, true, false],
     ['a & b_1', katex, true, true],
-    // Still wrong: isMathSubtree does not cover <script>, so the cell escaping
-    // reaches LaTeX it should have left alone.
-    ['a & b_1', mathjaxV2, true, false],
+    ['a & b_1', mathjaxV2, true, true],
     ['x < y', katex, true, true],
-    ['x < y', mathjaxV2, true, false],
+    ['x < y', mathjaxV2, true, true],
   ])('%s via %p', (tex, build, cellsSurvive, latexIntact) => {
     const html = table((build as (t: string) => string)(tex as string));
     const md = toMarkdown(html, { ...CONVERSION_OPTIONS, complexTableFallback: 'html' });

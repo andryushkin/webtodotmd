@@ -35,7 +35,11 @@ reads those from the DOM and picks the first marker that will actually render �
 `_`/`**`, then `*`/`__`, then `<em>`/`<strong>`/`<del>`, which have no flanking
 rules. The preferred marker is kept wherever it works, so ordinary pages produce
 the source they always did; the tag is the last resort for content that begins or
-ends in punctuation and sits against a word, where no delimiter renders at all.
+ends in punctuation and sits against a word, and for an element whose neighbour is
+another emphasis element — two adjacent runs would otherwise merge their
+delimiters into one. Adjacent code spans are merged into a single span for the
+same reason, since a code span has no tag to fall back to that would keep its
+content inert.
 Those tags are declared in `core/src/fallback-tags.ts` alongside the table set —
 the library's public statement of what markup it can emit, for consumers that
 have to tell its output from a page's text.
@@ -71,13 +75,16 @@ markup that showed the reader asterisks.
    `Range.cloneContents()` already closes whatever tags the selection cut
    through, so the work here is the opposite one: restoring context the
    selection left behind. A range inside a `<pre>`, a heading, a list item, a
-   blockquote or a table is rebuilt with that wrapper — the table's `<thead>`,
-   the code block's `data-lang`, the list's `<ol start>`. A range that *crosses
+   blockquote or a table is rebuilt with that wrapper — the table's header row,
+   the code block's `data-lang`, and the ordinal the selected list item actually
+   had, not the list's `start`. The wrapper and the header restoration compose:
+   two tables inside a quoted block come back as two tables, each with its header. A range that *crosses
    out* of a table has no semantic common ancestor at all (drag from the last
    rows into the paragraph below and it is a plain `<div>`), so table headers are
    restored separately, for every table the fragment carries. Clones keep no link
-   to their originals, so the originals are marked before cloning and unmarked in
-   a `finally`.
+   to their originals, so the originals are marked before cloning — and the mark's
+   previous value is restored in a `finally`, because the page may have been using
+   that attribute name itself.
 4. On success the script calls `removeAllRanges()`, so a second capture with
    nothing selected reports `NO_SELECTION` instead of repeating the last
    result.

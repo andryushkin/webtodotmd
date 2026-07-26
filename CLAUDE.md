@@ -48,9 +48,10 @@ Each of these has cost a bug already; the reason is what makes it stick.
   `pre`, `code`, `kbd`, `samp` or a math subtree: there a backslash is
   corruption, and in a math subtree only a tag start (`<` before a letter or
   slash) is neutralized, because that is what can close a fallback cell.
-- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Needs
-  `sanitize()` to call `normalize()` last — a parser hands `&lt;/td&gt;` over as
-  three text nodes, each harmless alone.
+- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves
+  must not assemble across a node boundary: `sanitize()` calls `normalize()` last,
+  and a node whose tail is still an open construct escapes it defensively, since
+  it cannot see what the next node adds.
 - Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`,
   then `*`/`__`, then an HTML tag (`core/src/utils/flanking.ts`). Content starting
   or ending in punctuation, pressed against a word, has no marker that works —
@@ -84,7 +85,8 @@ Each of these has cost a bug already; the reason is what makes it stick.
   selection left behind. A range crossing *out* of a table has no semantic common
   ancestor, so table headers are restored separately. Clones carry no link to
   originals: mark before cloning, unmark in a `finally`, and detect the header by
-  that mark — comparing `textContent` promoted a body row that repeated it.
+  that mark — comparing `textContent` promoted a body row that repeated it. The
+  page may own the attribute, so restore its value in the `finally`, not remove.
 
 **Content script**
 
