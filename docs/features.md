@@ -86,10 +86,12 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
 
 - **Tables** — pipe tables, with `|` inside a cell escaped and line breaks
   turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
-  for — merged cells, a list inside a cell, a nested table — falls back to a
-  plain HTML table carrying `colspan`/`rowspan`, with cell content as Markdown
-  and preformatted blocks preserved exactly. No markup from the page itself
-  reaches the file.
+  for — merged cells, a list inside a cell, a nested table, preformatted text —
+  falls back to a plain HTML table carrying `colspan`/`rowspan`, with cell
+  content as Markdown. Preformatted text keeps its whitespace exactly, as a
+  `<pre>` block or as a fenced block when it sits inside other markup. No markup
+  from the page itself reaches the file — not even a tag the page wrote as
+  literal text.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
   the page is converted to LaTeX first. If rendering fails, the LaTeX source is
   shown.

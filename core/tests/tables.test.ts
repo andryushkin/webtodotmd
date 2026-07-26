@@ -335,8 +335,10 @@ describe('HTML fallback — своя разметка, а не разметка 
     const source = 'a\n\nb';
     const html = `<table><tr><td colspan="2"><div><pre>${source}</pre></div></td></tr></table>`;
     const result = toMarkdown(html);
-    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
-    expect(result).not.toContain('<br>');
+    // Wrapped, it reaches the converter as a fence, so the newlines are encoded
+    // rather than collapsed — the text comes back either way.
+    expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(source);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
   it('экспоненциальная и шестнадцатеричная запись span не принимается', () => {
@@ -372,10 +374,53 @@ describe('HTML fallback — своя разметка, а не разметка 
   });
 
   it('теги, которые выпускает сам конвертер, не экранируются', () => {
-    const html = '<table><tr><td colspan="2">x<sub>1</sub><br>y</td></tr></table>';
+    const html = '<table><tr><td colspan="2">x<sub>1</sub><sup>2</sup><br>y</td></tr></table>';
     const result = toMarkdown(html);
     expect(result).toContain('<sub>1</sub>');
+    expect(result).toContain('<sup>2</sup>');
     expect(result).toContain('<br>');
+  });
+
+  it('литеральный <sub> с атрибутами не проходит по имени тега', () => {
+    // Copy and Download hand over the raw Markdown without sanitizing, so an
+    // allowed tag name must not be enough to carry attributes through.
+    const html =
+      '<table><tr><td colspan="2">&lt;sub style=position:fixed onclick=steal()&gt;t&lt;/sub&gt;</td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('&lt;sub');
+    const reparsed = parseHTML(result).document;
+    expect(reparsed.querySelectorAll('sub')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('[style], [onclick]')).toHaveLength(0);
+    // The text is kept — as text.
+    expect(reparsed.querySelector('td')?.textContent).toContain('onclick=steal()');
+  });
+
+  it('литеральный </sub> из текста не закрывает настоящий <sub>', () => {
+    const html = '<table><tr><td colspan="2"><sub>real</sub>&lt;/sub&gt;</td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('<sub>real</sub>');
+    expect(result).toContain('&lt;/sub&gt;');
+  });
+
+  it('<pre> внутри обёртки уводит таблицу в fallback даже без colspan', () => {
+    // The analysis used to look only at direct children, so this stayed a pipe
+    // table and the blank line in the code became a <br>.
+    const source = 'a\n\nb';
+    const html = `<table><tr><td><div><pre>${source}</pre></div></td><td>x</td></tr><tr><td>y</td><td>z</td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result).toContain('<table>');
+    expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(source);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+  });
+
+  it('обёртка вокруг <pre> сохраняет свою разметку списка', () => {
+    const html =
+      '<table><tr><td colspan="2"><ul><li>one<pre>code</pre>tail</li><li>two</li></ul></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('- one');
+    expect(result).toContain('- two');
+    expect(parseHTML(result).document.querySelector('td')?.textContent).toContain('code');
+    expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
   it('блочный контент даёт разрыв, но не пустую строку', () => {

@@ -36,15 +36,20 @@ function analyzeTable(table: Element): TableAnalysis {
   const hasColspan = !!table.querySelector('[colspan]');
   const hasRowspan = !!table.querySelector('[rowspan]');
   const hasNestedTable = !!table.querySelector('table table');
+  // A <pre> at any depth is decisive: a pipe table has nowhere to put its
+  // newlines, and collapsing them edits the code. The rest stay direct-child
+  // checks — a list or heading in a cell survives as Markdown with <br> breaks,
+  // so pulling those into the HTML fallback would cost more than it saves.
+  const hasPreformatted = !!table.querySelector('td pre, th pre');
   const hasBlockContent = !!table.querySelector(
-    'td > ul, td > ol, td > pre, td > blockquote, td > h1, td > h2, td > h3, td > h4, td > h5, td > h6, td > table',
+    'td > ul, td > ol, td > blockquote, td > h1, td > h2, td > h3, td > h4, td > h5, td > h6, td > table',
   );
   const hasHead = !!table.querySelector('thead');
   const rowEls = ownRows(table);
   const columns = rowEls[0] ? ownCells(rowEls[0]).length : 0;
   const rows = rowEls.length;
 
-  if (hasColspan || hasRowspan || hasNestedTable || hasBlockContent) {
+  if (hasColspan || hasRowspan || hasNestedTable || hasPreformatted || hasBlockContent) {
     return { level: 'complex', hasHead, columns, rows };
   }
 
@@ -127,15 +132,37 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
 // while the rest of the converter reduces all of them to text.
 const MAX_SPAN = 1000;
 
-// The converter emits these three itself; everything else that looks like a tag
-// is prose from the page. Inside a <td> that prose sits next to real markup, so
-// a literal "</td></table>" in the text would close our own elements.
-const CONVERTER_TAGS = new Set(['br', 'sub', 'sup']);
+// The converter emits exactly these, with no attributes: `<br>` from a cell's
+// line break and `<sub>`/`<sup>` from inline.ts. Everything else that looks like
+// a tag is prose from the page — and inside a <td> that prose sits next to real
+// markup, where a literal "</td></table>" would close our own elements.
+//
+// The match must be exact. A tag name alone is not enough: the page can write
+// `<sub style=... onclick=...>` as text, and passing it through would put live
+// markup in a file that Copy and Download hand over without sanitizing.
+const PAIRED_CONVERTER_TAGS = new Set(['sub', 'sup']);
 
 function escapeStrayTags(md: string): string {
-  return md.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (match, slash, tag, rest) =>
-    CONVERTER_TAGS.has(String(tag).toLowerCase()) ? match : `&lt;${slash}${tag}${rest}&gt;`,
-  );
+  // Closing tags are matched against what is actually open, so a `</sub>` the
+  // page wrote as prose cannot close a `<sub>` the converter opened. A bare
+  // opening tag is indistinguishable from the converter's own and is left alone:
+  // without attributes it carries nothing but formatting.
+  const open: string[] = [];
+  return md.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (match, slash, rawTag, rest) => {
+    const tag = String(rawTag).toLowerCase();
+    const escaped = `&lt;${slash}${rawTag}${rest}&gt;`;
+    if (rest !== '') return escaped;
+    if (!slash && tag === 'br') return match;
+    if (!slash && PAIRED_CONVERTER_TAGS.has(tag)) {
+      open.push(tag);
+      return match;
+    }
+    if (slash && open[open.length - 1] === tag) {
+      open.pop();
+      return match;
+    }
+    return escaped;
+  });
 }
 
 function escapeHtmlText(text: string): string {
@@ -161,6 +188,23 @@ function preformattedText(el: Element): string {
   return escapeHtmlText(el.textContent ?? '').replace(/\r?\n/g, '&#10;');
 }
 
+// A blank line ends the HTML block and hands the rest of the table to the
+// Markdown parser as prose, so blank lines have to go — but inside a fenced code
+// block every newline is content. A <pre> nested in a wrapper reaches the
+// converter as a fence (the wrapper's own Markdown, a list marker for instance,
+// is worth keeping), so its newlines are encoded rather than collapsed: &#10;
+// re-parses to the same text.
+function htmlSafeMarkdown(md: string): string {
+  return md
+    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g)
+    .map((part, index) =>
+      index % 2 === 1
+        ? part.replace(/\r?\n/g, '&#10;')
+        : part.replace(/\r?\n[ \t]*(?:\r?\n)+/g, '<br><br>'),
+    )
+    .join('');
+}
+
 // Nodes that get their own markup instead of going through the converter: a
 // nested table keeps its structure, and a <pre> keeps its whitespace, which
 // Markdown inside a cell cannot. Both are found at any depth — a <pre> wrapped
@@ -177,8 +221,7 @@ function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
       if (node.nodeType === TEXT_NODE) md += node.textContent ?? '';
       else if (node.nodeType === ELEMENT_NODE) md += convert(node, options);
     }
-    // Single newlines are safe inside an HTML block; a blank line is not.
-    out += escapeStrayTags(md).replace(/\r?\n[ \t]*(?:\r?\n)+/g, '<br><br>');
+    out += htmlSafeMarkdown(escapeStrayTags(md));
     pending = [];
   };
 
@@ -196,13 +239,6 @@ function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
     } else if (tag === 'pre') {
       flushMarkdown();
       out += `<pre>${preformattedText(el as Element)}</pre>`;
-    } else if (el && el.querySelector('table, pre')) {
-      // Descend past the wrapper: it is not carried anyway, and converting it
-      // whole would take the nested table or <pre> down with it. The wrapper's
-      // own Markdown (a list marker, say) is the price for keeping their content
-      // intact.
-      flushMarkdown();
-      out += serializeNodes(Array.from(el.childNodes), options);
     } else {
       pending.push(child);
     }
