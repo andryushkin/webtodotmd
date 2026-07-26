@@ -285,6 +285,37 @@ describe('соседние выделения', () => {
   });
 });
 
+// Two wrappers collide only when their delimiters really do meet, and a line
+// ending between them means they never do. The search for the neighbour skipped
+// anything holding no text, so it read straight past a `<br>` to the wrapper on
+// the line above: `<em>a</em><br><em>b</em>` was judged a collision and the second
+// wrapper gave up `_b_` — which renders perfectly on a line of its own — for a
+// tag. The character each end is pressed against comes from the same search, so a
+// wrapper at the start of a line was reading the one before the break.
+describe('перенос строки разделяет соседей', () => {
+  it.each([
+    ['an italic pair', '<p><em>a</em><br><em>b</em></p>', '_a_\\\n_b_'],
+    ['a bold pair', '<p><strong>a</strong><br><strong>b</strong></p>', '**a**\\\n**b**'],
+    ['a strikethrough pair', '<p><del>a</del><br><del>b</del></p>', '~~a~~\\\n~~b~~'],
+    // The break may sit inside the wrapper in front and still end the line.
+    ['a break inside the wrapper in front', '<p><span><em>a</em><br></span><em>b</em></p>', '_a_\\\n_b_'],
+    // A block ends a line as surely as a break does, and an `<hr>` writes one of
+    // its own.
+    ['a block between them', '<div><em>a</em><p>x</p><em>b</em></div>', '_a_\n\nx\n\n_b_'],
+    ['a rule between them', '<div><em>a</em><hr><em>b</em></div>', '_a_\n\n---\n\n_b_'],
+
+    // The neighbouring character, not just the neighbouring wrapper: `_` never
+    // works inside a word, and the word was on the other line.
+    ['the letter before the break is not the one in front', '<p>a<br><em>b</em></p>', 'a\\\n_b_'],
+    ['nor the one after it behind', '<p><em>a</em><br>b</p>', '_a_\\\nb'],
+
+    // On one line the collision is real and the second wrapper still gives way.
+    ['a pair on the same line still collides', '<p><em>a</em><em>b</em></p>', '_a_<em>b</em>'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
 // Nothing is parsed inside a code span, so every mark in one is a character the
 // reader sees. The rule wrapped the converted children, which put the emphasis
 // delimiters of `<code><strong>token</strong></code>` into the file as text.
@@ -310,6 +341,43 @@ describe('code span не показывает разметку', () => {
     // Reaching through a wrapper would move `b` inside the emphasis, so it is not
     // done — and here the closing `_` parts the backticks anyway.
     ['not merged across a wrapper', '<p><em><code>a</code></em><code>b</code></p>', '<em>`a`</em>`b`'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// The two spans merge because nothing stood between them, and emptiness of
+// `textContent` was the test for that. It is a different question: a `<br>` and an
+// `<img>` hold no text and are exactly what the reader saw in between. Stepping
+// over one welded two lines into one and left the break at the end of the merged
+// span, and moved the picture behind text it had been standing in front of.
+describe('пустой сосед не сливает спаны', () => {
+  it.each([
+    ['a break between them', '<p><code>a</code><br><code>b</code></p>', '`a`\\\n`b`'],
+    [
+      'an image between them',
+      '<p><code>a</code><img src="https://e.com/i.png" alt="P"><code>b</code></p>',
+      '`a`![P](https://e.com/i.png)`b`',
+    ],
+    // Neither the break nor the picture has to be the sibling itself: a wrapper
+    // is only as empty as what it holds.
+    ['a break inside a wrapper', '<p><code>a</code><span><br></span><code>b</code></p>', '`a`\\\n`b`'],
+    [
+      'a picture inside a wrapper',
+      '<p><code>a</code><picture><img src="https://e.com/i.png" alt="P"></picture><code>b</code></p>',
+      '`a`![P](https://e.com/i.png)`b`',
+    ],
+    // A `<sub>` writes its tags whatever it holds, and an `<hr>` its rule.
+    ['a sub between them', '<p><code>a</code><sub></sub><code>b</code></p>', '`a`<sub></sub>`b`'],
+    ['a rule between them', '<div><code>a</code><hr><code>b</code></div>', '`a`\n\n---\n\n`b`'],
+    ['every span keeps its own delimiters', '<p><code>a`b</code><br><code>c</code></p>', '`` a`b ``\\\n`c`'],
+    ['a run of them', '<p><code>a</code><br><code>b</code><br><code>c</code></p>', '`a`\\\n`b`\\\n`c`'],
+
+    // What really writes nothing is still stepped over — and has to be, since the
+    // spans are then adjacent in the file and their backticks would run together.
+    ['a wrapper holding nothing', '<p><code>a</code><span></span><code>b</code></p>', '`ab`'],
+    ['a comment', '<p><code>a</code><!-- x --><code>b</code></p>', '`ab`'],
+    ['nothing at all', '<p><code>a</code><code>b</code></p>', '`ab`'],
   ])('%s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });
