@@ -50,9 +50,9 @@ function analyzeTable(table: Element): TableAnalysis {
   // spanAttribute() — colspan="1" (Wikipedia, Word and Confluence exports write
   // it) and colspan="abc" mean nothing, and a table whose only oddity was such a
   // value used to lose its pipe form for an HTML table with no merged cells.
-  const hasMergedCells = Array.from(table.querySelectorAll('[colspan], [rowspan]')).some(
-    (cell) => spanAttribute(cell, 'colspan') !== '' || spanAttribute(cell, 'rowspan') !== '',
-  );
+  const hasMergedCells = Array.from(
+    table.querySelectorAll('td[colspan], th[colspan], td[rowspan], th[rowspan]'),
+  ).some((cell) => spanAttribute(cell, 'colspan') !== '' || spanAttribute(cell, 'rowspan') !== '');
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
@@ -147,7 +147,10 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
 // wrong shape: every tag not on the deny list survived, so <form>, <video
 // autoplay>, inline styles and event-carrying attributes reached the .md file,
 // while the rest of the converter reduces all of them to text.
-const MAX_SPAN = 1000;
+// Per the HTML Standard: colspan is 1..1000, rowspan is 0..65534, and rowspan="0"
+// means "to the end of the row group" — a real merge, not a typo.
+const MAX_COLSPAN = 1000;
+const MAX_ROWSPAN = 65534;
 
 function escapeHtmlText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -159,9 +162,14 @@ function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
   const raw = cell.getAttribute(name)?.trim() ?? '';
   // Digits only: Number() would read "1e3" as 1000 and "0x2" as 2, inventing a
   // span the page never wrote.
-  if (!/^\d{1,4}$/.test(raw)) return '';
+  if (!/^\d{1,5}$/.test(raw)) return '';
   const value = Number(raw);
-  if (value < 2 || value > MAX_SPAN) return '';
+  // 1 is the default and adds nothing. Zero is meaningful for rowspan only.
+  if (name === 'colspan') {
+    if (value < 2 || value > MAX_COLSPAN) return '';
+  } else if (value === 1 || value > MAX_ROWSPAN) {
+    return '';
+  }
   return ` ${name}="${value}"`;
 }
 
@@ -275,7 +283,9 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
   // element; fall back to the converter for the whole cell instead of guessing.
   if (lifted.length !== originals.length) return htmlSafeMarkdown(convert(clone, options));
 
-  const token = mintPlaceholder(cell.textContent ?? '');
+  // outerHTML, not textContent: href, src, alt and title reach the output too, so
+  // a placeholder written into one of them would be substituted as well.
+  const token = mintPlaceholder(cell.outerHTML);
   const blocks = originals.map((original) => {
     const tag = original.tagName.toLowerCase();
     if (tag === 'table') return serializeStructuralTable(original, options);

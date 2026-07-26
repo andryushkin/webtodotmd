@@ -86,13 +86,15 @@ source textarea together; Copy always reads `rawMd`.
 The preview runs marked with `html: true` so injected blocks (KaTeX output,
 metadata block, content gaps, `sub`/`sup`) render — which means literal tags in
 captured text would render too, so `escapeHtmlTagsInMarkdown()` runs first and
-escapes tags outside code spans. The exceptions are the tags the conversion core
-emits itself: `sub`, `sup`, `br`, and the table set (`table`, `tr`, `th`, `td`,
-`thead`, `tbody`, `tfoot`, `caption`, `pre`, `code`, `kbd`, `samp`) — a table
-with merged cells, a nested table or preformatted text falls back to plain HTML,
-and escaping it showed the user the markup instead of the table. The core escapes
-page text inside those tables, so they arrive without attributes. `DOMPurify
-.sanitize()` is mandatory before any `innerHTML` assignment.
+escapes tags outside code spans. It lives in `src/shared/escape-html-tags.ts`
+with its own tests. The exceptions are the tags the conversion core emits itself:
+`sub`, `sup`, `br`, and the table set of the HTML fallback (`table`, `tr`, `th`,
+`td`, `caption`, `pre`, `code`, `kbd`, `samp`) — a table with merged cells, a
+nested table or preformatted text takes that path, and escaping it showed the
+user markup instead of a table. The tag must be bare or carry only a numeric
+`colspan`/`rowspan`: a page can write `<table style="position:fixed">` as literal
+text, and `style` survives DOMPurify. `DOMPurify.sanitize()` is mandatory before
+any `innerHTML` assignment.
 
 The status bar has two layers: `setBaseStatus()` for the persistent readiness
 line and `setTempStatus()` for transient errors and confirmations, which fall

@@ -11,6 +11,7 @@ import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
 import { getRatingUrl } from '../shared/store-links';
+import { escapeHtmlTagsInMarkdown } from '../shared/escape-html-tags';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -267,42 +268,6 @@ function buildMetadata(meta: PageMeta): string {
   return `---\ntitle: '${escapedTitle}'\nsource: '${escapedUrl}'\ndate: ${dateStr}\n---`;
 }
 
-// Tags the conversion core emits on purpose, and which the preview therefore has
-// to render rather than escape. The table set is here because a table with merged
-// cells, a nested table or preformatted text falls back to plain HTML — escaping
-// it showed the user the markup instead of the table. All of it still goes
-// through DOMPurify before it reaches innerHTML, and the core escapes page text
-// inside those tables, so nothing arrives with attributes or behavior.
-const ALLOWED_HTML_TAGS = new Set([
-  'sub',
-  'sup',
-  'br',
-  'table',
-  'thead',
-  'tbody',
-  'tfoot',
-  'tr',
-  'th',
-  'td',
-  'caption',
-  'pre',
-  'code',
-  'kbd',
-  'samp',
-]);
-
-function escapeHtmlTagsInMarkdown(md: string): string {
-  const parts = md.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g);
-  return parts
-    .map((part, i) => {
-      if (i % 2 === 1) return part; // code span or fence — leave untouched
-      return part.replace(/<(\/?)(([a-zA-Z][a-zA-Z0-9]*))([^>]*)>/g, (_match, slash, tagName, _tn, attrs) => {
-        if (ALLOWED_HTML_TAGS.has(tagName.toLowerCase())) return _match;
-        return `&lt;${slash}${tagName}${attrs}&gt;`;
-      });
-    })
-    .join('');
-}
 
 function renderMarkdown(md: string) {
   const processed = preprocessMath(escapeHtmlTagsInMarkdown(md))

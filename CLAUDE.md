@@ -45,8 +45,11 @@ Each of these has cost a bug already; the reason is what makes it stick.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
   so injected KaTeX and metadata blocks render, which means literal tags in
   captured text would render too — `escapeHtmlTagsInMarkdown()` runs first. Its
-  allow-list is exactly what the core emits: `sub`, `sup`, `br` and the table
-  tags of the HTML fallback. Adding to it renders more of the page's own text.
+  allow-list (`src/shared/escape-html-tags.ts`, covered by tests) is exactly what
+  the core emits: `sub`, `sup`, `br` and the table tags of the HTML fallback,
+  and only bare or carrying a numeric `colspan`/`rowspan`. A tag name alone is
+  not enough — `style` survives DOMPurify, so a literal `<table
+  style="position:fixed">` in captured text would become an overlay.
 - Status has two layers: `setBaseStatus()` for readiness, `setTempStatus()` for
   errors and confirmations. Never call `setStatus()` directly — it uses
   `innerHTML`, so messages must pass through `escHtml()`.
