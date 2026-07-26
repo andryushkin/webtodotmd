@@ -265,6 +265,24 @@ describe('HTML fallback сохраняет разметку ячейки', () =>
     expect(result).not.toContain('>ab<');
   });
 
+  it('кавычка в значении атрибута не разрывает сериализацию', () => {
+    // The page writes &quot;, the parser hands back a literal quote: hand-built
+    // `name="value"` would let it close the attribute and inject live markup.
+    const html = `<table><tr><td colspan="2" title="&quot;><img src=x onerror=alert(1)>">safe</td></tr></table>`;
+    const result = toMarkdown(html);
+    const reparsed = parseHTML(result).document;
+    expect(reparsed.querySelectorAll('img')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('[onerror]')).toHaveLength(0);
+    expect(result).toContain('&quot;');
+    expect(result).toContain('safe');
+  });
+
+  it('скрипт в значении атрибута тоже не оживает', () => {
+    const html = `<table><tr><td colspan="2" title="&quot;><script>alert(1)</script>">safe</td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('script')).toHaveLength(0);
+  });
+
   it('скрипты и обработчики событий не переносятся', () => {
     const html = `
       <table>

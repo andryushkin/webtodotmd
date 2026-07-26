@@ -124,7 +124,13 @@ const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
 // keep the markup: textContent turned a list in a cell into "ab", losing both
 // the structure and the separation between items. Scripts and event handlers do
 // not survive the trip — nothing here should carry behavior into a .md file.
-function cellInnerHTML(cell: Element): string {
+//
+// Serialization goes through the DOM rather than string concatenation. An
+// attribute value can hold a quote — a page writes it as &quot; and the parser
+// hands it back decoded — so building `name="value"` by hand lets that value
+// close its own attribute and inject live markup into the file. outerHTML
+// re-escapes it.
+function serializeCell(cell: Element): string {
   const clone = cell.cloneNode(true) as Element;
   for (const el of Array.from(clone.querySelectorAll(UNSAFE_CELL_TAGS))) el.remove();
   for (const el of [clone, ...Array.from(clone.querySelectorAll('*'))]) {
@@ -132,23 +138,15 @@ function cellInnerHTML(cell: Element): string {
       if (attr.name.toLowerCase().startsWith('on')) el.removeAttribute(attr.name);
     }
   }
-  return clone.innerHTML.trim();
+  // A blank line inside the block would end the HTML block and hand the rest of
+  // the table to the Markdown parser as text.
+  return clone.outerHTML.replace(/\n[ \t]*\n+/g, '\n');
 }
 
 function serializeComplexTable(table: Element): string {
   const lines: string[] = ['<table>'];
   for (const row of ownRows(table)) {
-    const cellsHTML = ownCells(row)
-      .map((cell) => {
-        const tag = cell.tagName.toLowerCase();
-        const attrs = Array.from(cell.attributes)
-          .filter((a) => !a.name.toLowerCase().startsWith('on'))
-          .map((a) => ` ${a.name}="${a.value}"`)
-          .join('');
-        return `<${tag}${attrs}>${cellInnerHTML(cell)}</${tag}>`;
-      })
-      .join('');
-    lines.push(`<tr>${cellsHTML}</tr>`);
+    lines.push(`<tr>${ownCells(row).map(serializeCell).join('')}</tr>`);
   }
   lines.push('</table>');
   return lines.join('\n');
