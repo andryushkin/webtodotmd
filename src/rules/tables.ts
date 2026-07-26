@@ -124,10 +124,20 @@ const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
 // rest of the table to the Markdown parser as text — including a blank line
 // inside an attribute value, which Markdown cannot see is inside a tag. Deleting
 // those newlines would be data loss: they are content inside <pre> and inside
-// attributes. So they are carried through serialization as this token and come
-// out as &#10;, which re-parses to the same text. The private-use characters
-// make a collision with page content effectively impossible.
-const NEWLINE_TOKEN = 'htmltodotmd:nl';
+// attributes. So they ride through serialization as a token and come
+// out as &#10;, which re-parses to the same text.
+//
+// The token is minted per cell and verified absent from that cell's own markup.
+// The final substitution cannot tell a token we inserted from an identical
+// string the page wrote itself, and a fixed token would sit in the bundle for
+// any page to copy — so the only safe token is one the input does not contain.
+function mintNewlineToken(html: string): string {
+  let token = '\uE000nl\uE000';
+  while (html.includes(token)) {
+    token = `\uE000nl${Math.random().toString(36).slice(2)}\uE000`;
+  }
+  return token;
+}
 
 function isPreformatted(el: Element): boolean {
   let node: Element | null = el;
@@ -139,11 +149,11 @@ function isPreformatted(el: Element): boolean {
   return false;
 }
 
-function protectNewlines(root: Element): void {
+function protectNewlines(root: Element, token: string): void {
   for (const el of [root, ...Array.from(root.querySelectorAll('*'))]) {
     for (const attr of Array.from(el.attributes)) {
       if (/\r?\n/.test(attr.value)) {
-        el.setAttribute(attr.name, attr.value.replace(/\r?\n/g, NEWLINE_TOKEN));
+        el.setAttribute(attr.name, attr.value.replace(/\r?\n/g, token));
       }
     }
   }
@@ -156,7 +166,7 @@ function protectNewlines(root: Element): void {
         // Outside <pre> a blank line is formatting, not content: collapse it.
         // Inside, every newline is data and gets encoded instead.
         child.textContent = preformatted
-          ? text.replace(/\r?\n/g, NEWLINE_TOKEN)
+          ? text.replace(/\r?\n/g, token)
           : text.replace(/\r?\n[ \t]*(?:\r?\n)+/g, '\n');
       } else if (child.nodeType === ELEMENT_NODE) {
         walk(child as Element);
@@ -184,8 +194,9 @@ function serializeCell(cell: Element): string {
       if (attr.name.toLowerCase().startsWith('on')) el.removeAttribute(attr.name);
     }
   }
-  protectNewlines(clone);
-  return clone.outerHTML.split(NEWLINE_TOKEN).join('&#10;');
+  const token = mintNewlineToken(clone.outerHTML);
+  protectNewlines(clone, token);
+  return clone.outerHTML.split(token).join('&#10;');
 }
 
 function serializeComplexTable(table: Element): string {

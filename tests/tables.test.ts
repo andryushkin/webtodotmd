@@ -298,8 +298,38 @@ describe('HTML fallback сохраняет разметку ячейки', () =>
   });
 
   it('служебный токен не протекает в вывод', () => {
+    // Input free of private-use characters: any in the output would be a
+    // placeholder that was never substituted back.
     const html = `<table><tr><td colspan="2"><pre>a\n\nb</pre></td></tr></table>`;
     expect(toMarkdown(html)).not.toMatch(/[\uE000-\uF8FF]/);
+  });
+
+  // The page can write the placeholder itself: a fixed token sits in the bundle
+  // for anyone to copy, and the final substitution cannot tell the page's copy
+  // from ours. The token is therefore minted per cell against its own markup.
+  it('литеральный токен со страницы не превращается в перевод строки', () => {
+    const literal = '\uE000nl\uE000';
+    const html = `<table><tr><td colspan="2"><pre>before${literal}after</pre></td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelector('pre')?.textContent).toBe(`before${literal}after`);
+  });
+
+  it('литеральный токен рядом с настоящими переводами строк', () => {
+    const literal = '\uE000nl\uE000';
+    const source = `a\n\nb${literal}c`;
+    const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+  });
+
+  it('литеральный токен в значении атрибута вместе с переводом строки', () => {
+    const literal = '\uE000nl\uE000';
+    const value = `x${literal}y\n\nz`;
+    const html = `<table><tr><td colspan="2" title="${value}">t</td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(parseHTML(result).document.querySelector('td')?.getAttribute('title')).toBe(value);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
   it('кавычка в значении атрибута не разрывает сериализацию', () => {
