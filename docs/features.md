@@ -97,17 +97,23 @@ as Markdown, which would have reached the reader as asterisks and brackets.
 
 ## Formatting support
 
-Headings H1–H6, bold, italic, nested ordered and unordered lists, tables,
-fenced code blocks with language, inline code, links (absolute URLs), images,
+Headings H1–H6, bold, italic, nested ordered and unordered lists, definition
+lists, tables, fenced code blocks with language, inline code, links, images,
 blockquotes, horizontal rules, `<sub>` and `<sup>`.
+
+Link targets are limited to the schemes a Markdown file can carry safely — the
+same set the preview's sanitizer accepts, so the two halves of the product agree
+on what a link is. `javascript:` and a `data:` document lose the link and keep
+the text.
 
 - **Tables** — pipe tables, with `|` inside a cell escaped and line breaks
   turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
   for — merged cells, a nested table, preformatted text — is folded into the
   pipe form: a merged cell keeps its text where it starts and leaves the
   positions it spanned empty, a nested table becomes its rows one per line with
-  the cells of each row joined by a middle dot, and preformatted text becomes one
-  code span per line. Turning on **Keep complex tables as HTML** emits a plain
+  the cells of each row joined by a middle dot and its `<caption>` as the first
+  line, and preformatted text becomes one code span per line. A wrapper around the
+  inner table does not hide it from the fold. Turning on **Keep complex tables as HTML** emits a plain
   HTML table carrying `colspan`/`rowspan`
   instead, which keeps the structure exactly — at the price that Markdown is not
   parsed inside an HTML block, so every cell stops being Markdown. The preview renders these tables rather than showing
@@ -121,7 +127,7 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
   Elsewhere in the output a literal tag is escaped by the converter itself, so it
   stays literal text in the file and in the preview alike.
   A `<caption>` is kept: as a caption in the fallback, as the line above a pipe
-  table.
+  table, as the first line of a folded nested cell.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
   the page is converted to LaTeX first. If rendering fails, the LaTeX source is
   shown.

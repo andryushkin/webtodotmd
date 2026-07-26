@@ -42,7 +42,7 @@ Each of these has cost a bug already; the reason is what makes it stick.
 
 - Markdown characters in the page's own text are escaped, so the file renders
   what the reader saw. Inline marks (`*`, a non-intraword `_`, `` ` ``, `~~`,
-  link brackets) are escaped per text node; `#`, `>`, bullets, numbering and a
+  link brackets, the last against a bounded lookahead) are escaped per text node; `#`, `>`, bullets, numbering and a
   line of dashes only in the node that opens a block — a text node is not a line,
   and the parser splits text at every element boundary. Never escape inside
   `pre`, `code`, `kbd`, `samp` or a math subtree: there a backslash is

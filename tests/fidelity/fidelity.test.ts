@@ -82,8 +82,19 @@ beforeAll(() => {
 // emphasis work above and the generator's new shapes landed in the same tree, and
 // four of the seeds the generator newly reached were the collisions that work had
 // already fixed.
+//
+// Then 94 -> 76 across three more repairs. The concatenation axis is gone
+// entirely: link brackets are now escaped against a bounded lookahead, so
+// `<span>[</span>x](url)` no longer assembles. A nested table behind a wrapper is
+// folded, a <pre> holding both a <br> and a <code> keeps both, and a link
+// destination containing `](` no longer ends itself.
+//
+// Some classes here look new and are not. A class is keyed by the shrunk minimal
+// document, so repairing one defect lets the shrinker reach a different,
+// pre-existing one in the same seed. Each was checked directly: byte-identical
+// Markdown before and after, failing on both.
 const SEEDS = 200;
-const CEILING = 94;
+const CEILING = 76;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -97,34 +108,30 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com)<a href=\"https://example.com\">!</a></p>",
   "<p>(https://example.com)<a href=\"https://example.com/a`b`\">hello world</a></p>",
   "<p>(https://example.com/i.png)&lt;div&gt; x `</p>",
+  "<p>(https://example.com/i.png)&lt;td colspan=\"2\"&gt;</p>",
   "<p>(https://example.com/i.png)<b>x</b></p>",
+  "<p>(https://example.com/i.png)<kbd>word</kbd></p>",
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
   "<p>(https://example.com/i.png)<strong>hello world</strong></p>",
   "<p>(https://example.com/i.png)\\</p>",
+  "<p>(https://example.com/i.png)_</p>",
+  "<p>(https://example.com/i.png)`` `</p>",
   "<p>(https://example.com/i.png)~~</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
   "<p><img src=\"\" alt=\"x\"></p>",
-  "<p><span>![alt]</span>(https://example.com/i.png)</p>",
   "<p><span>1. </span></p>",
-  "<p><span>[</span>x](https://example.com)</p>",
-  "<p><span>[text]</span>(https://example.com)</p>",
-  "<p>[<a href=\"https://example.com/a](x)b\">x</a></p>",
   "<p>x](https://example.com)**</p>",
   "<p>x](https://example.com)<samp>![</samp></p>",
   "<p>x](https://example.com)<strong>text</strong></p>",
   "<p>~word~</p>",
   "<p>\ud83c\udf89<i>~</i></p>",
   "<p>\ud83d\udc69\u200d\ud83d\udcbb<b>&lt;div&gt;</b></p>",
-  "<pre>---<br><code>`</code></pre>",
-  "<pre><code>hello world</code><br>**</pre>",
-  "<pre><code>word</code><br>(https://example.com/i.png)</pre>",
-  "<pre>_under_<br><code>text</code></pre>",
-  "<table><tbody><tr><td><div><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>&lt;/td&gt;</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>(</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>--&gt;</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>[</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>`</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>hello world</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>text</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption> </caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -134,6 +141,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><caption>&lt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>&lt;pre&gt;x&lt;/pre&gt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>*bold*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>--&gt;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>]</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>__</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -334,6 +342,12 @@ describe('structural sanity', () => {
     // Recorded as a defect, and repaired in the same round by the inline-code
     // rule taking the child's text instead of its converted Markdown.
     ['emphasis inside a code span', '<p><code>a <b>b</b></code></p>', true],
+    // Load-bearing since the scheme list was widened to DOMPurify's own: a
+    // shorter list in the core would drop links the panel's sanitizer keeps.
+    ['a link keeps a tel: target', '<p><a href="tel:+15551234">call</a></p>', true],
+    // A `](` in a destination ends it only when an unbalanced `[` sits ahead of
+    // the link in the page's text — which is the shape a footnote marker makes.
+    ['a link target holding a bracket-paren', '<p>[<a href="https://e.com/a](x)b">x</a></p>', true],
     // Should fold exactly as the case above does. The fold looks at the cell's
     // own children, so one wrapper hides the inner table from it — and the pipe
     // table it emits instead lands inside a cell, where the reader gets
@@ -344,11 +358,11 @@ describe('structural sanity', () => {
         '</div></td></tr><tr><td>outer</td></tr></tbody></table>',
       false,
     ],
-    // Should be `pre:lost kept`. With both a `<br>` and a `<code>` inside, only
-    // what the `<code>` held survives; the rest of the block is dropped.
-    ['pre with a br and a code loses text', '<pre>lost<br><code>kept</code></pre>', false],
-    // Should keep `cap`. The inner table's caption has no slot in the fold and is
-    // dropped instead of being joined with the cells.
+    // Repaired: the `<code>` is read alone only when it is all the `<pre>` holds.
+    ['pre with a br and a code loses text', '<pre>lost<br><code>kept</code></pre>', true],
+    // `cap` reaches the file now, as the folded cell's first line. Still recorded
+    // unfaithful because the fold itself is — the ` · ` join is a deliberate
+    // difference, not a lost caption.
     [
       "a nested table's caption is dropped",
       '<table><tbody><tr><td><table><caption>cap</caption><tbody><tr><td>x</td><td>y</td></tr>' +

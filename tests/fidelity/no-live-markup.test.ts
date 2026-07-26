@@ -82,11 +82,10 @@ describe('markup shown as text never becomes markup again', () => {
     ['heading', `<h2>${SHOWN}</h2>`, SHOWN_TEXT],
     ['list item', `<ul><li>${SHOWN}</li></ul>`, SHOWN_TEXT],
     ['blockquote', `<blockquote>${SHOWN}</blockquote>`, SHOWN_TEXT],
-    // Still wrong: the term and the definition are two blocks on the page and one
-    // run of text in the file, so the payloads land welded together with no space
-    // between them. Should be `${SHOWN_TEXT} ${SHOWN_TEXT}`. Nothing here is live
-    // — this is the loss the old version of this table could not see.
-    ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT}${SHOWN_TEXT}`],
+    // Repaired: a term and its definition are separate blocks now, as the page
+    // showed them. `dt`/`dd` were already in the parser's BLOCK_PARENTS, so the
+    // escaper had assumed this while nothing downstream made it true.
+    ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT} ${SHOWN_TEXT}`],
     ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`, SHOWN_TEXT],
     // Table cells reach the output through their own path in tables.ts, which
     // once bypassed the HTML escaping entirely.
