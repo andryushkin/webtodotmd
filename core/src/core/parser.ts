@@ -11,7 +11,7 @@ export function convert(node: Node, options: MarkItDownOptions): string {
   if (node.nodeType === ELEMENT_NODE) {
     const el = node as Element;
     const rule = findRule(el, options);
-    const childContent = convertChildren(el, options);
+    const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
     return rule.replacement(el, childContent, options);
   }
   return '';

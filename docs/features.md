@@ -89,7 +89,8 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
   for — merged cells, a list inside a cell, a nested table, preformatted text —
   falls back to a plain HTML table carrying `colspan`/`rowspan`, with cell
   content as Markdown, and preformatted text kept as a `<pre>` block so its
-  whitespace survives. That HTML is built by the converter, never copied from
+  whitespace survives — including in the preview, which renders these tables
+  rather than showing their markup. That HTML is built by the converter, never copied from
   the page: in a fallback table, text the page wrote — including something that
   looks like a tag — is escaped, so it cannot close a cell or add behavior.
   Elsewhere in the output a literal tag stays literal text, as Markdown

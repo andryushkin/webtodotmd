@@ -134,6 +134,45 @@ describe('pipe в содержимом', () => {
 });
 
 describe('строки, колонки и подпись в pipe-таблице', () => {
+  it('colspan="1" и нечисловой span не уводят таблицу в HTML', () => {
+    // Wikipedia, Word and Confluence exports write colspan="1"; the gate and the
+    // serializer used to disagree about whether that is a merged cell.
+    for (const span of ['1', '0', 'abc']) {
+      const html = `<table><tr><th colspan="${span}">A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>`;
+      const result = toMarkdown(html);
+      expect(result).not.toContain('<table>');
+      expect(result).toContain('| A');
+    }
+  });
+
+  it('<tfoot> перед <tbody> всё равно идёт после данных', () => {
+    const html =
+      '<table><thead><tr><th>Q</th></tr></thead><tfoot><tr><td>Total</td></tr></tfoot><tbody><tr><td>Q1</td></tr></tbody></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines[2]).toContain('Q1');
+    expect(lines[3]).toContain('Total');
+  });
+
+  it('без <thead> строка <tfoot> не становится заголовком', () => {
+    const html = '<table><tfoot><tr><td>Total</td></tr></tfoot><tbody><tr><td>Q1</td></tr></tbody></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines[0]).toContain('Q1');
+    expect(lines[2]).toContain('Total');
+  });
+
+  it('таблица с одной подписью и без строк не исчезает', () => {
+    expect(toMarkdown('<table><caption>Important</caption></table>').trim()).toBe('Important');
+  });
+
+  it('режим text держит строку на одной строке', () => {
+    const result = toMarkdown('<table><tr><td colspan="2"><pre>a\nb</pre></td><td>x</td></tr></table>', {
+      complexTableFallback: 'text',
+    });
+    expect(result.trim().split('\n')).toHaveLength(1);
+    expect(result).toContain('a b | x');
+  });
+
+
   it('строки <tfoot> не теряются', () => {
     const html =
       '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>a</td></tr></tbody><tfoot><tr><td>total</td></tr></tfoot></table>';
@@ -172,10 +211,14 @@ describe('строки, колонки и подпись в pipe-таблице'
     expect(result).toContain('<caption>Cap</caption>');
   });
 
-  it('блочный контент в <th> уводит таблицу в fallback, как и в <td>', () => {
-    const result = toMarkdown('<table><tr><th><ul><li>a</li><li>b</li></ul></th></tr><tr><td>x</td></tr></table>');
-    expect(result).toContain('<table>');
-    expect(result).toContain('<th>');
+  it('список в ячейке не меняет формат таблицы и не зависит от обёртки', () => {
+    // Both paths render a list the same way, so it is not a reason to switch to
+    // the HTML form — and wrapping it in a <div> must not change the answer.
+    const bare = toMarkdown('<table><tr><td><ul><li>a</li><li>b</li></ul></td></tr></table>');
+    const wrapped = toMarkdown('<table><tr><td><div><ul><li>a</li><li>b</li></ul></div></td></tr></table>');
+    expect(bare).toBe(wrapped);
+    expect(bare).not.toContain('<table>');
+    expect(bare).toContain('- a<br>- b');
   });
 
   it('<br> внутри инлайн-обёртки не оставляет обратный слеш', () => {
@@ -210,14 +253,15 @@ describe('complex table — HTML fallback', () => {
     expect(result).toContain('rowspan');
   });
 
-  it('блочный контент в ячейке → HTML fallback', () => {
+  it('<pre> в ячейке → HTML fallback', () => {
     const html = `
       <table>
-        <thead><tr><th>Items</th></tr></thead>
-        <tbody><tr><td><ul><li>One</li></ul></td></tr></tbody>
+        <thead><tr><th>Code</th></tr></thead>
+        <tbody><tr><td><pre>one</pre></td></tr></tbody>
       </table>`;
     const result = toMarkdown(html);
     expect(result).toContain('<table>');
+    expect(result).toContain('<pre>one</pre>');
   });
 
   it('complexTableFallback: skip → пустой результат', () => {
@@ -360,11 +404,13 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(result).not.toContain('>ab<');
   });
 
-  it('инлайн-разметка ячейки становится markdown', () => {
+  it('инлайн-разметка ячейки становится markdown, код — элементом', () => {
     const html = '<table><tr><td colspan="2"><strong>t</strong> and <code>x|y</code></td></tr></table>';
     const result = toMarkdown(html);
     expect(result).toContain('**t**');
-    expect(result).toContain('`x|y`');
+    // A code span would need escaping to stay safe, and Markdown does not decode
+    // entities inside one; as an element the text stays readable.
+    expect(result).toContain('<code>x|y</code>');
   });
 
   it('<pre> сохраняется точно, включая пустые строки и табы', () => {
@@ -479,7 +525,8 @@ describe('HTML fallback — своя разметка, а не разметка 
     const html = '<table><tr><td colspan="2"><sub>real <code>&lt;/sub&gt;</code> tail</sub></td></tr></table>';
     const reparsed = parseHTML(toMarkdown(html)).document;
     expect(reparsed.querySelectorAll('sub')).toHaveLength(1);
-    expect(reparsed.querySelector('sub')?.textContent).toBe('real `</sub>` tail');
+    expect(reparsed.querySelector('sub')?.textContent).toBe('real </sub> tail');
+    expect(reparsed.querySelector('code')?.textContent).toBe('</sub>');
   });
 
   it('амперсанд и литеральная сущность проходят round-trip', () => {

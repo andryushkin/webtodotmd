@@ -267,7 +267,29 @@ function buildMetadata(meta: PageMeta): string {
   return `---\ntitle: '${escapedTitle}'\nsource: '${escapedUrl}'\ndate: ${dateStr}\n---`;
 }
 
-const ALLOWED_HTML_TAGS = new Set(['sub', 'sup', 'br']);
+// Tags the conversion core emits on purpose, and which the preview therefore has
+// to render rather than escape. The table set is here because a table with merged
+// cells, a nested table or preformatted text falls back to plain HTML — escaping
+// it showed the user the markup instead of the table. All of it still goes
+// through DOMPurify before it reaches innerHTML, and the core escapes page text
+// inside those tables, so nothing arrives with attributes or behavior.
+const ALLOWED_HTML_TAGS = new Set([
+  'sub',
+  'sup',
+  'br',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'pre',
+  'code',
+  'kbd',
+  'samp',
+]);
 
 function escapeHtmlTagsInMarkdown(md: string): string {
   const parts = md.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g);

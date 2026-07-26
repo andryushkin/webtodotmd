@@ -23,7 +23,22 @@ function closestTag(el: Element, tag: string): Element | null {
 // out once per row plus once inside the cell that contains it. Every row and
 // cell lookup goes through these two, which keep to the current level.
 function ownRows(table: Element, scope = 'tr'): Element[] {
-  return Array.from(table.querySelectorAll(scope)).filter((row) => closestTag(row, 'table') === table);
+  const rows = Array.from(table.querySelectorAll(scope)).filter(
+    (row) => closestTag(row, 'table') === table,
+  );
+  // <tfoot> may be written before <tbody> — legal HTML, and HTML 4 required it.
+  // Document order would then put a totals row above the data, or make it the
+  // header when there is no <thead>.
+  const rank = (row: Element): number => {
+    const section = row.parentElement?.tagName.toLowerCase();
+    if (section === 'thead') return 0;
+    if (section === 'tfoot') return 2;
+    return 1;
+  };
+  return rows
+    .map((row, index) => ({ row, index, rank: rank(row) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((entry) => entry.row);
 }
 
 function ownCells(row: Element): Element[] {
@@ -31,23 +46,27 @@ function ownCells(row: Element): Element[] {
 }
 
 function analyzeTable(table: Element): TableAnalysis {
-  const hasColspan = !!table.querySelector('[colspan]');
-  const hasRowspan = !!table.querySelector('[rowspan]');
+  // A span attribute is only a reason for the fallback if it survives
+  // spanAttribute() — colspan="1" (Wikipedia, Word and Confluence exports write
+  // it) and colspan="abc" mean nothing, and a table whose only oddity was such a
+  // value used to lose its pipe form for an HTML table with no merged cells.
+  const hasMergedCells = Array.from(table.querySelectorAll('[colspan], [rowspan]')).some(
+    (cell) => spanAttribute(cell, 'colspan') !== '' || spanAttribute(cell, 'rowspan') !== '',
+  );
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
   // checks — a list or heading in a cell survives as Markdown with <br> breaks,
   // so pulling those into the HTML fallback would cost more than it saves.
+  // Only two kinds of content actually need the HTML form: preformatted text,
+  // whose whitespace a pipe cell cannot hold, and a nested table, whose shape it
+  // cannot hold. Lists, headings and quotes come out as the same <br>-joined
+  // Markdown either way, so forcing the fallback for them only made the format
+  // depend on whether a <div> happened to wrap the list.
   const hasPreformatted = !!table.querySelector('td pre, th pre');
-  // Header cells get the same treatment as body cells: a list in a <th> used to
-  // stay a pipe table while the identical list in a <td> took the fallback.
-  const blockSelectors = ['ul', 'ol', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table']
-    .flatMap((tag) => [`td > ${tag}`, `th > ${tag}`])
-    .join(', ');
-  const hasBlockContent = !!table.querySelector(blockSelectors);
   const hasHead = !!table.querySelector('thead');
 
-  if (hasColspan || hasRowspan || hasNestedTable || hasPreformatted || hasBlockContent) {
+  if (hasMergedCells || hasNestedTable || hasPreformatted) {
     return { level: 'complex', hasHead };
   }
 
@@ -205,12 +224,14 @@ function escapedTextClone(el: Element): Element {
 // a nested table. Both are lifted out of the cell, the rest of the cell goes
 // through the converter untouched, and the lifted blocks are put back where they
 // were. Nothing about lists, breaks or emphasis is re-implemented here.
+const LIFTED_TAGS = ['pre', 'table', 'code', 'kbd', 'samp'];
+const LIFTED_SELECTOR = LIFTED_TAGS.join(', ');
+
 function topLevelBlocks(cell: Element): Element[] {
-  return Array.from(cell.querySelectorAll('pre, table')).filter((el) => {
+  return Array.from(cell.querySelectorAll(LIFTED_SELECTOR)).filter((el) => {
     let node = el.parentElement;
     while (node && node !== cell) {
-      const tag = node.tagName.toLowerCase();
-      if (tag === 'pre' || tag === 'table') return false;
+      if (LIFTED_TAGS.includes(node.tagName.toLowerCase())) return false;
       node = node.parentElement;
     }
     return true;
@@ -255,11 +276,15 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
   if (lifted.length !== originals.length) return htmlSafeMarkdown(convert(clone, options));
 
   const token = mintPlaceholder(cell.textContent ?? '');
-  const blocks = originals.map((original) =>
-    original.tagName.toLowerCase() === 'pre'
-      ? `<pre>${preformattedText(original)}</pre>`
-      : serializeStructuralTable(original, options),
-  );
+  const blocks = originals.map((original) => {
+    const tag = original.tagName.toLowerCase();
+    if (tag === 'table') return serializeStructuralTable(original, options);
+    if (tag === 'pre') return `<pre>${preformattedText(original)}</pre>`;
+    // A code span would have to be escaped to keep a literal "</td>" from
+    // closing the cell, and Markdown does not decode entities inside one — the
+    // reader would see &lt;/td&gt;. As an element it stays both safe and legible.
+    return `<${tag}>${escapeHtmlText(original.textContent ?? '')}</${tag}>`;
+  });
 
   lifted.forEach((el, index) => {
     const placeholder = el.ownerDocument?.createTextNode(`${token}${index}${token}`);
@@ -299,6 +324,9 @@ export const TABLE_RULES: Rule[] = [
   {
     name: 'table',
     filter: 'table',
+    // Rows are rendered from the element itself, so the converted subtree would
+    // be built and discarded — twice over for a nested table.
+    ignoresChildContent: true,
     replacement(el, _childContent, options) {
       const analysis = analyzeTable(el);
 
@@ -307,7 +335,12 @@ export const TABLE_RULES: Rule[] = [
         if (fallback === 'skip') return '';
         if (fallback === 'text') {
           const text = ownRows(el)
-            .map((row) => ownCells(row).map((c) => c.textContent?.trim() ?? '').join(' | '))
+            .map((row) =>
+              ownCells(row)
+                // A newline inside a cell would split the row this mode builds.
+                .map((c) => (c.textContent ?? '').trim().replace(/\s*\n+\s*/g, ' '))
+                .join(' | '),
+            )
             .join('\n');
           return `\n\n${text}\n\n`;
         }
@@ -325,7 +358,13 @@ export const TABLE_RULES: Rule[] = [
       // GFM allows exactly one header row, so any further <thead> row moves into
       // the body rather than disappearing.
       const headerRow = (analysis.hasHead ? headRows[0] : allRows[0]) ?? null;
-      if (!headerRow) return '';
+      if (!headerRow) {
+        // No rows at all: the caption is the only content left, and dropping it
+        // is the silent loss this code goes out of its way to avoid.
+        const only = ownCaption(el);
+        const onlyText = only ? getCellContent(only, options).replace(/<br>/g, ' ').trim() : '';
+        return onlyText ? `\n\n${onlyText}\n\n` : '';
+      }
       const bodyRowEls = allRows.filter((row) => row !== headerRow);
 
       const headerCells = ownCells(headerRow);

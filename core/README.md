@@ -125,10 +125,13 @@ See [docs/CHROME_EXTENSION.md](./docs/CHROME_EXTENSION.md) for a complete integr
 ## Build from Source
 
 ```bash
-bun install     # from the repository root
-bun run build   # outputs dist/browser.mjs and dist/browser.d.ts
-bun test        # this package's suite; the root runs it together with the extension's
+bun install                    # from the repository root, once
+bun run --filter core build    # outputs core/dist/browser.mjs and .d.ts
+bun test core                  # this package's suite; bare `bun test` adds the extension's
 ```
+
+`bun run build` at the repository root builds the *extension*, not this library —
+the commands above are `--filter`ed on purpose.
 
 ## License
 

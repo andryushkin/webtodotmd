@@ -44,7 +44,9 @@ Each of these has cost a bug already; the reason is what makes it stick.
   through `setContent(md)`; Copy always reads `rawMd`.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
   so injected KaTeX and metadata blocks render, which means literal tags in
-  captured text would render too — `escapeHtmlTagsInMarkdown()` runs first.
+  captured text would render too — `escapeHtmlTagsInMarkdown()` runs first. Its
+  allow-list is exactly what the core emits: `sub`, `sup`, `br` and the table
+  tags of the HTML fallback. Adding to it renders more of the page's own text.
 - Status has two layers: `setBaseStatus()` for readiness, `setTempStatus()` for
   errors and confirmations. Never call `setStatus()` directly — it uses
   `innerHTML`, so messages must pass through `escHtml()`.

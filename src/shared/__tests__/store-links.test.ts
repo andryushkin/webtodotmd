@@ -16,10 +16,4 @@ describe('getRatingUrl', () => {
   test.each([1, 2, 3, 4, 5])('a %i-star click opens the store review form', (stars) => {
     expect(getRatingUrl(stars)).toBe(CWS_REVIEWS_URL);
   });
-
-  test('no score routes to the developer site', () => {
-    for (const stars of [1, 2, 3, 4, 5]) {
-      expect(getRatingUrl(stars)).not.toContain('2md.site');
-    }
-  });
 });
