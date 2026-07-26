@@ -38,8 +38,16 @@ beforeAll(() => {
 // a comment opener starting the next joined into a comment that ate the rest of
 // the line. What is left on the concatenation axis is the Markdown half of the
 // same problem: `<span>[</span>x](url)` still assembles into a link.
+//
+// It fell from 74 when neighbouring inline runs stopped colliding — 8 seeds, all
+// on the emphasis-flanking axis, which lost 7 of its 12 classes. Two adjacent
+// wrappers used to run their delimiters into one: `<em>a</em><em>b</em>` was
+// written `*a**b*`, a single emphasis around `a**b`, and two code spans merged
+// into one holding stray backticks. What is left on that axis is content the page
+// showed as delimiters — `~word~`, `<b>**</b>` — where the escape and the marker
+// have to share the same characters.
 const SEEDS = 200;
-const CEILING = 74;
+const CEILING = 66;
 
 function countFailures(): number {
   let failures = 0;

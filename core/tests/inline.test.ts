@@ -246,6 +246,75 @@ describe('code spans that nest', () => {
   });
 });
 
+// Two wrappers pressed together put their delimiters side by side, and the pair
+// merges into one longer run: `*a**b*` is a single emphasis around `a**b`, so the
+// second wrapper is gone and the reader gains asterisks the page never showed.
+// The element that follows drops to its tag, which has no delimiter to merge.
+describe('соседние выделения', () => {
+  it.each([
+    ['italic pair', '<p><em>a</em><em>b</em></p>', '_a_<em>b</em>'],
+    ['bold pair', '<p><strong>a</strong><strong>b</strong></p>', '**a**<strong>b</strong>'],
+    ['strikethrough pair', '<p><del>a</del><del>b</del></p>', '~~a~~<del>b</del>'],
+    ['the other spellings of the same pair', '<p><i>a</i><em>b</em></p>', '_a_<em>b</em>'],
+    // Bold and italic draw from the same two characters, so `**a***b*` collides
+    // exactly as a matching pair does.
+    ['bold then italic', '<p><strong>a</strong><em>b</em></p>', '**a**<em>b</em>'],
+    ['three in a row', '<p><em>a</em><em>b</em><em>c</em></p>', '_a_<em>b</em><em>c</em>'],
+    // Whichever side it comes from, a space already parts the delimiters and both
+    // wrappers keep the lighter spelling.
+    ['parted by a text node', '<p><em>a</em> <em>b</em></p>', '_a_ _b_'],
+    ['parted by a space inside the first', '<p><em>a </em><em>b</em></p>', '_a_ _b_'],
+    ['parted by a space inside the second', '<p><em>a</em><em> b</em></p>', '_a_ _b_'],
+    // The neighbour is found through a wrapper that emits nothing of its own.
+    ['through a span', '<p><span><em>a</em></span><em>b</em></p>', '_a_<em>b</em>'],
+
+    // Other delimiters do not collide with emphasis, so nothing gives way. A code
+    // span is read for its text rather than its backtick: emphasis is resolved
+    // after code spans, and renderers disagree about what is left at that seam.
+    ['a code span next door', '<p><em>a</em><code>b</code></p>', '*a*`b`'],
+    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '_a_<sub>b</sub>'],
+
+    // Flanking is decided per code point. Indexing UTF-16 handed the test half a
+    // surrogate pair, which is in no category at all: an emoji is symbol
+    // punctuation, so pressed against letters no marker can open and `a*😀*b`
+    // rendered with the asterisks showing and no emphasis at all.
+    ['emoji against words', '<p>a<em>😀</em>b</p>', 'a<em>😀</em>b'],
+    ['emoji at the line edges', '<p><em>😀</em></p>', '_😀_'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// Nothing is parsed inside a code span, so every mark in one is a character the
+// reader sees. The rule wrapped the converted children, which put the emphasis
+// delimiters of `<code><strong>token</strong></code>` into the file as text.
+describe('code span не показывает разметку', () => {
+  it.each([
+    ['bold inside code', '<p><code><strong>token</strong></code></p>', '`token`'],
+    ['italic inside kbd', '<p><kbd><em>Ctrl</em></kbd></p>', '`Ctrl`'],
+    ['a link inside code', '<p><code><a href="https://e.com">x</a></code></p>', '`x`'],
+    // A <br> is the one child that is not text and is still something the reader
+    // saw; a span renders its newlines as spaces, so that is what it becomes.
+    ['a break inside code', '<p><code>a<br>b</code></p>', '`a b`'],
+
+    // Adjacent spans merge their backticks into one run — `` `word``hello world` ``
+    // is a single span whose text carries two backticks — and no delimiter length
+    // separates them, so the run is written as the one span the page looked like.
+    ['adjacent spans', '<p><code>word</code><code>hello world</code></p>', '`wordhello world`'],
+    ['three spans', '<p><code>a</code><code>b</code><code>c</code></p>', '`abc`'],
+    ['a span and a kbd', '<p><code>a</code><kbd>b</kbd></p>', '`ab`'],
+    ['merged text still sizes the delimiter', '<p><code>a`b</code><code>c</code></p>', '`` a`bc ``'],
+    ['text on both sides', '<p>x<code>a</code><code>b</code>y</p>', 'x`ab`y'],
+    // A space already parts the backticks, so the two spans stay two.
+    ['parted by a text node', '<p><code>a</code> <code>b</code></p>', '`a` `b`'],
+    // Reaching through a wrapper would move `b` inside the emphasis, so it is not
+    // done — and here the closing `_` parts the backticks anyway.
+    ['not merged across a wrapper', '<p><em><code>a</code></em><code>b</code></p>', '<em>`a`</em>`b`'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
 describe('link scheme check in an HTML fallback cell', () => {
   const cell = (href: string) =>
     `<table><tbody><tr><td colspan="2"><a href="${href}">t</a></td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
