@@ -93,8 +93,15 @@ beforeAll(() => {
 // document, so repairing one defect lets the shrinker reach a different,
 // pre-existing one in the same seed. Each was checked directly: byte-identical
 // Markdown before and after, failing on both.
+//
+// Then 76 -> 91, and this rise is a decision rather than a regression. A nested
+// table's empty cells used to be dropped before the fold joined the rest with
+// ` · `, so `a · b` was what both a two-cell row and a three-cell row with a gap
+// produced, and the reader could not tell which column a value sat in. Keeping
+// the positions costs a separator the page did not show — the same trade the
+// separator itself was accepted on — and every one of the 15 added seeds is that.
 const SEEDS = 200;
-const CEILING = 76;
+const CEILING = 91;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -116,7 +123,6 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com/i.png)\\</p>",
   "<p>(https://example.com/i.png)_</p>",
   "<p>(https://example.com/i.png)`` `</p>",
-  "<p>(https://example.com/i.png)~~</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
   "<p><img src=\"\" alt=\"x\"></p>",
   "<p><span>1. </span></p>",
@@ -126,6 +132,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>~word~</p>",
   "<p>\ud83c\udf89<i>~</i></p>",
   "<p>\ud83d\udc69\u200d\ud83d\udcbb<b>&lt;div&gt;</b></p>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>&lt;/td&gt;</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>(</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -157,6 +164,18 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><tbody><tr><td>)</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>**</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>*</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td> </td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>##</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>#</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>&lt;pre&gt;x&lt;/pre&gt;</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>*</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>_</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>hello world</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>text</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>word</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>x</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>\u2764\ufe0f</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>\ud83c\uddfa\ud83c\uddf8</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>[</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>\\</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>]</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -345,6 +364,20 @@ describe('structural sanity', () => {
     // Load-bearing since the scheme list was widened to DOMPurify's own: a
     // shorter list in the core would drop links the panel's sanitizer keeps.
     ['a link keeps a tel: target', '<p><a href="tel:+15551234">call</a></p>', true],
+    // A <pre> behind a wrapper folds exactly as a direct child does; before, the
+    // wrapper dropped a fenced block into a pipe cell.
+    [
+      'a wrapped pre in a cell',
+      '<table><tr><td>h</td></tr><tr><td><div><pre>a\nb</pre></div></td></tr></table>',
+      false,
+    ],
+    // An empty cell in a nested table keeps its position, so a value cannot move
+    // column silently. Unfaithful for the fold's own sake, like the cases above.
+    [
+      'an empty cell in a nested table',
+      '<table><tr><td><table><tr><td>a</td><td></td><td>b</td></tr></table></td></tr></table>',
+      false,
+    ],
     // A `](` in a destination ends it only when an unbalanced `[` sits ahead of
     // the link in the page's text — which is the shape a footnote marker makes.
     ['a link target holding a bracket-paren', '<p>[<a href="https://e.com/a](x)b">x</a></p>', true],
