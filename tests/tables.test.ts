@@ -220,6 +220,64 @@ describe('inline-форматирование в ячейках', () => {
   });
 });
 
+describe('вложенные таблицы', () => {
+  it('содержимое вложенной таблицы не дублируется', () => {
+    const html = `<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result.match(/inner/g)).toHaveLength(1);
+  });
+
+  it('вложенная таблица сохраняется целиком внутри ячейки', () => {
+    const html = `<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result).toContain('<td><table><tr><td>inner</td></tr></table></td>');
+  });
+
+  it('строки вложенной таблицы не попадают во внешнюю при fallback text', () => {
+    const html = `<table><tr><td>outer</td><td><table><tr><td>inner</td></tr></table></td></tr></table>`;
+    const result = toMarkdown(html, { complexTableFallback: 'text' });
+    expect(result.trim().split('\n')).toHaveLength(1);
+  });
+});
+
+describe('блочный контент в ячейке', () => {
+  it('два абзаца в ячейке остаются одной строкой таблицы', () => {
+    const html = `
+      <table>
+        <thead><tr><th>H</th></tr></thead>
+        <tbody><tr><td><p>para one</p><p>two</p></td></tr></tbody>
+      </table>`;
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines).toHaveLength(3); // header + separator + one row
+    expect(lines[2]).toContain('para one<br>two');
+  });
+});
+
+describe('HTML fallback сохраняет разметку ячейки', () => {
+  it('список в ячейке не схлопывается в текст', () => {
+    const html = `
+      <table>
+        <thead><tr><th>Items</th></tr></thead>
+        <tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody>
+      </table>`;
+    const result = toMarkdown(html);
+    expect(result).toContain('<ul><li>a</li><li>b</li></ul>');
+    expect(result).not.toContain('>ab<');
+  });
+
+  it('скрипты и обработчики событий не переносятся', () => {
+    const html = `
+      <table>
+        <tr><td onclick="steal()" colspan="2"><script>steal()</script><ul><li>a</li></ul></td></tr>
+      </table>`;
+    const result = toMarkdown(html);
+    expect(result).not.toContain('script');
+    expect(result).not.toContain('onclick');
+    expect(result).toContain('colspan="2"');
+    expect(result).toContain('<li>a</li>');
+  });
+});
+
 describe('пустая таблица', () => {
   it('таблица без строк → пустой вывод', () => {
     const html = `<table></table>`;

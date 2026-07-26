@@ -11,6 +11,27 @@ interface TableAnalysis {
   rows: number;
 }
 
+function closestTag(el: Element, tag: string): Element | null {
+  let node = el.parentElement;
+  while (node) {
+    if (node.tagName.toLowerCase() === tag) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+// querySelectorAll('tr') descends into nested tables, so an outer table used to
+// serialize the inner table's rows as if they were its own — the inner text came
+// out once per row plus once inside the cell that contains it. Every row and
+// cell lookup goes through these two, which keep to the current level.
+function ownRows(table: Element, scope = 'tr'): Element[] {
+  return Array.from(table.querySelectorAll(scope)).filter((row) => closestTag(row, 'table') === table);
+}
+
+function ownCells(row: Element): Element[] {
+  return Array.from(row.querySelectorAll('td, th')).filter((cell) => closestTag(cell, 'tr') === row);
+}
+
 function analyzeTable(table: Element): TableAnalysis {
   const hasColspan = !!table.querySelector('[colspan]');
   const hasRowspan = !!table.querySelector('[rowspan]');
@@ -19,9 +40,9 @@ function analyzeTable(table: Element): TableAnalysis {
     'td > ul, td > ol, td > pre, td > blockquote, td > h1, td > h2, td > h3, td > h4, td > h5, td > h6, td > table',
   );
   const hasHead = !!table.querySelector('thead');
-  const firstRow = table.querySelector('tr');
-  const columns = firstRow ? firstRow.querySelectorAll('td, th').length : 0;
-  const rows = table.querySelectorAll('tr').length;
+  const rowEls = ownRows(table);
+  const columns = rowEls[0] ? ownCells(rowEls[0]).length : 0;
+  const rows = rowEls.length;
 
   if (hasColspan || hasRowspan || hasNestedTable || hasBlockContent) {
     return { level: 'complex', hasHead, columns, rows };
@@ -48,7 +69,14 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
       text += child.textContent ?? '';
     }
   }
-  return text.trim().replace(/\|/g, '\\|');
+  // A GFM row is one line: a newline anywhere inside a cell ends the row early
+  // and the rest of the table falls apart. Block children (two paragraphs in a
+  // cell, say) produce exactly that, so line breaks become <br>, the only break
+  // a pipe table can carry.
+  return text
+    .trim()
+    .replace(/\|/g, '\\|')
+    .replace(/\s*\n+\s*/g, '<br>');
 }
 
 function getAlignment(cell: Element): string {
@@ -90,18 +118,34 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
   return [headerLine, separatorLine, ...bodyLines].join('\n');
 }
 
+const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
+
+// The fallback claims to keep what a pipe table cannot express, so it has to
+// keep the markup: textContent turned a list in a cell into "ab", losing both
+// the structure and the separation between items. Scripts and event handlers do
+// not survive the trip — nothing here should carry behavior into a .md file.
+function cellInnerHTML(cell: Element): string {
+  const clone = cell.cloneNode(true) as Element;
+  for (const el of Array.from(clone.querySelectorAll(UNSAFE_CELL_TAGS))) el.remove();
+  for (const el of [clone, ...Array.from(clone.querySelectorAll('*'))]) {
+    for (const attr of Array.from(el.attributes)) {
+      if (attr.name.toLowerCase().startsWith('on')) el.removeAttribute(attr.name);
+    }
+  }
+  return clone.innerHTML.trim();
+}
+
 function serializeComplexTable(table: Element): string {
-  const rows = Array.from(table.querySelectorAll('tr'));
   const lines: string[] = ['<table>'];
-  for (const row of rows) {
-    const cells = Array.from(row.querySelectorAll('td, th'));
-    const cellsHTML = cells
+  for (const row of ownRows(table)) {
+    const cellsHTML = ownCells(row)
       .map((cell) => {
         const tag = cell.tagName.toLowerCase();
         const attrs = Array.from(cell.attributes)
+          .filter((a) => !a.name.toLowerCase().startsWith('on'))
           .map((a) => ` ${a.name}="${a.value}"`)
           .join('');
-        return `<${tag}${attrs}>${cell.textContent?.trim() ?? ''}</${tag}>`;
+        return `<${tag}${attrs}>${cellInnerHTML(cell)}</${tag}>`;
       })
       .join('');
     lines.push(`<tr>${cellsHTML}</tr>`);
@@ -121,12 +165,8 @@ export const TABLE_RULES: Rule[] = [
         const fallback = options.complexTableFallback ?? 'html';
         if (fallback === 'skip') return '';
         if (fallback === 'text') {
-          const rows = Array.from(el.querySelectorAll('tr'));
-          const text = rows
-            .map((row) => {
-              const cells = Array.from(row.querySelectorAll('td, th'));
-              return cells.map((c) => c.textContent?.trim() ?? '').join(' | ');
-            })
+          const text = ownRows(el)
+            .map((row) => ownCells(row).map((c) => c.textContent?.trim() ?? '').join(' | '))
             .join('\n');
           return `\n\n${text}\n\n`;
         }
@@ -135,14 +175,14 @@ export const TABLE_RULES: Rule[] = [
       }
 
       // Simple or medium: build GFM pipe table
-      const allRows = Array.from(el.querySelectorAll('tr'));
+      const allRows = ownRows(el);
 
       let headerRow: Element | null = null;
       let bodyRowEls: Element[] = [];
 
       if (analysis.hasHead) {
-        headerRow = el.querySelector('thead tr') ?? null;
-        bodyRowEls = Array.from(el.querySelectorAll('tbody tr'));
+        headerRow = ownRows(el, 'thead tr')[0] ?? null;
+        bodyRowEls = ownRows(el, 'tbody tr');
       } else {
         headerRow = allRows[0] ?? null;
         bodyRowEls = allRows.slice(1);
@@ -150,14 +190,13 @@ export const TABLE_RULES: Rule[] = [
 
       if (!headerRow) return '';
 
-      const headerCells = Array.from(headerRow.querySelectorAll('td, th'));
+      const headerCells = ownCells(headerRow);
       const headers = headerCells.map((c) => getCellContent(c, options));
       const alignments = headerCells.map(getAlignment);
 
-      const bodyData = bodyRowEls.map((row) => {
-        const cells = Array.from(row.querySelectorAll('td, th'));
-        return cells.map((c) => getCellContent(c, options));
-      });
+      const bodyData = bodyRowEls.map((row) =>
+        ownCells(row).map((c) => getCellContent(c, options)),
+      );
 
       if (headers.every((h) => !h) && bodyData.length === 0) return '';
 
