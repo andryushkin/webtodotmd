@@ -332,6 +332,39 @@ describe('HTML fallback сохраняет разметку ячейки', () =>
     expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
+  // The mint loop must not depend on the calling realm's RNG: a stub returning 0
+  // once produced the same candidate forever. Both cases below run with Math.random
+  // pinned to 0 and would hang, not fail, on a regression.
+  it('минтинг токена не зависит от Math.random', () => {
+    const literal = '\uE000nl\uE000';
+    const source = `before${literal}after`;
+    const real = Math.random;
+    Math.random = () => 0;
+    try {
+      const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+      const reparsed = parseHTML(toMarkdown(html)).document;
+      expect(reparsed.querySelector('pre')?.textContent).toBe(source);
+    } finally {
+      Math.random = real;
+    }
+  });
+
+  it('занятые базовый и удлинённый кандидаты обходятся', () => {
+    const base = '\uE000nl\uE000';
+    const padded = '\uE000nl\uE001\uE000';
+    const source = `a${base}b${padded}c\n\nd`;
+    const real = Math.random;
+    Math.random = () => 0;
+    try {
+      const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+      const result = toMarkdown(html);
+      expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+      expect(result).not.toMatch(/\n[ \t]*\n/);
+    } finally {
+      Math.random = real;
+    }
+  });
+
   it('кавычка в значении атрибута не разрывает сериализацию', () => {
     // The page writes &quot;, the parser hands back a literal quote: hand-built
     // `name="value"` would let it close the attribute and inject live markup.

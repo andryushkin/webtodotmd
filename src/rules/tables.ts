@@ -131,10 +131,16 @@ const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
 // The final substitution cannot tell a token we inserted from an identical
 // string the page wrote itself, and a fixed token would sit in the bundle for
 // any page to copy — so the only safe token is one the input does not contain.
+//
+// Each candidate is one character longer than the last, so the search ends after
+// at most one candidate per character of input: the first candidate longer than
+// the input cannot occur in it. No randomness — this ships as a library artifact
+// and Math.random belongs to the calling realm, where a stub returning 0 would
+// hand back the same candidate forever.
 function mintNewlineToken(html: string): string {
   let token = '\uE000nl\uE000';
-  while (html.includes(token)) {
-    token = `\uE000nl${Math.random().toString(36).slice(2)}\uE000`;
+  for (let padding = 1; html.includes(token); padding += 1) {
+    token = `\uE000nl${'\uE001'.repeat(padding)}\uE000`;
   }
   return token;
 }
