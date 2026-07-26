@@ -48,6 +48,11 @@ Each of these has cost a bug already; the reason is what makes it stick.
   `pre`, `code`, `kbd`, `samp` or a math subtree: there a backslash is
   corruption, and in a math subtree only a tag start (`<` before a letter or
   slash) is neutralized, because that is what can close a fallback cell.
+- HTML in the page's own text is escaped too (`\<`, `\&`), and just as narrowly:
+  only a `<` that could open a tag and an `&` that could complete a reference.
+  Markdown carries raw HTML through, so without this a page *about* HTML lost the
+  text it showed. This needs `sanitize()` to call `normalize()` last — a parser
+  hands `&lt;/td&gt;` over as three text nodes, each harmless alone.
 - The HTML table fallback sets `escapeSyntax: false` for its cells: Markdown is
   not parsed inside an HTML block, so escaping it there protects nothing and the
   backslashes reach the reader.

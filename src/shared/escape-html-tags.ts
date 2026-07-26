@@ -80,7 +80,12 @@ function coreTableBlockEnd(md: string, start: number): number | null {
 }
 
 function escapeStrayTags(text: string): string {
-  return text.replace(TAG, (match, slash, tagName, attrs) => {
+  return text.replace(TAG, (match, slash, tagName, attrs, offset: number) => {
+    // The core now escapes tags in page text itself, so `\<` already means "these
+    // are characters, not markup". Escaping it again produced `\&lt;pre&gt;`,
+    // which renders as the entity spelled out — the very thing this guards
+    // against, caused by the guard.
+    if (offset > 0 && text[offset - 1] === '\\') return match;
     if (INLINE_TAGS.has(String(tagName).toLowerCase()) && attrs === '') return match;
     return `&lt;${slash}${tagName}${attrs}&gt;`;
   });

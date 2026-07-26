@@ -84,7 +84,10 @@ What the page showed is what the file renders. Markdown characters in the page's
 own text are escaped, so a page displaying `**bold**`, `# heading` or
 `[text](url)` as characters — a tutorial, a changelog, API prose — produces
 `\*\*bold\*\*` in the source and those same characters in the preview, not bold
-text and not a heading. Code, preformatted blocks and LaTeX are left verbatim,
+text and not a heading. The same holds for HTML: a page showing `</td>` or
+`<!-- note -->` as characters produces `\</td>` and `\<!-- note -->`, because
+Markdown carries raw HTML through and those would otherwise vanish from the file
+— documentation and changelogs are full of them. Code, preformatted blocks and LaTeX are left verbatim,
 where a backslash would be corruption rather than protection — in a formula only
 a tag start is neutralized, since that is what could close a cell of an HTML
 fallback table. Inside such a table nothing is escaped at all: Markdown is not

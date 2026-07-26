@@ -55,6 +55,24 @@ export function escapeBlockStarts(md: string): string {
 }
 
 /**
+ * HTML the page showed as characters. Markdown passes raw HTML through, so a page
+ * *about* HTML — documentation, a changelog, a tutorial — lost the text it was
+ * showing: `</td>` vanished, `<pre>x</pre>` turned into a code block, and
+ * `<!-- note -->` swallowed the rest of the sentence. The preview escaped these
+ * for display, but the saved file kept them raw, so the two disagreed.
+ *
+ * As narrow as the Markdown escaping above, and for the same reason: `a < b` and
+ * `Tom & Jerry` are not markup, and a backslash there is noise the reader pays
+ * for. Only a `<` that could open a tag, a comment or a processing instruction,
+ * and only an `&` that could complete a character reference.
+ */
+export function escapeHtmlSyntax(text: string): string {
+  return text
+    .replace(/&(?=[a-zA-Z][a-zA-Z0-9]*;|#\d+;|#[xX][0-9a-fA-F]+;)/g, '\\&')
+    .replace(/<(?=[a-zA-Z/!?])/g, '\\<');
+}
+
+/**
  * Escapes only what could open an HTML tag: `<` followed by a letter or a slash.
  * For text the converter re-emits as LaTeX, full escaping is corruption — `a & b`
  * is a matrix separator — but a literal `</td>` inside a formula still closes the

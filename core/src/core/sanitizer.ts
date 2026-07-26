@@ -16,6 +16,12 @@ export function sanitize(
   removeHidden(root);
   removeEmptyWrappers(root);
   collapseWhitespace(root);
+  // Adjacent text nodes are one line to the reader but separate nodes to the
+  // escaper, which decides per node and so cannot see a construct spanning two.
+  // A parser hands `&lt;/td&gt;` over as "<", "/td", ">" — three nodes, each
+  // harmless alone, `</td>` once joined. Merging them last, after every removal
+  // has created its own new neighbours, is what lets a lookahead work at all.
+  root.normalize();
 }
 
 function removeScripts(root: Element | Document, preserveMath: boolean): void {

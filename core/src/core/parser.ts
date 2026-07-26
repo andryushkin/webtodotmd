@@ -1,6 +1,6 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { escapeBlockStarts, escapeInlineMarkdown } from './escape.js';
+import { escapeBlockStarts, escapeHtmlSyntax, escapeInlineMarkdown } from './escape.js';
 
 // Text inside these is emitted verbatim — as a code fence, a code span or LaTeX —
 // so escaping it would corrupt the content instead of protecting it.
@@ -56,7 +56,9 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // Markdown the page showed as characters must render as characters — unless
     // this text is headed for an HTML block, where Markdown does not apply.
     if (options.escapeSyntax === false || isLiteralContext(node)) return text;
-    const escaped = escapeInlineMarkdown(text);
+    // HTML escaping comes after the Markdown pass, which doubles backslashes: run
+    // the other way round and the `\<` this adds would be doubled into a literal.
+    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text));
     return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
   }
   if (node.nodeType === ELEMENT_NODE) {

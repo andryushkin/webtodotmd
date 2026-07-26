@@ -19,11 +19,11 @@ beforeAll(() => {
   installDOMAdapter();
 });
 
-// Measured 2026-07-26 on the generator as it stands. Both layers sit at the same
-// number because every failure so far originates in the core; the preview escaper
-// neither adds nor repairs any of them.
+// Measured 2026-07-26 on the generator as it stands. The two layers sit at the
+// same number because the core now escapes HTML in page text itself: the preview
+// escaper has nothing left to repair, and stands only as a backstop.
 const SEEDS = 200;
-const CEILING = { core: 131, app: 115 };
+const CEILING = { core: 110, app: 110 };
 
 function countFailures(level: 'core' | 'app'): number {
   let failures = 0;

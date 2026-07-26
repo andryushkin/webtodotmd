@@ -8,9 +8,17 @@ source (`core/src/browser.ts`), so there is no build step between the two.
 
 The conversion escapes Markdown syntax that came from the page as text, so the
 file renders what the reader saw rather than turning `**bold**` in a tutorial
-into bold. `core/src/core/escape.ts` splits this in two on purpose: inline marks
-are safe per text node, while `#`, `>`, bullets and numbering depend on starting
-a line, which only the text node opening a block does.
+into bold. `core/src/core/escape.ts` splits this in three on purpose: inline
+marks are safe per text node; `#`, `>`, bullets and numbering depend on starting
+a line, which only the text node opening a block does; and HTML — a `<` that
+could open a tag, an `&` that could complete a character reference — is escaped
+because Markdown carries raw HTML through, so a page *about* HTML would lose the
+text it was showing.
+
+That last pass only works because `sanitize()` calls `normalize()` last: a parser
+hands `&lt;/td&gt;` over as three adjacent text nodes, each harmless on its own,
+and the escaper decides one node at a time. Merging them is what lets it see the
+construct at all.
 
 ## Surfaces
 
@@ -92,7 +100,10 @@ source textarea together; Copy always reads `rawMd`.
 The preview runs marked with `html: true` so injected blocks (KaTeX output,
 metadata block, content gaps, `sub`/`sup`) render — which means literal tags in
 captured text would render too, so `escapeHtmlTagsInMarkdown()` runs first and
-escapes tags outside code spans. It lives in `src/shared/escape-html-tags.ts`
+escapes tags outside code spans. Since the core escapes HTML in page text itself,
+this is now a backstop rather than the only guard, and it skips any `<` already
+carrying the core's backslash — escaping that again rendered the entity spelled
+out, the very thing it exists to prevent. It lives in `src/shared/escape-html-tags.ts`
 with its own tests. The exceptions are the tags the conversion core emits itself:
 `sub`, `sup`, `br`, and the table set of the HTML fallback — a table with merged
 cells, a nested table or preformatted text takes that path, and escaping it

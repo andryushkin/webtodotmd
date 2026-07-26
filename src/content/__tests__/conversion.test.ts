@@ -260,11 +260,11 @@ describe('images', () => {
 // ---- Edge cases ----
 
 describe('edge cases', () => {
-  test('HTML entity text is preserved as-is in markdown output', () => {
-    // &lt;strong&gt; in DOM becomes text <strong>, which markitdown passes through as text
+  test('HTML the page showed as text is escaped, not passed through', () => {
+    // Passing it through was the bug: Markdown carries raw HTML, so a page about
+    // HTML lost the text it was showing — this one rendered as actual bold.
     const html = '<p>&lt;strong&gt;bold&lt;/strong&gt;</p>';
-    const md = convert(html);
-    expect(md).toContain('<strong>bold</strong>');
+    expect(convert(html)).toBe('\\<strong>bold\\</strong>');
   });
 
   test('empty paragraph produces no output', () => {
