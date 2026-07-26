@@ -4,6 +4,7 @@ import { icon } from '../shared/icons';
 import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
+import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
@@ -95,6 +96,26 @@ function collapseHardBreaksToParagraphs(md: string): string {
     .join('');
 }
 
+/**
+ * Records what the page's stylesheets say, for the length of one capture.
+ *
+ * Before anything else: `getComputedStyle` is answered from a cache Chrome throws
+ * away on the next DOM change, and both `snapshotStyles()` and
+ * `expandShadowRoots()` change the DOM. Reading first is what keeps a capture one
+ * style recalculation rather than one per element.
+ *
+ * The cleanup takes every attribute back off, so it belongs in a `finally`
+ * outside the conversion — the clone is taken while they are still on.
+ */
+function captureStyles(scopes: Array<Element | null>): () => void {
+  const roots = scopes.filter((el): el is Element => el !== null);
+  if (roots.length === 0) return () => {};
+  // `snapshotStyles` swallows its own faults and always hands back a working
+  // undo: a style the browser cannot resolve is a worse conversion, never a
+  // failed capture, and never an attribute left on the page.
+  return snapshotStyles(roots, computedStyleIn(window));
+}
+
 function expandShadowRoots(): () => void {
   const cleanups: (() => void)[] = [];
   document.querySelectorAll('*').forEach(el => {
@@ -114,19 +135,22 @@ function tableOptions(): { complexTableFallback: 'flatten' | 'html' } {
 }
 
 function selectionToMd(selection: Selection): string {
-  const cleanup = expandShadowRoots();
+  const ranges: Range[] = [];
+  for (let i = 0; i < selection.rangeCount; i++) ranges.push(selection.getRangeAt(i));
+  const restoreStyles = captureStyles(ranges.map(snapshotScope));
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
-    if (selection.rangeCount > 1) {
-      const fragments: string[] = [];
-      for (let i = 0; i < selection.rangeCount; i++) {
-        fragments.push(collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(selection.getRangeAt(i))), opts)));
-      }
+    const cleanup = expandShadowRoots();
+    try {
+      const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
+      const fragments = ranges.map((range) =>
+        collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(range)), opts)),
+      );
       return fragments.join('\n\n');
+    } finally {
+      cleanup();
     }
-    return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(selection.getRangeAt(0))), opts));
   } finally {
-    cleanup();
+    restoreStyles();
   }
 }
 
@@ -454,17 +478,22 @@ function captureHighlightsMd(): string {
     return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
   });
 
-  const cleanup = expandShadowRoots();
+  const restoreStyles = captureStyles(sorted.map(el => el.closest('table') ?? el));
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
-    const fragments = sorted.map(el => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
-    });
-    return fragments.join('\n\n');
+    const cleanup = expandShadowRoots();
+    try {
+      const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
+      const fragments = sorted.map(el => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
+      });
+      return fragments.join('\n\n');
+    } finally {
+      cleanup();
+    }
   } finally {
-    cleanup();
+    restoreStyles();
   }
 }
 

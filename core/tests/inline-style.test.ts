@@ -296,6 +296,96 @@ describe('the style attribute itself', () => {
   });
 });
 
+// The second source of the same properties: a computed style someone with live
+// nodes wrote down before the clone was taken (`src/content/style-snapshot.ts`).
+// It is read through the same parser and the same property readers, so what is
+// tested here is the joining — that it answers where the page's own attribute
+// cannot, and that it wins where both speak, computed style being the later word.
+describe('a recorded computed style', () => {
+  it.each([
+    ['weight', '<span data-s2md-style="font-weight:700">x</span> y', '**x** y'],
+    ['slant', '<span data-s2md-style="font-style:italic">x</span> y', '_x_ y'],
+    ['a line through', '<span data-s2md-style="text-decoration-line:line-through">x</span> y', '~~x~~ y'],
+  ])('carries the %s a class gave', (_name, html, expected) => {
+    expect(md(html)).toBe(expected);
+  });
+
+  it('declines what the tag means, exactly as the attribute does', () => {
+    expect(md('<strong data-s2md-style="font-weight:400">x</strong> y')).toBe('x y');
+    expect(md('<em data-s2md-style="font-style:normal">x</em> y')).toBe('x y');
+  });
+
+  it('is still measured against its context', () => {
+    // The recorded weight of a heading a theme reset, and of the run inside it
+    // that is genuinely bolder than the heading.
+    const html =
+      '<h2 data-s2md-style="font-weight:400">a <span data-s2md-style="font-weight:700">b</span></h2>';
+    expect(toMarkdown(html)).toBe('## a **b**\n');
+  });
+
+  it('wins over the attribute it was computed from', () => {
+    // A stylesheet with `!important` beats an inline declaration, and the
+    // computed style is the only place that shows.
+    expect(md('<span style="font-weight:700" data-s2md-style="font-weight:400">x</span> y'))
+      .toBe('x y');
+  });
+
+  it('leaves the attribute to answer what it says nothing about', () => {
+    expect(md('<span style="font-style:italic" data-s2md-style="font-weight:700">x</span> y'))
+      .toBe('**_x_** y');
+  });
+
+  it('breaks a line the tag would not', () => {
+    expect(toMarkdown('<p>A<span data-s2md-style="display:block">B</span>C</p>'))
+      .toBe('A\n\nB\n\nC\n');
+  });
+
+  it('never reaches the output, not even where the fallback emits tags', () => {
+    const html =
+      '<table><tbody><tr><td><span data-s2md-style="font-weight:bold">x</span></td></tr>' +
+      '<tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>';
+    const out = toMarkdown(html, { complexTableFallback: 'html' });
+    expect(out).toContain('<strong>x</strong>');
+    expect(out).not.toContain('data-s2md-style');
+  });
+});
+
+// The shapes a page uses to keep text for a screen reader and away from every
+// other one. They are written by a class, so in practice only a recorded computed
+// style ever shows them — but the reader is the same reader, so the `style`
+// attribute is answered too.
+describe('clipped out of sight', () => {
+  it.each([
+    ['a zero clip rect', 'clip:rect(0px, 0px, 0px, 0px)'],
+    ['the same without commas', 'clip:rect(0px 0px 0px 0px)'],
+    ['an inset clip-path', 'clip-path:inset(50%)'],
+    ['a deeper inset', 'clip-path:inset(100%)'],
+    ['a far negative text-indent', 'text-indent:-9999px'],
+    ['absolute positioning off the canvas', 'position:absolute;left:-9999px'],
+    ['fixed positioning above it', 'position:fixed;top:-5000px'],
+    ['a one-pixel box that clips', 'width:1px;height:1px;overflow:hidden'],
+  ])('%s drops the text', (_name, style) => {
+    expect(md(`<span data-s2md-style="${style}">HIDDEN</span>ok`)).toBe('ok');
+    expect(md(`<span style="${style}">HIDDEN</span>ok`)).toBe('ok');
+  });
+
+  // The half that matters more: every one of these is a layout a page really
+  // uses, and text a reader saw is what a wrong threshold costs.
+  it.each([
+    ['a clip rect with a side', 'clip:rect(0px, 100px, 20px, 0px)'],
+    ['a shallow inset', 'clip-path:inset(10%)'],
+    ['a hanging indent', 'text-indent:-2em'],
+    ['a small negative indent', 'text-indent:-24px'],
+    ['a pulled-back absolute box', 'position:absolute;left:-120px'],
+    ['a negative offset with no positioning', 'left:-9999px'],
+    ['a relative offset', 'position:relative;left:-9999px'],
+    ['a one-pixel box that does not clip', 'width:1px;height:1px'],
+    ['a collapsed panel the reader can open', 'width:800px;height:0px;overflow:hidden'],
+  ])('%s keeps it', (_name, style) => {
+    expect(md(`<span data-s2md-style="${style}">SHOWN</span> ok`)).toBe('SHOWN ok');
+  });
+});
+
 describe('a style on other elements', () => {
   it('a link keeps its target and gains the mark', () => {
     expect(md('<a href="https://e.com" style="font-weight:bold">link</a>'))

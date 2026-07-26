@@ -101,18 +101,28 @@ Headings H1–H6, bold, italic, nested ordered and unordered lists, definition
 lists, tables, fenced code blocks with language, inline code, links, images,
 blockquotes, horizontal rules, `<sub>` and `<sup>`.
 
-Formatting a page writes in its `style` attribute rather than in a tag counts
-too: a `font-weight` of 600 or more is bold, `font-style: italic` is italics,
-`text-decoration: line-through` is strikethrough, and a `display` that makes an
-inline element a block puts its text on a line of its own. What is *not* written
-is a mark the output already carries — a bold heading stays `##` with no
-asterisks inside it, a bold table header stays a header, and a `<strong>` that
-declares itself bold is bold once. The reverse holds as well: a `<strong>` the
-page styles back to `font-weight: normal` showed the reader no bold text, so it
-keeps its text and loses the mark. Inside code, preformatted text and formulas no
-mark is written at all — a `**` there would be two characters of the sample.
-Text the page hides with `display: none`, `visibility: hidden` or `opacity: 0`
-never reaches the file.
+Formatting a page states in a style rather than in a tag counts too, whether it
+wrote it in the `style` attribute or in a stylesheet: a `font-weight` of 600 or
+more is bold, `font-style: italic` is italics, `text-decoration: line-through` is
+strikethrough, and a `display` that makes an inline element a block puts its text
+on a line of its own. Tailwind's `font-bold`, a Notion export, a Medium or
+Confluence page — all of them say it with a class, and all of it survives the
+capture. What is *not* written is a mark the output already carries: a bold
+heading stays `##` with no asterisks inside it, a bold table header stays a
+header, a `<strong>` that declares itself bold is bold once, and a run that is
+merely as bold as the heading around it adds nothing. The reverse holds as well:
+a `<strong>` the page styles back to `font-weight: normal` showed the reader no
+bold text, so it keeps its text and loses the mark. Inside code, preformatted
+text and formulas no mark is written at all — a `**` there would be two
+characters of the sample.
+
+Text the page hides never reaches the file: `display: none`, `visibility:
+hidden`, `opacity: 0`, and the shapes a `.sr-only` or `.visually-hidden` class is
+built from — a zero clip rect, a `clip-path` that insets the whole box, a text
+indent or an offset far off the canvas, a one-pixel box that clips. That is where
+"Skip to main content" and "opens in a new tab" live, and they were written for a
+screen reader rather than for a note. A section a page is about to fade in is not
+hidden, only not shown yet, and it is kept.
 
 Link targets are limited to the schemes a Markdown file can carry safely — the
 same set the preview's sanitizer accepts, so the two halves of the product agree

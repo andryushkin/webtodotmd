@@ -55,7 +55,7 @@ A page states its formatting in two languages, and only one of them is a tag.
 `core/src/utils/inline-style.ts` reads the other — the `style` attribute — for
 the properties that change what a reader sees as text: `font-weight`,
 `font-style`, `text-decoration`, and `display` for where the line ends.
-Deliberately the attribute alone: the core is isomorphic, its tests run against
+Deliberately an attribute: the core is isomorphic, its tests run against
 linkedom and the extension converts a detached clone, so `getComputedStyle`
 exists in neither and a rule that needed it would hold in one half of the
 product only.
@@ -73,10 +73,39 @@ through `emphasis()`, the same function the tag rules use, so a style-derived
 mark picks its marker by the same flanking rules and becomes a `<strong>` tag
 inside the HTML table fallback without a word of its own.
 
+Most of the web states its formatting through a class, though, and a class says
+nothing to a clone — which made Tailwind, Notion, Medium, Substack and Confluence
+pages convert as unformatted text. `src/content/style-snapshot.ts` is the other
+half of the answer: it holds live nodes for the length of a capture and writes
+the computed style of everything whose face differs from what its tag and its
+parent already imply into a `data-s2md-style` attribute, in ordinary CSS
+declarations. `elementStyle()` joins the two — the snapshot is the later word,
+since a computed style already has the inline one folded into it, and silence in
+it is not a denial. No snapshot is the ordinary case rather than an error:
+`server.ts` and every other caller of the library convert without one, and the
+`style` attribute is read exactly as it was before.
+
+Recording a *change* of face rather than a face is what lets the attribute
+survive being cut out of the page. A run whose weight came from a paragraph the
+selection left behind carries no claim of its own, so no `**` is invented for it;
+a `<span>` inside a bold heading is silent for the same reason, which is the rule
+above restated against a stylesheet. The walk collects everything before it
+writes anything — setting an attribute invalidates the style the browser has
+cached, so a walk that wrote as it went would recalculate once per element — it
+stops at `display:none` instead of marking a hidden menu one node at a time, and
+it descends into `shadowRoot`, since `expandShadowRoots()` flattens a component
+by copying `innerHTML` and attributes are the only thing that copy carries.
+
 Two places read the same declarations for their own questions: `isHidden()` in
 the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and
 `opacity:0` before anything is converted, and `endsLine()` in the flanking
 module, since a `display:block` on a `<span>` ends a line as surely as a `<br>`.
+`isHidden()` also drops the shapes `.sr-only` and `.visually-hidden` are built
+from — a zero `clip` rect, `clip-path: inset(50%)` or deeper, a four-digit
+negative `text-indent` or offset, a one-pixel box that clips — because the text
+under them was written for a screen reader and no reader ever saw it. Each
+threshold sits where no layout lands by accident: the mistake that costs here is
+deleting text a person saw, not keeping text they did not.
 
 ## Surfaces
 
@@ -93,10 +122,14 @@ module, since a `display:block` on a `<span>` ends a line as surely as a `<br>`.
    a PING, and an on-demand `scripting.executeScript()` if nothing answers.
    The manifest also auto-injects on `*://*/*`; the ping path covers tabs that
    loaded before the extension did.
-2. The content script expands shadow roots (`expandShadowRoots()`), injecting
-   their contents as temporary `<s2md-shadow>` elements so web components
-   convert like ordinary markup. The cleanup function it returns runs in a
-   `finally` block.
+2. The content script records the computed style of the selection's scope
+   (`snapshotStyles()`), then expands shadow roots (`expandShadowRoots()`),
+   injecting their contents as temporary `<s2md-shadow>` elements so web
+   components convert like ordinary markup. That order is the point: the
+   snapshot has to be read before anything mutates the DOM, and its attributes
+   have to be on the shadow nodes before their `innerHTML` is copied out. Both
+   cleanups run in `finally` blocks, and both restore the page's own value for
+   the attribute rather than removing it.
 3. `selectionToMarkdown()` converts the selection. Multiple ranges
    (`rangeCount > 1`) are converted separately and joined with `\n\n`.
    `Range.cloneContents()` already closes whatever tags the selection cut

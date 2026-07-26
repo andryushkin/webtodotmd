@@ -27,8 +27,8 @@ import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
 import {
   displayFrom,
+  elementStyle,
   hiddenByStyle,
-  inlineStyle,
   italicFrom,
   struckFrom,
   weightFrom,
@@ -57,12 +57,13 @@ const BLOCK_TAGS = new Set([
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
-// A `display` in the page's own style attribute decides this before the tag does:
-// `<span style="display:block">` is a line of its own on screen, and a `<div
-// style="display:inline">` is not. The converter reads the same declaration, so
-// an oracle that went by the tag alone would report the agreement as a difference.
+// A `display` the page states decides this before the tag does: `<span
+// style="display:block">` is a line of its own on screen, and a `<div
+// style="display:inline">` is not. `elementStyle` is what the converter reads —
+// the style attribute and a recorded computed style both — so an oracle that went
+// by the tag alone would report the agreement as a difference.
 function isBlockBox(el: Element): boolean {
-  const display = displayFrom(inlineStyle(el));
+  const display = displayFrom(elementStyle(el));
   if (display === 'block') return true;
   if (display === 'inline') return false;
   return BLOCK_TAGS.has(el.tagName.toLowerCase());
@@ -288,7 +289,7 @@ function boldByItself(el: Element): boolean {
 }
 
 function faceOf(el: Element, parent: Face): Face {
-  const read = inlineStyle(el);
+  const read = elementStyle(el);
   const mark = FACE_TAGS[tagOf(el)];
   const boldByTag = mark === 'weight' || boldByItself(el);
   return {

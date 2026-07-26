@@ -12,7 +12,7 @@ when you alter behavior it describes.
 
 | Path | Contents |
 | --- | --- |
-| `src/content/` | Selection capture, highlighter mode, floating bubble, Shadow DOM flattening; plus `page-title.ts`, `highlight-target.ts`, generated `html-entities.ts` |
+| `src/content/` | Selection capture, highlighter mode, floating bubble, Shadow DOM flattening; plus `page-title.ts`, `highlight-target.ts`, `style-snapshot.ts`, generated `html-entities.ts` |
 | `src/sidepanel/` | Main UI: preview/source, toolbar, status bar, rating |
 | `src/background/` | Service worker: context menu, commands, panel behavior, install/update pages |
 | `src/settings/` | Options page |
@@ -55,8 +55,19 @@ Each of these has cost a bug already; the reason is what makes it stick.
 - A style mark is what is *heavier than its context*, never a large `font-weight`
   (`core/src/utils/inline-style.ts`): a heading, a `<th>` and a `<strong>` are already bold and are
   routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
-  both ways — a style declining its tag's mark drops it — reads the attribute only (no
-  `getComputedStyle`: the core is isomorphic), and emits through `emphasis()` like every other mark.
+  both ways — a style declining its tag's mark drops it — and emits through `emphasis()` like every
+  other mark.
+- The core reads attributes, never `getComputedStyle`, because it is isomorphic: `style`, and beside
+  it `data-s2md-style`, a computed style the content script recorded while it still had live nodes.
+  `elementStyle()` joins them — the snapshot is the later word, silence in it is not a denial — and
+  one parser and one set of property readers answer both, so neither side can invent a spelling the
+  other has to be taught. No snapshot is the ordinary case: `server.ts` and every library caller
+  convert without one, and stage one's behavior must survive its absence unchanged.
+- `hiddenByStyle()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
+  inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
+  `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
+  reader alone. Every threshold is set where no layout lands by accident — the expensive mistake here
+  is deleting text a person saw, not keeping text they did not.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would
@@ -99,6 +110,15 @@ Each of these has cost a bug already; the reason is what makes it stick.
 - Bubble visibility is `style.display` only. `element.hidden` does nothing —
   the inline `display:inline-flex` overrides the UA `[hidden]` rule.
 - Wrap `expandShadowRoots()` in try/finally so its cleanup always runs.
+- `snapshotStyles()` (`style-snapshot.ts`) is the only `getComputedStyle` in the
+  product. It runs before any DOM mutation and writes nothing while it walks —
+  setting an attribute invalidates Chrome's style cache, so a walk that wrote as
+  it went would pay for a recalculation per element. It records only what the tag
+  and the parent do not already imply, which is both what keeps the markup small
+  and what lets a run cut out of its bold paragraph stay plain. It walks
+  `shadowRoot` too: `expandShadowRoots()` copies `innerHTML`, which carries
+  attributes and nothing else, so a component not snapshotted first arrives
+  unstyled for good. Marks come off in a `finally`, restoring the page's value.
 - Anything that needs a test goes in its own module: `content-script.ts` cannot
   be imported by a test, because of its top-level Chrome API calls.
 

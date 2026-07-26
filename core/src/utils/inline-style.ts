@@ -1,22 +1,35 @@
 /**
- * The `style` attribute, read for the few properties that decide what a reader
- * sees as text rather than where the box sits on the page.
+ * Two attributes, read for the few properties that decide what a reader sees as
+ * text rather than where the box sits on the page: the page's own `style`, and a
+ * snapshot of the computed style left behind by whoever held the live nodes.
  *
- * Only the attribute, and deliberately so. `getComputedStyle` is not available
- * here: the core runs against linkedom in its own tests and against a detached
- * clone in the extension, and neither has a layout engine, so a rule that needed
- * it would hold in one half of the product and not the other. What a page writes
- * inline is also the half that travels with a copied fragment.
+ * Attributes, and deliberately so. `getComputedStyle` is not available here: the
+ * core runs against linkedom in its own tests and against a detached clone in the
+ * extension, and neither has a layout engine, so a rule that needed it would hold
+ * in one half of the product and not the other. What a class or a stylesheet says
+ * is invisible from a clone for the same reason, which is why the side that does
+ * have live nodes writes it down first — see `src/content/style-snapshot.ts`. No
+ * snapshot is the ordinary case, not an error: the library converts a string for
+ * callers that never had a browser.
  *
- * The property readers take a lookup rather than an element, because the next
- * source of exactly these properties is a computed style: the same questions,
- * asked somewhere else. Everything below the lookup — what `bolder` resolves to,
- * where "bold enough" starts, which `display` values break a line — is the part
+ * The property readers take a lookup rather than an element, because the same
+ * properties arrive from both places: the same questions, asked twice. Everything
+ * below the lookup — what `bolder` resolves to, where "bold enough" starts, which
+ * `display` values break a line, which shapes clip a box to nothing — is the part
  * that must not be written twice.
  */
 
 /** A style, asked one property at a time. Undefined means the style is silent. */
 export type StyleReader = (property: string) => string | undefined;
+
+/**
+ * Where a computed style is written down for the clone to read.
+ *
+ * Its values are ordinary CSS declarations, so the same parser and the same
+ * readers answer both attributes and neither side can invent a private spelling
+ * the other has to be taught.
+ */
+export const SNAPSHOT_ATTR = 'data-s2md-style';
 
 const NO_STYLE: StyleReader = () => undefined;
 
@@ -80,18 +93,51 @@ function addDeclaration(out: Map<string, string>, text: string): void {
 // from a stale one; `rules/tables.ts` rewrites attributes on a clone, and a cache
 // that only knew the element would have to be trusted about the order that
 // happens in.
-const parsed = new WeakMap<Element, { raw: string; reader: StyleReader }>();
+type Parsed = WeakMap<Element, { raw: string; reader: StyleReader }>;
 
-/** This element's own inline style. Elements without one cost a single lookup. */
-export function inlineStyle(el: Element): StyleReader {
-  const raw = el.getAttribute?.('style');
+const parsedInline: Parsed = new WeakMap();
+const parsedSnapshot: Parsed = new WeakMap();
+
+function attributeStyle(el: Element, name: string, cache: Parsed): StyleReader {
+  const raw = el.getAttribute?.(name);
   if (!raw) return NO_STYLE;
-  const cached = parsed.get(el);
+  const cached = cache.get(el);
   if (cached !== undefined && cached.raw === raw) return cached.reader;
   const declarations = parseDeclarations(raw);
   const reader: StyleReader = (property) => declarations.get(property);
-  parsed.set(el, { raw, reader });
+  cache.set(el, { raw, reader });
   return reader;
+}
+
+/** This element's own inline style. Elements without one cost a single lookup. */
+export function inlineStyle(el: Element): StyleReader {
+  return attributeStyle(el, 'style', parsedInline);
+}
+
+/** The computed style someone else recorded for this element, if anyone did. */
+export function snapshotStyle(el: Element): StyleReader {
+  return attributeStyle(el, SNAPSHOT_ATTR, parsedSnapshot);
+}
+
+/**
+ * Everything known about how this element was painted.
+ *
+ * The snapshot answers first: a computed style already has the inline one folded
+ * into it, so where both speak the snapshot is the later word. It is written only
+ * where it says something the tag and the ancestry do not already imply, so a
+ * property missing from it is not a denial — the inline attribute is still asked.
+ */
+export function elementStyle(el: Element): StyleReader {
+  const snapshot = snapshotStyle(el);
+  if (snapshot === NO_STYLE) return inlineStyle(el);
+  const inline = inlineStyle(el);
+  if (inline === NO_STYLE) return snapshot;
+  return (property) => snapshot(property) ?? inline(property);
+}
+
+/** Whether either attribute is present at all — the parser's cheap gate. */
+export function hasStyle(el: Element): boolean {
+  return el.getAttribute?.('style') != null || el.getAttribute?.(SNAPSHOT_ATTR) != null;
 }
 
 /** The first component of a value — `display: block flow` is a block. */
@@ -202,6 +248,90 @@ export function hiddenFrom(read: StyleReader): boolean {
   return opacity !== undefined && Number.parseFloat(opacity) === 0;
 }
 
+/**
+ * The properties `visuallyHiddenFrom` reads, named so a snapshot can carry
+ * exactly the ones its verdict rests on and the two sides cannot drift apart.
+ */
+export const CLIPPED_PROPERTIES: readonly string[] = [
+  'clip', 'clip-path', 'text-indent', 'position', 'left', 'top', 'width', 'height', 'overflow',
+];
+
+/** A length in pixels, or undefined for `auto`, a percentage, or a keyword. */
+function px(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const match = /^(-?\d*\.?\d+)px$/.exec(value.trim());
+  return match ? Number.parseFloat(match[1]!) : undefined;
+}
+
+// Far enough off the canvas that nothing of the element is on screen. A round
+// number rather than the viewport's edge, which no stylesheet knows: the idioms
+// this catches are all written with four digits, and a box merely pushed a
+// column's width to the left is a layout, not a hiding place.
+const OFFSCREEN_PX = -1000;
+
+// `clip: rect(0px, 0px, 0px, 0px)`, the CSS 2 spelling of "none of this". The
+// property is deprecated and this is very nearly the only thing it is still
+// written for; commas are optional in the legacy syntax, so both are accepted.
+function clippedToNothing(value: string | undefined): boolean {
+  const inside = value === undefined ? null : /^rect\(([^)]*)\)$/.exec(value.trim());
+  if (!inside) return false;
+  const sides = inside[1]!.split(/[\s,]+/).filter((side) => side !== '');
+  return sides.length === 4 && sides.every((side) => px(side) === 0);
+}
+
+// `clip-path: inset(50%)` and anything deeper: half the box taken off every side
+// leaves nothing between them. Percentages only — an inset in pixels needs the
+// box's size to judge, and that is not in a style.
+function insetToNothing(value: string | undefined): boolean {
+  const match = value === undefined ? null : /^inset\(\s*(\d*\.?\d+)%/.exec(value.trim());
+  return match !== null && Number.parseFloat(match[1]!) >= 50;
+}
+
+// A box one pixel across that clips what it cannot fit. Both sides, not either:
+// a strip zero pixels high and the full width of the page is a collapsed panel,
+// which a reader opens, and this must not decide it was never there.
+function pinhole(read: StyleReader): boolean {
+  const overflow = read('overflow');
+  if (overflow === undefined || !/hidden|clip/.test(overflow)) return false;
+  const width = px(read('width'));
+  const height = px(read('height'));
+  return width !== undefined && width <= 1 && height !== undefined && height <= 1;
+}
+
+// Positioned out past the edge of the canvas, the oldest of these idioms.
+function positionedOffscreen(read: StyleReader): boolean {
+  const position = read('position');
+  if (position !== 'absolute' && position !== 'fixed') return false;
+  const left = px(read('left'));
+  const top = px(read('top'));
+  return (left !== undefined && left <= OFFSCREEN_PX) || (top !== undefined && top <= OFFSCREEN_PX);
+}
+
+/**
+ * Whether the element is drawn somewhere no reader can look.
+ *
+ * This is the shape `.sr-only` and `.visually-hidden` take: the text is left in
+ * the tree on purpose, for a screen reader, and clipped, indented or pushed off
+ * the canvas so that nobody else meets it. `display:none` would take it away from
+ * the screen reader too, which is exactly why these classes exist and why they
+ * are what a page writes — so a converter that only knows `hiddenFrom` copies
+ * "Skip to main content" and "opens in a new tab" into the reader's file.
+ *
+ * Each test is the whole idiom rather than one of its parts, and each threshold
+ * is set where no layout would land by accident. The cost of a false positive
+ * here is text a person saw and no longer has, which is worse than the text they
+ * did not see and now have.
+ */
+export function visuallyHiddenFrom(read: StyleReader): boolean {
+  return (
+    clippedToNothing(read('clip')) ||
+    insetToNothing(read('clip-path')) ||
+    (px(read('text-indent')) ?? 0) <= OFFSCREEN_PX ||
+    positionedOffscreen(read) ||
+    pinhole(read)
+  );
+}
+
 // ---------------------------------------------------------------------------
 // From properties to what the element shows, and from that to what the output
 // does not already say.
@@ -215,6 +345,17 @@ const BOLD_TAGS = new Set(['strong', 'b', 'th', 'h1', 'h2', 'h3', 'h4', 'h5', 'h
 const ITALIC_TAGS = new Set(['em', 'i']);
 const STRUCK_TAGS = new Set(['del', 's']);
 
+// Asked from outside by whoever records a computed style: what it has to compare
+// against is what this file would have assumed without it, so the sets have to be
+// the same sets. Predicates rather than the sets themselves, so nothing outside
+// can add a tag to them.
+/** Whether the tag alone is already bold. */
+export const isBoldTag = (tag: string): boolean => BOLD_TAGS.has(tag);
+/** Whether the tag alone is already italic. */
+export const isItalicTag = (tag: string): boolean => ITALIC_TAGS.has(tag);
+/** Whether the tag alone is already struck through. */
+export const isStruckTag = (tag: string): boolean => STRUCK_TAGS.has(tag);
+
 // Tags whose conversion already puts their content on a line of its own, so a
 // `display` saying the same thing has nothing to add. Anything unlisted counts
 // as inline, which is the safe direction: the cost of a wrong break is a blank
@@ -226,6 +367,9 @@ const BLOCK_TAGS = new Set([
   'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'summary', 'table', 'tbody',
   'td', 'tfoot', 'th', 'thead', 'tr', 'ul',
 ]);
+
+/** Whether the tag's own conversion already puts its content on a line of its own. */
+export const isBlockTag = (tag: string): boolean => BLOCK_TAGS.has(tag);
 
 function tagOf(el: Element): string {
   return el.tagName.toLowerCase();
@@ -250,7 +394,7 @@ const PLAIN: Face = { weight: NORMAL_WEIGHT, italic: false, struck: false };
 // ancestor's style attribute once per question, which on a document where every
 // element is styled is the depth of the tree paid three times over for every run.
 function ownFace(el: Element, inherited: Face): Face {
-  const read = inlineStyle(el);
+  const read = elementStyle(el);
   const tag = tagOf(el);
   return {
     weight: weightFrom(read, inherited.weight) ?? (BOLD_TAGS.has(tag) ? BOLD_WEIGHT : inherited.weight),
@@ -274,7 +418,9 @@ const NO_MARKS: StyleMarks = { bold: false, italic: false, strike: false };
 
 function silent(el: Element): boolean {
   const raw = el.getAttribute?.('style');
-  return !raw || !AFFECTS_TYPEFACE.test(raw);
+  if (raw && AFFECTS_TYPEFACE.test(raw)) return false;
+  const snapshot = el.getAttribute?.(SNAPSHOT_ATTR);
+  return !snapshot || !AFFECTS_TYPEFACE.test(snapshot);
 }
 
 /**
@@ -293,7 +439,7 @@ function silent(el: Element): boolean {
  */
 export function addedMarks(el: Element): StyleMarks {
   if (silent(el)) return NO_MARKS;
-  const read = inlineStyle(el);
+  const read = elementStyle(el);
   const tag = tagOf(el);
   const context = inheritedFace(el);
 
@@ -324,7 +470,7 @@ export function addedMarks(el: Element): StyleMarks {
  */
 export function suppressedMarks(el: Element): StyleMarks {
   if (silent(el)) return NO_MARKS;
-  const read = inlineStyle(el);
+  const read = elementStyle(el);
   return {
     // Only a declaration can decline anything; the default here is the weight the
     // tag would have had, which declines nothing.
@@ -337,15 +483,16 @@ export function suppressedMarks(el: Element): StyleMarks {
 /** Whether this element's style puts its content on a line its tag would not. */
 export function displaysAsBlock(el: Element): boolean {
   if (BLOCK_TAGS.has(tagOf(el))) return false;
-  return displayFrom(inlineStyle(el)) === 'block';
+  return displayFrom(elementStyle(el)) === 'block';
 }
 
 /** Whether this element's style keeps its content in the line its tag would leave. */
 export function displaysInline(el: Element): boolean {
-  return displayFrom(inlineStyle(el)) === 'inline';
+  return displayFrom(elementStyle(el)) === 'inline';
 }
 
-/** Whether this element is styled out of the render. */
+/** Whether this element is styled out of the render, or out of sight. */
 export function hiddenByStyle(el: Element): boolean {
-  return hiddenFrom(inlineStyle(el));
+  const read = elementStyle(el);
+  return hiddenFrom(read) || visuallyHiddenFrom(read);
 }

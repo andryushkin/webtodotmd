@@ -1,7 +1,7 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
 import { applyStyleEmphasis } from '../rules/inline.js';
-import { displaysAsBlock } from '../utils/inline-style.js';
+import { displaysAsBlock, hasStyle } from '../utils/inline-style.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -213,16 +213,15 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const el = node as Element;
     const rule = findRule(el, options);
     const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
-    // The two things the `style` attribute says that no rule can read off a tag:
-    // that this run is emphasised, and that it stands on a line of its own. The
-    // marks go inside whatever the rule writes and the break goes outside it, so
-    // a styled block keeps being a block and a styled `<span>` keeps its place in
-    // the sentence.
+    // The two things a style says that no rule can read off a tag: that this run
+    // is emphasised, and that it stands on a line of its own. The marks go inside
+    // whatever the rule writes and the break goes outside it, so a styled block
+    // keeps being a block and a styled `<span>` keeps its place in the sentence.
     //
-    // The attribute is asked for first because almost no element has one, and
-    // `inLiteral` walks the ancestry: without this the whole tree paid for its own
-    // depth on every document, styled or not.
-    const styled = el.getAttribute?.('style') != null && !inLiteral(el);
+    // The attributes are asked for first because almost no element carries one,
+    // and `inLiteral` walks the ancestry: without this the whole tree paid for its
+    // own depth on every document, styled or not.
+    const styled = hasStyle(el) && !inLiteral(el);
     if (!styled) return rule.replacement(el, childContent, options);
     const out = rule.replacement(el, applyStyleEmphasis(el, childContent, options), options);
     if (!displaysAsBlock(el)) return out;
