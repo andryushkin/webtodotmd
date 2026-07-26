@@ -1,5 +1,7 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
+import { applyStyleEmphasis } from '../rules/inline.js';
+import { displaysAsBlock } from '../utils/inline-style.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -166,6 +168,24 @@ function literalContext(node: Node): 'none' | 'code' | 'math' {
   return 'none';
 }
 
+/**
+ * Whether this element's content is characters rather than markup.
+ *
+ * Code and maths are the two places where a style has nothing worth writing
+ * down: a `**` inside a fence or a code span is two characters of the sample,
+ * and inside a formula two more tokens of LaTeX. A syntax highlighter puts a
+ * `<span style="font-weight:bold">` on every other keyword, and every one of
+ * them would land in the code.
+ *
+ * `literalContext` answers for the ancestors; the element's own tag is asked
+ * here, because an element is inside itself.
+ */
+function inLiteral(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (LITERAL_TAGS.has(tag) || MATH_TAGS.has(tag) || el.classList?.contains('katex')) return true;
+  return literalContext(el) !== 'none';
+}
+
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
@@ -193,7 +213,21 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const el = node as Element;
     const rule = findRule(el, options);
     const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
-    return rule.replacement(el, childContent, options);
+    // The two things the `style` attribute says that no rule can read off a tag:
+    // that this run is emphasised, and that it stands on a line of its own. The
+    // marks go inside whatever the rule writes and the break goes outside it, so
+    // a styled block keeps being a block and a styled `<span>` keeps its place in
+    // the sentence.
+    //
+    // The attribute is asked for first because almost no element has one, and
+    // `inLiteral` walks the ancestry: without this the whole tree paid for its own
+    // depth on every document, styled or not.
+    const styled = el.getAttribute?.('style') != null && !inLiteral(el);
+    if (!styled) return rule.replacement(el, childContent, options);
+    const out = rule.replacement(el, applyStyleEmphasis(el, childContent, options), options);
+    if (!displaysAsBlock(el)) return out;
+    const trimmed = out.trim();
+    return trimmed === '' ? out : `\n\n${trimmed}\n\n`;
   }
   return '';
 }

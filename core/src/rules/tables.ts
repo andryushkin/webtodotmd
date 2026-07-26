@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert, lookAhead } from '../core/parser.js';
+import { applyStyleEmphasis } from './inline.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
 import {
   escapeBlockStarts,
@@ -356,11 +357,18 @@ function getCellContent(
       text += escapeCellText(child.textContent ?? '', child);
     }
   }
+  // A style on the cell itself, which this walk would otherwise never see: it
+  // reads the cell's children and the converter is never handed the `<td>`, so
+  // `<td style="font-weight:bold">Total</td>` — how a spreadsheet export writes a
+  // totals row — lost the one thing that made it a totals row. A `<th>` gains
+  // nothing here and must not: a header cell is bold in every renderer, which is
+  // what `addedMarks` weighs the declaration against.
+  const marked = applyStyleEmphasis(cell, text.trim(), options);
   // A GFM row is one line: a newline anywhere inside a cell ends the row early
   // and the rest of the table falls apart. Block children (two paragraphs in a
   // cell, say) produce exactly that, so line breaks become <br>, the only break
   // a pipe table can carry.
-  return breaksToBr(escapePipes ? escapeCellPipes(text.trim()) : text.trim());
+  return breaksToBr(escapePipes ? escapeCellPipes(marked) : marked);
 }
 
 function getAlignment(cell: Element): string {

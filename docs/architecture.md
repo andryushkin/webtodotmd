@@ -51,6 +51,33 @@ block would never parse. It replaced a boolean `escapeSyntax: false`, which said
 only half of it: escaping stopped, but the rules kept writing `**bold**` into
 markup that showed the reader asterisks.
 
+A page states its formatting in two languages, and only one of them is a tag.
+`core/src/utils/inline-style.ts` reads the other — the `style` attribute — for
+the properties that change what a reader sees as text: `font-weight`,
+`font-style`, `text-decoration`, and `display` for where the line ends.
+Deliberately the attribute alone: the core is isomorphic, its tests run against
+linkedom and the extension converts a detached clone, so `getComputedStyle`
+exists in neither and a rule that needed it would hold in one half of the
+product only.
+
+The rule is not "weight ≥ 600 means bold". A heading, a table header and a
+`<strong>` are already bold, and every one of them is routinely handed the weight
+it already has — by a CMS, by a paste from a word processor, by a theme — so the
+module works out two faces for each element: the one its style declares, and the
+one it would have had without the declaration. A mark is written only where the
+first beats the second, which is what keeps `**` out of a `##` and stops a
+`<strong style="font-weight:700">` writing its delimiters twice. The comparison
+runs the other way too: `<strong style="font-weight:normal">` is not bold on
+screen, so the tag's mark is dropped and its text kept. Everything is emitted
+through `emphasis()`, the same function the tag rules use, so a style-derived
+mark picks its marker by the same flanking rules and becomes a `<strong>` tag
+inside the HTML table fallback without a word of its own.
+
+Two places read the same declarations for their own questions: `isHidden()` in
+the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and
+`opacity:0` before anything is converted, and `endsLine()` in the flanking
+module, since a `display:block` on a `<span>` ends a line as surely as a `<br>`.
+
 ## Surfaces
 
 | Surface | Entry point | Role |

@@ -1,4 +1,5 @@
 import { isContentless } from './contentful.js';
+import { hiddenByStyle } from '../utils/inline-style.js';
 const REMOVE_TAGS = new Set(['style', 'noscript', 'iframe', 'object', 'embed', 'template', 'svg']);
 const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
@@ -90,13 +91,14 @@ function removeHidden(root: Element | Document): void {
   }
 }
 
+// Every way a page writes "this is here but nobody sees it". `hiddenByStyle`
+// parses the attribute rather than matching it, which is what tells
+// `visibility: collapse` from a `-ms-visibility: collapsed` nobody implements,
+// and `opacity: 0` from `opacity: 0.9`.
 function isHidden(el: Element): boolean {
   if (el.hasAttribute('hidden')) return true;
   if (el.getAttribute('aria-hidden') === 'true') return true;
-  const style = el.getAttribute('style') ?? '';
-  if (/display\s*:\s*none/i.test(style)) return true;
-  if (/visibility\s*:\s*hidden/i.test(style)) return true;
-  return false;
+  return hiddenByStyle(el);
 }
 
 function removeEmptyWrappers(root: Element | Document): void {

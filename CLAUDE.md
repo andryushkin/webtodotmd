@@ -30,9 +30,8 @@ bun test          # extension and core, one runner
 scripts/audit.sh  # public-repo gate, before pushing (docs/audit.md)
 ```
 
-Bun is the transpiler for the extension — no bundler, no config. `core/` has a
-`tsup` build of its own, used only to publish the library. Packaging and store steps
-are in `docs/releasing.md`.
+Bun is the transpiler for the extension — no bundler, no config. `core/` has a `tsup` build of its
+own, used only to publish the library. Packaging and store steps are in `docs/releasing.md`.
 
 ## Invariants
 
@@ -40,27 +39,28 @@ Each of these has cost a bug already; the reason is what makes it stick.
 
 **Conversion core (`core/`)**
 
-- Markdown characters in the page's own text are escaped, so the file renders
-  what the reader saw. Inline marks (`*`, a non-intraword `_`, `` ` ``, `~~`,
-  link brackets, the last against a bounded lookahead) are escaped per text node; `#`, `>`, bullets, numbering and a
-  line of dashes only in the node that opens a block — a text node is not a line,
-  and the parser splits text at every element boundary. Never escape inside
-  `pre`, `code`, `kbd`, `samp` or a math subtree: there a backslash is
-  corruption, and in a math subtree only a tag start (`<` before a letter or
-  slash) is neutralized, because that is what can close a fallback cell.
-- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves
-  must not assemble across a node boundary: `sanitize()` calls `normalize()` last,
-  and a node whose tail is still an open construct escapes it defensively, since
-  it cannot see what the next node adds.
-- Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`,
-  then `*`/`__`, then an HTML tag (`core/src/utils/flanking.ts`). Content starting
-  or ending in punctuation, pressed against a word, has no marker that works —
-  emitting one anyway lost the italics and left the characters.
-- The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML
-  block is not parsed as Markdown, so escaping shows backslashes *and* `**bold**`
-  shows asterisks. Emphasis, code and links emit tags; an image emits alt text,
-  since allowing `src`/`alt` past the preview's allow-list would widen it for a
-  case that already rendered nothing. A link's scheme is checked.
+- Markdown characters in the page's own text are escaped, so the file renders what the reader saw.
+  Inline marks (`*`, a non-intraword `_`, `` ` ``, `~~`, link brackets, the last against a bounded
+  lookahead) are escaped per text node; `#`, `>`, bullets, numbering and a line of dashes only in the
+  node that opens a block — a text node is not a line, and the parser splits text at every element
+  boundary. Never escape inside `pre`, `code`, `kbd`, `samp` or a math subtree: a backslash there is
+  corruption, and in a math subtree only a tag start (`<` before a letter or slash) is neutralized,
+  because that is what can close a fallback cell.
+- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves must not assemble across
+  a node boundary: `sanitize()` calls `normalize()` last, and a node whose tail is still an open
+  construct escapes it defensively, since it cannot see what the next node adds.
+- Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`, then `*`/`__`,
+  then an HTML tag (`core/src/utils/flanking.ts`). Content starting or ending in punctuation, pressed
+  against a word, has no marker that works — emitting one lost the italics and left the characters.
+- A style mark is what is *heavier than its context*, never a large `font-weight`
+  (`core/src/utils/inline-style.ts`): a heading, a `<th>` and a `<strong>` are already bold and are
+  routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
+  both ways — a style declining its tag's mark drops it — reads the attribute only (no
+  `getComputedStyle`: the core is isomorphic), and emits through `emphasis()` like every other mark.
+- The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
+  Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
+  emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would
+  widen it for a case that already rendered nothing. A link's scheme is checked.
 
 **Side panel**
 

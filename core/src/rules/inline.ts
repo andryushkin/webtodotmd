@@ -7,6 +7,7 @@ import {
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext, lookAhead } from '../core/parser.js';
+import { addedMarks, suppressedMarks } from '../utils/inline-style.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -61,6 +62,38 @@ function emphasis(
     }
   }
   return `${leading}<${tag}>${trimmed}</${tag}>${trailing}`;
+}
+
+/**
+ * The marks an element's `style` attribute shows that no tag around it records.
+ *
+ * Applied to the element's converted children, before its own rule runs, which
+ * is what lets a `<div style="font-weight:bold">` keep both things it is: the
+ * `**` goes inside the block the div rule writes, not around it. For a `<span>`
+ * — the ordinary case — the rule is the default one and hands the content
+ * straight back, so the marks end up exactly where they would have been had the
+ * page used a tag.
+ *
+ * The emitter is `emphasis()` above and nothing else. A second one would have to
+ * re-derive which of `_`, `**` or a tag renders here, and which neighbour it
+ * would collide with; that logic is the expensive part, and having one copy of
+ * it is also what makes the HTML table fallback work without a word — inside a
+ * cell `emphasis()` already writes tags instead of delimiters.
+ *
+ * Italic inside strikethrough inside bold, so the delimiters nest the way a page
+ * that used tags would have nested them.
+ */
+export function applyStyleEmphasis(
+  el: Element,
+  content: string,
+  options: MarkItDownOptions,
+): string {
+  const marks = addedMarks(el);
+  let out = content;
+  if (marks.italic) out = emphasis(el, out, ['_', '*'], 'em', options);
+  if (marks.strike) out = emphasis(el, out, ['~~'], 'del', options);
+  if (marks.bold) out = emphasis(el, out, ['**', '__'], 'strong', options);
+  return out;
 }
 
 const TEXT_NODE = 3;
@@ -387,21 +420,34 @@ function extractImageUrl(img: Element): string {
   return src;
 }
 
+// A tag says what the page meant; the style attribute says what it showed. Where
+// the two disagree the reader saw the style — a `<strong style="font-weight:400">`
+// is not bold on screen, and `**` around it claims a formatting the page withheld.
+// The mark is dropped, never the content.
 export const INLINE_RULES: Rule[] = [
   {
     name: 'bold',
     filter: ['strong', 'b'],
-    replacement: (el, childContent, options) => emphasis(el, childContent, ['**', '__'], 'strong', options),
+    replacement: (el, childContent, options) =>
+      suppressedMarks(el).bold
+        ? childContent
+        : emphasis(el, childContent, ['**', '__'], 'strong', options),
   },
   {
     name: 'italic',
     filter: ['em', 'i'],
-    replacement: (el, childContent, options) => emphasis(el, childContent, ['_', '*'], 'em', options),
+    replacement: (el, childContent, options) =>
+      suppressedMarks(el).italic
+        ? childContent
+        : emphasis(el, childContent, ['_', '*'], 'em', options),
   },
   {
     name: 'strikethrough',
     filter: ['del', 's'],
-    replacement: (el, childContent, options) => emphasis(el, childContent, ['~~'], 'del', options),
+    replacement: (el, childContent, options) =>
+      suppressedMarks(el).strike
+        ? childContent
+        : emphasis(el, childContent, ['~~'], 'del', options),
   },
   {
     name: 'subscript',

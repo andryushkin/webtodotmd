@@ -25,6 +25,14 @@
 import { parseHTML } from 'linkedom';
 import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
+import {
+  displayFrom,
+  hiddenByStyle,
+  inlineStyle,
+  italicFrom,
+  struckFrom,
+  weightFrom,
+} from '../../core/src/utils/inline-style.js';
 import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
 export function installDOMAdapter(): void {
@@ -49,6 +57,17 @@ const BLOCK_TAGS = new Set([
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
+// A `display` in the page's own style attribute decides this before the tag does:
+// `<span style="display:block">` is a line of its own on screen, and a `<div
+// style="display:inline">` is not. The converter reads the same declaration, so
+// an oracle that went by the tag alone would report the agreement as a difference.
+function isBlockBox(el: Element): boolean {
+  const display = displayFrom(inlineStyle(el));
+  if (display === 'block') return true;
+  if (display === 'inline') return false;
+  return BLOCK_TAGS.has(el.tagName.toLowerCase());
+}
+
 function collectText(node: Node, out: string[]): void {
   if (node.nodeType === TEXT_NODE) {
     out.push(node.textContent ?? '');
@@ -56,7 +75,9 @@ function collectText(node: Node, out: string[]): void {
   }
   if (node.nodeType !== ELEMENT_NODE) return;
 
-  const block = BLOCK_TAGS.has((node as Element).tagName.toLowerCase());
+  // Styled out of the render: the converter drops it, and so did the reader's eye.
+  if (hiddenByStyle(node as Element)) return;
+  const block = isBlockBox(node as Element);
   if (block) out.push('\n');
   for (const child of Array.from(node.childNodes)) collectText(child, out);
   if (block) out.push('\n');
@@ -168,22 +189,17 @@ function normUrl(url: string): string {
   }
 }
 
-// What a fact is named after, not what tag produced it. `<b>` and `<strong>` make
-// the same claim, and so do `<code>`, `<kbd>` and `<samp>` — the core turns the
-// last two into code spans, so demanding the tag back would fail on a conversion
-// that is entirely correct.
+// What a fact is named after, not what tag produced it. `<code>`, `<kbd>` and
+// `<samp>` make the same claim — the core turns the last two into code spans, so
+// demanding the tag back would fail on a conversion that is entirely correct.
+//
+// The emphasis tags used to be listed here and are not any more: bold, italic and
+// strikethrough are read off the *face* now, below, because a page states them in
+// two languages and only one of them is a tag.
 const FACT_TAGS: Readonly<Record<string, string>> = {
-  b: 'strong',
-  strong: 'strong',
-  i: 'em',
-  em: 'em',
-  cite: 'em',
   code: 'code',
   kbd: 'code',
   samp: 'code',
-  s: 'del',
-  del: 'del',
-  strike: 'del',
   sub: 'sub',
   sup: 'sup',
   blockquote: 'quote',
@@ -195,6 +211,103 @@ const FACT_TAGS: Readonly<Record<string, string>> = {
   h5: 'h5',
   h6: 'h6',
 };
+
+// ---------------------------------------------------------------------------
+// Typeface, which is a claim a page makes in two languages.
+//
+// `<b>bold</b>` and `<span style="font-weight:700">bold</span>` put the same
+// thing on the screen, and the oracle has to agree with itself about that or it
+// cannot measure the conversion at all: the input says it one way, the rendered
+// Markdown always says it the other. So the fact comes from the face the reader
+// sees — weight, slant, line — and not from the tag that produced it.
+//
+// A fact is emitted where the face *changes*, never where it merely holds. That
+// is the difference between "this run is bold" and "this run is bolder than what
+// surrounds it", and the second is the only one that survives a round trip: a
+// `<th>` and an `<h2>` are painted bold by every renderer, so a `**` inside one
+// is a mark the page never showed and the converter deliberately declines to
+// write. Recording the *state* instead would report that decision as a defect on
+// every table header there is.
+//
+// The CSS value readers are the core's own. What a `font-weight: bolder`
+// resolves to is not where conversion defects live, and a second copy of that
+// arithmetic would only drift; what this file must own — and does, below — is
+// which elements are held to make a claim, and when.
+interface Face {
+  weight: number;
+  italic: boolean;
+  strike: boolean;
+}
+
+const PLAIN: Face = { weight: 400, italic: false, strike: false };
+const BOLD = 700;
+const BOLD_ENOUGH = 600;
+
+// The tags that state a face, and the mark each one states.
+const FACE_TAGS: Readonly<Record<string, keyof Face>> = {
+  b: 'weight',
+  strong: 'weight',
+  i: 'italic',
+  em: 'italic',
+  cite: 'italic',
+  s: 'strike',
+  del: 'strike',
+  strike: 'strike',
+};
+
+// Bold because of what they are, not because of what they say: a heading carries
+// its weight into everything inside it and cannot hand it back through a Markdown
+// mark. Such an element raises the face for its children and claims nothing of
+// its own — recording the claim would report `## Title` as having lost the bold
+// that `#` is.
+const BOLD_BLOCKS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
+/**
+ * A cell that is read as a header, which is bold in every renderer there is.
+ *
+ * The first row, whatever tag it was written with. This file already reads a
+ * table that way — `tableFacts` names every column after `grid[0]` — and a pipe
+ * table has only that form: its first row becomes `<th>` on the way out no matter
+ * what came in. Weighing a `<td>` there as an ordinary cell made the oracle
+ * disagree with itself, and `<table><tr><td><b>a</b>` reported a bold that the
+ * conversion had kept perfectly.
+ */
+function isHeaderCell(el: Element): boolean {
+  const tag = tagOf(el);
+  if (tag === 'th') return true;
+  if (tag !== 'td') return false;
+  const row = el.parentElement;
+  if (!row || tagOf(row) !== 'tr') return false;
+  let table: Element | null = row.parentElement;
+  while (table !== null && tagOf(table) !== 'table') table = table.parentElement;
+  return table !== null && ownRows(table)[0] === row;
+}
+
+function boldByItself(el: Element): boolean {
+  return BOLD_BLOCKS.has(tagOf(el)) || isHeaderCell(el);
+}
+
+function faceOf(el: Element, parent: Face): Face {
+  const read = inlineStyle(el);
+  const mark = FACE_TAGS[tagOf(el)];
+  const boldByTag = mark === 'weight' || boldByItself(el);
+  return {
+    weight: weightFrom(read, parent.weight) ?? (boldByTag ? BOLD : parent.weight),
+    italic: italicFrom(read) ?? (mark === 'italic' || parent.italic),
+    strike: struckFrom(read) ?? (mark === 'strike' || parent.strike),
+  };
+}
+
+function faceFacts(el: Element, parent: Face, own: Face, out: string[]): void {
+  const text = factText(el);
+  // A mark around nothing claims nothing — the same rule `MARKS` states below.
+  if (text === '') return;
+  if (own.weight >= BOLD_ENOUGH && parent.weight < BOLD_ENOUGH && !boldByItself(el)) {
+    out.push(`strong:${text}`);
+  }
+  if (own.italic && !parent.italic) out.push(`em:${text}`);
+  if (own.strike && !parent.strike) out.push(`del:${text}`);
+}
 
 // Literal contexts: their content is characters, not structure. Descending would
 // report a `<code>` inside every `<pre>` the renderer builds and none inside the
@@ -295,15 +408,20 @@ function isParagraph(el: Element): boolean {
   return childElements(el).every((child) => !BLOCK_TAGS.has(tagOf(child)) || tagOf(child) === 'br');
 }
 
-// An inline mark around nothing claims nothing: `<b></b>` has no text that could
-// come back unemphasised, so dropping it is not a loss. A link is the exception —
-// its target is a claim on its own, and one that vanished is worth seeing.
-const MARKS = new Set(['strong', 'em', 'del', 'code', 'sub', 'sup']);
+// An inline mark around nothing claims nothing: `<code></code>` has no text that
+// could come back unwrapped, so dropping it is not a loss. A link is the
+// exception — its target is a claim on its own, and one that vanished is worth
+// seeing. `faceFacts` applies the same rule to the marks it reads off the face.
+const MARKS = new Set(['code', 'sub', 'sup']);
 
-function collectFacts(node: Node, out: string[]): void {
+function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void {
   if (node.nodeType !== ELEMENT_NODE) return;
   const el = node as Element;
   const tag = tagOf(el);
+  // Styled out of the render: there was nothing on the screen here to claim
+  // anything about, which is why the converter drops it too.
+  if (hiddenByStyle(el)) return;
+  const face = faceOf(el, inherited);
 
   if (tag === 'table') tableFacts(el, out);
 
@@ -326,7 +444,12 @@ function collectFacts(node: Node, out: string[]): void {
     if (fact && !(text === '' && MARKS.has(fact))) out.push(`${fact}:${text}`);
   }
 
-  for (const child of Array.from(el.childNodes)) collectFacts(child, out);
+  // After the tag's own claim and before the children's, so that an element
+  // making both — `<li style="font-weight:bold">` — lists them in the order the
+  // rendered `<li><strong>` will.
+  faceFacts(el, inherited, face, out);
+
+  for (const child of Array.from(el.childNodes)) collectFacts(child, out, face);
 }
 
 /**

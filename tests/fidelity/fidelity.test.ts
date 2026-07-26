@@ -323,6 +323,34 @@ describe('structural sanity', () => {
     ['pre with a br', '<pre>a<br>b</pre>', true],
     ['strikethrough survives', '<p><del>gone</del> here</p>', true],
 
+    // The same claims written in the other language a page has for them. Every
+    // one of these read as plain text until the style attribute was read, and
+    // none of them changed a single character while doing so — which is why they
+    // belong here and are invisible to the oracle above.
+    ['a styled bold run survives', '<p><span style="font-weight:700">bold</span> text</p>', true],
+    ['a styled italic run survives', '<p><span style="font-style:italic">slanted</span> text</p>', true],
+    [
+      'a styled strikethrough survives',
+      '<p><span style="text-decoration:line-through">gone</span> here</p>',
+      true,
+    ],
+    // The style is what the reader saw, so the tag's mark must not be written.
+    ['a style that declines its tag', '<p><strong style="font-weight:normal">plain</strong> text</p>', true],
+    // A header cell is bold in every renderer, so the declaration claims nothing
+    // the output does not already make — writing `**` here would *add* a claim.
+    [
+      'a bold table header claims nothing extra',
+      '<table><thead><tr><th style="font-weight:700">h</th></tr></thead>' +
+        '<tbody><tr><td>a</td></tr></tbody></table>',
+      true,
+    ],
+    [
+      'a bold body cell is a claim of its own',
+      '<table><thead><tr><th>h</th></tr></thead>' +
+        '<tbody><tr><td style="font-weight:bold">a</td></tr></tbody></table>',
+      true,
+    ],
+
     // --- deliberate: differences the product chose ---
     // `headingOffset: 1` — the page title takes h1, so everything below moves
     // down one. Nothing to repair; the case is here so that a change to the
@@ -345,6 +373,18 @@ describe('structural sanity', () => {
       'a rowspan continuation is blank',
       '<table><tbody><tr><th>h1</th><th>h2</th></tr><tr><td rowspan="2">tall</td>' +
         '<td>a</td></tr><tr><td>b</td></tr></tbody></table>',
+      false,
+    ],
+    // `display:block` on a `<span>` is three lines on the page and three
+    // paragraphs in the file, which is the conversion doing exactly the right
+    // thing. What cannot follow it is this oracle: a browser wraps `A` and `C` in
+    // anonymous block boxes that exist in no markup, so there is nothing here to
+    // read them off, and the input still reads as the one paragraph the `<p>` is.
+    // The text oracle above agrees with the conversion, which is where the claim
+    // that it is right actually rests.
+    [
+      'a block-displayed span splits its paragraph',
+      '<p>A<span style="display:block">B</span>C</p>',
       false,
     ],
     // The fold that replaced the HTML fallback: the inner grid becomes one cell of

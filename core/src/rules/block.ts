@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
+import { displaysInline } from '../utils/inline-style.js';
 
 const ELEMENT_NODE = 1;
 const ANCHOR_CLASSES = new Set(['anchor', 'heading-link', 'headerlink']);
@@ -73,10 +74,15 @@ export const BLOCK_RULES: Rule[] = [
   {
     name: 'div',
     filter: ['div'],
-    replacement(_el, childContent) {
+    replacement(el, childContent) {
       const text = childContent.trim();
       if (!text) return '';
-      return `\n\n${text}\n\n`;
+      // `display: inline` on a `<div>` is how a page puts a wrapper — a tooltip
+      // host, a highlighter's span written as a div — inside a sentence. Writing
+      // the paragraph the tag implies would cut that sentence in two, and the
+      // reader saw one. Untrimmed on purpose: an inline box keeps the spaces
+      // around it, and they are what separate it from the words on either side.
+      return displaysInline(el) ? childContent : `\n\n${text}\n\n`;
     },
   },
   // Markdown has no definition list, so a <dl> becomes what the page showed: the

@@ -1,3 +1,5 @@
+import { addedMarks, displaysAsBlock, suppressedMarks, type StyleMarks } from './inline-style.js';
+
 export function extractFlankingWhitespace(content: string): {
   leading: string;
   trimmed: string;
@@ -120,13 +122,27 @@ const ELEMENT_NODE = 1;
  * parser knows neither of those about an `<hr>`, which is a gap of its own and not
  * one to copy: it is why `<div>x<hr>## y</div>` writes the page's `## y` as a real
  * heading.
+ *
+ * A `display` that makes an inline element a block ends the line as well — the
+ * converter writes it as its own paragraph, so nothing on either side of it can
+ * collide with anything on the other.
  */
 function endsLine(el: Element): boolean {
   const tag = el.tagName.toLowerCase();
-  return tag === 'br' || tag === 'hr' || BLOCK_BOUNDARY.has(tag);
+  return tag === 'br' || tag === 'hr' || BLOCK_BOUNDARY.has(tag) || displaysAsBlock(el);
 }
 
-const EMPHASIS_TAGS = new Set(['em', 'i', 'strong', 'b', 'del', 's']);
+// The tag each wrapper's mark comes from, which is also the mark its own style
+// can decline: a `<strong style="font-weight:normal">` emits nothing, and a
+// neighbour that expected a delimiter from it would give up its own for nothing.
+const EMPHASIS_TAGS: Readonly<Record<string, keyof StyleMarks>> = {
+  em: 'italic',
+  i: 'italic',
+  strong: 'bold',
+  b: 'bold',
+  del: 'strike',
+  s: 'strike',
+};
 // Wrappers with no Markdown spelling at all: their rule always emits the tag.
 const TAG_ONLY = new Set(['sub', 'sup']);
 
@@ -134,9 +150,19 @@ const TAG_ONLY = new Set(['sub', 'sup']);
  * Whether this element becomes emphasis — delimiters, or the tag they fall back
  * to. Content that is empty or all whitespace is not wrapped at all, and a
  * neighbour must not expect a delimiter from it.
+ *
+ * A style is a second source of the same marks, and one with no tag to give it
+ * away: `<span style="font-weight:700">a</span><b>c</b>` writes `**a****c**`
+ * unless this says yes for the span as well. A block is asked about first
+ * because its delimiters, if it has any, are written *inside* it — what a
+ * neighbour meets at its edge is the end of a line.
  */
 function emitsEmphasis(el: Element): boolean {
-  return EMPHASIS_TAGS.has(el.tagName.toLowerCase()) && (el.textContent ?? '').trim() !== '';
+  if ((el.textContent ?? '').trim() === '' || endsLine(el)) return false;
+  const mark = EMPHASIS_TAGS[el.tagName.toLowerCase()];
+  if (mark !== undefined && !suppressedMarks(el)[mark]) return true;
+  const added = addedMarks(el);
+  return added.bold || added.italic || added.strike;
 }
 
 /**
