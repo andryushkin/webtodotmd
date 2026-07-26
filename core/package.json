@@ -36,9 +36,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "coverage": "vitest run --coverage",
+    "test": "bun test",
+    "coverage": "bun test --coverage",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "tsc": "tsc --noEmit",
@@ -50,17 +49,15 @@
     "attw": "bunx @arethetypeswrong/cli --pack ."
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/node": "^25.5.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/browser": "^1.6.0",
-    "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^9.0.0",
     "linkedom": "*",
     "prettier": "^3.2.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.4.0",
-    "vitest": "^1.6.0"
+    "typescript": "^5.4.0"
   },
   "peerDependencies": {
     "linkedom": "",

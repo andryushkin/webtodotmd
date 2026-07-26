@@ -3,14 +3,6 @@
 Everything the extension ships is bundled at build time; nothing is loaded from
 a CDN at runtime.
 
-## htmltodotmd
-
-Copyright © 2026 andryushkin.
-
-The HTML → Markdown conversion core, pulled in as the `vendor/htmltodotmd` git
-submodule and compiled into the content script. Licensed under the MIT License:
-[vendor/htmltodotmd/LICENSE](vendor/htmltodotmd/LICENSE).
-
 ## marked
 
 Copyright © 2011–2024 Christopher Jeffrey and contributors.

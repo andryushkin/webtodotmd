@@ -1,0 +1,3 @@
+# The library spec quotes Markdown examples, where two trailing spaces are a
+# hard line break — content, not whitespace damage. Everything else is checked.
+core/docs/LIBRARY_SPEC.md whitespace=-trailing-space

@@ -1,9 +1,8 @@
 # Text to .md — working guide
 
 Manifest V3 Chrome extension that converts a page selection to Markdown. The
-conversion itself is not in this repository: it comes from
-[htmltodotmd](https://github.com/andryushkin/htmltodotmd), the
-`vendor/htmltodotmd` submodule.
+conversion core lives in `core/` — the `htmltodotmd` library, developed in this
+repository and published from it, not a third-party dependency.
 
 Domain docs are in `docs/` (`docs/README.md` is the index). Read the one
 matching your task before changing that area, and update it in the same change
@@ -19,14 +18,15 @@ when you alter behavior it describes.
 | `src/settings/` | Options page |
 | `src/shared/` | i18n, icons, settings store, injection, messaging, telemetry, identity |
 | `public/_locales/` | 52 locales; must stay under `public/` to reach `dist/` |
-| `vendor/` | marked, DOMPurify, KaTeX, mathml-to-latex, `htmltodotmd` submodule |
+| `core/` | `htmltodotmd`: the HTML → Markdown library — rules, parser, its own tests and build |
+| `vendor/` | marked, DOMPurify, KaTeX, mathml-to-latex |
 
 ## Build and test
 
 ```bash
 bash build.sh     # → dist/, no node_modules needed
 bun install       # once, for linkedom
-bun test src      # not bare `bun test` — that also runs the submodule's suite
+bun test          # extension and core, one runner
 scripts/audit.sh  # public-repo gate, before pushing (docs/audit.md)
 ```
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { toMarkdown, setDOMAdapter } from '../src/server.js';
 

@@ -4,11 +4,14 @@
 
 TypeScript/JavaScript library for converting HTML to Markdown. Zero dependencies. Works in any browser, Chrome Extension, or bundler (Vite, esbuild, webpack).
 
-Powers the [Text to .md — HTML to Markdown Web Clipper](https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego) Chrome extension.
+Developed in the [webtodotmd](https://github.com/andryushkin/webtodotmd)
+repository, which is also its first consumer: the extension imports it straight
+from source, so the library and the product never drift apart.
 
 ## Integration
 
-Download [`dist/browser.mjs`](./dist/browser.mjs) and copy it to your project. That's it — no build step, no dependencies.
+Build `dist/browser.mjs` (see [Build from Source](#build-from-source)) and copy
+it into your project. That's it — no build step on your side, no dependencies.
 
 ```js
 import { toMarkdown } from './browser.mjs'
@@ -19,7 +22,7 @@ const md = toMarkdown('<h1>Hello</h1><p>World <strong>!</strong></p>')
 // World **!**
 ```
 
-TypeScript types are in [`dist/browser.d.ts`](./dist/browser.d.ts).
+TypeScript types are emitted next to it as `dist/browser.d.ts`.
 
 ## API
 
@@ -122,9 +125,9 @@ See [docs/CHROME_EXTENSION.md](./docs/CHROME_EXTENSION.md) for a complete integr
 ## Build from Source
 
 ```bash
-bun install
-bun run build   # outputs dist/browser.mjs
-bun test
+bun install     # from the repository root
+bun run build   # outputs dist/browser.mjs and dist/browser.d.ts
+bun test        # this package's suite; the root runs it together with the extension's
 ```
 
 ## License

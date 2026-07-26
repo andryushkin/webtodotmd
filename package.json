@@ -7,9 +7,12 @@
   "license": "MIT",
   "scripts": {
     "build": "bash build.sh",
-    "test": "bun test src"
+    "test": "bun test"
   },
   "devDependencies": {
     "linkedom": "^0.18.12"
-  }
+  },
+  "workspaces": [
+    "core"
+  ]
 }

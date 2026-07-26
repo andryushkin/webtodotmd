@@ -20,12 +20,10 @@ doc — fix it in the same change.
 - All prose in the repository is English: comments, docs, commit messages. The
   exception is `public/_locales/`, which is translations by definition, and the
   Russian examples inside `docs/localization.md`.
-- Conversion bugs usually belong to
-  [htmltodotmd](https://github.com/andryushkin/htmltodotmd), the
-  `vendor/htmltodotmd` submodule — check there before patching around a bad
-  conversion here. Do not commit submodule pointer bumps as a side effect of
-  unrelated work.
-- Verify with a real build: `bash build.sh`, then `bun test src`. Behavior
+- Conversion bugs usually belong to the `core/` package — the HTML → Markdown
+  library this extension is built on. Fix them there, with tests in
+  `core/tests/`, rather than patching around bad Markdown in `src/`.
+- Verify with a real build: `bash build.sh`, then `bun test`. Behavior
   that only the browser exercises (panel UI, highlighter, shortcuts) needs the
   unpacked extension reloaded in `chrome://extensions`.
 - Before pushing or changing repository visibility, run `scripts/audit.sh`

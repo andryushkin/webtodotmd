@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parseHTML } from 'linkedom';
-import { toMarkdown } from '../../../vendor/htmltodotmd/src/browser.ts';
+import { toMarkdown } from '../../../core/src/browser.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;

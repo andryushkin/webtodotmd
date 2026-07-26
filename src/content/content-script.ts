@@ -1,4 +1,4 @@
-import { toMarkdown } from '../../vendor/htmltodotmd/src/browser.ts';
+import { toMarkdown } from '../../core/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';

@@ -23,10 +23,10 @@ a reproducible bug report or a well-argued idea, not a pull request.
 - **Questions** →
   [Discussions ▸ Q&A](https://github.com/andryushkin/webtodotmd/discussions/categories/q-a).
 
-Conversion bugs — wrong Markdown for correct HTML — usually belong in
-[htmltodotmd](https://github.com/andryushkin/htmltodotmd), the library that does
-the converting. If you are not sure which side is at fault, report it here and
-it will be moved.
+Conversion bugs — wrong Markdown for correct HTML — belong to the conversion
+core in `core/`, which lives in this repository and is published separately as
+a library. Report them here either way; the fix goes into `core/` with tests in
+`core/tests/`.
 
 ## Pull requests
 

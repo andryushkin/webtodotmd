@@ -27,6 +27,6 @@ cp -r public/* dist/
 mkdir -p dist/licenses
 cp LICENSE THIRD_PARTY_NOTICES.md dist/
 cp vendor/licenses/* dist/licenses/
-cp vendor/htmltodotmd/LICENSE dist/licenses/htmltodotmd-LICENSE
+cp core/LICENSE dist/licenses/htmltodotmd-LICENSE
 
 echo "Build OK → dist/"

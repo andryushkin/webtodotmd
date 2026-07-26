@@ -41,18 +41,13 @@ needs no `node_modules` — Bun compiles the TypeScript directly and every runti
 dependency is vendored.
 
 ```bash
-git clone --recurse-submodules https://github.com/andryushkin/webtodotmd.git
+git clone https://github.com/andryushkin/webtodotmd.git
 cd webtodotmd
 bash build.sh
 ```
 
 The unpacked extension lands in `dist/`, ready to load as described in
 [Install](#install).
-
-If you cloned without `--recurse-submodules`, run
-`git submodule update --init` first: the HTML → Markdown core lives in
-[`vendor/htmltodotmd`](https://github.com/andryushkin/htmltodotmd) and the
-content script does not compile without it.
 
 ## Tests
 
@@ -61,11 +56,11 @@ DOM the conversion tests run against.
 
 ```bash
 bun install
-bun test src
+bun test
 ```
 
-Use `bun test src` rather than bare `bun test`, which would also pick up the
-submodule's own suite.
+That runs both suites: the extension's and the conversion core's in
+`core/tests/`.
 
 ## Repository layout
 
@@ -77,7 +72,8 @@ submodule's own suite.
 | `src/settings/` | Options page |
 | `src/shared/` | i18n, icons, storage, injection, telemetry |
 | `public/_locales/` | 52 locales; must live under `public/` to reach `dist/` |
-| `vendor/` | Vendored runtime deps + the `htmltodotmd` submodule |
+| `core/` | The `htmltodotmd` HTML → Markdown library: rules, parser, tests |
+| `vendor/` | Vendored runtime deps: marked, DOMPurify, KaTeX, mathml-to-latex |
 | `docs/` | Domain documentation ([index](docs/README.md)) |
 
 Before pushing or changing repository visibility, run the static public-repo

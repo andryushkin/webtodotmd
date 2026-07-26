@@ -102,15 +102,15 @@ if bad:
 PY
 then pass "version-and-locales"; else fail "version-and-locales"; fi
 
-# 5. The public conversion submodule must be pinned, checked out, and licensed.
-gitlink=$(git ls-files -s vendor/htmltodotmd | awk '$1 == 160000 {print $2}')
-submodule_status=$(git submodule status vendor/htmltodotmd 2>/dev/null)
-if [ -n "$gitlink" ] \
-    && [ "${submodule_status#-}" = "$submodule_status" ] \
-    && [ -f vendor/htmltodotmd/LICENSE ]; then
-    pass "htmltodotmd-submodule"
+# 5. The conversion core must be present, licensed, and reachable from the
+# content script — it is a package in this repository, not a submodule.
+if [ -f core/src/browser.ts ] \
+    && [ -f core/LICENSE ] \
+    && [ -f core/package.json ] \
+    && grep -q "core/src/browser" src/content/content-script.ts; then
+    pass "conversion-core"
 else
-    fail "htmltodotmd-submodule" "missing/uninitialized gitlink or LICENSE"
+    fail "conversion-core" "core/src/browser.ts, core/LICENSE, core/package.json or the import"
 fi
 
 # 6. Exact vendored license texts must exist and be copied by build.sh.
@@ -126,7 +126,7 @@ for path in "${license_files[@]}"; do
     [ -s "$path" ] || missing="$missing $path"
 done
 grep -q 'vendor/licenses/\*' build.sh || missing="$missing build-copy"
-grep -q 'vendor/htmltodotmd/LICENSE' build.sh || missing="$missing submodule-license-copy"
+grep -q 'core/LICENSE' build.sh || missing="$missing core-license-copy"
 if [ -z "$missing" ]; then
     pass "third-party-licenses"
 else

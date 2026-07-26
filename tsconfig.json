@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "typeRoots": ["./types"]
   },
-  "include": ["src", "vendor", "types"],
+  "include": ["src", "core/src", "vendor", "types"],
   "exclude": ["src/**/__tests__/**"]
 }

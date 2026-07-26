@@ -2,9 +2,9 @@
 
 Manifest V3 extension with four surfaces — content script, side panel, service
 worker, options page — sharing a small module layer under `src/shared/`. The
-HTML → Markdown conversion itself is not part of this repository: it lives in
-[htmltodotmd](https://github.com/andryushkin/htmltodotmd), pulled in as the
-`vendor/htmltodotmd` submodule and compiled into the content script.
+HTML → Markdown conversion is the `core/` package — the `htmltodotmd` library,
+developed here and published from here; the content script imports it from
+source (`core/src/browser.ts`), so there is no build step between the two.
 
 ## Surfaces
 
@@ -144,8 +144,10 @@ shared utilities are separate modules. Entity decoding cannot be tested through
 the DOM at all (linkedom does not decode entities); those tests compare against
 the reference table instead.
 
-Run `bun test src`, not bare `bun test`, which would also run the submodule's
-suite.
+`bun test` runs both suites: the extension's under `src/**/__tests__/` and the
+conversion core's under `core/tests/`. Conversion behavior belongs in the
+latter — `src/content/__tests__/conversion.test.ts` covers only what the
+extension itself depends on.
 
 ## Two Chrome behaviors worth remembering
 

@@ -9,7 +9,7 @@ bash build.sh
 Produces the unpacked extension in `dist/`. Load it via `chrome://extensions`
 ▸ Developer mode ▸ Load unpacked, and reload it there after each rebuild.
 
-Before packaging, check that `bun test src` passes and that the panel, the
+Before packaging, check that `bun test` passes and that the panel, the
 options page and a capture on an ordinary page all work with no console
 errors.
 
