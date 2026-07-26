@@ -65,6 +65,7 @@ function emphasis(
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
+const COMMENT_NODE = 8;
 
 const CODE_TAGS = new Set(['code', 'kbd', 'samp']);
 
@@ -113,12 +114,53 @@ function literalText(el: Element): string {
   return text;
 }
 
+// The tags that write something while holding no text at all: a `<br>` is a line
+// break, an `<hr>` a rule, an `<img>` a picture, `<sub>`/`<sup>` their own tags —
+// and a `<sup>` is also where a footnote marker comes from — an empty `<pre>` is
+// still a fence, and a `<math alttext>` carries its formula in the attribute,
+// as does a `<script type="math/tex">`.
+//
+// The list is the rule set read through rather than a guess, and that is what
+// makes it complete: an element writes only what its rule writes, and a tag no
+// rule matches falls to the default, which returns its children. A new rule that
+// can write for an element holding no text belongs here too.
+const WRITES_WITHOUT_TEXT = new Set(['br', 'hr', 'img', 'sub', 'sup', 'pre', 'math', 'script']);
+
+/**
+ * Whether this node puts nothing whatever into the output.
+ *
+ * Where the answer is uncertain it is "it writes something", because the two
+ * mistakes cost differently: refusing a merge leaves two spans the page showed as
+ * one, while merging across something visible also moves that something behind
+ * the merged text.
+ */
+function writesNothing(node: Node): boolean {
+  // A comment carries text and reaches the output in no form at all.
+  if (node.nodeType === COMMENT_NODE) return true;
+  if (node.nodeType !== ELEMENT_NODE) return (node.textContent ?? '') === '';
+  const el = node as Element;
+  if ((el.textContent ?? '') !== '') return false;
+  if (WRITES_WITHOUT_TEXT.has(el.tagName.toLowerCase())) return false;
+  // A wrapper is only as empty as what it holds: the picture in
+  // `<picture><img></picture>` is written from inside two elements with no text.
+  return Array.from(el.childNodes).every((child) => writesNothing(child));
+}
+
 /**
  * The code span directly against this one on the given side, if there is one.
  *
  * Direct siblings only. Reaching through a wrapper would move text across it —
  * in `<em><code>a</code></em><code>b</code>` the `b` would end up inside the
  * emphasis — and no rearrangement is worth that.
+ *
+ * Only a node that writes nothing may be stepped over on the way. Empty
+ * `textContent` was the test for that and asks a different question: a `<br>` and
+ * an `<img>` hold no text and are exactly what the reader saw between the two
+ * spans. Stepping over them welded `<code>a</code><br><code>b</code>` into one
+ * span and left the break stranded at the end of it — two lines on the page,
+ * one in the file — and put the picture of
+ * `<code>a</code><img><code>b</code>` behind text it had been standing in front
+ * of.
  */
 function adjacentCodeSpan(el: Element, side: 'prev' | 'next'): Element | undefined {
   for (
@@ -126,8 +168,7 @@ function adjacentCodeSpan(el: Element, side: 'prev' | 'next'): Element | undefin
     sibling;
     sibling = side === 'prev' ? sibling.previousSibling : sibling.nextSibling
   ) {
-    // A node with no text emits nothing and cannot part the two spans.
-    if ((sibling.textContent ?? '') === '') continue;
+    if (writesNothing(sibling)) continue;
     if (sibling.nodeType !== ELEMENT_NODE) return undefined;
     const element = sibling as Element;
     return emitsCodeSpan(element) ? element : undefined;

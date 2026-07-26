@@ -100,12 +100,31 @@ export function markerWorks(
   return true;
 }
 
+// Where a line ends, and with it the chance of anything joining onto it. The same
+// tags the parser calls `LINE_ENDS`, written out a second time because that set is
+// unexported and importing it would tie this file to the parser — the precedent is
+// `preformattedLines` in the table rules.
 const BLOCK_BOUNDARY = new Set([
   'p', 'div', 'li', 'td', 'th', 'blockquote', 'section', 'article', 'main', 'dd',
   'dt', 'figcaption', 'caption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre',
 ]);
 
 const ELEMENT_NODE = 1;
+
+/**
+ * Whether this element's output ends the line it is on.
+ *
+ * A `<br>` joins the blocks because it is a line ending and nothing else, which is
+ * how the parser reads it too — `opensBlock()` names it beside the same set. An
+ * `<hr>` writes `---` between two blank lines and so ends one as surely. The
+ * parser knows neither of those about an `<hr>`, which is a gap of its own and not
+ * one to copy: it is why `<div>x<hr>## y</div>` writes the page's `## y` as a real
+ * heading.
+ */
+function endsLine(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  return tag === 'br' || tag === 'hr' || BLOCK_BOUNDARY.has(tag);
+}
 
 const EMPHASIS_TAGS = new Set(['em', 'i', 'strong', 'b', 'del', 's']);
 // Wrappers with no Markdown spelling at all: their rule always emits the tag.
@@ -164,10 +183,20 @@ function edgeDelimiter(el: Element, side: 'start' | 'end'): string | undefined {
  * and there is nothing in front. Descending into a wrapper matters as much as
  * climbing out of one: what ends `<span><em>a</em></span>` is the `<em>`, not the
  * letter `a`.
+ *
+ * A line ending is handed back as itself rather than skipped. Undefined means
+ * "nothing of mine here, keep looking", and a `<br>` answered that: it holds no
+ * text and spells no delimiter, so the search read straight past it and reported
+ * the wrapper on the line above as this one's neighbour. `<em>a</em><br><em>b</em>`
+ * was judged a pair of colliding delimiters and the second wrapper paid for it
+ * with an HTML tag, on a line where `_b_` renders perfectly. Returning the element
+ * needs nothing else of the callers: neither a `<br>` nor a block spells a
+ * delimiter, so both read as the edge of a line, which is what they are.
  */
 function edgeNode(node: Node, side: 'start' | 'end'): Node | undefined {
   if (node.nodeType === ELEMENT_NODE) {
     const el = node as Element;
+    if (endsLine(el)) return el;
     if (edgeDelimiter(el, side) !== undefined) return el;
     for (
       let child = side === 'end' ? el.lastChild : el.firstChild;
