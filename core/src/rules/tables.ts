@@ -120,13 +120,36 @@ function breaksToBr(md: string): string {
 }
 
 /**
+ * The text of a preformatted block, with its lines still in it.
+ *
+ * `textContent` reads a `<br>` as nothing, so `a<br>b` — how plenty of pages
+ * write a code sample, and what anything that pasted HTML into one produces —
+ * arrived as `ab` and the reader lost the line. Both table fallbacks read a
+ * `<pre>` this way, so both lost it.
+ *
+ * Deliberately a copy of `textWithLineBreaks` in `rules/code.ts` rather than an
+ * import: that rule owns the fenced block and this module owns the cell, and a
+ * two-line helper is a smaller thing to keep in step than a dependency between
+ * two rule files. Read from a clone either way — the page's own DOM must come
+ * back unchanged, and here the element handed over is the page's, not a clone.
+ */
+function preformattedLines(el: Element): string {
+  if (!el.querySelector('br')) return el.textContent ?? '';
+  const clone = el.cloneNode(true) as Element;
+  for (const br of Array.from(clone.querySelectorAll('br'))) {
+    br.replaceWith(clone.ownerDocument!.createTextNode('\n'));
+  }
+  return clone.textContent ?? '';
+}
+
+/**
  * Preformatted text folded into one pipe cell: every line keeps its own code span
  * and its own indentation, and the lines are joined with the only break a pipe
  * cell can carry. A single span across the whole thing would lose the newlines —
  * a code span renders them as spaces — and a fence cannot live in a cell at all.
  */
 function preInCell(pre: Element): string {
-  const text = (pre.textContent ?? '').replace(/\n$/, '');
+  const text = preformattedLines(pre).replace(/\n$/, '');
   return text
     .split('\n')
     .map((line) => {
@@ -290,7 +313,7 @@ function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
 // same text. A blank line would end the HTML block and hand the rest of the
 // table to the Markdown parser as prose.
 function preformattedText(el: Element): string {
-  return escapeHtmlText(el.textContent ?? '').replace(/\r?\n/g, '&#10;');
+  return escapeHtmlText(preformattedLines(el)).replace(/\r?\n/g, '&#10;');
 }
 
 // A blank line ends the HTML block and hands the rest of the table to the
@@ -317,8 +340,22 @@ function isMathSubtree(el: Element): boolean {
     tag === 'math' ||
     tag === 'mjx-container' ||
     tag === 'annotation' ||
+    // MathJax v2 keeps the LaTeX in a <script type="math/tex">, which the
+    // sanitizer spares only when math is on. Without it named here the walk below
+    // treated the formula as prose: `a & b_1` — a matrix separator and a
+    // subscript — came back as `$a &amp; b_1$` and the reader saw `&amp;`.
+    (tag === 'script' && (el.getAttribute('type') ?? '').startsWith('math/tex')) ||
     el.classList?.contains('katex') === true
   );
+}
+
+/**
+ * A `<` still open when the node ends. `escapeTagStarts` judges a `<` by the
+ * character after it, and at the end of a node that character belongs to the next
+ * node — which is joined on afterwards, when nothing is looking.
+ */
+function escapeDanglingTagStart(text: string): string {
+  return text.replace(/<$/, '&lt;');
 }
 
 function escapeMathText(root: Element): void {
@@ -336,6 +373,30 @@ function escapeMathText(root: Element): void {
     // escaping would replace every `<` and break the LaTeX.
     const alttext = el.getAttribute('alttext');
     if (alttext !== null) el.setAttribute('alttext', escapeTagStarts(alttext));
+  }
+  escapeMathElementText(root);
+}
+
+/**
+ * MathML that carries no LaTeX of its own, where the formula *is* the elements:
+ * `<mo>&lt;</mo><mi>img src=x onerror=…&gt;</mi>` is how a page writes that text,
+ * and this cell is an HTML block, so the two nodes joined into a working tag.
+ *
+ * Collapsing the subtree into one string — what the containers above do — is not
+ * available here: the elements are the notation, and the rule that turns raw
+ * MathML into LaTeX reads the subtree's markup. So each text node is escaped on
+ * its own, and a `<` left dangling at its end is neutralized on suspicion, which
+ * is the only thing a per-node rule can do about a seam it cannot see across.
+ * `&lt;` and not a backslash, for the same reason as everywhere in this file: the
+ * cell is HTML, where an entity is what renders as the character.
+ */
+function escapeMathElementText(el: Element): void {
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === TEXT_NODE) {
+      child.textContent = escapeDanglingTagStart(escapeTagStarts(child.textContent ?? ''));
+    } else if (child.nodeType === ELEMENT_NODE) {
+      escapeMathElementText(child as Element);
+    }
   }
 }
 

@@ -866,3 +866,110 @@ describe('режимы text и skip экранируют текст страни
     expect(result.trim().startsWith('Sales 2026')).toBe(true);
   });
 });
+
+// `textContent` читает <br> как ничто, и обе сложные формы таблицы читали <pre>
+// именно так: `a<br>b` приезжало как `ab`. Страницы ломают строки в примерах кода
+// через <br> постоянно — и всё, что вставляло HTML в пример, тоже, — так что
+// читатель терял строки кода без единого следа.
+describe('<br> в preformatted ячейке', () => {
+  const table = (cell: string) =>
+    `<table><tr><th colspan="2">Code</th></tr><tr><td>${cell}</td><td>next</td></tr></table>`;
+
+  it('pipe-форма: каждая строка получает свой код-спан', () => {
+    const result = toMarkdown(table('<pre>a<br>b</pre>'));
+    expect(result).toContain('`a`<br>`b`');
+    expect(result).not.toContain('`ab`');
+  });
+
+  it('HTML-форма: перенос кодируется, а не пропадает', () => {
+    const result = toMarkdown(table('<pre>a<br>b</pre>'), { complexTableFallback: 'html' });
+    expect(result).toContain('<pre>a&#10;b</pre>');
+    // Пустая строка закрыла бы HTML-блок и отдала остаток таблицы Markdown.
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe('a\nb');
+  });
+
+  it('<code> с переносами читается так же', () => {
+    const result = toMarkdown(table('<code>a<br>b</code>'), { complexTableFallback: 'html' });
+    expect(parseHTML(result).document.querySelector('code')?.textContent).toBe('a\nb');
+  });
+
+  it('DOM страницы возвращается неизменным', () => {
+    // Читаем из копии: <br> заменяется на перевод строки, и делать это в
+    // документе страницы значило бы править то, что нам дали посмотреть.
+    const doc = parseHTML(table('<pre>a<br>b</pre>')).document;
+    setDOMAdapter(() => doc);
+    try {
+      toMarkdown('', { complexTableFallback: 'html' });
+      expect(doc.querySelectorAll('br')).toHaveLength(1);
+    } finally {
+      setDOMAdapter((html) => parseHTML(html).document as unknown as Document);
+    }
+  });
+
+  it('<pre> без <br> не меняется', () => {
+    const result = toMarkdown(table('<pre>a\nb</pre>'), { complexTableFallback: 'html' });
+    expect(result).toContain('<pre>a&#10;b</pre>');
+  });
+});
+
+// В HTML-ячейке Markdown не разбирается, поэтому текст страницы экранируется
+// заранее — но у поддерева формулы своя мера: `&` там разделитель матрицы, а не
+// сущность. Мера была слишком узкой сразу с двух сторон.
+describe('формула в HTML-ячейке', () => {
+  const htmlTable = (cell: string, options = {}) =>
+    toMarkdown(`<table><tr><td colspan="2">${cell}</td></tr><tr><td>x</td><td>y</td></tr></table>`, {
+      math: true,
+      complexTableFallback: 'html',
+      ...options,
+    });
+
+  // MathJax v2 держит LaTeX в <script type="math/tex">, и isMathSubtree его не
+  // знал: формулу экранировали как обычную прозу, и читатель видел `&amp;` там,
+  // где страница показывала `&`.
+  it('MathJax v2 не экранируется как проза', () => {
+    // <script> — raw text: сущности внутри него не разбираются, страница пишет
+    // символы формулы буквально.
+    const result = htmlTable('<script type="math/tex">a & b_1</script>');
+    expect(result).toContain('$a & b_1$');
+    expect(result).not.toContain('&amp;');
+  });
+
+  it('MathJax v2 всё же не может закрыть ячейку', () => {
+    const result = htmlTable('<script type="math/tex">a</td></tr></table><img src=q> b</script>');
+    const doc = parseHTML(result).document;
+    expect(doc.querySelectorAll('td')).toHaveLength(3);
+    expect(doc.querySelectorAll('img')).toHaveLength(0);
+  });
+
+  // Сырой MathML — формула, записанная элементами: `<mo>&lt;</mo>` это оператор
+  // «меньше». Поддерево не свернуть в одну строку — его читает правило, которое
+  // превращает MathML в LaTeX, — поэтому каждый узел экранируется сам, а
+  // висящий на конце `<` обезвреживается по подозрению: следующий узел допишут
+  // к нему уже после проверки.
+  it('MathML по узлам не собирается в тег', () => {
+    const result = htmlTable(
+      '<math><mo>&lt;</mo><mi>img src=x onerror=alert(1)&gt;</mi></math>',
+      { math: false },
+    );
+    const doc = parseHTML(result).document;
+    expect(doc.querySelectorAll('img')).toHaveLength(0);
+    expect(doc.querySelectorAll('[onerror]')).toHaveLength(0);
+    // Текст, который страница показывала, читатель всё равно получает.
+    expect(result).toContain('img src=x onerror=alert(1)');
+  });
+
+  it('MathML в одном узле тоже обезврежен', () => {
+    const result = htmlTable('<math><mo>&lt;img src=x onerror=alert(1)&gt;</mo></math>', {
+      math: false,
+    });
+    expect(parseHTML(result).document.querySelectorAll('img, [onerror]')).toHaveLength(0);
+  });
+
+  it('оператор «меньше» остаётся «меньше»', () => {
+    // Экранирование стоит формулы, поэтому `a < b`, записанное элементами,
+    // должно дойти до читателя как `a < b`.
+    const result = htmlTable('<math><mi>a</mi><mo>&lt;</mo><mi>b</mi></math>', { math: false });
+    expect(parseHTML(result).document.querySelector('td')?.textContent).toBe('a<b');
+  });
+});
