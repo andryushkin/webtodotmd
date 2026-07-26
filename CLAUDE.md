@@ -25,12 +25,13 @@ when you alter behavior it describes.
 
 ```bash
 bash build.sh     # → dist/, no node_modules needed
-bun install       # once, for linkedom
+bun install       # once: linkedom for tests, plus the core package's toolchain
 bun test          # extension and core, one runner
 scripts/audit.sh  # public-repo gate, before pushing (docs/audit.md)
 ```
 
-Bun is the transpiler; there is no bundler config. Packaging and store steps
+Bun is the transpiler for the extension — no bundler, no config. `core/` has a
+`tsup` build of its own, used only to publish the library. Packaging and store steps
 are in `docs/releasing.md`.
 
 ## Invariants

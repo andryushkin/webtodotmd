@@ -25,9 +25,20 @@ files = [
     Path("CONTRIBUTING.md"),
     Path("THIRD_PARTY_NOTICES.md"),
     *Path("docs").glob("*.md"),
+    # The core package publishes its own docs from this repository.
+    Path("core/README.md"),
+    *Path("core/docs").glob("*.md"),
 ]
+def prose_only(text):
+    # Links inside code are examples of syntax, not references to files — the
+    # library spec is full of them.
+    text = re.sub(r"```.*?```", "", text, flags=re.S)
+    text = re.sub(r"~~~.*?~~~", "", text, flags=re.S)
+    return re.sub(r"`[^`\n]*`", "", text)
+
+
 for path in files:
-    for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", path.read_text()):
+    for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", prose_only(path.read_text())):
         if target.startswith(("http://", "https://", "mailto:", "#")):
             continue
         relative = target.split("#", 1)[0]
@@ -126,7 +137,8 @@ for path in "${license_files[@]}"; do
     [ -s "$path" ] || missing="$missing $path"
 done
 grep -q 'vendor/licenses/\*' build.sh || missing="$missing build-copy"
-grep -q 'core/LICENSE' build.sh || missing="$missing core-license-copy"
+# The conversion core is first-party: covered by the root LICENSE, not a
+# third-party notice. Its own LICENSE file is checked in the core node above.
 if [ -z "$missing" ]; then
     pass "third-party-licenses"
 else

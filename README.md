@@ -51,8 +51,10 @@ The unpacked extension lands in `dist/`, ready to load as described in
 
 ## Tests
 
-Tests are the one place that needs a package install — `linkedom` provides the
-DOM the conversion tests run against.
+Tests are the one place that needs a package install: `linkedom` provides the
+DOM the conversion tests run against. The same install also pulls the `core/`
+package's own toolchain (`tsup`, ESLint, TypeScript), which the extension build
+does not use.
 
 ```bash
 bun install

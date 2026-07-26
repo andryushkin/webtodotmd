@@ -133,6 +133,50 @@ describe('pipe в содержимом', () => {
   });
 });
 
+describe('строки, колонки и подпись в pipe-таблице', () => {
+  it('строки <tfoot> не теряются', () => {
+    const html =
+      '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>a</td></tr></tbody><tfoot><tr><td>total</td></tr></tfoot></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines).toHaveLength(4);
+    expect(lines[3]).toContain('total');
+  });
+
+  it('строка шире заголовка расширяет таблицу, а не теряет ячейку', () => {
+    const html =
+      '<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr></tbody></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines[0]?.match(/\|/g)).toHaveLength(4);
+    expect(lines[2]).toContain('3');
+  });
+
+  it('<caption> становится строкой над таблицей', () => {
+    const html = '<table><caption>Sales 2026</caption><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table>';
+    const result = toMarkdown(html).trim();
+    expect(result.startsWith('Sales 2026')).toBe(true);
+    expect(result).toContain('| a');
+  });
+
+  it('<caption> сохраняется и в HTML-fallback', () => {
+    const result = toMarkdown('<table><caption>Cap</caption><tr><td colspan="2">x</td></tr></table>');
+    expect(result).toContain('<caption>Cap</caption>');
+  });
+
+  it('блочный контент в <th> уводит таблицу в fallback, как и в <td>', () => {
+    const result = toMarkdown('<table><tr><th><ul><li>a</li><li>b</li></ul></th></tr><tr><td>x</td></tr></table>');
+    expect(result).toContain('<table>');
+    expect(result).toContain('<th>');
+  });
+
+  it('<br> внутри инлайн-обёртки не оставляет обратный слеш', () => {
+    const html =
+      '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td><span>a<br>b</span></td></tr></tbody></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('a<br>b');
+    expect(result).not.toContain('\\');
+  });
+});
+
 describe('complex table — HTML fallback', () => {
   it('colspan → HTML fallback', () => {
     const html = `
@@ -401,6 +445,26 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(reparsed.querySelectorAll('td')[0]?.textContent).toBe(expectedText);
   });
 
+  it.each([
+    ['title картинки', '<img src="https://e.com/a.png" alt="a" title="</td></tr></table><script>alert(1)</script>">'],
+    ['alt картинки', '<img src="https://e.com/a.png" alt="</td></tr></table><script>alert(1)</script>">'],
+    ['href ссылки', '<a href="https://e.com/?a=<img src=x onerror=alert(1)>">t</a>'],
+  ])('значение атрибута (%s) не проносит разметку в файл', (_name, cell) => {
+    // The converter puts attribute values into its own syntax — [t](href),
+    // ![alt](src 'title') — so they reach the file just like text does.
+    const html = `<table><tr><td colspan="2">${cell}</td><td>next</td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('td')).toHaveLength(2);
+    expect(reparsed.querySelectorAll('script, img, [onerror]')).toHaveLength(0);
+  });
+
+  it('вложенная таблица через обёртку не экранируется дважды', () => {
+    const html =
+      '<table><tr><td colspan="2"><div><table><tr><td colspan="2">a &amp; b</td></tr></table></div></td></tr></table>';
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('table table td')[0]?.textContent).toBe('a & b');
+  });
+
   it('прозаический </sub> внутри inline-кода не закрывает настоящий <sub>', () => {
     const html = '<table><tr><td colspan="2"><sub>real <code>&lt;/sub&gt;</code> tail</sub></td></tr></table>';
     const reparsed = parseHTML(toMarkdown(html)).document;
@@ -414,16 +478,29 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(reparsed.querySelector('td')?.textContent).toBe('a & b, literal &lt; stays');
   });
 
-  it('забор длиннее трёх бэктиков не разрезается по своему содержимому', () => {
-    // code.ts emits four or more backticks when the code contains three, so
-    // pairing on a fixed ``` would split the block at its own content and turn
-    // the blank line inside it into a break.
+  it('код с тройными бэктиками внутри проходит round-trip', () => {
     const code = 'a\n```\n\nb';
     const html = `<table><tr><td colspan="2"><div><pre><code>${code}</code></pre></div></td></tr></table>`;
     const result = toMarkdown(html);
-    expect(result).toContain('````');
-    expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(code);
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(code);
     expect(result).not.toMatch(/\n[ \t]*\n/);
+  });
+
+  it('<pre> в обёртке остаётся <pre>, а не превращается в забор', () => {
+    // As a fenced block inside a <td> the renderer collapses the whitespace, so
+    // the element itself has to survive.
+    const source = 'def f():\n\n\treturn 1';
+    const html = `<table><tr><td colspan="2"><div><pre>${source}</pre></div></td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result).toContain('<pre>');
+    expect(parseHTML(result).document.querySelector('pre')?.textContent).toBe(source);
+  });
+
+  it('обёртка сохраняет свой маркер списка вокруг <pre>', () => {
+    const html = '<table><tr><td colspan="2"><ol><li>a<pre>x</pre></li><li>b</li></ol></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('1. a<pre>x</pre>');
+    expect(result).toContain('2. b');
   });
 
   it('<pre> внутри обёртки уводит таблицу в fallback даже без colspan', () => {

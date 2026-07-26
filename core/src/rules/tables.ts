@@ -7,8 +7,6 @@ const ELEMENT_NODE = 1;
 interface TableAnalysis {
   level: 'simple' | 'medium' | 'complex';
   hasHead: boolean;
-  columns: number;
-  rows: number;
 }
 
 function closestTag(el: Element, tag: string): Element | null {
@@ -41,23 +39,19 @@ function analyzeTable(table: Element): TableAnalysis {
   // checks — a list or heading in a cell survives as Markdown with <br> breaks,
   // so pulling those into the HTML fallback would cost more than it saves.
   const hasPreformatted = !!table.querySelector('td pre, th pre');
-  const hasBlockContent = !!table.querySelector(
-    'td > ul, td > ol, td > blockquote, td > h1, td > h2, td > h3, td > h4, td > h5, td > h6, td > table',
-  );
+  // Header cells get the same treatment as body cells: a list in a <th> used to
+  // stay a pipe table while the identical list in a <td> took the fallback.
+  const blockSelectors = ['ul', 'ol', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table']
+    .flatMap((tag) => [`td > ${tag}`, `th > ${tag}`])
+    .join(', ');
+  const hasBlockContent = !!table.querySelector(blockSelectors);
   const hasHead = !!table.querySelector('thead');
-  const rowEls = ownRows(table);
-  const columns = rowEls[0] ? ownCells(rowEls[0]).length : 0;
-  const rows = rowEls.length;
 
   if (hasColspan || hasRowspan || hasNestedTable || hasPreformatted || hasBlockContent) {
-    return { level: 'complex', hasHead, columns, rows };
+    return { level: 'complex', hasHead };
   }
 
-  if (!hasHead) {
-    return { level: 'medium', hasHead, columns, rows };
-  }
-
-  return { level: 'simple', hasHead, columns, rows };
+  return { level: hasHead ? 'simple' : 'medium', hasHead };
 }
 
 function getCellContent(cell: Element, options: MarkItDownOptions): string {
@@ -81,6 +75,10 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
   return text
     .trim()
     .replace(/\|/g, '\\|')
+    // The converter's hard break is a trailing backslash plus a newline. Only a
+    // <br> directly in the cell is mapped above; one inside a <span> arrives
+    // here, and collapsing just the newline would leave the backslash visible.
+    .replace(/\\\n/g, '<br>')
     .replace(/\s*\n+\s*/g, '<br>');
 }
 
@@ -220,14 +218,55 @@ function htmlSafeMarkdown(md: string): string {
 // where a "tag" is not one.
 function escapedTextClone(el: Element): Element {
   const clone = el.cloneNode(true) as Element;
-  const walk = (node: Node): void => {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === TEXT_NODE) child.textContent = escapeHtmlText(child.textContent ?? '');
-      else if (child.nodeType === ELEMENT_NODE) walk(child);
+
+  // Attribute values reach the file through the converter's own syntax — a link
+  // target, an image's alt text, a title in quotes — so page text arrives there
+  // just as it does in a text node.
+  const escapeAttributes = (element: Element): void => {
+    for (const attr of Array.from(element.attributes)) {
+      element.setAttribute(attr.name, escapeHtmlText(attr.value));
     }
   };
+
+  const walk = (node: Element): void => {
+    escapeAttributes(node);
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === TEXT_NODE) {
+        child.textContent = escapeHtmlText(child.textContent ?? '');
+        continue;
+      }
+      if (child.nodeType !== ELEMENT_NODE) continue;
+      const element = child as Element;
+      // A nested table is serialized by serializeStructuralTable, which escapes
+      // its own cells; walking into it here would escape them twice.
+      if (element.tagName.toLowerCase() === 'table') escapeAttributes(element);
+      else walk(element);
+    }
+  };
+
   walk(clone);
   return clone;
+}
+
+function serializeWrapper(el: Element, options: MarkItDownOptions): string {
+  const tag = el.tagName.toLowerCase();
+  const children = Array.from(el.childNodes);
+
+  if (tag === 'ul' || tag === 'ol') {
+    const items = children.filter(
+      (node) => node.nodeType === ELEMENT_NODE && (node as Element).tagName.toLowerCase() === 'li',
+    ) as Element[];
+    return items
+      .map((li, index) => {
+        const marker = tag === 'ol' ? `${index + 1}. ` : '- ';
+        return `${marker}${serializeNodes(Array.from(li.childNodes), options)}`;
+      })
+      .join('<br>');
+  }
+
+  if (tag === 'blockquote') return `> ${serializeNodes(children, options)}`;
+
+  return serializeNodes(children, options);
 }
 
 // Nodes that get their own markup instead of going through the converter: a
@@ -264,6 +303,12 @@ function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
     } else if (tag === 'pre') {
       flushMarkdown();
       out += `<pre>${preformattedText(el as Element)}</pre>`;
+    } else if (el && el.querySelector('pre, table')) {
+      // A <pre> only keeps its whitespace as a real <pre>: as a fenced block
+      // inside a <td> the renderer collapses it. So descend to reach it — and
+      // emit the wrapper's own marker, which the converter would have produced.
+      flushMarkdown();
+      out += serializeWrapper(el, options);
     } else {
       pending.push(child);
     }
@@ -274,8 +319,14 @@ function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
   return out.trim().replace(/^(?:<br>)+/, '').replace(/(?:<br>)+$/, '');
 }
 
+function ownCaption(table: Element): Element | undefined {
+  return Array.from(table.children).find((child) => child.tagName.toLowerCase() === 'caption');
+}
+
 function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {
   const lines: string[] = ['<table>'];
+  const caption = ownCaption(table);
+  if (caption) lines.push(`<caption>${serializeNodes(Array.from(caption.childNodes), options)}</caption>`);
   for (const row of ownRows(table)) {
     const cells = ownCells(row)
       .map((cell) => {
@@ -312,19 +363,14 @@ export const TABLE_RULES: Rule[] = [
 
       // Simple or medium: build GFM pipe table
       const allRows = ownRows(el);
+      const headRows = analysis.hasHead ? ownRows(el, 'thead tr') : [];
 
-      let headerRow: Element | null = null;
-      let bodyRowEls: Element[] = [];
-
-      if (analysis.hasHead) {
-        headerRow = ownRows(el, 'thead tr')[0] ?? null;
-        bodyRowEls = ownRows(el, 'tbody tr');
-      } else {
-        headerRow = allRows[0] ?? null;
-        bodyRowEls = allRows.slice(1);
-      }
-
+      // Every row that is not a header row is a body row — including <tfoot>,
+      // and including rows outside any section. Selecting 'tbody tr' instead
+      // dropped a totals row without a word.
+      const headerRow = (analysis.hasHead ? headRows[0] : allRows[0]) ?? null;
       if (!headerRow) return '';
+      const bodyRowEls = allRows.filter((row) => row !== headerRow && !headRows.includes(row));
 
       const headerCells = ownCells(headerRow);
       const headers = headerCells.map((c) => getCellContent(c, options));
@@ -336,7 +382,18 @@ export const TABLE_RULES: Rule[] = [
 
       if (headers.every((h) => !h) && bodyData.length === 0) return '';
 
-      return `\n\n${buildGFMTable(headers, bodyData, alignments)}\n\n`;
+      // A body row may be wider than the header: the table widens rather than
+      // dropping the extra cells.
+      const columnCount = Math.max(headers.length, ...bodyData.map((row) => row.length));
+      while (headers.length < columnCount) headers.push('');
+      while (alignments.length < columnCount) alignments.push('none');
+
+      const table = buildGFMTable(headers, bodyData, alignments);
+      // GFM has no caption, so it becomes the line above the table — losing it
+      // silently is worse than moving it.
+      const caption = ownCaption(el);
+      const captionText = caption ? getCellContent(caption, options).replace(/<br>/g, ' ').trim() : '';
+      return captionText ? `\n\n${captionText}\n\n${table}\n\n` : `\n\n${table}\n\n`;
     },
   },
   {

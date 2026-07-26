@@ -88,10 +88,14 @@ blockquotes, horizontal rules, `<sub>` and `<sup>`.
   turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
   for — merged cells, a list inside a cell, a nested table, preformatted text —
   falls back to a plain HTML table carrying `colspan`/`rowspan`, with cell
-  content as Markdown. Preformatted text keeps its whitespace exactly, as a
-  `<pre>` block or as a fenced block when it sits inside other markup. No markup
-  from the page itself reaches the file — not even a tag the page wrote as
-  literal text.
+  content as Markdown, and preformatted text kept as a `<pre>` block so its
+  whitespace survives. That HTML is built by the converter, never copied from
+  the page: in a fallback table, text the page wrote — including something that
+  looks like a tag — is escaped, so it cannot close a cell or add behavior.
+  Elsewhere in the output a literal tag stays literal text, as Markdown
+  normally does, and the side panel escapes it before rendering (see below).
+  A `<caption>` is kept: as a caption in the fallback, as the line above a pipe
+  table.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
   the page is converted to LaTeX first. If rendering fails, the LaTeX source is
   shown.
