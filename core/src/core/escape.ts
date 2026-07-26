@@ -95,6 +95,12 @@ export function escapeTagStarts(text: string): string {
 export function escapeMathTags(latex: string): string {
   return latex.replace(
     /<(?:[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][a-zA-Z0-9]*\s*>|!--)/g,
-    (match) => `&lt;${match.slice(1)}`,
+    // Both delimiters, not just the opener: leaving the `>` behind produced
+    // `&lt;b>` — half an entity, which KaTeX shows verbatim and no renderer
+    // reassembles. A comment opener has no `>` to pair with and keeps its text.
+    (match) => {
+      const inner = match.slice(1);
+      return `&lt;${inner.endsWith('>') ? `${inner.slice(0, -1)}&gt;` : inner}`;
+    },
   );
 }

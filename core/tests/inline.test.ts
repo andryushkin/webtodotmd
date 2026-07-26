@@ -234,3 +234,32 @@ describe('emphasis whose delimiters would not flank', () => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });
 });
+
+// From the same review: repairs that broke neighbouring behaviour.
+describe('code spans that nest', () => {
+  it.each([
+    ['kbd inside code', '<p><code>press <kbd>X</kbd></code></p>', '`press X`'],
+    ['samp inside samp', '<p><samp>a<samp>b</samp>c</samp></p>', '`abc`'],
+    ['code inside pre stays a fence', '<pre><code>x</code></pre>', '```\nx\n```'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+describe('link scheme check in an HTML fallback cell', () => {
+  const cell = (href: string) =>
+    `<table><tbody><tr><td colspan="2"><a href="${href}">t</a></td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
+
+  it.each([
+    ['https', 'https://e.com', true],
+    ['mailto', 'mailto:a@e.com', true],
+    // Relative URLs may contain a colon; matching "no colon anywhere" dropped them.
+    ['relative with a colon', '2024:notes.html', true],
+    ['query with a colon', '?filter=a:b', true],
+    ['javascript', 'javascript:alert(1)', false],
+  ])('%s', (_name, href, kept) => {
+    const md = toMarkdown(cell(href));
+    expect(md.includes('<a href=')).toBe(kept);
+    expect(md).toContain('t');
+  });
+});

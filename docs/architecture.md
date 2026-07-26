@@ -27,8 +27,9 @@ reads those from the DOM and picks the first marker that will actually render �
 rules. The preferred marker is kept wherever it works, so ordinary pages produce
 the source they always did; the tag is the last resort for content that begins or
 ends in punctuation and sits against a word, where no delimiter renders at all.
-Those tags are declared in `core/src/fallback-tags.ts` alongside the table set,
-because the preview escaper has to know them as the core's own output.
+Those tags are declared in `core/src/fallback-tags.ts` alongside the table set —
+the library's public statement of what markup it can emit, for consumers that
+have to tell its output from a page's text.
 
 The same question — which language is being written — is what `outputContext`
 answers. Inside a cell of the HTML table fallback it is `'html'`, and emphasis,
@@ -143,6 +144,26 @@ every context that emits text is listed there, and a new one has to be added
 before it can be trusted.
 
 `DOMPurify.sanitize()` still runs before `innerHTML`, and is still required.
+
+The status bar has two layers: `setBaseStatus()` for the persistent readiness
+line and `setTempStatus()` for transient errors and confirmations, which fall
+back to the base message. Readiness is recomputed on `tabs.onActivated`,
+`tabs.onUpdated` and at the end of `init()` — restricted tabs (PDF, `file://`,
+`chrome://`, empty) get a warning instead of "Ready to capture".
+
+The toolbar collapses to icons only when it no longer fits:
+`updateToolbarDensity()` measures the real layout in the non-compact state and
+adds a `compact` class if anything wrapped, so there is no oscillation. In
+compact mode the visible label is gone, so `setButtonContent()` always sets
+`aria-label`.
+
+One toolbar button is platform-conditional: **Send to EditMD** targets a macOS
+app, so the panel sets `btnEditmd.hidden` from the UA platform hint at module
+scope — synchronously, before first paint, because awaiting
+`chrome.runtime.getPlatformInfo()` would make the button appear or disappear
+after the toolbar is already on screen. The node always exists, so no call site
+needs a guard, and `updateToolbarDensity()` skips children with no
+`offsetParent` so a hidden button cannot be mistaken for the top row.
 
 ## i18n
 

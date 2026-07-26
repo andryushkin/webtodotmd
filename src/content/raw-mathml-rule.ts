@@ -1,4 +1,6 @@
 import { MathMLToLaTeX } from '../../vendor/mathml-to-latex.mjs';
+import { escapeMathTags } from '../../core/src/core/escape';
+import type { MarkItDownOptions } from '../../core/src/types';
 
 // MathML that carries no LaTeX of its own — no `alttext`, no `<annotation>` — is
 // converted here instead of by the core, which only reads LaTeX that the page
@@ -16,8 +18,12 @@ export const rawMathmlRule = {
     try {
       const latex = MathMLToLaTeX.convert(el.outerHTML);
       if (!latex) return '';
+      // Same reason as the core's math rules: LaTeX is re-emitted between dollar
+      // signs, and Markdown carries raw HTML, so `<img src=x onerror=…>` coming
+      // out of MathML would render.
+      const safe = escapeMathTags(latex);
       const display = el.getAttribute('display') === 'block';
-      return display ? `\n\n$$${latex}$$\n\n` : `$${latex}$`;
+      return display ? `\n\n$$${safe}$$\n\n` : `$${safe}$`;
     } catch {
       return '';
     }
@@ -25,8 +31,8 @@ export const rawMathmlRule = {
 };
 
 /** The options the content script converts with, shared so tests can match them. */
-export const CONVERSION_OPTIONS = {
+export const CONVERSION_OPTIONS: MarkItDownOptions = {
   headingOffset: 1,
   math: true,
   rules: [rawMathmlRule],
-} as const;
+};

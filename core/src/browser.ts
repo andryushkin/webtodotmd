@@ -47,9 +47,18 @@ const ORIGIN_ATTR = 'data-s2md-origin';
 const ORIGIN_ROW_ATTR = 'data-s2md-row';
 const HEADER_ROW_MARK = 'header';
 
-/** Возвращает строку-шапку из исходной таблицы — ТОЛЬКО если есть явный <thead> */
+/**
+ * The table's own header row — never one belonging to a table nested inside it.
+ * `querySelector` descends, so an outer table with no header "had" one as soon as
+ * an inner table did, and the restoration it needed was skipped.
+ */
 function getTableHeaderRow(table: Element): Element | null {
-  return table.querySelector('thead tr') ?? null;
+  for (const child of Array.from(table.children)) {
+    if (child.tagName.toLowerCase() !== 'thead') continue;
+    const row = Array.from(child.children).find((el) => el.tagName.toLowerCase() === 'tr');
+    if (row) return row;
+  }
+  return null;
 }
 
 /**
@@ -328,8 +337,8 @@ function cloneWithTableHeaders(range: Range): DocumentFragment {
       clone.removeAttribute(ORIGIN_ATTR);
       if (index === null) continue;
       // A header already in the selection needs nothing; one that was scrolled
-      // past does.
-      if (clone.querySelector('thead tr')) continue;
+      // past does. Its own header — not a nested table's.
+      if (getTableHeaderRow(clone)) continue;
       const headerRow = originals[Number(index)] && getTableHeaderRow(originals[Number(index)]!);
       if (!headerRow) continue;
 
@@ -366,8 +375,12 @@ function tryEnrichFragment(range: Range): DocumentFragment | null {
 /**
  * The enrichment a selection gets: the semantic wrapper its range sits in, and —
  * whether or not there was one — the headers of any tables it crosses.
+ *
+ * Exported because `selectionToMarkdown()` is not the only caller that needs it:
+ * the extension's content script builds its own fragment (it has to rewrite
+ * newlines into `<br>` first) and so bypassed all of this.
  */
-function enrichFragment(range: Range): DocumentFragment {
+export function enrichRange(range: Range): DocumentFragment {
   return tryEnrichFragment(range) ?? cloneWithTableHeaders(range);
 }
 
@@ -382,7 +395,7 @@ export function selectionToMarkdown(selection: Selection, options: MarkItDownOpt
   const container = doc.createElement('div');
   for (let i = 0; i < selection.rangeCount; i++) {
     const range = expandRangeToWordBoundaries(selection.getRangeAt(i));
-    const fragment = enrichFragment(range);
+    const fragment = enrichRange(range);
     container.appendChild(fragment);
   }
 

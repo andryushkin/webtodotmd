@@ -1,4 +1,4 @@
-import { toMarkdown } from '../../core/src/browser.ts';
+import { toMarkdown, enrichRange } from '../../core/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
 import { CONVERSION_OPTIONS } from './raw-mathml-rule';
@@ -35,7 +35,11 @@ function expandRangeToWords(range: Range): Range {
 }
 
 function cloneRangeWithBr(range: Range): DocumentFragment {
-  const fragment = range.cloneContents();
+  // enrichRange, not cloneContents: a partial selection loses the context around
+  // it — a table's header row, a code block's language, a list's numbering — and
+  // restoring that is the core's job. This path had been calling cloneContents
+  // directly, so none of it reached the extension.
+  const fragment = enrichRange(range);
   const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let node = walker.nextNode();

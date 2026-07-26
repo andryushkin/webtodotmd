@@ -48,7 +48,15 @@ function emphasis(
 // side panel runs DOMPurify too, but this library is published on its own, and a
 // converter that can emit `javascript:` from page input is a converter that must
 // not be trusted alone.
-const SAFE_SCHEME = /^(?:https?:|mailto:|[#/.]|[^:]*$)/i;
+//
+// A URL with no scheme is relative and always fine — including one that merely
+// contains a colon, like `2024:notes.html` or `?filter=a:b`. Matching "no colon
+// anywhere" instead dropped those links entirely.
+const URL_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
+function isRenderableUrl(url: string): boolean {
+  const scheme = URL_SCHEME.exec(url.trim());
+  return scheme === null || /^(?:https?|mailto)$/i.test(scheme[1]!);
+}
 
 function htmlAttr(value: string): string {
   return value
@@ -160,17 +168,31 @@ export const INLINE_RULES: Rule[] = [
     // the thing that makes the text inert.
     filter: (el) => {
       const tag = el.tagName.toLowerCase();
-      if (tag === 'kbd' || tag === 'samp') return true;
-      return tag === 'code' && el.parentElement?.tagName.toLowerCase() !== 'pre';
+      if (tag !== 'code' && tag !== 'kbd' && tag !== 'samp') return false;
+      // One span, however deeply these nest. `<code>press <kbd>X</kbd></code>`
+      // wrapped twice and the inner backticks came out as characters; a `code`
+      // inside a `pre` is the same problem, already handled this way.
+      for (let el_ = el.parentElement; el_; el_ = el_.parentElement) {
+        const parent = el_.tagName.toLowerCase();
+        if (parent === 'pre' || parent === 'code' || parent === 'kbd' || parent === 'samp') {
+          return false;
+        }
+      }
+      return true;
     },
     replacement: (_el, childContent, options) => {
       const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
       if (!trimmed) return childContent;
       if (isHtmlContext(options)) return `${leading}<code>${trimmed}</code>${trailing}`;
+      // A code span cannot cross a blank line: the line ends the paragraph, the
+      // opening backtick is left as a literal, and whatever followed renders as
+      // markup. Newlines inside a span collapse to spaces when rendered anyway,
+      // so folding them here changes nothing a reader would see.
+      const oneLine = trimmed.replace(/\s*\n\s*/g, ' ');
       // Если внутри есть бэктики — использовать двойные + пробелы §6.6
-      const hasBacktick = trimmed.includes('`');
+      const hasBacktick = oneLine.includes('`');
       const delim = hasBacktick ? '``' : '`';
-      const inner = hasBacktick ? ` ${trimmed} ` : trimmed;
+      const inner = hasBacktick ? ` ${oneLine} ` : oneLine;
       return `${leading}${delim}${inner}${delim}${trailing}`;
     },
   },
@@ -183,7 +205,7 @@ export const INLINE_RULES: Rule[] = [
       if (!trimmed) return childContent;
       if (isHtmlContext(options)) {
         // An unusable scheme costs the link, not the text it was wrapping.
-        if (!SAFE_SCHEME.test(href)) return `${leading}${trimmed}${trailing}`;
+        if (!isRenderableUrl(href)) return `${leading}${trimmed}${trailing}`;
         return `${leading}<a href="${htmlAttr(href)}">${trimmed}</a>${trailing}`;
       }
       return `${leading}[${trimmed}](${href})${trailing}`;

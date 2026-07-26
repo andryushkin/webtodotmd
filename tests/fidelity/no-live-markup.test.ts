@@ -30,11 +30,32 @@ const PAYLOAD = '<img src=x onerror=alert(1)><div style="position:fixed;inset:0"
 const SHOWN = escapeHtml(PAYLOAD);
 const OWN_IMAGE = 'https://e.com/a.png';
 
+// Anything that executes, loads, positions or navigates. Naming only `onerror`
+// and `onclick` would let `onload`, `onfocus`, an <iframe> or a
+// `javascript:` href through — and this function is the definition of the
+// guarantee, so a gap here is a gap in the guarantee.
+const DANGEROUS = [
+  'script', 'iframe', 'object', 'embed', 'form', 'svg', 'link', 'meta', 'base',
+  'img', 'video', 'audio', 'source', 'input', 'button', 'style',
+].join(',');
+
 function liveMarkup(html: string): string[] {
   const doc = parseHTML(`<html><body>${html}</body></html>`).document;
-  return [...doc.querySelectorAll('script, [onerror], [onclick], [style], img')]
-    .filter((el) => el.nodeName !== 'IMG' || el.getAttribute('src') !== OWN_IMAGE)
-    .map((el) => el.nodeName);
+  const found = new Set<string>();
+  for (const el of doc.querySelectorAll('*')) {
+    const name = el.nodeName.toLowerCase();
+    // The converter's own ![alt](url) legitimately becomes an <img>.
+    const isOwnImage = name === 'img' && el.getAttribute('src') === OWN_IMAGE;
+    if (DANGEROUS.split(',').includes(name) && !isOwnImage) found.add(el.nodeName);
+    for (const attr of Array.from(el.attributes)) {
+      const attrName = attr.name.toLowerCase();
+      if (attrName.startsWith('on') || attrName === 'style') found.add(`${el.nodeName}[${attrName}]`);
+      if ((attrName === 'href' || attrName === 'src') && /^\s*javascript:/i.test(attr.value)) {
+        found.add(`${el.nodeName}[${attrName}=javascript]`);
+      }
+    }
+  }
+  return [...found];
 }
 
 describe('markup shown as text never becomes markup again', () => {
@@ -95,5 +116,35 @@ describe('math escaping does not damage formulas', () => {
       latex,
     )}</annotation></span>`;
     expect(toMarkdown(html, { ...CONVERSION_OPTIONS }).includes(latex)).toBe(unchanged);
+  });
+});
+
+// Cases a review found in the net itself. Each one is markup that reached the
+// output alive through a path the table above did not name.
+describe('paths the first version of this file missed', () => {
+  it('escapes MathML the content script converts itself', () => {
+    // The core's math rules got escapeMathTags; the extension's raw-MathML rule,
+    // which runs at priority 1 in findRule(), did not.
+    const html = `<p><math><mo>${escapeHtml(PAYLOAD)}</mo></math></p>`;
+    expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
+  });
+
+  it('escapes math with the library defaults, not just the extension options', () => {
+    // With `math` falsy no math rule matches, so the text falls through to the
+    // parser's literal handling — which used to hand it back untouched.
+    const html = `<p><span class="katex"><annotation encoding="application/x-tex">${escapeHtml(
+      PAYLOAD,
+    )}</annotation></span></p>`;
+    expect(liveMarkup(render(toMarkdown(html, {})))).toEqual([]);
+  });
+
+  it.each([
+    ['samp', `<p><samp>a\n\n${escapeHtml(PAYLOAD)}</samp></p>`],
+    ['kbd', `<p><kbd>a\n\n${escapeHtml(PAYLOAD)}</kbd></p>`],
+    ['code', `<p><code>a\n\n${escapeHtml(PAYLOAD)}</code></p>`],
+  ])('a blank line cannot break the code span that makes %s inert', (_name, html) => {
+    // A code span cannot cross a blank line: it never closes, and everything
+    // after it renders as markup.
+    expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
   });
 });

@@ -1,11 +1,11 @@
 /**
- * The HTML the table fallback is allowed to emit — the whole of it.
+ * The HTML this library is allowed to emit — the whole of it.
  *
- * `src/rules/tables.ts` produces markup only from this set, and consumers that
- * have to tell this library's own output from a page's text (the extension's
- * preview escaper, for one) read the set from here rather than restating it. A
- * restatement drifts: when it does, a table missing one tag is not partially
- * escaped, it is escaped whole and shown to the user as markup.
+ * `src/rules/tables.ts` produces markup only from this set. It is exported as its
+ * own entry point for consumers that must tell this library's output from a
+ * page's text; the extension used to be one, escaping everything else before
+ * rendering, until the escaping moved into the conversion itself, where the
+ * origin of the text is still known.
  *
  * Kept dependency-free so importing it costs nothing.
  */
@@ -27,11 +27,9 @@ export const FALLBACK_INLINE_TAGS = [
 export const FALLBACK_VOID_TAGS = ['br'] as const;
 
 /**
- * Every attribute the converter writes, and nothing else. A cell's span is always
- * numeric; a URL is restricted to schemes that are safe to render, because this
- * is what decides whether the preview treats a tag as the core's own output.
- * `style` is deliberately absent: it survives DOMPurify, so a literal
- * `<table style="position:fixed">` in captured text would become an overlay.
+ * Every attribute the serializer writes onto a cell: a span, always numeric. Used
+ * by `tables.ts` to check its own output before emitting it, so keep it tight —
+ * widening it only weakens that assertion. A link's `href` does not pass through
+ * here; `inline.ts` writes it, and checks the scheme itself.
  */
-export const FALLBACK_ATTR_PATTERN =
-  /^(?:\s+(?:colspan|rowspan)="\d{1,5}"|\s+href="(?:https?:|mailto:)[^"<>]*")*$/;
+export const FALLBACK_ATTR_PATTERN = /^(?:\s+(?:colspan|rowspan)="\d{1,5}")*$/;

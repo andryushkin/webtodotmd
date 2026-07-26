@@ -1,10 +1,21 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { escapeBlockStarts, escapeHtmlSyntax, escapeInlineMarkdown } from './escape.js';
+import {
+  escapeBlockStarts,
+  escapeHtmlSyntax,
+  escapeInlineMarkdown,
+  escapeMathTags,
+} from './escape.js';
 
-// Text inside these is emitted verbatim — as a code fence, a code span or LaTeX —
-// so escaping it would corrupt the content instead of protecting it.
-const LITERAL_TAGS = new Set(['pre', 'code', 'kbd', 'samp', 'math', 'mjx-container', 'annotation']);
+// Text inside these is emitted verbatim — as a code fence or a code span — so
+// escaping it would corrupt the content instead of protecting it.
+const LITERAL_TAGS = new Set(['pre', 'code', 'kbd', 'samp']);
+
+// Math is literal too, but for a different reason and with a different remedy: a
+// fence makes code inert, whereas LaTeX between dollar signs is not inert at all.
+// With `math: false` — the library default — no math rule claims these elements,
+// so their text falls through to here and used to arrive raw.
+const MATH_TAGS = new Set(['math', 'mjx-container', 'annotation']);
 
 // A line begins where a block begins, so `#`, `>`, a bullet or numbering can only
 // be mistaken for markup in the text node that opens one of these.
@@ -42,14 +53,15 @@ export function isHtmlContext(options: MarkItDownOptions): boolean {
   return options.outputContext === 'html' || options.escapeSyntax === false;
 }
 
-function isLiteralContext(node: Node): boolean {
+function literalContext(node: Node): 'none' | 'code' | 'math' {
   let el = node.parentElement;
   while (el) {
-    if (LITERAL_TAGS.has(el.tagName.toLowerCase())) return true;
-    if (el.classList?.contains('katex')) return true;
+    const tag = el.tagName.toLowerCase();
+    if (LITERAL_TAGS.has(tag)) return 'code';
+    if (MATH_TAGS.has(tag) || el.classList?.contains('katex')) return 'math';
     el = el.parentElement;
   }
-  return false;
+  return 'none';
 }
 
 const TEXT_NODE = 3;
@@ -60,7 +72,12 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const text = node.textContent ?? '';
     // Markdown the page showed as characters must render as characters — unless
     // this text is headed for an HTML block, where Markdown does not apply.
-    if (isHtmlContext(options) || isLiteralContext(node)) return text;
+    if (isHtmlContext(options)) return text;
+    const literal = literalContext(node);
+    // A fence or a code span already makes code inert; LaTeX does not, so only
+    // what could open a tag is neutralized there.
+    if (literal === 'code') return text;
+    if (literal === 'math') return escapeMathTags(text);
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
     const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text));
