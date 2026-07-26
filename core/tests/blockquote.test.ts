@@ -25,3 +25,16 @@ describe('blockquote', () => {
     expect(toMarkdown('<blockquote></blockquote>')).toBe('\n');
   });
 });
+
+// Also from the manual pass: the whitespace between a `</p>` and the `<ul>` after
+// it is a line of spaces, which the 3+ newline collapse does not see, so the quote
+// came out with a run of bare `>` lines through the middle of it.
+describe('blockquote with indented markup inside', () => {
+  it('does not turn HTML indentation into blank quote lines', () => {
+    const html = `<blockquote>
+      <p>Quoted line.</p>
+      <ul><li>First</li><li>Second</li></ul>
+    </blockquote>`;
+    expect(toMarkdown(html).trim()).toBe('> Quoted line.\n>\n> - First\n> - Second');
+  });
+});

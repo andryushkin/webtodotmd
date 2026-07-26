@@ -20,8 +20,10 @@ function getHeadingText(el: Element, options: MarkItDownOptions): string {
 }
 
 function prefixBlockquote(text: string): string {
-  // Normalize internal 3+ newlines before prefixing
-  const normalized = text.replace(/\n{3,}/g, '\n\n');
+  // A line of spaces is a blank line to the reader but not to the collapse below,
+  // and HTML indentation between a </p> and the <ul> after it produces several —
+  // which came out as a run of bare `>` lines inside the quote.
+  const normalized = text.replace(/^[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n');
   return normalized
     .split('\n')
     .map((line) => (line === '' ? '>' : `> ${line}`))

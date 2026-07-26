@@ -39,6 +39,19 @@ function removeLineNumbers(el: Element): void {
   }
 }
 
+// `textContent` reads a <br> as nothing, so a <pre> that breaks its lines with
+// them — plenty do, and so does anything that pasted HTML into a code sample —
+// collapsed into one unreadable line. Read from a clone: the page's own DOM must
+// come back unchanged.
+function textWithLineBreaks(el: Element): string {
+  if (!el.querySelector('br')) return el.textContent ?? '';
+  const clone = el.cloneNode(true) as Element;
+  for (const br of Array.from(clone.querySelectorAll('br'))) {
+    br.replaceWith(clone.ownerDocument!.createTextNode('\n'));
+  }
+  return clone.textContent ?? '';
+}
+
 function fenceChar(text: string): string {
   let max = 2; // минимум 3 бэктика
   for (const m of text.matchAll(/`+/g)) {
@@ -62,9 +75,9 @@ export const CODE_RULES: Rule[] = [
         text = clip.getAttribute('value') ?? '';
       } else if (codeEl) {
         removeLineNumbers(codeEl);
-        text = codeEl.textContent ?? '';
+        text = textWithLineBreaks(codeEl);
       } else {
-        text = el.textContent ?? '';
+        text = textWithLineBreaks(el);
       }
 
       text = text.replace(/\n$/, '');

@@ -143,3 +143,17 @@ describe('inline code — backtick escaping', () => {
     expect(toMarkdown('<code></code>')).toBe('\n');
   });
 });
+
+// Found by a manual pass over docs/test_faithfulness_page.html: `textContent`
+// reads a <br> as nothing, so a <pre> that breaks its lines with them collapsed
+// into one unreadable line. The selection path had been fixed for this; the rule
+// itself, which is what a whole-page capture goes through, had not.
+describe('<pre> that breaks lines with <br>', () => {
+  it.each([
+    ['bare pre', '<pre>a<br>b<br>c</pre>', 'a\nb\nc'],
+    ['pre > code', '<pre><code>a<br>b</code></pre>', 'a\nb'],
+    ['real newlines are untouched', '<pre><code>x = 1\ny = 2</code></pre>', 'x = 1\ny = 2'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(`\`\`\`\n${expected}\n\`\`\``);
+  });
+});
