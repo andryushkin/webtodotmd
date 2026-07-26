@@ -381,25 +381,49 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(result).toContain('<br>');
   });
 
-  it('литеральный <sub> с атрибутами не проходит по имени тега', () => {
-    // Copy and Download hand over the raw Markdown without sanitizing, so an
-    // allowed tag name must not be enough to carry attributes through.
-    const html =
-      '<table><tr><td colspan="2">&lt;sub style=position:fixed onclick=steal()&gt;t&lt;/sub&gt;</td></tr></table>';
+  // Copy and Download hand over the raw Markdown with no sanitizing, so the file
+  // must not gain markup from the page's own text. Escaping happens on the text
+  // nodes before conversion, which is why none of these need a special case.
+  it.each([
+    ['тег с атрибутами', '&lt;sub style=position:fixed onclick=steal()&gt;t&lt;/sub&gt;', '<sub style=position:fixed onclick=steal()>t</sub>'],
+    ['точный парный тег', '&lt;sub&gt;text&lt;/sub&gt;', '<sub>text</sub>'],
+    ['закрывающий тег в одиночку', 'a&lt;/sub&gt;b', 'a</sub>b'],
+    ['структурные теги', 'x &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt; y', 'x </td></tr></table> y'],
+    ['HTML-комментарий', 'a &lt;!-- c --&gt; b', 'a <!-- c --> b'],
+    ['img с обработчиком', '&lt;img src=x onerror=alert(1)&gt;', '<img src=x onerror=alert(1)>'],
+  ])('литеральный %s остаётся текстом', (_name, input, expectedText) => {
+    const html = `<table><tr><td colspan="2">${input}</td><td>next</td></tr></table>`;
     const result = toMarkdown(html);
-    expect(result).toContain('&lt;sub');
     const reparsed = parseHTML(result).document;
-    expect(reparsed.querySelectorAll('sub')).toHaveLength(0);
-    expect(reparsed.querySelectorAll('[style], [onclick]')).toHaveLength(0);
-    // The text is kept — as text.
-    expect(reparsed.querySelector('td')?.textContent).toContain('onclick=steal()');
+    // The second cell proves nothing swallowed the rest of the row.
+    expect(reparsed.querySelectorAll('td')).toHaveLength(2);
+    expect(reparsed.querySelectorAll('sub, img, [onclick], [onerror], [style]')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('td')[0]?.textContent).toBe(expectedText);
   });
 
-  it('литеральный </sub> из текста не закрывает настоящий <sub>', () => {
-    const html = '<table><tr><td colspan="2"><sub>real</sub>&lt;/sub&gt;</td></tr></table>';
+  it('прозаический </sub> внутри inline-кода не закрывает настоящий <sub>', () => {
+    const html = '<table><tr><td colspan="2"><sub>real <code>&lt;/sub&gt;</code> tail</sub></td></tr></table>';
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelectorAll('sub')).toHaveLength(1);
+    expect(reparsed.querySelector('sub')?.textContent).toBe('real `</sub>` tail');
+  });
+
+  it('амперсанд и литеральная сущность проходят round-trip', () => {
+    const html = '<table><tr><td colspan="2">a &amp; b, literal &amp;lt; stays</td></tr></table>';
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelector('td')?.textContent).toBe('a & b, literal &lt; stays');
+  });
+
+  it('забор длиннее трёх бэктиков не разрезается по своему содержимому', () => {
+    // code.ts emits four or more backticks when the code contains three, so
+    // pairing on a fixed ``` would split the block at its own content and turn
+    // the blank line inside it into a break.
+    const code = 'a\n```\n\nb';
+    const html = `<table><tr><td colspan="2"><div><pre><code>${code}</code></pre></div></td></tr></table>`;
     const result = toMarkdown(html);
-    expect(result).toContain('<sub>real</sub>');
-    expect(result).toContain('&lt;/sub&gt;');
+    expect(result).toContain('````');
+    expect(parseHTML(result).document.querySelector('td')?.textContent).toContain(code);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
   });
 
   it('<pre> внутри обёртки уводит таблицу в fallback даже без colspan', () => {

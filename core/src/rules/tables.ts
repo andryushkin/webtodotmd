@@ -132,39 +132,6 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
 // while the rest of the converter reduces all of them to text.
 const MAX_SPAN = 1000;
 
-// The converter emits exactly these, with no attributes: `<br>` from a cell's
-// line break and `<sub>`/`<sup>` from inline.ts. Everything else that looks like
-// a tag is prose from the page — and inside a <td> that prose sits next to real
-// markup, where a literal "</td></table>" would close our own elements.
-//
-// The match must be exact. A tag name alone is not enough: the page can write
-// `<sub style=... onclick=...>` as text, and passing it through would put live
-// markup in a file that Copy and Download hand over without sanitizing.
-const PAIRED_CONVERTER_TAGS = new Set(['sub', 'sup']);
-
-function escapeStrayTags(md: string): string {
-  // Closing tags are matched against what is actually open, so a `</sub>` the
-  // page wrote as prose cannot close a `<sub>` the converter opened. A bare
-  // opening tag is indistinguishable from the converter's own and is left alone:
-  // without attributes it carries nothing but formatting.
-  const open: string[] = [];
-  return md.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (match, slash, rawTag, rest) => {
-    const tag = String(rawTag).toLowerCase();
-    const escaped = `&lt;${slash}${rawTag}${rest}&gt;`;
-    if (rest !== '') return escaped;
-    if (!slash && tag === 'br') return match;
-    if (!slash && PAIRED_CONVERTER_TAGS.has(tag)) {
-      open.push(tag);
-      return match;
-    }
-    if (slash && open[open.length - 1] === tag) {
-      open.pop();
-      return match;
-    }
-    return escaped;
-  });
-}
-
 function escapeHtmlText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -194,15 +161,73 @@ function preformattedText(el: Element): string {
 // converter as a fence (the wrapper's own Markdown, a list marker for instance,
 // is worth keeping), so its newlines are encoded rather than collapsed: &#10;
 // re-parses to the same text.
+function fenceMarker(line: string): string | undefined {
+  return line.trim().match(/^(`{3,}|~{3,})/)?.[1];
+}
+
 function htmlSafeMarkdown(md: string): string {
-  return md
-    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g)
-    .map((part, index) =>
-      index % 2 === 1
-        ? part.replace(/\r?\n/g, '&#10;')
-        : part.replace(/\r?\n[ \t]*(?:\r?\n)+/g, '<br><br>'),
-    )
-    .join('');
+  const lines = md.split(/\r?\n/);
+
+  // Which lines belong to a fenced block. Length matters: code.ts deliberately
+  // emits four or more backticks when the code itself contains three, so pairing
+  // by a fixed ``` would cut such a block open at its own content.
+  const fenced: boolean[] = [];
+  let open: string | undefined;
+  for (const line of lines) {
+    const marker = fenceMarker(line);
+    if (open === undefined) {
+      fenced.push(marker !== undefined);
+      if (marker !== undefined) open = marker;
+      continue;
+    }
+    fenced.push(true);
+    if (marker !== undefined && marker[0] === open[0] && marker.length >= open.length && line.trim() === marker) {
+      open = undefined;
+    }
+  }
+
+  let out = '';
+  let blankRun = false;
+  let previousFenced = false;
+  for (const [index, line] of lines.entries()) {
+    const insideFence = fenced[index] ?? false;
+    if (!insideFence && line.trim() === '') {
+      // A blank line ends the HTML block and hands the rest of the table to the
+      // Markdown parser as prose. Outside a fence it is formatting, so it turns
+      // into a break; inside, it is content and is kept as &#10;.
+      blankRun = true;
+      continue;
+    }
+    if (out !== '') {
+      if (blankRun) out += '<br><br>';
+      else out += insideFence && previousFenced ? '&#10;' : '\n';
+    }
+    out += line;
+    blankRun = false;
+    previousFenced = insideFence;
+  }
+  return out;
+}
+
+// Inside a <td> the converter's Markdown sits next to real markup, so text the
+// page wrote must not be able to look like markup: a literal "</td></table>",
+// "<sub onclick=…>" or "<!--" would close our elements, add behavior, or comment
+// out the rest of the table. Escaping happens at the source — on the text nodes,
+// before conversion — rather than on the finished string. Filtering the string
+// was tried twice and cannot work: it has no way to tell a tag the converter
+// emitted from an identical one that came from the page's prose, and it has to
+// re-derive Markdown's own structure (code spans, fences of any length) to know
+// where a "tag" is not one.
+function escapedTextClone(el: Element): Element {
+  const clone = el.cloneNode(true) as Element;
+  const walk = (node: Node): void => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === TEXT_NODE) child.textContent = escapeHtmlText(child.textContent ?? '');
+      else if (child.nodeType === ELEMENT_NODE) walk(child);
+    }
+  };
+  walk(clone);
+  return clone;
 }
 
 // Nodes that get their own markup instead of going through the converter: a
@@ -218,10 +243,10 @@ function serializeNodes(nodes: Node[], options: MarkItDownOptions): string {
     if (pending.length === 0) return;
     let md = '';
     for (const node of pending) {
-      if (node.nodeType === TEXT_NODE) md += node.textContent ?? '';
-      else if (node.nodeType === ELEMENT_NODE) md += convert(node, options);
+      if (node.nodeType === TEXT_NODE) md += escapeHtmlText(node.textContent ?? '');
+      else if (node.nodeType === ELEMENT_NODE) md += convert(escapedTextClone(node as Element), options);
     }
-    out += htmlSafeMarkdown(escapeStrayTags(md));
+    out += htmlSafeMarkdown(md);
     pending = [];
   };
 
