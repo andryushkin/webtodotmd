@@ -175,22 +175,33 @@ function preInCell(pre: Element): string {
 }
 
 /**
- * A nested table folded into its cell: the rows it held, one per line, cells
- * separated by a middle dot. A pipe table cannot nest, and the alternative — the
- * inner table's own pipe syntax, separator row and all — arrives as noise.
+ * A nested table folded into its cell: its caption on the first line, then the
+ * rows it held, one per line, cells separated by a middle dot. A pipe table
+ * cannot nest, and the alternative — the inner table's own pipe syntax,
+ * separator row and all — arrives as noise.
+ *
+ * The caption used to be left out, because this walked rows and a caption is not
+ * one: the page showed it and the file did not. It goes on its own line, above
+ * the rows, which is where `captionLine` puts the outer table's caption too —
+ * but without that function's block escaping. There a caption is a line of the
+ * document and a leading `#` opens a heading; here it is part of a pipe cell,
+ * where nothing opens a block and a backslash would be visible for nothing.
  */
 function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
-  return ownRows(table)
-    .map((row) =>
+  const caption = ownCaption(table);
+  // `escapePipes: false` throughout: the outer getCellContent escapes the
+  // finished cell, and escaping the inner cells first turned every `|` into
+  // `\\|`.
+  const lines = caption ? [getCellContent(caption, options, false)] : [];
+  for (const row of ownRows(table)) {
+    lines.push(
       ownCells(row)
-        // `escapePipes: false`: the outer getCellContent escapes the finished
-        // cell, and escaping the inner cells first turned every `|` into `\\|`.
         .map((cell) => getCellContent(cell, options, false))
         .filter((cell) => cell !== '')
         .join(' · '),
-    )
-    .filter((row) => row !== '')
-    .join('<br>');
+    );
+  }
+  return lines.filter((line) => line !== '').join('<br>');
 }
 
 function getCellContent(
@@ -207,9 +218,13 @@ function getCellContent(
         text += '<br>';
       } else if (childTag === 'pre') {
         text += preInCell(el);
-      } else if (childTag === 'table') {
-        text += nestedTableInCell(el, options);
       } else {
+        // A <table> is not named here, and deliberately: this walk sees the
+        // cell's own children, so a <div> around the inner table — ordinary page
+        // markup — hid it, and the pipe table the converter emitted instead
+        // landed inside a pipe cell, where the reader got `| x | y |` and a row
+        // of dashes as literal text. The fold is the table rule's own decision
+        // now, taken from the element's ancestry, which a wrapper cannot hide.
         text += convert(child, options);
       }
     } else if (child.nodeType === TEXT_NODE) {
@@ -637,6 +652,15 @@ export const TABLE_RULES: Rule[] = [
     // be built and discarded — twice over for a nested table.
     ignoresChildContent: true,
     replacement(el, _childContent, options) {
+      // Inside another table, at whatever depth: a pipe table has no nesting, so
+      // the inner grid is folded into the one cell that holds it. Asked of the
+      // ancestry rather than of the parent, because the wrapper a page puts
+      // around a table — a <div>, a <figure> — must not decide the format.
+      // The other two paths never reach here: the HTML fallback lifts a nested
+      // table out of the cell before converting it, and the text fallback reads
+      // textContent and converts nothing.
+      if (closestTag(el, 'table')) return nestedTableInCell(el, options);
+
       const analysis = analyzeTable(el);
 
       // 'flatten' is the default: an HTML table renders nowhere that Markdown

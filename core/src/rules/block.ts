@@ -79,4 +79,31 @@ export const BLOCK_RULES: Rule[] = [
       return `\n\n${text}\n\n`;
     },
   },
+  // Markdown has no definition list, so a <dl> becomes what the page showed: the
+  // term on a line of its own and the definition on the next, each its own
+  // block. Before this rule existed the three tags fell through to the default,
+  // which returns its children's text unchanged, and `<dt>aa</dt><dd>bb</dd>`
+  // arrived as `aabb` — the page showed two lines and the reader got one word.
+  //
+  // Every other candidate writes a marker the page never showed. `aa` over
+  // `:   bb` is Pandoc's syntax and not CommonMark's: there the second line is a
+  // lazy continuation of the first, so the pair welds back into one line and
+  // gains a stray colon on the way. A bold term invents emphasis. Indenting the
+  // definition is the shape a browser renders, but an indent under four spaces
+  // renders as nothing at all, so it would buy the source a cue at the price of
+  // changing how a list or a fence inside the definition is parsed. A blank line
+  // is the one separator that costs nothing.
+  //
+  // What it does not carry is which definition belongs to which term when a list
+  // has several pairs; adjacency is all that is left of that, and Markdown
+  // offers nothing better without inventing syntax.
+  {
+    name: 'definition-list',
+    filter: ['dl', 'dt', 'dd'],
+    replacement(_el, childContent) {
+      const text = childContent.trim();
+      if (!text) return '';
+      return `\n\n${text}\n\n`;
+    },
+  },
 ];

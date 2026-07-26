@@ -76,6 +76,33 @@ function textWithLineBreaks(el: Element): string {
   return clone.textContent ?? '';
 }
 
+const TEXT_NODE = 3;
+
+/**
+ * True when the `<code>` is everything the `<pre>` holds.
+ *
+ * The rule reads the `<code>` rather than the `<pre>` so that a highlighter's
+ * line-number gutter, which sits inside it, can be stripped first. That
+ * preference was unconditional, and a `<pre>` holding anything besides the
+ * `<code>` lost it: `lost<br><code>kept</code>` — how a page writes a sample
+ * whose tail is highlighted, and what anything that pasted markup into one
+ * produces — came out as `kept`, and the first half of the block was gone
+ * without a word.
+ *
+ * Whitespace around the `<code>` does not count against it. `<pre>` preserves
+ * whitespace, so that is not free — but `<pre>\n<code>…</code>\n</pre>` is the
+ * commonest shape there is, the newline is the page's indentation rather than
+ * its code, and reading the `<pre>` for it would open every such block with a
+ * blank line.
+ */
+function holdsNothingBut(pre: Element, code: Element): boolean {
+  return Array.from(pre.childNodes).every(
+    (child) =>
+      child === code ||
+      (child.nodeType === TEXT_NODE && (child.textContent ?? '').trim() === ''),
+  );
+}
+
 function fenceChar(text: string): string {
   let max = 2; // минимум 3 бэктика
   for (const m of text.matchAll(/`+/g)) {
@@ -97,11 +124,15 @@ export const CODE_RULES: Rule[] = [
       let text: string;
       if (clip) {
         text = clip.getAttribute('value') ?? '';
-      } else if (codeEl) {
-        removeLineNumbers(codeEl);
-        text = textWithLineBreaks(codeEl);
       } else {
-        text = textWithLineBreaks(el);
+        // The whole <pre> whenever it holds more than the one <code>; the <code>
+        // alone otherwise, which is what lets its gutter be stripped. Either way
+        // the gutter goes: it can sit in either element, and text the reader
+        // never saw as code belongs in neither.
+        const source = codeEl && holdsNothingBut(el, codeEl) ? codeEl : el;
+        removeLineNumbers(source);
+        if (codeEl && codeEl !== source) removeLineNumbers(codeEl);
+        text = textWithLineBreaks(source);
       }
 
       text = text.replace(/\n$/, '');

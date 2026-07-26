@@ -343,6 +343,78 @@ describe('вложенные таблицы', () => {
   });
 });
 
+// Свёртка смотрела на собственных детей ячейки, поэтому любая обёртка вокруг
+// вложенной таблицы прятала её: конвертер выдавал внутри pipe-ячейки настоящую
+// pipe-таблицу, и читатель получал `| x | y |` и строку дефисов как текст.
+// Обёртка вокруг таблицы — обычная разметка страницы, а не решение о формате.
+describe('вложенная таблица за обёрткой', () => {
+  const folded = '| x · y |';
+
+  it.each([
+    ['<div>', '<div><table><tr><td>x</td><td>y</td></tr></table></div>'],
+    ['<figure>', '<figure><table><tr><td>x</td><td>y</td></tr></table></figure>'],
+    ['две обёртки', '<div><div><table><tr><td>x</td><td>y</td></tr></table></div></div>'],
+  ])('%s сворачивается так же, как таблица без обёртки', (_name, inner) => {
+    const result = toMarkdown(`<table><tr><td>${inner}</td></tr><tr><td>outer</td></tr></table>`);
+    expect(result).toContain(folded);
+    // Ни синтаксиса вложенной таблицы, ни её строки-разделителя.
+    expect(result).not.toContain('---|');
+    expect(result).not.toContain('\\|');
+  });
+
+  it('обёртка даёт тот же результат, что и прямой ребёнок', () => {
+    const bare = '<table><tr><td><table><tr><td>x</td><td>y</td></tr></table></td></tr></table>';
+    const wrapped =
+      '<table><tr><td><div><table><tr><td>x</td><td>y</td></tr></table></div></td></tr></table>';
+    expect(toMarkdown(wrapped)).toBe(toMarkdown(bare));
+  });
+
+  it('текст рядом с обёрткой не теряется', () => {
+    const html =
+      '<table><tr><td>before<div><table><tr><td>x</td></tr></table></div>after</td></tr></table>';
+    expect(toMarkdown(html)).toContain('before<br>x<br>after');
+  });
+
+  it('HTML fallback по-прежнему сохраняет вложенную таблицу за обёрткой', () => {
+    const html =
+      '<table><tr><td><div><table><tr><td>inner</td></tr></table></div></td></tr></table>';
+    const reparsed = parseHTML(toMarkdown(html, { complexTableFallback: 'html' })).document;
+    expect(reparsed.querySelector('td table td')?.textContent).toBe('inner');
+  });
+});
+
+// Свёртка обходила только строки, а подпись — не строка: страница её показывала,
+// а файл нет.
+describe('подпись вложенной таблицы', () => {
+  it('подпись становится первой строкой свёрнутой ячейки', () => {
+    const html =
+      '<table><tr><td><table><caption>cap</caption><tr><td>x</td><td>y</td></tr></table></td></tr></table>';
+    expect(toMarkdown(html)).toContain('| cap<br>x · y |');
+  });
+
+  it('подпись переживает обёртку', () => {
+    const html =
+      '<table><tr><td><div><table><caption>cap</caption><tr><td>x</td></tr></table></div></td></tr></table>';
+    expect(toMarkdown(html)).toContain('cap<br>x');
+  });
+
+  it('пустая подпись не добавляет строку', () => {
+    const html =
+      '<table><tr><td><table><caption> </caption><tr><td>x</td></tr></table></td></tr></table>';
+    expect(toMarkdown(html)).not.toContain('<br>');
+  });
+
+  // Внутри pipe-ячейки ничего не открывает блок, поэтому обратный слэш там был бы
+  // виден читателю ни за что. `|` экранирует внешний getCellContent — один раз.
+  it('подпись экранируется как ячейка, а не как строка документа', () => {
+    const html =
+      '<table><tr><td><table><caption># a | b</caption><tr><td>x</td></tr></table></td></tr></table>';
+    const result = toMarkdown(html);
+    expect(result).toContain('# a \\| b');
+    expect(result).not.toContain('\\#');
+  });
+});
+
 describe('блочный контент в ячейке', () => {
   it('два абзаца в ячейке остаются одной строкой таблицы', () => {
     const html = `
