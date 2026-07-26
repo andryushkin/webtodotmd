@@ -144,6 +144,47 @@ describe('inline code — backtick escaping', () => {
   });
 });
 
+// Правило предпочитало <code> самому <pre>, чтобы можно было снять нумерацию
+// строк, которая лежит внутри <code>. Предпочтение было безусловным, и <pre> с
+// чем-либо ещё внутри терял это «ещё»: `lost<br><code>kept</code>` доходил как
+// `kept`, а первая половина блока пропадала молча.
+describe('pre с br и code', () => {
+  it.each([
+    ['текст до <code>', '<pre>lost<br><code>kept</code></pre>', 'lost\nkept'],
+    ['текст после <code>', '<pre><code>kept</code><br>lost</pre>', 'kept\nlost'],
+    ['<code> посередине', '<pre>a<br><code>b</code><br>c</pre>', 'a\nb\nc'],
+    ['два <code>', '<pre><code>a</code><br><code>b</code></pre>', 'a\nb'],
+    ['перенос без <br>', '<pre>a\n<code>b</code></pre>', 'a\nb'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(`\`\`\`\n${expected}\n\`\`\``);
+  });
+
+  it('язык всё ещё читается с <code>', () => {
+    expect(toMarkdown('<pre>lost<br><code class="lang-js">kept</code></pre>')).toBe(
+      '```js\nlost\nkept\n```\n',
+    );
+  });
+
+  // Пробелы вокруг <code> — отступ разметки, а не код: `<pre>\n<code>…` самая
+  // частая форма, и чтение всего <pre> открывало бы такой блок пустой строкой.
+  it('перевод строки вокруг <code> не делает <pre> составным', () => {
+    expect(toMarkdown('<pre>\n<code>x</code>\n</pre>')).toBe('```\nx\n```\n');
+  });
+
+  // Нумерация строк может лежать и в <pre>, и в <code>; текст, которого читатель
+  // не видел как код, не нужен ни там, ни там.
+  it('нумерация строк снимается и в составном <pre>', () => {
+    const html =
+      '<pre>lost<br><code>kept<span class="line-numbers-rows"><span></span></span></code></pre>';
+    expect(toMarkdown(html)).toBe('```\nlost\nkept\n```\n');
+  });
+
+  it('нумерация строк снимается с самого <pre>', () => {
+    const html = '<pre><span class="linenumber">1</span>code<br>more</pre>';
+    expect(toMarkdown(html)).toBe('```\ncode\nmore\n```\n');
+  });
+});
+
 // Found by a manual pass over docs/test_faithfulness_page.html: `textContent`
 // reads a <br> as nothing, so a <pre> that breaks its lines with them collapsed
 // into one unreadable line. The selection path had been fixed for this; the rule
