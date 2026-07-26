@@ -87,6 +87,26 @@ describe('markup shown as text never becomes markup again', () => {
     // escaper had assumed this while nothing downstream made it true.
     ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT} ${SHOWN_TEXT}`],
     ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`, SHOWN_TEXT],
+    // A style is the second way to be a block, and `convert()` writes such an
+    // element between blank lines — so its text opens a line exactly as a `<div>`
+    // does, and everything a line start makes dangerous is dangerous here. Only
+    // the tag was asked, so a `<span style="display:block">` holding the page's
+    // own `# heading` put a real H1 in the file. Both spellings are here because
+    // both reach the converter: the page's own attribute and the computed style
+    // the content script records beside it.
+    ['span displayed as a block', `<p>x<span style="display:block">${SHOWN}</span>y</p>`, `x ${SHOWN_TEXT} y`],
+    [
+      'snapshot displayed as a block',
+      `<p>x<span data-s2md-style="display:block">${SHOWN}</span>y</p>`,
+      `x ${SHOWN_TEXT} y`,
+    ],
+    // The text *after* one, which the same blank lines leave at the start of a
+    // line without the styled element being its parent at all.
+    [
+      'text after a block-displayed span',
+      `<p>x<span style="display:block">a</span>${SHOWN}</p>`,
+      `x a ${SHOWN_TEXT}`,
+    ],
     // Table cells reach the output through their own path in tables.ts, which
     // once bypassed the HTML escaping entirely.
     [
@@ -142,6 +162,47 @@ describe('markup shown as text never becomes markup again', () => {
     const rendered = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));
     expect(liveMarkup(rendered)).toEqual([]);
     expect(visibleText(rendered)).toBe(shown);
+  });
+});
+
+// A style is the second way to be a block, and the one no tag gives away.
+// `convert()` writes such an element between blank lines, so its text opens a
+// line exactly as a `<div>`'s does — and everything that is only markup at the
+// start of a line becomes markup there. Only the tag was being asked, so a
+// `<span style="display:block">` holding the page's own `# heading` produced a
+// real H1, `- item` a list, and `---` a rule that took the whole line with it.
+//
+// `liveMarkup` cannot see any of that: a heading executes nothing. What it costs
+// is the characters, which is the other half of this file's promise and the half
+// that catches it. Both spellings are here because both reach the converter — the
+// page's own attribute, and the computed style the content script records beside
+// it — and the pair is the standing proof they are read as one.
+describe('a style that opens a line', () => {
+  const inside = (style: string, text: string) =>
+    `<p>x<span ${style}="display:block">${text}</span>y</p>`;
+  const after = (style: string, text: string) =>
+    `<p>x<span ${style}="display:block">a</span>${text}</p>`;
+
+  it.each([
+    ['heading marker', '# heading'],
+    ['bullet', '- item'],
+    ['numbering', '1. one'],
+    ['quote', '&gt; quoted'],
+    // The one that costs the line rather than a marker: a thematic break has no
+    // text of its own, so the reader's `---` simply left the page.
+    ['thematic break', '---'],
+    ['setext underline', '==='],
+  ])('%s', (_name, text) => {
+    const shown = visibleText(`<p>${text}</p>`);
+    for (const style of ['style', 'data-s2md-style']) {
+      const within = render(toMarkdown(inside(style, text), { ...CONVERSION_OPTIONS }));
+      expect(visibleText(within)).toBe(`x ${shown} y`);
+      expect(liveMarkup(within)).toEqual([]);
+      // The text after one is at the start of a line too, without the styled
+      // element being its parent at all.
+      const behind = render(toMarkdown(after(style, text), { ...CONVERSION_OPTIONS }));
+      expect(visibleText(behind)).toBe(`x a ${shown}`);
+    }
   });
 });
 

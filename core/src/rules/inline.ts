@@ -111,8 +111,11 @@ const CODE_TAGS = new Set(['code', 'kbd', 'samp']);
  * is the same problem, already handled this way. Content that is empty or all
  * whitespace is not wrapped either, and a neighbour must not expect a backtick
  * from it.
+ *
+ * Exported because the text escaper has to expect one: a `~` the page showed
+ * stops the span opening if it lands directly in front of the backtick.
  */
-function emitsCodeSpan(el: Element): boolean {
+export function emitsCodeSpan(el: Element): boolean {
   if (!CODE_TAGS.has(el.tagName.toLowerCase()) || (el.textContent ?? '').trim() === '') {
     return false;
   }
@@ -571,9 +574,9 @@ export const INLINE_RULES: Rule[] = [
         // text after it — `<img alt="see [">` followed by ` ](url)` gave a working
         // link whose opener came from an attribute and whose target came from
         // elsewhere on the page.
-        const ahead = lookAhead(el, mayOpenLink(alt));
+        const ahead = lookAhead(el, mayOpenLink(alt), alt.includes('~'));
         return escapeBlockStarts(
-          escapeHtmlSyntax(escapeInlineMarkdown(alt, ahead.text), ahead.continues),
+          escapeHtmlSyntax(escapeInlineMarkdown(alt, { ahead: ahead.text }), ahead.continues),
         );
       }
       const title = el.getAttribute('title');

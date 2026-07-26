@@ -14,8 +14,114 @@
  * happens to begin with `>` sits mid-sentence as often as it starts a quote.
  */
 
+import { isLeftFlanking, isRightFlanking } from '../utils/flanking.js';
+
 function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && /\w/.test(ch);
+}
+
+/**
+ * What the rest of the line writes on either side of this text node, as far as
+ * the tilde question needs it. The parser gathers it; `''` is the edge of a line.
+ */
+export interface Seam {
+  /** The tail of what is written before this node. */
+  behind?: string;
+  /** The head of what is written after it — also the bracket rule's lookahead. */
+  ahead?: string;
+}
+
+/**
+ * Strikethrough, which is the one mark a page can also show as characters.
+ *
+ * A `~` needs a partner to be markup at all, and with none it renders as itself
+ * — which is why a lone one was left alone for a long time, and why the rule
+ * that replaced that ("both edges of a text node pay") was wrong in the other
+ * direction: `~/src`, `~5 min`, a `<td>~</td>` and a `## ~/home` all paid a
+ * backslash for a partner that does not exist.
+ *
+ * The real question is whether a partner can reach it, and it is asked the same
+ * way the bracket rule asks about `](`: over this node's text plus what the line
+ * writes on each side of it. A backslash still goes only on a tilde inside this
+ * node — the other half is its own node's business — but unlike the bracket rule
+ * this one cannot rely on killing a single delimiter, so *both* halves of a
+ * possible pair are escaped by their own nodes. A backslash does not disarm the
+ * closing side: `~word\~\~\~` comes back as `<del>word\</del>~~` from the
+ * renderer that draws the preview.
+ *
+ * What can be a partner:
+ *
+ *   - A run of two or more tildes, which is a delimiter on its own account.
+ *     `~~x~~` is strikethrough and `~~~` at the head of a line is a code fence,
+ *     so a run of ours always pays whatever stands around it.
+ *   - Another `~` that CommonMark's flanking rules let close what this one opens,
+ *     or the other way round. `see ~/src and ~/usr` has two and pays nothing:
+ *     both can open, neither can close, so nothing pairs. `range 1~5 and 7~9`
+ *     pays, because a tilde inside a word does both.
+ *   - A `~` the neighbouring output puts on the line — the `~~` a `<del>` writes.
+ *     `~` then a struck `x` made `~~~x~~`, a fence, and `x` left the page: the
+ *     only defect the survey has found that costs content rather than characters.
+ *
+ * One clause has nothing to do with pairs. A `~` directly in front of a code
+ * span's backtick stops the span opening at all — `` ~`text` `` renders as its
+ * own five characters — so the tilde pays for a delimiter that is not even its
+ * own. It is the `<del>` case seen from the other side: two escapers meeting at
+ * a seam neither can see across.
+ */
+function escapeTildes(text: string, seam: Seam): string {
+  if (!text.includes('~')) return text;
+  // One string, exactly as the bracket rule builds one: the line as it will be
+  // read, with this node's own slice marked off. Every neighbour is then an
+  // ordinary character to the flanking tests, and the offsets stay honest.
+  const behind = seam.behind ?? '';
+  const line = `${behind}${text}${seam.ahead ?? ''}`;
+  const start = behind.length;
+  const end = start + text.length;
+
+  const runs = [...line.matchAll(/~+/g)].map((match) => {
+    const at = match.index;
+    const length = match[0].length;
+    const before = line[at - 1];
+    const after = line[at + length];
+    return {
+      at,
+      length,
+      // A run of two or more is a delimiter on its own account, whatever stands
+      // around it: `~~x~~` is strikethrough and `~~~` at the head of a line is a
+      // fence. It is still weighed for flanking below, because a run that pays
+      // can be the closer some earlier tilde needs escaping against.
+      pays: length > 1 || after === '`',
+      opens: isLeftFlanking(before, after),
+      closes: isRightFlanking(before, after),
+    };
+  });
+
+  // An opener with a closer somewhere after it, and the mirror of that. Either
+  // half is enough to settle the pair, and each is escaped by its own node.
+  let openerBefore = false;
+  for (const run of runs) {
+    if (run.closes && openerBefore) run.pays = true;
+    if (run.opens) openerBefore = true;
+  }
+  let closerAfter = false;
+  for (let i = runs.length - 1; i >= 0; i -= 1) {
+    const run = runs[i]!;
+    if (run.opens && closerAfter) run.pays = true;
+    if (run.closes) closerAfter = true;
+  }
+
+  let out = '';
+  let cursor = start;
+  for (const run of runs) {
+    // Only the part of the run inside this node: a run that grew across the seam
+    // — `~` meeting a `<del>` — belongs half to somebody else.
+    const from = Math.max(run.at, start);
+    const to = Math.min(run.at + run.length, end);
+    if (!run.pays || from >= to) continue;
+    out += `${line.slice(cursor, from)}${'\\~'.repeat(to - from)}`;
+    cursor = to;
+  }
+  return out + line.slice(cursor, end);
 }
 
 // Link and image syntax: an opener, a label with no `]` in it, and a `](`. Only a
@@ -44,7 +150,7 @@ export function mayOpenLink(text: string): boolean {
  * that became a working link once joined. The page showed the brackets and the
  * reader lost them.
  *
- * So the match runs over this node's text plus `upcoming` — the page's own text
+ * So the match runs over this node's text plus `seam.ahead` — the page's own text
  * that will be joined onto it, gathered by the parser — and a backslash is written
  * only for a delimiter that lies inside this node. The other half is either its own
  * node's business or already gone: killing one delimiter kills the link.
@@ -55,34 +161,30 @@ export function mayOpenLink(text: string): boolean {
  * marker on a wiki page. Reading the text costs a bounded walk instead, and charges
  * a backslash only where a link really assembles.
  *
- * What it does cost: `upcoming` is the page's text, not the Markdown the following
+ * What it does cost: the seam is the page's text, not the Markdown the surrounding
  * nodes will emit. A rule that wraps its text in markers can break a match this
  * sees — `[a` then `<code>x](y)</code>` renders as a code span, not a link — and
  * then the reader pays one backslash for a link that was never there. The reverse,
  * a rule that *creates* a `](` out of nothing, would be missed; only a link or an
  * image emits one, and both already carry their own brackets.
+ *
+ * Tildes are escaped last of the marks, because every pass before them inserts a
+ * backslash and would double the one they write.
  */
-export function escapeInlineMarkdown(text: string, upcoming = ''): string {
-  const marks = text
-    // Backslash first, or the escapes below would read as literal pairs.
-    .replace(/\\/g, '\\\\')
-    .replace(/([*`])/g, '\\$1')
-    // An underscore between word characters is not emphasis in CommonMark, so
-    // `snake_case` renders as itself — escaping it is noise in the source.
-    .replace(/_/g, (mark, index: number, text_: string) =>
-      isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
-    )
-    // Strikethrough needs a pair, so a tilde in the middle of a sentence renders as
-    // itself and is left alone — `~/src`, `~5 min`.
-    //
-    // At an edge it is a half, and the node next to it supplies the other: `~`
-    // followed by a struck `x` writes `~~~x~~`, a three-character run that closes
-    // nothing, and the reader loses the text outright rather than seeing a stray
-    // marker. `~~` has no second spelling to fall back to the way emphasis picks
-    // between `_` and `*`, so the backslash is the only repair, and only the edges
-    // can ever meet a neighbour.
-    .replace(/~~|^~|~$/g, (mark) => (mark === '~' ? '\\~' : '\\~\\~'));
-  return escapeLinkSyntax(marks, upcoming);
+export function escapeInlineMarkdown(text: string, seam: Seam = {}): string {
+  const marks = escapeTildes(
+    text
+      // Backslash first, or the escapes below would read as literal pairs.
+      .replace(/\\/g, '\\\\')
+      .replace(/([*`])/g, '\\$1')
+      // An underscore between word characters is not emphasis in CommonMark, so
+      // `snake_case` renders as itself — escaping it is noise in the source.
+      .replace(/_/g, (mark, index: number, text_: string) =>
+        isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
+      ),
+    seam,
+  );
+  return escapeLinkSyntax(marks, seam.ahead ?? '');
 }
 
 /**

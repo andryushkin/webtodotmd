@@ -280,6 +280,34 @@ describe('соседние выделения', () => {
     // rendered with the asterisks showing and no emphasis at all.
     ['emoji against words', '<p>a<em>😀</em>b</p>', 'a<em>😀</em>b'],
     ['emoji at the line edges', '<p><em>😀</em></p>', '_😀_'],
+
+    // A neighbour is judged by its tag, and the tag comes off the page. An object
+    // literal answered `constructor` with a function, which read as an emphasis
+    // wrapper — so the `<em>` gave up `*b*` for a tag against a delimiter no
+    // `<constructor>` element ever writes.
+    ['an element named after Object.prototype', '<p><constructor>a</constructor><em>b</em></p>', 'a*b*'],
+    ['an ordinary unknown element', '<p><foo>a</foo><em>b</em></p>', 'a*b*'],
+
+    // A style inside a code span reaches no output: the code rule takes its
+    // element's text. Looking into one found a syntax highlighter's
+    // `font-weight` and made the `<em>` after the span give way to a delimiter
+    // that was really a backtick — and a highlighter puts such a span inside
+    // every `<code>` on an ordinary documentation page.
+    [
+      'a styled run inside a code span',
+      '<p><code><span style="font-weight:700">a</span></code><em>b</em></p>',
+      '`a`*b*',
+    ],
+    [
+      'a bold tag inside a code span',
+      '<p><code>a<b>b</b></code><em>c</em></p>',
+      '`ab`*c*',
+    ],
+    [
+      'a styled run inside a formula',
+      '<p><span class="katex"><span style="font-weight:700">a</span></span><em>b</em></p>',
+      'a*b*',
+    ],
   ])('%s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });

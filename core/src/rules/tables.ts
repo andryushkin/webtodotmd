@@ -1,6 +1,7 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert, lookAhead } from '../core/parser.js';
 import { applyStyleEmphasis } from './inline.js';
+import { alignFrom, elementStyle } from '../utils/inline-style.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
 import {
   escapeBlockStarts,
@@ -116,8 +117,17 @@ function escapeCellText(text: string, node?: Node): string {
   // is not one string either. `<td>a &lt;<span>img src=…&gt;</span></td>` reached
   // the file as a working tag, and `<td>[y<span>](url)</span></td>` as a link the
   // page never had — this path escapes its own text nodes and so had to ask too.
-  const ahead = node ? lookAhead(node, mayOpenLink(text)) : undefined;
-  return escapeHtmlSyntax(escapeInlineMarkdown(text, ahead?.text ?? ''), ahead?.continues ?? false);
+  const wantsTilde = text.includes('~');
+  const ahead = node ? lookAhead(node, mayOpenLink(text), wantsTilde) : undefined;
+  // No `behind`: the flattened `text` fallback has no node to look back from, and
+  // a cell that does is walked child by child here rather than by `convert()`, so
+  // there is no one place to ask. A tilde therefore pairs within its own node or
+  // with what follows — the direction that matters, since the `~~` of a `<del>`
+  // reaching a cell is written by a rule this walk runs itself.
+  return escapeHtmlSyntax(
+    escapeInlineMarkdown(text, { ahead: ahead?.text ?? '' }),
+    ahead?.continues ?? false,
+  );
 }
 
 // A cell is one line, whichever form the table takes. The converter's hard break
@@ -371,12 +381,14 @@ function getCellContent(
   return breaksToBr(escapePipes ? escapeCellPipes(marked) : marked);
 }
 
+// Through `elementStyle`, like every other style question, rather than a regex
+// over the `style` attribute: a column aligned by a class states it in the
+// snapshot and nowhere else, and a third parser of the same attribute is how the
+// three of them drift apart. It also stops `-x-text-align:right` counting, for
+// the same reason `-x-display:none` does not hide anything.
 function getAlignment(cell: Element): string {
-  const style = cell.getAttribute('style') ?? '';
-  if (/text-align\s*:\s*center/i.test(style)) return ':center:';
-  if (/text-align\s*:\s*right/i.test(style)) return ':right:';
-  if (/text-align\s*:\s*left/i.test(style)) return ':left:';
-  return 'none';
+  const align = alignFrom(elementStyle(cell));
+  return align === undefined ? 'none' : `:${align}:`;
 }
 
 function buildSeparator(width: number, alignment: string): string {

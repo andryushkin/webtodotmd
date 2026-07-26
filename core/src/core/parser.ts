@@ -1,7 +1,13 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { applyStyleEmphasis } from '../rules/inline.js';
-import { displaysAsBlock, hasStyle } from '../utils/inline-style.js';
+import { applyStyleEmphasis, emitsCodeSpan } from '../rules/inline.js';
+import {
+  displaysAsBlock,
+  displaysInline,
+  statesConversion,
+  statesDisplay,
+} from '../utils/inline-style.js';
+import { emitsStrike } from '../utils/flanking.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -52,6 +58,30 @@ const ENDS_THE_LINE = new Set([
   ...LINE_ENDS, 'br', 'hr', 'ul', 'ol', 'dl', 'table', 'figure', 'form',
 ]);
 
+// The blocks whose whole conversion is their content between blank lines. Only
+// these can decline the block a `display:inline` says they did not draw: a `<br>`
+// writes a break and no content, a `<table>` writes a grid and a `<pre>` a fence,
+// and for those the tag's own output is still the closest the file can come.
+const INLINEABLE_BLOCKS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
+/**
+ * Whether this element's style puts its content on a line of its own, which the
+ * sets above cannot say because they are read off the tag.
+ *
+ * `convert()` writes such an element between blank lines, so it begins a line and
+ * ends one exactly as a `<div>` does — and everything that reads the line has to
+ * know: a `# heading` the page showed as characters inside a
+ * `<span style="display:block">` was left unescaped at the start of a line and
+ * became a real H1.
+ *
+ * The attribute test comes first, and it is the narrow one: this runs per
+ * sibling on every lookahead walk, and a `color` on a `<span>` would otherwise
+ * pay for a parse of its declarations once per text node that walks past it.
+ */
+function styledBlock(el: Element): boolean {
+  return statesDisplay(el) && displaysAsBlock(el);
+}
+
 // How far the lookahead reads. A link label holds no `]`, so the search below stops
 // at the first one anyway; this only bounds the pathological case of a very long
 // run of text with no bracket in it, where nothing was ever going to be found.
@@ -63,33 +93,66 @@ type Lookahead = {
   /** The page's own text in it, as far as it was worth reading. */
   text: string;
   done: boolean;
+  /** Whether a tilde still has to be looked for; see `settled`. */
+  wantsTilde: boolean;
 };
 
 /** Nothing further can change the answer: a `]` with a character after it settles
- * every label still open, and so does a newline, which no label may contain. */
-function settled(text: string): boolean {
-  return text.length >= LOOKAHEAD_LIMIT || /\n|\][\s\S]/.test(text);
+ * every label still open, and so does a newline, which no label may contain. The
+ * tilde question is settled by finding one, since one partner is all it takes. */
+function settled(ahead: Lookahead): boolean {
+  if (ahead.text.length >= LOOKAHEAD_LIMIT) return true;
+  if (ahead.wantsTilde && !ahead.text.includes('~')) return false;
+  return /\n|\][\s\S]/.test(ahead.text);
 }
 
-/** Text in document order, stopping where the line does. */
+/**
+ * Text in document order, stopping where the line does.
+ *
+ * A struck element contributes the `~~` its rule writes, and a code span its
+ * backtick, as well as their text. Those are the two delimiters the tilde rule
+ * has to see: everything else in the output is either the page's own characters
+ * or a mark no tilde can join with. Gathered only when a tilde is being asked
+ * about, so the ordinary lookahead still reads the page's text and nothing else.
+ */
 function absorb(node: Node, ahead: Lookahead): void {
   if (ahead.done) return;
   if (node.nodeType === TEXT_NODE) {
     ahead.text += node.textContent ?? '';
-    if (settled(ahead.text)) ahead.done = true;
+    if (settled(ahead)) ahead.done = true;
     return;
   }
   if (node.nodeType !== ELEMENT_NODE) return;
-  const tag = (node as Element).tagName.toLowerCase();
-  // A <br> or a nested block ends the line inside a sibling just as it does outside.
-  if (tag === 'br' || LINE_ENDS.has(tag)) {
+  const el = node as Element;
+  const tag = el.tagName.toLowerCase();
+  // A <br> or a nested block ends the line inside a sibling just as it does
+  // outside, and so does a style that makes a block out of something else.
+  if (tag === 'br' || LINE_ENDS.has(tag) || styledBlock(el)) {
     ahead.done = true;
     return;
   }
-  for (const child of Array.from(node.childNodes)) {
+  const delimiter = !ahead.wantsTilde ? '' : written(el);
+  if (delimiter !== '') {
+    ahead.text += delimiter;
+    if (settled(ahead)) {
+      ahead.done = true;
+      return;
+    }
+  }
+  for (const child of Array.from(el.childNodes)) {
     absorb(child, ahead);
     if (ahead.done) return;
   }
+  if (delimiter !== '') {
+    ahead.text += delimiter;
+    if (settled(ahead)) ahead.done = true;
+  }
+}
+
+/** The delimiter this element's rule writes at each of its two ends, if any. */
+function written(el: Element): string {
+  if (emitsStrike(el)) return '~~';
+  return emitsCodeSpan(el) ? '`' : '';
 }
 
 /**
@@ -108,11 +171,16 @@ function absorb(node: Node, ahead: Lookahead): void {
  * *what* — because a `[` is only markup when a `](` turns up, and escaping every
  * bracket that ends a node would brand every `[1]` on the page.
  */
-export function lookAhead(node: Node, wantsText: boolean): Lookahead {
+export function lookAhead(node: Node, wantsText: boolean, wantsTilde = false): Lookahead {
   // Starting `done` is what makes the caller's `wantsText` a real saving: with no
   // text to gather, the walk stops the moment `continues` is answered, which is at
   // the first sibling — the whole of the question this used to ask.
-  const ahead: Lookahead = { continues: false, text: '', done: !wantsText };
+  const ahead: Lookahead = {
+    continues: false,
+    text: '',
+    done: !wantsText && !wantsTilde,
+    wantsTilde,
+  };
   for (let current: Node | null = node; current; current = current.parentNode) {
     for (let next = current.nextSibling; next; next = next.nextSibling) {
       if (next.nodeType === ELEMENT_NODE) {
@@ -120,8 +188,9 @@ export function lookAhead(node: Node, wantsText: boolean): Lookahead {
         // opensBlock(). Tested before `continues` is set: claiming it first meant
         // `<div>Q&amp;A<h2>x</h2></div>` paid for a backslash the h2 makes
         // unnecessary — the noise this walk exists to avoid.
-        const tag = (next as Element).tagName.toLowerCase();
-        if (tag === 'br' || LINE_ENDS.has(tag)) return ahead;
+        const el = next as Element;
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'br' || LINE_ENDS.has(tag) || styledBlock(el)) return ahead;
         ahead.continues = true;
       } else if ((next.textContent ?? '') !== '') {
         ahead.continues = true;
@@ -131,21 +200,76 @@ export function lookAhead(node: Node, wantsText: boolean): Lookahead {
     }
     const parent = current.parentNode;
     if (!parent || parent.nodeType !== ELEMENT_NODE) return ahead;
-    if (LINE_ENDS.has((parent as Element).tagName.toLowerCase())) return ahead;
+    const el = parent as Element;
+    if (LINE_ENDS.has(el.tagName.toLowerCase()) || styledBlock(el)) return ahead;
   }
   return ahead;
 }
 
+/**
+ * The tail of what the line writes before this node — the other direction of the
+ * same question, and asked only about tildes.
+ *
+ * The bracket rule needs no such walk: killing either delimiter kills the link,
+ * so the node holding the `[` can settle it alone by reading forward. A tilde is
+ * not symmetric that way, because one of the two halves may be a delimiter this
+ * converter *emits*: `<del>x</del>` writes `~~x~~`, and a `~` in the text after
+ * it makes the closing run three long, which is a tilde code fence. The `<del>`
+ * rule cannot see the text; the text node has to look back.
+ *
+ * It stops at the first thing that writes anything, because that is where the
+ * seam is — a partner further away is `ahead`'s business on the other side.
+ */
+function writtenBefore(node: Node): string {
+  for (let current: Node | null = node; current; current = current.parentNode) {
+    for (let prev = current.previousSibling; prev; prev = prev.previousSibling) {
+      const tail = writtenTail(prev);
+      if (tail !== undefined) return tail;
+    }
+    const parent = current.parentNode;
+    if (!parent || parent.nodeType !== ELEMENT_NODE) return '';
+    const el = parent as Element;
+    if (LINE_ENDS.has(el.tagName.toLowerCase()) || styledBlock(el)) return '';
+  }
+  return '';
+}
+
+/** What this node leaves at its end, or undefined when it writes nothing at all. */
+function writtenTail(node: Node): string | undefined {
+  if (node.nodeType === TEXT_NODE) {
+    const text = node.textContent ?? '';
+    return text === '' ? undefined : text;
+  }
+  if (node.nodeType !== ELEMENT_NODE) return undefined;
+  const el = node as Element;
+  const tag = el.tagName.toLowerCase();
+  // A line boundary: nothing on the other side of it can reach this node.
+  if (tag === 'br' || LINE_ENDS.has(tag) || styledBlock(el)) return '';
+  if (emitsStrike(el)) return '~~';
+  for (let child = el.lastChild; child; child = child.previousSibling) {
+    const tail = writtenTail(child);
+    if (tail !== undefined) return tail;
+  }
+  return undefined;
+}
+
 function opensBlock(node: Node): boolean {
   const parent = node.parentElement;
-  if (!parent || !BLOCK_PARENTS.has(parent.tagName.toLowerCase())) return false;
+  // A style is the second way to be a block, and the parser has to read it here
+  // too: `<span style="display:block"># heading</span>` is written between blank
+  // lines by `convert()`, so its text starts a line, and while only the tag was
+  // asked about the page's literal `# heading` arrived as a real H1.
+  if (!parent) return false;
+  if (!BLOCK_PARENTS.has(parent.tagName.toLowerCase()) && !styledBlock(parent)) return false;
   for (let prev = node.previousSibling; prev; prev = prev.previousSibling) {
     // Anything that ends the line before this text leaves it opening one. Only
     // `<br>` was asked about, so `<div>x<hr>## y</div>` and the same with a `<p>`
     // printed the page's literal `## y` as a real heading — the block moved the
     // text to the start of a line and nothing escaped it there.
-    if (prev.nodeType === ELEMENT_NODE && ENDS_THE_LINE.has((prev as Element).tagName.toLowerCase())) {
-      return true;
+    if (prev.nodeType === ELEMENT_NODE) {
+      const el = prev as Element;
+      if (ENDS_THE_LINE.has(el.tagName.toLowerCase()) || styledBlock(el)) return true;
+      return false;
     }
     if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
   }
@@ -200,30 +324,44 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // what could open a tag is neutralized there.
     if (literal === 'code') return text;
     // Every escaper judges a construct by what follows it, and none can see past
-    // the end of this node — so they are told what does. Only the bracket rule
-    // reads the text itself, so a node it has no use for skips gathering it.
-    const ahead = lookAhead(node, literal === 'none' && mayOpenLink(text));
+    // the end of this node — so they are told what does. Only the bracket and
+    // tilde rules read the text itself, so a node neither has a use for skips
+    // gathering it, which is almost every node on almost every page.
+    const prose = literal === 'none';
+    const wantsTilde = prose && text.includes('~');
+    const ahead = lookAhead(node, prose && mayOpenLink(text), wantsTilde);
     if (literal === 'math') return escapeMathTags(text, ahead.continues);
+    const seam = { behind: wantsTilde ? writtenBefore(node) : '', ahead: ahead.text };
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
-    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text, ahead.text), ahead.continues);
+    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text, seam), ahead.continues);
     return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
   }
   if (node.nodeType === ELEMENT_NODE) {
     const el = node as Element;
+    const tag = el.tagName.toLowerCase();
     const rule = findRule(el, options);
     const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
     // The two things a style says that no rule can read off a tag: that this run
-    // is emphasised, and that it stands on a line of its own. The marks go inside
-    // whatever the rule writes and the break goes outside it, so a styled block
-    // keeps being a block and a styled `<span>` keeps its place in the sentence.
+    // is emphasised, and which line its content stands on. The marks go inside
+    // whatever the rule writes and the line is decided outside it, so a styled
+    // block keeps being a block and a styled `<span>` keeps its place in the
+    // sentence.
     //
-    // The attributes are asked for first because almost no element carries one,
-    // and `inLiteral` walks the ancestry: without this the whole tree paid for its
-    // own depth on every document, styled or not.
-    const styled = hasStyle(el) && !inLiteral(el);
+    // The gate is what the style *says*, not that there is one: a `color` or a
+    // `margin` — most of what a page writes inline — cannot change a character of
+    // the output, and asking for presence charged every one of them the ancestor
+    // walk below plus a parse of its declarations.
+    const styled = statesConversion(el) && !inLiteral(el);
     if (!styled) return rule.replacement(el, childContent, options);
-    const out = rule.replacement(el, applyStyleEmphasis(el, childContent, options), options);
+    const content = applyStyleEmphasis(el, childContent, options);
+    // Declining the block the tag implies, which is the mirror of adding one. It
+    // is decided here rather than in each rule because every block tag has the
+    // question and only `<div>` was answering it, while the snapshot records the
+    // declaration for all of them: two `<p style="display:inline">` were two
+    // paragraphs in the file and one sentence on the page.
+    if (INLINEABLE_BLOCKS.has(tag) && displaysInline(el)) return content;
+    const out = rule.replacement(el, content, options);
     if (!displaysAsBlock(el)) return out;
     const trimmed = out.trim();
     return trimmed === '' ? out : `\n\n${trimmed}\n\n`;

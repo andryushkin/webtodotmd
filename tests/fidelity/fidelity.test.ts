@@ -129,6 +129,17 @@ beforeAll(() => {
 // checked directly against the previous commit and fails there identically. A
 // class is keyed by its shrunk document, so a seed that stops failing on the
 // tilde shrinks to whatever else it was already carrying.
+//
+// Then 84 -> 84, and the total sitting still is exactly the case this file's
+// second test exists for. Three classes went and two arrived. The three are the
+// tilde rule learning to ask whether a partner exists rather than where in the
+// node the tilde stands: `~word~` after any prefix used to be written `~word\~`,
+// and a backslash does not stop the renderer that draws the preview from closing
+// a `<del>` on it, so the reader lost `~word~` and gained a stray `\`. The two
+// that arrived are the ` · ` fold on a nested table, already fifty lines of this
+// list, reached by the shrinker only now that the same seeds stop failing on the
+// tilde first; both were run against the previous commit and fail there
+// identically.
 const SEEDS = 200;
 const CEILING = 84;
 
@@ -140,9 +151,6 @@ const CEILING = 84;
 // Regenerate with `bun tests/fidelity/survey.ts 200` after a deliberate change.
 const RECORDED_CLASSES: readonly string[] = [
   "<p style=\"font-weight:700;font-style:italic\"><b>**</b></p>",
-  "<p>!-- swallowed --&gt; b~word~</p>",
-  "<p>!-- swallowed --&gt;~word~</p>",
-  "<p>&amp;amp;~word~</p>",
   "<p>(https://example.com)&lt;div&gt; x `</p>",
   "<p>(https://example.com)&lt;table&gt;</p>",
   "<p>(https://example.com)<b>text</b></p>",
@@ -181,6 +189,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><div><table><tbody><tr><td>hello world</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>word</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>x</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><div><table><tbody><tr><td>~word~</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>🎉</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption> </caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>![alt]</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -208,6 +217,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>===</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>foo bar</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>hello world</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>~word~</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>❤️</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>===</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>word</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",

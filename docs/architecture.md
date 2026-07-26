@@ -10,10 +10,19 @@ The conversion escapes Markdown syntax that came from the page as text, so the
 file renders what the reader saw rather than turning `**bold**` in a tutorial
 into bold. `core/src/core/escape.ts` splits this in three on purpose: inline
 marks are safe per text node; `#`, `>`, bullets and numbering depend on starting
-a line, which only the text node opening a block does; and HTML — a `<` that
-could open a tag, an `&` that could complete a character reference — is escaped
-because Markdown carries raw HTML through, so a page *about* HTML would lose the
-text it was showing.
+a line, which only the text node opening a block does — a block the tag says, or
+one a `display` does, since `convert()` writes such an element between blank
+lines too; and HTML — a `<` that could open a tag, an `&` that could complete a
+character reference — is escaped because Markdown carries raw HTML through, so a
+page *about* HTML would lose the text it was showing.
+
+A tilde is the exception among the inline marks, because one alone is not a mark
+at all. It is escaped only where a partner can reach it: another tilde in the
+same node that CommonMark's flanking rules let pair with it, or one the line
+writes beside it — the `~~` a `<del>` emits. `~` in front of a struck run made
+`~~~x~~`, which is a tilde code fence, and the text left the page rather than
+gaining a stray marker; `~/src` and `~5 min` pay nothing, and neither does a pair
+that cannot close, as in `~/src and ~/usr`.
 
 That last pass only works because `sanitize()` calls `normalize()` last: a parser
 hands `&lt;/td&gt;` over as three adjacent text nodes, each harmless on its own,
@@ -77,8 +86,9 @@ Most of the web states its formatting through a class, though, and a class says
 nothing to a clone — which made Tailwind, Notion, Medium, Substack and Confluence
 pages convert as unformatted text. `src/content/style-snapshot.ts` is the other
 half of the answer: it holds live nodes for the length of a capture and writes
-the computed style of everything whose face differs from what its tag and its
-parent already imply into a `data-s2md-style` attribute, in ordinary CSS
+the computed style of everything whose face — its weight, its slant, its line,
+the box it makes, the edge it lines up against — differs from what its tag and
+its parent already imply into a `data-s2md-style` attribute, in ordinary CSS
 declarations. `elementStyle()` joins the two — the snapshot is the later word,
 since a computed style already has the inline one folded into it, and silence in
 it is not a denial. No snapshot is the ordinary case rather than an error:
@@ -96,16 +106,40 @@ stops at `display:none` instead of marking a hidden menu one node at a time, and
 it descends into `shadowRoot`, since `expandShadowRoots()` flattens a component
 by copying `innerHTML` and attributes are the only thing that copy carries.
 
-Two places read the same declarations for their own questions: `isHidden()` in
-the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and
-`opacity:0` before anything is converted, and `endsLine()` in the flanking
-module, since a `display:block` on a `<span>` ends a line as surely as a `<br>`.
-`isHidden()` also drops the shapes `.sr-only` and `.visually-hidden` are built
-from — a zero `clip` rect, `clip-path: inset(50%)` or deeper, a four-digit
-negative `text-indent` or offset, a one-pixel box that clips — because the text
-under them was written for a screen reader and no reader ever saw it. Each
-threshold sits where no layout lands by accident: the mistake that costs here is
-deleting text a person saw, not keeping text they did not.
+Silence has one exception, and it is the only way the snapshot can take something
+back rather than add to it. The core falls back on the page's own `style` for
+every property the snapshot says nothing about, so where the cascade overruled
+that attribute — an `!important` rule lifting a `display:none`, a stylesheet
+transition turning an `opacity:0` into a reveal — the computed value is written
+down explicitly. Left unsaid, the attribute decides alone, and what it decides is
+to delete the element with everything under it.
+
+Several places read the same declarations for their own questions: `isHidden()`
+in the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and
+`opacity:0` before anything is converted; `endsLine()` in the flanking module,
+since a `display:block` on a `<span>` ends a line as surely as a `<br>`;
+`getAlignment()` in the table rule, which is what carries a column aligned by a
+class into the separator row; and the parser, where `convert()` decides the box
+both ways round — `block` on an inline tag wraps the rule's output in blank
+lines, `inline` on a block tag returns the content instead of running the rule —
+while `opensBlock()` and the lookahead ask the same question so that the text of
+a styled block is escaped as the start of a line. Each of those is gated on the
+raw attribute mentioning the property, so an element carrying only a `color`
+costs no more than one carrying no style at all. `isHidden()` also drops the
+shapes `.sr-only` and `.visually-hidden` are built from — a zero `clip` rect,
+`clip-path: inset(50%)` or deeper, a four-digit negative `text-indent` or offset,
+a one-pixel box that clips — because the text under them was written for a screen
+reader and no reader ever saw it. Each threshold sits where no layout lands by
+accident: the mistake that costs here is deleting text a person saw, not keeping
+text they did not.
+
+Two of the verdicts therefore hold back. An `opacity: 0` with a transition or an
+animation over it is a section on its way in rather than one withheld, and
+`visibility` is the one property a descendant can declare back — so a hidden box
+holding something visible again survives, and only the parts of it still hidden
+are removed. The snapshot settles that mark on the way *out* of its walk, once it
+knows what the subtree holds; deciding in document order left a hidden paragraph
+standing whenever a visible sibling happened to follow it.
 
 ## Surfaces
 

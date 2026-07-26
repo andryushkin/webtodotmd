@@ -22,7 +22,7 @@ import { computedStyleIn, snapshotScope, snapshotStyles, type ComputedStyleOf } 
 type Declarations = Record<string, string>;
 
 // The properties a child takes from its parent when nothing else speaks.
-const INHERITED = ['font-weight', 'font-style', 'visibility', 'text-indent'];
+const INHERITED = ['font-weight', 'font-style', 'visibility', 'text-indent', 'text-align'];
 
 // Everything a computed style always has a value for.
 const INITIAL: Declarations = {
@@ -32,6 +32,7 @@ const INITIAL: Declarations = {
   'font-weight': '400',
   'font-style': 'normal',
   'text-decoration-line': 'none',
+  'text-align': 'start',
   'text-indent': '0px',
   position: 'static',
   left: 'auto',
@@ -59,7 +60,10 @@ const UA: Record<string, Declarations> = {
   tbody: { display: 'table-row-group' },
   tr: { display: 'table-row' },
   td: { display: 'table-cell' },
-  th: { display: 'table-cell', 'font-weight': '700' },
+  // Centred, as every UA stylesheet centres a header cell — the value the
+  // snapshot has to recognise as the tag's rather than the page's.
+  th: { display: 'table-cell', 'font-weight': '700', 'text-align': 'center' },
+  caption: { ...BLOCK, 'text-align': 'center' },
   h1: { ...BLOCK, 'font-weight': '700' }, h2: { ...BLOCK, 'font-weight': '700' },
   h3: { ...BLOCK, 'font-weight': '700' }, h4: { ...BLOCK, 'font-weight': '700' },
   h5: { ...BLOCK, 'font-weight': '700' }, h6: { ...BLOCK, 'font-weight': '700' },
@@ -86,6 +90,11 @@ function inlineDeclarations(el: Element): Declarations {
  * A cascade small enough to read and large enough to state a real page in.
  * `rules` is keyed by class name, which is how every framework in the brief
  * writes the styles this stage exists to see.
+ *
+ * `!important` is here for one reason: it is the only way a stylesheet can beat
+ * what the page wrote in the element's own `style` attribute, and that gap —
+ * where the attribute says one thing and the reader saw another — is what the
+ * snapshot has to be able to state.
  */
 function styleEngine(rules: Record<string, Declarations> = {}): ComputedStyleOf {
   const cache = new WeakMap<Element, Declarations>();
@@ -94,13 +103,21 @@ function styleEngine(rules: Record<string, Declarations> = {}): ComputedStyleOf 
     if (hit) return hit;
     const parent = el.parentElement;
     const own: Declarations = { ...INITIAL };
+    const important: Declarations = {};
     if (parent) {
       const above = resolve(parent);
       for (const property of INHERITED) own[property] = above[property]!;
     }
     Object.assign(own, UA[el.tagName.toLowerCase()] ?? {});
-    for (const name of Array.from(el.classList)) Object.assign(own, rules[name] ?? {});
+    for (const name of Array.from(el.classList)) {
+      for (const [property, value] of Object.entries(rules[name] ?? {})) {
+        const forced = /\s*!important$/.test(value);
+        if (forced) important[property] = value.replace(/\s*!important$/, '');
+        own[property] = forced ? important[property]! : value;
+      }
+    }
     Object.assign(own, inlineDeclarations(el));
+    Object.assign(own, important);
     cache.set(el, own);
     return own;
   };
@@ -169,6 +186,9 @@ const TAILWIND: Record<string, Declarations> = {
   'visually-hidden': { 'clip-path': 'inset(50%)', position: 'absolute' },
   'offscreen': { position: 'absolute', left: '-9999px' },
   'ir': { 'text-indent': '-9999px' },
+  'text-right': { 'text-align': 'right' },
+  'text-center': { 'text-align': 'center' },
+  'text-left': { 'text-align': 'left' },
 };
 
 describe('what the snapshot writes down', () => {
@@ -313,6 +333,83 @@ describe('text nobody could see', () => {
     expect(toMarkdown(doc.body).trim()).toBe('a');
   });
 
+  // And the same page written the other way round. The decision cannot be made
+  // on the way down — when the hidden sibling is read, nothing yet says the
+  // ancestor's claim will be taken back — so it is made on the way out, where
+  // the answer is known. Read in document order it used to keep both.
+  it('the hidden sibling marks itself whichever way round they are', () => {
+    const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
+    const doc = page('<div class="invisible"><p data-name="unseen">b</p><p class="shown" data-name="seen">a</p></div>');
+    snapshotStyles([doc.body], styleEngine(rules));
+    expect(marks(doc)).toEqual({ unseen: 'visibility:hidden' });
+    expect(toMarkdown(doc.body).trim()).toBe('a');
+  });
+
+  it('a hidden branch several levels down still marks its own top', () => {
+    const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
+    const doc = page(
+      '<div class="invisible">' +
+        '<section data-name="branch"><p>b</p><span>c</span></section>' +
+        '<p class="shown" data-name="seen">a</p>' +
+        '</div>',
+    );
+    snapshotStyles([doc.body], styleEngine(rules));
+    expect(marks(doc)).toEqual({ branch: 'visibility:hidden' });
+    expect(toMarkdown(doc.body).trim()).toBe('a');
+  });
+
+  // The attribute the page wrote itself is the one the core falls back on, and
+  // the snapshot's silence cannot take it back: leaving the retraction unsaid
+  // deleted the `<div>` with the paragraph the page had just revealed inside it.
+  it('a retraction is stated when the page hid the box in its own attribute', () => {
+    const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
+    const doc = page('<div style="visibility:hidden"><p class="shown">Read me</p></div>');
+    const restore = snapshotStyles([doc.body], styleEngine(rules));
+    expect(marks(doc)).toEqual({ div: 'visibility:visible' });
+    expect(toMarkdown(doc.body).trim()).toBe('Read me');
+    restore();
+  });
+
+  // The same hole from the other side: a stylesheet rule that beats the
+  // attribute. The snapshot is the later word only where it speaks, so where the
+  // cascade overruled the page's own `display:none` it has to speak.
+  it('a hiding attribute the stylesheet overruled is answered', () => {
+    const rules = { ...TAILWIND, forced: { display: 'block !important' } };
+    const doc = page('<div style="display:none" class="forced">Read me</div>');
+    const restore = snapshotStyles([doc.body], styleEngine(rules));
+    expect(marks(doc).div).toContain('display:block');
+    expect(toMarkdown(doc.body).trim()).toBe('Read me');
+    restore();
+  });
+
+  // A reveal-on-scroll library writes the `opacity` on the element and leaves
+  // the transition in its stylesheet, so neither half alone is the whole case.
+  it('an opacity:0 the stylesheet is about to fade in keeps its text', () => {
+    const rules = {
+      ...TAILWIND,
+      fade: { 'transition-duration': '0.4s', 'transition-property': 'opacity' },
+    };
+    const doc = page('<p style="opacity:0" class="fade">Read me</p>');
+    const restore = snapshotStyles([doc.body], styleEngine(rules));
+    expect(toMarkdown(doc.body).trim()).toBe('Read me');
+    restore();
+  });
+
+  // The declarations exist to carry the verdict, and one too long to spell is
+  // dropped on the way — so the set that travels is asked the question again,
+  // and the shape is named when no set can answer it.
+  it('a clipped element whose declarations cannot be carried still reads as hidden', () => {
+    const rules = {
+      ...TAILWIND,
+      // Real in shape, and past the length a single declaration may take.
+      wide: { 'clip-path': `inset(50% ${'0'.repeat(110)}px 50% 50%)`, position: 'absolute' },
+    };
+    const { written } = snapshot('<p><span class="wide">x</span></p>', rules);
+    expect(written.span).toBe('clip:rect(0px, 0px, 0px, 0px)');
+    const { after } = convert('<p><span class="wide">unseen</span>Read me</p>', rules);
+    expect(after).toBe('Read me');
+  });
+
   it('a retraction leaves the rest of the element standing', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     const { written } = snapshot(
@@ -368,6 +465,106 @@ describe('the page is handed back as it was', () => {
     const restore = snapshotStyles([outer, inner], styleEngine(TAILWIND));
     restore();
     expect(doc.body.innerHTML).toBe(original);
+  });
+});
+
+describe('how far the capture reaches', () => {
+  const scopeOf = (html: string, select: string, inside = false): Element | null => {
+    const doc = page(html);
+    const target = doc.querySelector(select)!;
+    const range = doc.createRange();
+    // A selection is a pair of offsets in a text node far more often than it is
+    // a whole element, and that is the case with no element of its own.
+    if (inside) {
+      const text = target.firstChild!;
+      range.setStart(text, 0);
+      range.setEnd(text, (text.textContent ?? '').length);
+    } else {
+      range.selectNodeContents(target);
+    }
+    return snapshotScope(range);
+  };
+
+  it('is the range\'s own common ancestor', () => {
+    expect(scopeOf('<article><p id="a">one</p><p>two</p></article>', 'article')?.tagName.toLowerCase())
+      .toBe('article');
+  });
+
+  it('is the element around a range that lives in a text node', () => {
+    expect(scopeOf('<article><p id="a">one</p></article>', '#a', true)?.tagName.toLowerCase())
+      .toBe('p');
+  });
+
+  // A selection inside a table is handed its header row back from above it
+  // (`enrichRange`), so the styles the capture may read start at the table.
+  it('is the whole table when the range is inside one', () => {
+    const html = '<div><table><thead><tr><th>H</th></tr></thead><tbody><tr><td id="c">v</td></tr></tbody></table></div>';
+    expect(scopeOf(html, '#c', true)?.tagName.toLowerCase()).toBe('table');
+    expect(scopeOf(html, '#c')?.tagName.toLowerCase()).toBe('table');
+  });
+
+  // Nothing above the document has a style, and `captureStyles` filters the
+  // null out — a capture with no styles read, rather than one that threw.
+  it('is nothing when the range reaches past every element', () => {
+    const doc = page('<p>x</p>');
+    const range = doc.createRange();
+    range.selectNode(doc.documentElement);
+    expect(snapshotScope(range)).toBeNull();
+  });
+
+  // The seam to the browser, which every other test here replaces: a property
+  // with no value is silence, and a value is lower-cased so that the two sides
+  // spell the same declaration the same way.
+  it('reads a live style through the core\'s lookup', () => {
+    const read = computedStyleIn({
+      getComputedStyle: () => ({
+        getPropertyValue: (property: string) =>
+          property === 'font-weight' ? '700' : property === 'display' ? 'BLOCK' : '',
+      }),
+    })({} as Element);
+    expect(read('font-weight')).toBe('700');
+    expect(read('display')).toBe('block');
+    expect(read('visibility')).toBeUndefined();
+  });
+});
+
+describe('which edge the text lines up against', () => {
+  it('a column aligned by a class reaches the separator row', () => {
+    const html = '<table><tr><th class="text-right">Sum</th></tr><tr><td>42</td></tr></table>';
+    const { before, after } = convert(html, TAILWIND);
+    expect(before).toContain('| --- |');
+    expect(after).toContain('| --: |');
+  });
+
+  it.each([['text-right', 'right'], ['text-center', 'center']])(
+    '%s is recorded',
+    (className, value) => {
+      const { written } = snapshot(`<p class="${className}">x</p>`, TAILWIND);
+      expect(written).toEqual({ p: `text-align:${value}` });
+    },
+  );
+
+  // `left` is what an unstyled element already computes, so the class saying it
+  // states nothing — but the same class inside a right-aligned box does.
+  it('left is a change only where the context is not already left', () => {
+    expect(snapshot('<p class="text-left">x</p>', TAILWIND).written).toEqual({});
+    const { written } = snapshot(
+      '<div class="text-right"><p class="text-left" data-name="cell">x</p></div>',
+      TAILWIND,
+    );
+    expect(written.cell).toBe('text-align:left');
+  });
+
+  // The tag's own centring, and a value a cell merely inherits, are both what
+  // the page would have shown with no rule at all.
+  it('says nothing for a header nobody aligned', () => {
+    const html = '<table><tr><th>H</th></tr><tr><td>v</td></tr></table>';
+    expect(snapshot(html, TAILWIND).written).toEqual({});
+  });
+
+  it('says nothing on a child that only inherits the alignment', () => {
+    const { written } = snapshot('<div class="text-right"><p>x</p></div>', TAILWIND);
+    expect(written).toEqual({ div: 'text-align:right' });
   });
 });
 

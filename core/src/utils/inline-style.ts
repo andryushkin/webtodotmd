@@ -46,13 +46,22 @@ const CSS_WIDE = new Set(['inherit', 'initial', 'unset', 'revert', 'revert-layer
  * or inside `url(…)` belongs to the value. None of the properties read here can
  * hold either, but a parser that answered a *different* property wrongly would
  * be a trap for whoever adds the next one. Later wins, as the cascade says.
+ *
+ * The last declaration is flushed after the loop rather than by a branch inside
+ * it. Inside the loop the flush sat *after* the test for an open quote, so it
+ * was unreachable while one was open and the attribute's whole tail was thrown
+ * away instead — an apostrophe in a font name (`font-family:Tom's`) is all it
+ * took, and a trailing backslash could step the index past the end and lose the
+ * tail with no quote open at all. CSS closes an unterminated string at the end
+ * of input; so does this now, and a value that is then nonsense is rejected by
+ * the readers below, which is where a nonsense value belongs.
  */
 function parseDeclarations(css: string): Map<string, string> {
   const out = new Map<string, string>();
   let depth = 0;
   let quote = '';
   let start = 0;
-  for (let i = 0; i <= css.length; i += 1) {
+  for (let i = 0; i < css.length; i += 1) {
     const ch = css[i];
     if (quote !== '') {
       if (ch === '\\') i += 1;
@@ -62,11 +71,12 @@ function parseDeclarations(css: string): Map<string, string> {
     if (ch === '"' || ch === "'") quote = ch;
     else if (ch === '(') depth += 1;
     else if (ch === ')' && depth > 0) depth -= 1;
-    else if (ch === undefined || (ch === ';' && depth === 0)) {
+    else if (ch === ';' && depth === 0) {
       addDeclaration(out, css.slice(start, i));
       start = i + 1;
     }
   }
+  addDeclaration(out, css.slice(start));
   return out;
 }
 
@@ -135,7 +145,11 @@ export function elementStyle(el: Element): StyleReader {
   return (property) => snapshot(property) ?? inline(property);
 }
 
-/** Whether either attribute is present at all — the parser's cheap gate. */
+/**
+ * Whether either attribute is present at all. Not a gate for anything here —
+ * `statesConversion()` below is, because presence says nothing about whether the
+ * work it guards can change the output.
+ */
 export function hasStyle(el: Element): boolean {
   return el.getAttribute?.('style') != null || el.getAttribute?.(SNAPSHOT_ATTR) != null;
 }
@@ -161,10 +175,16 @@ export const BOLD_WEIGHT = 700;
  */
 export const BOLD_THRESHOLD = 600;
 
-const NAMED_WEIGHTS: Readonly<Record<string, number>> = {
-  normal: NORMAL_WEIGHT,
-  bold: BOLD_WEIGHT,
-};
+// A Map, not an object literal, and for a reason that has nothing to do with
+// taste: a plain object answers `constructor`, `toString` and every other name on
+// `Object.prototype` with a function, and the lookups below test the answer
+// against `undefined`. A CSS value is page text, so the page picks the key — and
+// a lookup that says "yes, a number" while handing back `Object` puts a function
+// where the rest of this file has declared a weight.
+const NAMED_WEIGHTS = new Map<string, number>([
+  ['normal', NORMAL_WEIGHT],
+  ['bold', BOLD_WEIGHT],
+]);
 
 // CSS Fonts 4: `bolder` and `lighter` step along the scale from whatever was
 // inherited, they do not add a fixed amount.
@@ -184,7 +204,7 @@ function lighter(inherited: number): number {
 export function weightFrom(read: StyleReader, inherited: number): number | undefined {
   const value = read('font-weight');
   if (value === undefined) return undefined;
-  const named = NAMED_WEIGHTS[value];
+  const named = NAMED_WEIGHTS.get(value);
   if (named !== undefined) return named;
   if (value === 'bolder') return bolder(inherited);
   if (value === 'lighter') return lighter(inherited);
@@ -234,18 +254,109 @@ export function displayFrom(read: StyleReader): 'block' | 'inline' | 'other' | u
 // table out of `<div>`s and `<span>`s, and those sit side by side.
 const BLOCK_DISPLAYS = new Set(['block', 'flow-root', 'flex', 'grid', 'table', 'list-item']);
 
-/** Whether this style takes the element out of the render entirely. */
-export function hiddenFrom(read: StyleReader): boolean {
+/**
+ * The properties that say an element is on its way in rather than kept out.
+ *
+ * Named here so a snapshot can carry the evidence beside an `opacity: 0` it
+ * decided to keep: the transition lives in the stylesheet and the `opacity` in
+ * the attribute more often than not, and the clone reads only the attribute.
+ */
+export const REVEAL_PROPERTIES: readonly string[] = [
+  'animation-name', 'transition-duration', 'transition-property',
+];
+
+// A CSS time, the only token in a `transition` a duration can be.
+const TIME = /^-?\d*\.?\d+m?s$/;
+
+// Everything a `transition` part can hold that is not the property being
+// transitioned: the easings, by keyword and by function.
+const EASING = /^(?:linear|ease(?:-in)?(?:-out)?|step-start|step-end|allow-discrete|normal|cubic-bezier\(|steps\(|linear\()/;
+
+// `all` covers `opacity`, and `all` is also what a part naming no property means.
+const REVEALED = /\ball\b|\bopacity\b/;
+
+/** Whether any time in a comma-separated CSS time list is above zero. */
+function anyPositive(list: string): boolean {
+  return list.split(',').some((part) => Number.parseFloat(part) > 0);
+}
+
+/**
+ * The `transition` shorthand, which is how a `style` attribute writes it.
+ *
+ * A comma-separated list; each part carries a property name, a duration, an
+ * easing and a delay in any order, and the name is optional — a part without one
+ * transitions `all`. An easing function has commas of its own, so splitting on
+ * commas cuts some parts in half; every half it produces is read the same way,
+ * and a half that cannot name a property or a time simply answers no.
+ */
+function transitionReveals(value: string): boolean {
+  for (const part of value.split(',')) {
+    let duration: number | undefined;
+    let property: string | undefined;
+    for (const token of part.trim().split(/\s+/)) {
+      if (token === '') continue;
+      // The first time is the duration; a second one is the delay.
+      if (TIME.test(token)) duration ??= Number.parseFloat(token);
+      else if (property === undefined && !EASING.test(token)) property = token;
+    }
+    if ((duration ?? 0) > 0 && REVEALED.test(property ?? 'all')) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether the element is on its way in rather than kept out.
+ *
+ * `opacity: 0` is two different things on a modern page: text a script has put
+ * beyond reach, and a section a reveal-on-scroll library has not animated in yet.
+ * The second is most of an article below the fold, and dropping it would take
+ * half of every such page out of a select-all. A declared transition or a running
+ * animation is the difference between them.
+ *
+ * Both spellings are read, because both sources spell it their own way: a
+ * computed style always states the longhands, and a `style` attribute almost
+ * always writes the shorthand.
+ */
+export function revealsFrom(read: StyleReader): boolean {
+  const name = read('animation-name');
+  if (name !== undefined) {
+    if (name !== 'none') return true;
+  } else {
+    const animation = read('animation');
+    if (animation !== undefined && firstToken(animation) !== 'none') return true;
+  }
+  const duration = read('transition-duration');
+  // A property list too long for a snapshot to carry arrives as silence, and
+  // CSS's own default for it is `all` — so silence reveals rather than hides.
+  if (duration !== undefined) {
+    return anyPositive(duration) && REVEALED.test(read('transition-property') ?? 'all');
+  }
+  const shorthand = read('transition');
+  return shorthand !== undefined && transitionReveals(shorthand);
+}
+
+/** Whether this style takes the element out of the render, for good. */
+export function removedFrom(read: StyleReader): boolean {
   const display = read('display');
   if (display !== undefined && firstToken(display) === 'none') return true;
-  const visibility = read('visibility');
-  // `collapse` is `hidden` everywhere except on a table row or column, where it
-  // removes the row instead — invisible either way.
-  if (visibility === 'hidden' || visibility === 'collapse') return true;
   const opacity = read('opacity');
   // Fully transparent, in either spelling: `0` and `0%`. A value merely close to
-  // zero is left alone — the mistake that costs is deleting text a reader saw.
-  return opacity !== undefined && Number.parseFloat(opacity) === 0;
+  // zero is left alone — the mistake that costs is deleting text a reader saw,
+  // and so is deleting the text they were half a scroll away from seeing.
+  if (opacity === undefined || Number.parseFloat(opacity) !== 0) return false;
+  return !revealsFrom(read);
+}
+
+/**
+ * Whether this style makes the element invisible — the one of these a descendant
+ * can take back, because `visibility` inherits and a child may declare it again.
+ *
+ * `collapse` is `hidden` everywhere except on a table row or column, where it
+ * removes the row instead — invisible either way.
+ */
+export function invisibleFrom(read: StyleReader): boolean {
+  const visibility = read('visibility');
+  return visibility === 'hidden' || visibility === 'collapse';
 }
 
 /**
@@ -314,8 +425,9 @@ function positionedOffscreen(read: StyleReader): boolean {
  * the tree on purpose, for a screen reader, and clipped, indented or pushed off
  * the canvas so that nobody else meets it. `display:none` would take it away from
  * the screen reader too, which is exactly why these classes exist and why they
- * are what a page writes — so a converter that only knows `hiddenFrom` copies
- * "Skip to main content" and "opens in a new tab" into the reader's file.
+ * are what a page writes — so a converter that only knows `removedFrom` and
+ * `invisibleFrom` copies "Skip to main content" and "opens in a new tab" into
+ * the reader's file.
  *
  * Each test is the whole idiom rather than one of its parts, and each threshold
  * is set where no layout would land by accident. The cost of a false positive
@@ -330,6 +442,38 @@ export function visuallyHiddenFrom(read: StyleReader): boolean {
     positionedOffscreen(read) ||
     pinhole(read)
   );
+}
+
+/**
+ * Every property a hiding verdict rests on that a snapshot may have to answer.
+ *
+ * The core reads the `style` attribute wherever the snapshot is silent, which
+ * means silence cannot take back what the page wrote there. Where a stylesheet
+ * overruled the attribute — an `!important` rule, or a transition that turns an
+ * `opacity: 0` into a reveal — whoever holds the live nodes has to say the
+ * computed value out loud, or the attribute decides alone and takes the
+ * element's whole subtree with it.
+ *
+ * `visibility` is deliberately absent: a descendant can take that one back, so
+ * the two sides state it in their own terms rather than by copying a value.
+ */
+export const HIDING_PROPERTIES: readonly string[] = ['display', 'opacity', ...CLIPPED_PROPERTIES];
+
+/**
+ * Which edge this style lines its text up against, in the terms GFM has.
+ *
+ * `start` and `end` are the logical spellings of the same thing, and a computed
+ * style states them in place of `left` and `right`. `justify` is neither, and a
+ * pipe table has no way to write it.
+ */
+export function alignFrom(read: StyleReader): 'left' | 'center' | 'right' | undefined {
+  const value = read('text-align');
+  if (value === undefined) return undefined;
+  const keyword = firstToken(value);
+  if (keyword === 'center') return 'center';
+  if (keyword === 'right' || keyword === 'end') return 'right';
+  if (keyword === 'left' || keyword === 'start') return 'left';
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -381,6 +525,48 @@ function tagOf(el: Element): string {
 // test is a regex over the raw attribute rather than a parse.
 const AFFECTS_TYPEFACE = /font-weight|font-style|text-decoration/i;
 
+// Everything `convert()` acts on: the three properties above and the one that
+// moves the element's content onto a line of its own or back off it. Anything
+// else a page writes inline — and `color`, `margin` and `padding` are most of it
+// — cannot change a character of the output, so an element carrying only those
+// must cost no more than an element carrying nothing.
+const AFFECTS_CONVERSION = /font-weight|font-style|text-decoration|display/i;
+const AFFECTS_BOX = /display/i;
+
+// A regex over the raw attributes rather than a parse. That is the whole point:
+// these two are asked before any of the work they gate, so they have to be
+// cheaper than it. Neither can answer *what* the style says, only that it is on
+// the subject.
+function states(el: Element, properties: RegExp): boolean {
+  const raw = el.getAttribute?.('style');
+  if (raw != null && properties.test(raw)) return true;
+  const snapshot = el.getAttribute?.(SNAPSHOT_ATTR);
+  return snapshot != null && properties.test(snapshot);
+}
+
+/**
+ * Whether either attribute says anything the conversion reads — the parser's
+ * gate, and the reason it is not `hasStyle`.
+ *
+ * Presence was the old test, and it charged every styled element the ancestor
+ * walk that decides whether it sits in code or maths, plus a full parse of its
+ * declarations, for a `color` no rule here has ever read. A page is full of
+ * those.
+ */
+export function statesConversion(el: Element): boolean {
+  return states(el, AFFECTS_CONVERSION);
+}
+
+/**
+ * Whether either attribute mentions `display` — the gate for the narrower
+ * question the escaper asks, and it asks it per sibling on every lookahead walk.
+ * Without it a `color` on a `<span>` paid for a parse of its declarations once
+ * for every text node that walked past it.
+ */
+export function statesDisplay(el: Element): boolean {
+  return states(el, AFFECTS_BOX);
+}
+
 /** What the reader sees at a point in the tree: all three answers at once. */
 interface Face {
   weight: number;
@@ -417,10 +603,7 @@ export interface StyleMarks {
 const NO_MARKS: StyleMarks = { bold: false, italic: false, strike: false };
 
 function silent(el: Element): boolean {
-  const raw = el.getAttribute?.('style');
-  if (raw && AFFECTS_TYPEFACE.test(raw)) return false;
-  const snapshot = el.getAttribute?.(SNAPSHOT_ATTR);
-  return !snapshot || !AFFECTS_TYPEFACE.test(snapshot);
+  return !states(el, AFFECTS_TYPEFACE);
 }
 
 /**
@@ -486,13 +669,59 @@ export function displaysAsBlock(el: Element): boolean {
   return displayFrom(elementStyle(el)) === 'block';
 }
 
-/** Whether this element's style keeps its content in the line its tag would leave. */
+/**
+ * Whether this element's style keeps its content in the line its tag would leave.
+ *
+ * The mirror of `displaysAsBlock` and gated the same way round: a tag that was
+ * never going to draw a block has nothing to decline, and reading `inline` off
+ * one would strip the marks an `<em>` or a `<code>` writes for a declaration
+ * that agrees with them. `style-snapshot.ts` records the value on exactly this
+ * condition, which is the other half of the same agreement.
+ */
 export function displaysInline(el: Element): boolean {
+  if (!BLOCK_TAGS.has(tagOf(el))) return false;
   return displayFrom(elementStyle(el)) === 'inline';
 }
 
-/** Whether this element is styled out of the render, or out of sight. */
+// `visibility` inherits and a descendant can declare it back, so the nearest
+// declaration on the way up is the one that decides — asking the element alone
+// leaves every child of a hidden box reading as visible. The gate is `hasStyle`
+// rather than a parse: this runs for every element the sanitizer looks at, and
+// almost none of them has an ancestor that declares anything at all.
+function invisibleAbove(el: Element): boolean {
+  for (let node = el.parentElement; node !== null; node = node.parentElement) {
+    if (!hasStyle(node)) continue;
+    const visibility = elementStyle(node)('visibility');
+    if (visibility === 'visible') return false;
+    if (visibility === 'hidden' || visibility === 'collapse') return true;
+  }
+  return false;
+}
+
+// Anything below that declares itself visible again. Only a styled element can,
+// so the search is over those rather than over the subtree.
+function revealedBelow(el: Element): boolean {
+  const styled = el.querySelectorAll?.(`[style],[${SNAPSHOT_ATTR}]`);
+  if (styled === undefined) return false;
+  for (const descendant of Array.from(styled)) {
+    if (elementStyle(descendant)('visibility') === 'visible') return true;
+  }
+  return false;
+}
+
+/**
+ * Whether this element is styled out of the render, or out of sight.
+ *
+ * `visibility` is the one property here that a descendant can take back, and
+ * removing an element removes everything under it: a box that hid itself and
+ * then let a child be seen again has to stay, or the text the reader was looking
+ * at goes with the box. What is still hidden inside it says so for itself —
+ * `visibility` inherits, so a child that declares nothing is invisible too.
+ */
 export function hiddenByStyle(el: Element): boolean {
   const read = elementStyle(el);
-  return hiddenFrom(read) || visuallyHiddenFrom(read);
+  if (removedFrom(read) || visuallyHiddenFrom(read)) return true;
+  const own = read('visibility');
+  const invisible = own === undefined ? invisibleAbove(el) : invisibleFrom(read);
+  return invisible && !revealedBelow(el);
 }

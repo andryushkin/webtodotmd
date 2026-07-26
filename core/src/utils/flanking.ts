@@ -135,16 +135,47 @@ function endsLine(el: Element): boolean {
 // The tag each wrapper's mark comes from, which is also the mark its own style
 // can decline: a `<strong style="font-weight:normal">` emits nothing, and a
 // neighbour that expected a delimiter from it would give up its own for nothing.
-const EMPHASIS_TAGS: Readonly<Record<string, keyof StyleMarks>> = {
-  em: 'italic',
-  i: 'italic',
-  strong: 'bold',
-  b: 'bold',
-  del: 'strike',
-  s: 'strike',
-};
+//
+// A Map because the key is a tag name off the page and an object literal answers
+// `constructor` and the rest of `Object.prototype` with a function: an unknown
+// `<constructor>` element read as an emphasis wrapper, and the `<em>` beside it
+// gave up `*b*` for `<em>b</em>` against a delimiter that was never written.
+const EMPHASIS_TAGS = new Map<string, keyof StyleMarks>([
+  ['em', 'italic'],
+  ['i', 'italic'],
+  ['strong', 'bold'],
+  ['b', 'bold'],
+  ['del', 'strike'],
+  ['s', 'strike'],
+]);
 // Wrappers with no Markdown spelling at all: their rule always emits the tag.
 const TAG_ONLY = new Set(['sub', 'sup']);
+
+// Where the content is characters rather than markup, so nothing inside spells a
+// delimiter at all. The same sets `parser.ts` names, written out a second time
+// for the same reason `BLOCK_BOUNDARY` above is — importing them would tie this
+// file to the parser, and the parser already imports this one.
+const LITERAL_TAGS = new Set(['pre', 'code', 'kbd', 'samp']);
+const MATH_TAGS = new Set(['math', 'mjx-container', 'annotation']);
+
+/**
+ * Whether this element's content is characters rather than markup.
+ *
+ * `convert()` asks exactly this before it lets a style emit anything, because a
+ * `**` inside a fence or a code span is two characters of the sample. This file
+ * has to ask it too: a syntax highlighter puts a `<span style="font-weight:bold">`
+ * on every keyword, and `followsEmphasis` walked *into* the code span, found one,
+ * and made the `<em>` after the span fall back to `<em>` tags — against a
+ * delimiter the highlighted span never wrote, since what really ends a code span
+ * is its backtick.
+ */
+function inLiteral(el: Element): boolean {
+  for (let up: Element | null = el; up; up = up.parentElement) {
+    const tag = up.tagName.toLowerCase();
+    if (LITERAL_TAGS.has(tag) || MATH_TAGS.has(tag) || up.classList?.contains('katex')) return true;
+  }
+  return false;
+}
 
 /**
  * Whether this element becomes emphasis — delimiters, or the tag they fall back
@@ -156,13 +187,37 @@ const TAG_ONLY = new Set(['sub', 'sup']);
  * unless this says yes for the span as well. A block is asked about first
  * because its delimiters, if it has any, are written *inside* it — what a
  * neighbour meets at its edge is the end of a line.
+ *
+ * A literal context answers no whatever it holds: the code rule takes its
+ * element's *text*, so neither a tag nor a style inside one reaches the output.
  */
 function emitsEmphasis(el: Element): boolean {
-  if ((el.textContent ?? '').trim() === '' || endsLine(el)) return false;
-  const mark = EMPHASIS_TAGS[el.tagName.toLowerCase()];
+  if ((el.textContent ?? '').trim() === '' || endsLine(el) || inLiteral(el)) return false;
+  const mark = EMPHASIS_TAGS.get(el.tagName.toLowerCase());
   if (mark !== undefined && !suppressedMarks(el)[mark]) return true;
   const added = addedMarks(el);
   return added.bold || added.italic || added.strike;
+}
+
+/**
+ * Whether this element's conversion writes `~~` against its own two edges.
+ *
+ * Strikethrough is the one mark whose delimiter a page can also *show*, and the
+ * two have to share the characters: a lone `~` in the text beside a `<del>` runs
+ * into the `~~` it writes, and `~~~x~~` is a tilde code fence — the text leaves
+ * the page rather than gaining a stray marker. So the escaper asks this about a
+ * text node's neighbours, which is why the answer is a tilde and not the
+ * representative delimiter `edgeDelimiter` hands back below.
+ *
+ * Yes is the safe answer where it is uncertain: `emphasis()` may fall back to a
+ * `<del>` tag against a colliding neighbour, and flanking whitespace inside the
+ * element is lifted outside the delimiters. Both cost one backslash the reader
+ * sees; being wrong the other way costs the text.
+ */
+export function emitsStrike(el: Element): boolean {
+  if ((el.textContent ?? '').trim() === '' || endsLine(el) || inLiteral(el)) return false;
+  if (EMPHASIS_TAGS.get(el.tagName.toLowerCase()) === 'strike') return !suppressedMarks(el).strike;
+  return addedMarks(el).strike;
 }
 
 /**

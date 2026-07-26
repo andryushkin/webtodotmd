@@ -243,6 +243,39 @@ describe('display', () => {
     expect(toMarkdown('<div>a<div style="display:inline">b</div>c</div>')).toBe('abc\n');
   });
 
+  // The `<div>` rule was the only one that asked, while the content script
+  // records the declaration for every block tag — so two `<p style="display:
+  // inline">` were two paragraphs in the file and one sentence on the page. The
+  // decision sits in `convert()` now, beside the one that *adds* a block.
+  it.each([
+    ['paragraphs', '<p style="display:inline">a</p><p style="display:inline">b</p>', 'ab\n'],
+    ['list items', '<ul><li style="display:inline">a</li><li style="display:inline">b</li></ul>', 'ab\n'],
+    ['a heading in a sentence', '<div>x<h2 style="display:inline">a</h2>y</div>', 'xay\n'],
+    ['a quote in a sentence', '<div>x<blockquote style="display:inline">a</blockquote>y</div>', 'xay\n'],
+    ['from a snapshot', '<p data-s2md-style="display:inline">a</p><p>b</p>', 'a\n\nb\n'],
+  ])('inline declines the block a %s tag implies', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
+  // Only a tag that would have drawn a block has a block to decline. Reading the
+  // declaration off anything else would strip the marks its rule writes — and a
+  // `<br>` carries `display:inline` in every computed style there is, so the
+  // snapshot puts one on every line break in the document.
+  it.each([
+    ['emphasis keeps its marks', '<p>a<em style="display:inline">b</em>c</p>', 'a*b*c\n'],
+    ['a code span keeps its backticks', '<p>a<code style="display:inline">b</code>c</p>', 'a`b`c\n'],
+    ['a break stays a break', '<p>a<br data-s2md-style="display:inline">b</p>', 'a\\\nb\n'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
+  // A grid is not content between blank lines, so there is nothing to unwrap
+  // that would leave a table behind.
+  it('inline on a table keeps the grid', () => {
+    const html = '<table style="display:inline"><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></table>';
+    expect(toMarkdown(html)).toContain('| a   | b   |');
+  });
+
   it('block on an element that is already one changes nothing', () => {
     expect(toMarkdown('<div style="display:block">a</div><div>b</div>')).toBe('a\n\nb\n');
   });
@@ -276,6 +309,82 @@ describe('hidden by style', () => {
   });
 });
 
+// The section that is not hidden, only not shown yet. A reveal-on-scroll library
+// puts `opacity: 0` on half an article and fades each part in as it arrives, and
+// dropping those would take the second half of every such page out of a
+// select-all. The transition or the animation beside it is the whole difference,
+// and a `style` attribute writes it in the shorthand.
+describe('an opacity:0 that is on its way in', () => {
+  it.each([
+    ['a transition shorthand', 'opacity:0;transition:opacity .4s'],
+    ['one naming no property', 'opacity:0;transition:.4s'],
+    ['one naming all', 'opacity:0;transition:all 300ms ease-in-out'],
+    ['one with an easing function', 'opacity:0;transition:opacity .4s cubic-bezier(0.4,0,0.2,1)'],
+    ['a list with opacity in it', 'opacity:0;transition:color .2s,opacity .4s'],
+    ['a delay after the duration', 'opacity:0;transition:opacity .4s .2s'],
+    ['an animation shorthand', 'opacity:0;animation:fade-in 1s ease'],
+    ['the longhands a computed style writes', 'opacity:0;transition-duration:0.4s;transition-property:opacity'],
+    ['a recorded animation-name', 'opacity:0;animation-name:fade-in'],
+  ])('%s keeps the text', (_name, style) => {
+    expect(md(`<span style="${style}">SHOWN</span> ok`)).toBe('SHOWN ok');
+    expect(md(`<span data-s2md-style="${style}">SHOWN</span> ok`)).toBe('SHOWN ok');
+  });
+
+  it.each([
+    ['a transition on something else', 'opacity:0;transition:color .4s'],
+    ['a transition with no time', 'opacity:0;transition:opacity'],
+    ['a zero duration', 'opacity:0;transition-duration:0s;transition-property:opacity'],
+    ['an animation set to none', 'opacity:0;animation:none'],
+    ['a recorded animation-name of none', 'opacity:0;animation-name:none'],
+  ])('%s still drops it', (_name, style) => {
+    expect(md(`<span style="${style}">HIDDEN</span>ok`)).toBe('ok');
+    expect(md(`<span data-s2md-style="${style}">HIDDEN</span>ok`)).toBe('ok');
+  });
+});
+
+// `visibility` is the one of these a descendant can declare back, and removing an
+// element removes everything under it — so a box that hid itself and then let
+// something inside be seen has to stay. It reads the same whichever attribute
+// says it, which is what makes a snapshot able to take back what a `style` wrote.
+describe('a visibility a descendant takes back', () => {
+  it.each([
+    ['the style attribute', 'style'],
+    ['a recorded computed style', 'data-s2md-style'],
+  ])('is answered through %s', (_name, attribute) => {
+    const html =
+      `<div ${attribute}="visibility:hidden"><p ${attribute}="visibility:visible">SHOWN</p></div>`;
+    expect(toMarkdown(html).trim()).toBe('SHOWN');
+  });
+
+  it('is answered across the two attributes', () => {
+    expect(toMarkdown('<div style="visibility:hidden"><p data-s2md-style="visibility:visible">SHOWN</p></div>').trim())
+      .toBe('SHOWN');
+  });
+
+  // The box stays, but only what declared itself visible again comes with it:
+  // `visibility` inherits, so a sibling that declares nothing is invisible too.
+  it('leaves the rest of the box hidden', () => {
+    const html =
+      '<div style="visibility:hidden"><p style="visibility:visible">SHOWN</p><p>HIDDEN</p></div>';
+    expect(toMarkdown(html).trim()).toBe('SHOWN');
+  });
+
+  it('still drops a box with nothing visible under it', () => {
+    expect(toMarkdown('<div style="visibility:hidden"><p>HIDDEN</p></div><p>ok</p>').trim())
+      .toBe('ok');
+  });
+
+  // Nothing takes back the other three: a descendant of a `display:none`, an
+  // `opacity:0` or a clipped box cannot be seen whatever it declares.
+  it.each([['display:none'], ['opacity:0'], ['clip:rect(0px, 0px, 0px, 0px)']])(
+    '%s is not undone from inside',
+    (style) => {
+      expect(toMarkdown(`<div style="${style}"><p style="visibility:visible">HIDDEN</p></div><p>ok</p>`).trim())
+        .toBe('ok');
+    },
+  );
+});
+
 describe('the style attribute itself', () => {
   it('a semicolon inside a value does not split the declaration', () => {
     expect(md('<span style="background:url(a;b);font-weight:bold">x</span> y')).toBe('**x** y');
@@ -294,6 +403,31 @@ describe('the style attribute itself', () => {
     // already had: writing a mark for it would claim a change that is not one.
     expect(md('<strong style="font-weight:inherit">x</strong> y')).toBe('**x** y');
   });
+
+  // The last declaration is flushed after the loop, not by a branch inside it:
+  // there the flush sat behind the test for an open quote and could not run
+  // while one was, so an apostrophe in a font name threw the attribute's whole
+  // tail away. CSS closes an unterminated string at the end of input, and the
+  // declaration it makes is then nonsense the readers reject — which is where a
+  // nonsense value belongs, rather than taking its neighbours with it.
+  it.each([
+    ['an unterminated quote after the weight', "<span style=\"font-weight:bold;font-family:Tom's\">x</span> y"],
+    ['a quoted family before it', "<span style=\"font-family:'Tom Sans';font-weight:bold\">x</span> y"],
+    ['a trailing backslash inside a quote', "<span style=\"font-weight:bold;font-family:'a\\\">x</span> y"],
+    ['an unbalanced paren after the weight', '<span style="font-weight:bold;background:url(a">x</span> y'],
+  ])('%s keeps the weight', (_name, html) => {
+    expect(md(html)).toBe('**x** y');
+  });
+
+  // A CSS value is page text, so the page picks the key. An object literal
+  // answers `constructor` with a function, and `weightFrom` handed it back where
+  // it had declared a number.
+  it.each([['constructor'], ['toString'], ['valueOf'], ['__proto__']])(
+    'font-weight:%s is not a weight',
+    (value) => {
+      expect(md(`<strong style="font-weight:${value}">x</strong> y`)).toBe('**x** y');
+    },
+  );
 });
 
 // The second source of the same properties: a computed style someone with live

@@ -26,6 +26,9 @@ import { parseHTML } from 'linkedom';
 import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
 import {
+  BOLD_THRESHOLD,
+  BOLD_WEIGHT,
+  NORMAL_WEIGHT,
   displayFrom,
   elementStyle,
   hiddenByStyle,
@@ -197,21 +200,26 @@ function normUrl(url: string): string {
 // The emphasis tags used to be listed here and are not any more: bold, italic and
 // strikethrough are read off the *face* now, below, because a page states them in
 // two languages and only one of them is a tag.
-const FACT_TAGS: Readonly<Record<string, string>> = {
-  code: 'code',
-  kbd: 'code',
-  samp: 'code',
-  sub: 'sub',
-  sup: 'sup',
-  blockquote: 'quote',
-  li: 'item',
-  h1: 'h1',
-  h2: 'h2',
-  h3: 'h3',
-  h4: 'h4',
-  h5: 'h5',
-  h6: 'h6',
-};
+//
+// A Map for the reason `FACE_TAGS` below is one: a `<constructor>` element is
+// markup a page may write, and an object literal answered it with `Object` — a
+// truthy value, so the oracle claimed a fact named after a native function and
+// then failed to find it on the other side of the round trip.
+const FACT_TAGS = new Map<string, string>([
+  ['code', 'code'],
+  ['kbd', 'code'],
+  ['samp', 'code'],
+  ['sub', 'sub'],
+  ['sup', 'sup'],
+  ['blockquote', 'quote'],
+  ['li', 'item'],
+  ['h1', 'h1'],
+  ['h2', 'h2'],
+  ['h3', 'h3'],
+  ['h4', 'h4'],
+  ['h5', 'h5'],
+  ['h6', 'h6'],
+]);
 
 // ---------------------------------------------------------------------------
 // Typeface, which is a claim a page makes in two languages.
@@ -240,21 +248,26 @@ interface Face {
   strike: boolean;
 }
 
-const PLAIN: Face = { weight: 400, italic: false, strike: false };
-const BOLD = 700;
-const BOLD_ENOUGH = 600;
+// The thresholds are the core's own, imported for the reason the readers are:
+// a second copy would let the core move its idea of "bold enough" while this
+// file went on measuring against the old one and called every semibold run a
+// defect. What this file owns is which elements are held to make a claim.
+const PLAIN: Face = { weight: NORMAL_WEIGHT, italic: false, strike: false };
 
-// The tags that state a face, and the mark each one states.
-const FACE_TAGS: Readonly<Record<string, keyof Face>> = {
-  b: 'weight',
-  strong: 'weight',
-  i: 'italic',
-  em: 'italic',
-  cite: 'italic',
-  s: 'strike',
-  del: 'strike',
-  strike: 'strike',
-};
+// The tags that state a face, and the mark each one states. A Map, like the
+// core's own lookups: the key is a tag name off the page, and an object literal
+// answers `constructor` and every other name on `Object.prototype` with a
+// function that is not a mark.
+const FACE_TAGS = new Map<string, keyof Face>([
+  ['b', 'weight'],
+  ['strong', 'weight'],
+  ['i', 'italic'],
+  ['em', 'italic'],
+  ['cite', 'italic'],
+  ['s', 'strike'],
+  ['del', 'strike'],
+  ['strike', 'strike'],
+]);
 
 // Bold because of what they are, not because of what they say: a heading carries
 // its weight into everything inside it and cannot hand it back through a Markdown
@@ -290,10 +303,10 @@ function boldByItself(el: Element): boolean {
 
 function faceOf(el: Element, parent: Face): Face {
   const read = elementStyle(el);
-  const mark = FACE_TAGS[tagOf(el)];
+  const mark = FACE_TAGS.get(tagOf(el));
   const boldByTag = mark === 'weight' || boldByItself(el);
   return {
-    weight: weightFrom(read, parent.weight) ?? (boldByTag ? BOLD : parent.weight),
+    weight: weightFrom(read, parent.weight) ?? (boldByTag ? BOLD_WEIGHT : parent.weight),
     italic: italicFrom(read) ?? (mark === 'italic' || parent.italic),
     strike: struckFrom(read) ?? (mark === 'strike' || parent.strike),
   };
@@ -303,7 +316,7 @@ function faceFacts(el: Element, parent: Face, own: Face, out: string[]): void {
   const text = factText(el);
   // A mark around nothing claims nothing — the same rule `MARKS` states below.
   if (text === '') return;
-  if (own.weight >= BOLD_ENOUGH && parent.weight < BOLD_ENOUGH && !boldByItself(el)) {
+  if (own.weight >= BOLD_THRESHOLD && parent.weight < BOLD_THRESHOLD && !boldByItself(el)) {
     out.push(`strong:${text}`);
   }
   if (own.italic && !parent.italic) out.push(`em:${text}`);
@@ -435,12 +448,12 @@ function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void 
   } else if (tag === 'br') {
     out.push('break');
   } else if (OPAQUE.has(tag)) {
-    out.push(`${FACT_TAGS[tag] ?? tag}:${factText(el)}`);
+    out.push(`${FACT_TAGS.get(tag) ?? tag}:${factText(el)}`);
     return; // characters from here down, not structure
   } else if (isParagraph(el)) {
     out.push(`para:${factText(el)}`);
   } else {
-    const fact = FACT_TAGS[tag];
+    const fact = FACT_TAGS.get(tag);
     const text = fact ? factText(el) : '';
     if (fact && !(text === '' && MARKS.has(fact))) out.push(`${fact}:${text}`);
   }

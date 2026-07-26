@@ -64,26 +64,56 @@ describe('экранирование markdown из текста страницы
     expect(toMarkdown('<p>Intro<br>- item</p>').trim()).toContain('\\- item');
   });
 
-  // A tilde alone renders as itself, which is why it used to be left alone — but a
-  // tilde at the edge of a text node is a half, and a struck neighbour supplies the
-  // other. `~~~x~~` closes nothing and the reader loses `x` from the page entirely,
-  // the one defect the fidelity survey has found that costs content rather than
-  // characters. `~~` has no second spelling to fall back to, so the escape is the
-  // only repair.
+  // Тильда — единственный знак, который страница и конвертер пишут одинаково, и
+  // одна ничего не значит: паре нужна вторая половина. Вопрос поэтому не «где
+  // стоит тильда», а «дотянется ли до неё партнёр» — в этом же узле или в том,
+  // что строка допишет рядом. `~~~x~~` — это забор кода на тильдах: текст
+  // исчезает со страницы целиком, единственный найденный дефект, который стоит
+  // содержимого, а не символов.
   it.each([
     ['перед зачёркнутым тегом', '<p>~<del>x</del></p>', '\\~~~x~~'],
     ['перед зачёркнутым стилем', '<p>~<span style="text-decoration-line:line-through">x</span></p>', '\\~~~x~~'],
+    [
+      'перед зачёркнутым снапшотом',
+      '<p>~<span data-s2md-style="text-decoration-line:line-through">x</span></p>',
+      '\\~~~x~~',
+    ],
     ['после зачёркнутого', '<p><del>x</del>~</p>', '~~x~~\\~'],
     ['оба края узла', '<p>~home~</p>', '\\~home\\~'],
-  ])('край текстового узла: %s', (_name, html, expected) => {
+    ['пара разорвана по узлам', '<p><span>~y</span><span>x~</span></p>', '\\~yx\\~'],
+    // Внутри слова тильда фланкирует в обе стороны, поэтому пара собирается и
+    // посреди предложения — там, где два пути её не собирают.
+    ['диапазоны внутри слова', '<p>range 1~5 and 7~9</p>', 'range 1\\~5 and 7\\~9'],
+    // Экранированная тильда всё равно закрывает `<del>` в marked, поэтому платят
+    // обе половины пары или ни одна: `~word\\~\\~\\~` рисуется как `<del>`.
+    ['одна и три', '<p>~word~~~</p>', '\\~word\\~\\~\\~'],
+  ])('партнёр есть: %s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // Тильда прямо перед бэктиком не даёт код-спану открыться вовсе — плата за
+  // чужой разделитель, тот же шов с другой стороны.
+  it('перед код-спаном', () => {
+    expect(toMarkdown('<p>~<code>text</code></p>').trim()).toBe('\\~`text`');
   });
 
   it.each([
     ['путь', '<p>see ~/src for it</p>', 'see ~/src for it'],
     ['приближение', '<p>about ~5 min</p>', 'about ~5 min'],
-  ])('середина предложения не платит: %s', (_name, html, expected) => {
+    // Раньше платил каждый край текстового узла, и вот что это стоило: две
+    // тильды, которые не могут составить пару, тильда одна в ячейке и тильда в
+    // заголовке — четыре обратных слеша ни за что.
+    ['два пути в предложении', '<p>see ~/src and ~/usr for it</p>', 'see ~/src and ~/usr for it'],
+    ['две приближённости', '<p>about ~5 min or ~10 min</p>', 'about ~5 min or ~10 min'],
+    ['в заголовке', '<h2>~/home</h2>', '## ~/home'],
+    ['узел целиком из тильды', '<p><span>~</span></p>', '~'],
+  ])('партнёра нет: %s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  it('одинокая тильда в ячейке', () => {
+    const html = '<table><tr><td>~</td></tr><tr><td>b</td></tr></table>';
+    expect(toMarkdown(html)).toContain('| ~ ');
   });
 
   it('текст ячейки экранируется и в pipe-таблице', () => {
@@ -261,5 +291,37 @@ describe('блочный сосед открывает строку', () => {
     ['после инлайна', '<div><em>a</em> # not a heading</div>', '_a_ # not a heading'],
   ])('не экранирует лишнего: %s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// Блоком делает не только тег. `convert()` пишет элемент с `display:block` между
+// пустыми строками — значит его текст открывает строку ровно как текст `<div>`, а
+// спрашивали только про тег: литеральный `# heading` со страницы становился
+// настоящим H1, `---` уносил всю строку. Обе записи стиля, потому что до
+// конвертера доходят обе: собственный атрибут страницы и снятый снапшот.
+describe('стилевой блок открывает строку', () => {
+  const inside = (style: string, text: string) =>
+    `<p>x<span ${style}="display:block">${text}</span>y</p>`;
+  const after = (style: string, text: string) =>
+    `<p>x<span ${style}="display:block">a</span>${text}</p>`;
+
+  it.each([
+    ['заголовок', '# heading', '\\# heading'],
+    ['маркер списка', '- item', '\\- item'],
+    ['нумерация', '1. one', '1\\. one'],
+    ['цитата', '&gt; quoted', '\\> quoted'],
+    ['тематический разрыв', '---', '\\---'],
+  ])('%s', (_name, text, expected) => {
+    for (const style of ['style', 'data-s2md-style']) {
+      expect(toMarkdown(inside(style, text))).toContain(expected);
+      expect(toMarkdown(after(style, text))).toContain(expected);
+    }
+  });
+
+  // Плата — только за начало строки: тот же знак посреди предложения внутри
+  // стилевого блока обратного слеша не стоит.
+  it('середина стилевого блока не платит', () => {
+    expect(toMarkdown('<p>x<span style="display:block">mid # sentence</span>y</p>'))
+      .toContain('mid # sentence');
   });
 });

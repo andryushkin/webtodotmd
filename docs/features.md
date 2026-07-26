@@ -116,13 +116,23 @@ bold text, so it keeps its text and loses the mark. Inside code, preformatted
 text and formulas no mark is written at all — a `**` there would be two
 characters of the sample.
 
+The same goes for the alignment of a table column: a header aligned right in a
+stylesheet reaches the file as `---:`, exactly as one aligned right in its own
+`style` attribute does.
+
 Text the page hides never reaches the file: `display: none`, `visibility:
 hidden`, `opacity: 0`, and the shapes a `.sr-only` or `.visually-hidden` class is
 built from — a zero clip rect, a `clip-path` that insets the whole box, a text
 indent or an offset far off the canvas, a one-pixel box that clips. That is where
 "Skip to main content" and "opens in a new tab" live, and they were written for a
 screen reader rather than for a note. A section a page is about to fade in is not
-hidden, only not shown yet, and it is kept.
+hidden, only not shown yet, and it is kept — a transition or an animation over
+the transparency is the difference, whichever of the two the page states it in.
+
+`visibility` is the one of these a page can take back further in: a box hidden
+with something inside it declared visible again stays, and only the parts of it
+still hidden go. Removing the box would take the visible part with it, and text a
+reader was looking at is the expensive thing to lose.
 
 Link targets are limited to the schemes a Markdown file can carry safely — the
 same set the preview's sanitizer accepts, so the two halves of the product agree

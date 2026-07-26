@@ -21,24 +21,45 @@
  *    the `**` that a naive rule puts inside a `##` cannot be written at all. It
  *    is also what makes the snapshot survive being cut out of the page: a run
  *    whose weight came from a paragraph left behind carries no claim of its own.
- * 3. **Put the page back exactly as it was.** A capture is a read. The
+ * 3. **Say it out loud where silence would let the attribute decide.** Rule 2
+ *    has one exception, and it is the whole of what a snapshot can take back.
+ *    The core reads the page's own `style` wherever this is silent, so a hiding
+ *    declaration the cascade overruled — an `!important` rule, a transition that
+ *    turns an `opacity: 0` into a reveal, a box a descendant makes visible again
+ *    — has to be answered with the computed value. Silence there is the
+ *    attribute deciding alone, and it decides to delete the element with
+ *    everything under it.
+ * 4. **Put the page back exactly as it was.** A capture is a read. The
  *    attribute's previous value is restored rather than removed, because the
  *    page may own the name — the same discipline `core/src/browser.ts` uses for
  *    its own marks, and for the same reason.
+ *
+ * `visibility` is the one property here a descendant can take back, so its mark
+ * is the one that cannot be decided on the way down: the walk collects the
+ * subtree's claims and settles them on the way out, where it knows whether
+ * anything below can be seen. Reading it in document order kept a hidden
+ * paragraph whenever a visible one happened to come after it.
  */
 
 import {
   BOLD_THRESHOLD,
   BOLD_WEIGHT,
   CLIPPED_PROPERTIES,
+  HIDING_PROPERTIES,
   NORMAL_WEIGHT,
+  REVEAL_PROPERTIES,
   SNAPSHOT_ATTR,
+  alignFrom,
   displayFrom,
+  inlineStyle,
+  invisibleFrom,
   isBlockTag,
   isBoldTag,
   isItalicTag,
   isStruckTag,
   italicFrom,
+  removedFrom,
+  revealsFrom,
   struckFrom,
   visuallyHiddenFrom,
   weightFrom,
@@ -72,21 +93,21 @@ export function computedStyleIn(view: {
 interface Context {
   weight: number;
   italic: boolean;
-  visibility: string;
+  align: 'left' | 'center' | 'right' | undefined;
 }
 
-const PLAIN: Context = { weight: NORMAL_WEIGHT, italic: false, visibility: 'visible' };
+const PLAIN: Context = { weight: NORMAL_WEIGHT, italic: false, align: undefined };
 
 interface Pending {
   el: Element;
   declarations: string[];
   /**
-   * Where a `visibility:hidden` sits in `declarations`, so a visible descendant
-   * can take it back. `visibility` is the one property here that a child can
-   * override after its parent has already been decided, and the sanitizer drops
-   * an element with everything under it — so an ancestor marked hidden would
-   * take a visible child with it. Nothing else needs this: no descendant of a
-   * `display:none`, an `opacity:0` or a clipped box can be seen either.
+   * Where a `visibility:hidden` sits in `declarations`, so an ancestor that turns
+   * out to be hidden as a whole can take it back and speak once for the lot.
+   * `visibility` is the one property here a descendant can override, so it is the
+   * one whose mark cannot be decided until the subtree below it has been read.
+   * Nothing else needs this: no descendant of a `display:none`, an `opacity:0` or
+   * a clipped box can be seen either, and the walk stops at those.
    */
   retractable: number;
 }
@@ -110,27 +131,6 @@ function firstWord(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   const space = value.indexOf(' ');
   return space < 0 ? value : value.slice(0, space);
-}
-
-/** Whether any time in a comma-separated CSS time list is non-zero. */
-function anyPositive(list: string | undefined): boolean {
-  return (list ?? '').split(',').some((part) => Number.parseFloat(part) > 0);
-}
-
-/**
- * Whether the element is on its way in rather than kept out.
- *
- * `opacity: 0` is two different things on a modern page: text a script has put
- * beyond reach, and a section that a reveal-on-scroll library has not animated
- * in yet. Both look identical to a style attribute, and the second is most of the
- * page below the fold — dropping it would take an article's second half out of a
- * select-all. A declared transition or a running animation is the difference, and
- * it is a difference only a computed style can see.
- */
-function reveals(read: StyleReader): boolean {
-  if ((read('animation-name') ?? 'none') !== 'none') return true;
-  if (!anyPositive(read('transition-duration'))) return false;
-  return /\ball\b|\bopacity\b/.test(read('transition-property') ?? '');
 }
 
 // A declaration is one property of a style attribute, so a value carrying a
@@ -160,20 +160,64 @@ function readerOf(declarations: string[]): StyleReader {
   return (property) => map.get(property);
 }
 
+// `clip: rect(0px, 0px, 0px, 0px)` says "none of this" in one declaration and no
+// other property has to agree with it, which is what makes it the shape to fall
+// back on when the element's own declarations cannot be carried.
+const HIDDEN_SHAPE = 'clip:rect(0px, 0px, 0px, 0px)';
+
+// Every UA stylesheet centres a table header, so a computed `center` there is
+// the tag speaking rather than the page.
+const CENTRED_TAGS = new Set(['th', 'caption']);
+
+function isCentredTag(tag: string): boolean {
+  return CENTRED_TAGS.has(tag);
+}
+
+/**
+ * Answers a hiding declaration in the `style` attribute that the cascade overruled.
+ *
+ * The snapshot is the later word only where it speaks: the core falls back on the
+ * attribute for every property this is silent about, so silence here cannot take
+ * anything back. An `!important` rule that lifts a `display:none`, or a
+ * stylesheet transition that turns an `opacity:0` into a section on its way in —
+ * both leave the attribute saying the opposite of what the reader saw, and the
+ * attribute deciding alone deletes the element with everything under it.
+ *
+ * Only the properties the attribute actually claims are answered, so this costs
+ * nothing on the elements — almost all of them — that claim nothing.
+ */
+function answerOverruledAttribute(el: Element, read: StyleReader, out: string[]): void {
+  const own = inlineStyle(el);
+  if (!removedFrom(own) && !visuallyHiddenFrom(own)) return;
+  for (const property of HIDING_PROPERTIES) {
+    if (own(property) !== undefined) carry(out, property, read(property));
+  }
+  // The evidence for a reveal is in the stylesheet and the `opacity: 0` is in the
+  // attribute, which is exactly the split this case is about.
+  if (revealsFrom(read)) {
+    for (const property of REVEAL_PROPERTIES) carry(out, property, read(property));
+  }
+}
+
 /** The declarations a clipped-away element's verdict rests on. */
 function clippedDeclarations(read: StyleReader): string[] {
   const all: string[] = [];
   for (const property of CLIPPED_PROPERTIES) carry(all, property, read(property));
   // Most of those are the property's initial value and travel for nothing; they
   // are collected only because the list has to be the list the verdict is made
-  // from. Which ones carried it is not reasoned about — the short set is asked
-  // the same question, and kept only if it still answers yes.
+  // from. Which ones carried it is not reasoned about — each set is asked the
+  // same question, and kept only if it still answers yes.
   const kept = all.filter((declaration) => !INERT.test(declaration));
   if (kept.length > 0 && visuallyHiddenFrom(readerOf(kept))) return kept;
-  // The short set could not carry the verdict, or the value limits above left
-  // nothing to carry at all. The verdict still holds — the reader saw none of
-  // this — so the whole set travels, and failing that the shape is named.
-  return all.length > 0 ? all : ['clip:rect(0px, 0px, 0px, 0px)'];
+  // The full set is asked too, and not assumed: `carry` drops a value longer than
+  // it can spell or one carrying a semicolon, so the declaration the verdict
+  // actually rested on may be the one missing. A set that no longer reads as
+  // hidden would let the element through with the text nobody saw still in it —
+  // which is the whole of what this function exists to prevent.
+  if (all.length > 0 && visuallyHiddenFrom(readerOf(all))) return all;
+  // Nothing that could be carried carries the verdict. It still holds — the
+  // reader saw none of this — so the shape is named instead.
+  return [HIDDEN_SHAPE];
 }
 
 /**
@@ -201,8 +245,20 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     return entry;
   };
 
-  function walk(el: Element, context: Context, retractable: Pending[]): void {
-    if (seen.has(el)) return;
+  /**
+   * Walks `el`, appending to `marks` the entries in this subtree that claim
+   * `visibility:hidden`, and answering whether anything in it can be seen.
+   *
+   * That answer is what decides the one property here a descendant can take
+   * back, and it can only be given on the way out — which is why the marks
+   * travel with it. A box that is hidden with nothing visible under it absorbs
+   * its subtree's marks and speaks once; a box that is hidden with something
+   * visible under it leaves them where they are and says nothing itself.
+   */
+  function walk(el: Element, context: Context, marks: Pending[]): boolean {
+    // A second root inside the first. Reading it as visible is the safe answer:
+    // the worst it does is leave an ancestor's claim unmade.
+    if (seen.has(el)) return true;
     seen.add(el);
     const read = computed(el);
     const tag = el.tagName.toLowerCase();
@@ -211,47 +267,35 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     // than mark a whole hidden menu one element at a time.
     if (firstWord(read('display')) === 'none') {
       record(el, ['display:none']);
-      return;
+      return false;
     }
     if (visuallyHiddenFrom(read)) {
       record(el, clippedDeclarations(read));
-      return;
+      return false;
     }
     const opacity = read('opacity');
-    if (opacity !== undefined && Number.parseFloat(opacity) === 0 && !reveals(read)) {
+    if (opacity !== undefined && Number.parseFloat(opacity) === 0 && !revealsFrom(read)) {
       record(el, ['opacity:0']);
-      return;
+      return false;
     }
-    if (OPAQUE.has(tag) || el.classList?.contains('katex')) {
-      record(el, []);
-      return;
-    }
-
-    const declarations: string[] = [];
-    let retraction = NOT_RETRACTABLE;
 
     const visibility = read('visibility') ?? 'visible';
-    if (visibility === 'visible' && context.visibility !== 'visible') {
-      // The page reveals here what an ancestor hid. Every claim above this point
-      // is wrong about at least this element, and the sanitizer would delete it
-      // along with them.
-      for (const entry of retractable) {
-        if (entry.retractable !== NOT_RETRACTABLE) {
-          entry.declarations[entry.retractable] = '';
-          entry.retractable = NOT_RETRACTABLE;
-        }
-      }
-      retractable = [];
-    } else if (
-      (visibility === 'hidden' || visibility === 'collapse') &&
-      // No ancestor's claim is still standing over this element — either none was
-      // made, or a visible cousin took it back and this branch has to speak for
-      // itself. Asking the inherited value instead would leave the hidden sibling
-      // of a revealed one unmarked.
-      !retractable.some((entry) => entry.retractable !== NOT_RETRACTABLE)
-    ) {
-      retraction = declarations.length;
-      declarations.push(`visibility:${visibility}`);
+    const invisible = visibility === 'hidden' || visibility === 'collapse';
+    // What the `style` attribute says on its own, which is what the core falls
+    // back on wherever the snapshot is silent.
+    const claimsInvisible = invisibleFrom(inlineStyle(el));
+
+    const declarations: string[] = [];
+    answerOverruledAttribute(el, read, declarations);
+
+    // Nothing inside can carry a mark, but the element is judged like any other:
+    // a hidden code sample is hidden, and one the page hid in its own attribute
+    // and the stylesheet showed again has to say so.
+    if (OPAQUE.has(tag) || el.classList?.contains('katex')) {
+      if (invisible) declarations.push(`visibility:${visibility}`);
+      else if (claimsInvisible) declarations.push('visibility:visible');
+      record(el, declarations);
+      return !invisible;
     }
 
     // The face, against what this element would have shown with no stylesheet at
@@ -289,15 +333,23 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     if (box === 'block' && !isBlockTag(tag)) declarations.push('display:block');
     else if (box === 'inline' && isBlockTag(tag)) declarations.push('display:inline');
 
-    const entry = record(el, declarations, retraction);
-    const below =
-      entry !== undefined && retraction !== NOT_RETRACTABLE
-        ? [...retractable, entry]
-        : retractable;
+    // Which edge the text lines up against, for the one thing that reads it: a
+    // pipe table's separator row. It inherits, so it is measured against the
+    // context the way the weight is, and worth writing down only where it is the
+    // page aligning this element — never the centring every UA stylesheet hands a
+    // `<th>`, which would put `:---:` under every header of every table nobody
+    // aligned at all. The price is an explicitly centred header reading as one
+    // the browser centred; the alternative is the whole page paying for it.
+    const align = alignFrom(read) ?? context.align;
+    if (align !== undefined && align !== context.align && !(isCentredTag(tag) && align === 'center')) {
+      declarations.push(`text-align:${align}`);
+    }
 
-    const next: Context = { weight, italic, visibility };
+    const next: Context = { weight, italic, align };
+    const below: Pending[] = [];
+    let seenBelow = false;
     for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
-      walk(child, next, below);
+      seenBelow = walk(child, next, below) || seenBelow;
     }
     // A shadow tree is styled by rules nobody outside it can see, and the content
     // script flattens it by copying `innerHTML` — which carries attributes and
@@ -306,9 +358,35 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
       .shadowRoot;
     if (shadow) {
       for (let child = shadow.firstElementChild; child; child = child.nextElementSibling) {
-        walk(child, next, below);
+        seenBelow = walk(child, next, below) || seenBelow;
       }
     }
+
+    if (invisible && !seenBelow) {
+      // Nothing under here can be seen, so the whole of it goes with one mark.
+      // The subtree said the same thing element by element on the way down —
+      // each of them had no visible descendant either — and this takes those
+      // back, which is the only reason they could wait to be written.
+      for (const entry of below) {
+        if (entry.retractable === NOT_RETRACTABLE) continue;
+        entry.declarations[entry.retractable] = '';
+        entry.retractable = NOT_RETRACTABLE;
+      }
+      const retraction = declarations.length;
+      declarations.push(`visibility:${visibility}`);
+      const entry = record(el, declarations, retraction);
+      if (entry !== undefined) marks.push(entry);
+      return false;
+    }
+
+    // Something in here is visible, or this element is. Either way the box stays
+    // — and if its own attribute hides it, the snapshot has to say so, because
+    // removal would take the visible part with it. What is genuinely hidden
+    // inside has already marked itself.
+    if (claimsInvisible) declarations.push('visibility:visible');
+    record(el, declarations);
+    marks.push(...below);
+    return true;
   }
 
   const undo: Array<() => void> = [];
@@ -354,7 +432,7 @@ function contextOf(read: StyleReader, el: Element): Context {
   return {
     weight: weightFrom(read, NORMAL_WEIGHT) ?? (isBoldTag(tag) ? BOLD_WEIGHT : NORMAL_WEIGHT),
     italic: italicFrom(read) ?? isItalicTag(tag),
-    visibility: read('visibility') ?? 'visible',
+    align: alignFrom(read),
   };
 }
 

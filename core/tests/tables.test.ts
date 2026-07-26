@@ -119,6 +119,38 @@ describe('выравнивание', () => {
     expect(lines[1]).toMatch(/:.*:/); // center
     expect(lines[1]).toMatch(/----:/); // right
   });
+
+  // A column aligned by a class says so in the recorded computed style and
+  // nowhere else, which is why this reads the cell through `elementStyle` rather
+  // than through a regex over one attribute.
+  it('a recorded computed style aligns the column too', () => {
+    const html =
+      '<table><thead><tr><th data-s2md-style="text-align:right">Sum</th></tr></thead>' +
+      '<tbody><tr><td>100</td></tr></tbody></table>';
+    expect(toMarkdown(html).trim().split('\n')[1]).toMatch(/--:/);
+  });
+
+  // The logical spellings of the same two edges, which is how a computed style
+  // states them.
+  it.each([
+    ['start', /^\| :-+ \|$/],
+    ['end', /^\| -+: \|$/],
+  ])('%s is read as the edge it names', (value, expected) => {
+    const html =
+      `<table><thead><tr><th data-s2md-style="text-align:${value}">H</th></tr></thead>` +
+      '<tbody><tr><td>v</td></tr></tbody></table>';
+    expect(toMarkdown(html).trim().split('\n')[1]).toMatch(expected);
+  });
+
+  it.each([
+    ['a property that merely starts the same way', '-x-text-align:right'],
+    ['a value a pipe table cannot write', 'text-align:justify'],
+  ])('%s aligns nothing', (_name, style) => {
+    const html =
+      `<table><thead><tr><th style="${style}">H</th></tr></thead>` +
+      '<tbody><tr><td>v</td></tr></tbody></table>';
+    expect(toMarkdown(html).trim().split('\n')[1]).toMatch(/^\| -+ \|$/);
+  });
 });
 
 describe('pipe в содержимом', () => {

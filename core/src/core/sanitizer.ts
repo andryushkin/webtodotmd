@@ -76,16 +76,20 @@ function removeByTagSet(root: Element | Document, tags: Set<string>): void {
   }
 }
 
+// Removal takes the subtree with the element, so the walk stops at the first
+// element it decides against rather than asking the same question of everything
+// underneath — the answer there is discarded, and `hiddenByStyle` pays for a
+// search of the subtree to give it.
 function removeHidden(root: Element | Document): void {
   const toRemove: Element[] = [];
-  const walker = createWalker(root);
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    const el = node as Element;
+  const visit = (el: Element): void => {
     if (isHidden(el)) {
       toRemove.push(el);
+      return;
     }
-  }
+    for (let child = el.firstElementChild; child; child = child.nextElementSibling) visit(child);
+  };
+  for (let child = root.firstElementChild; child; child = child.nextElementSibling) visit(child);
   for (const el of toRemove) {
     el.parentNode?.removeChild(el);
   }
