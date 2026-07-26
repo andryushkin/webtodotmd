@@ -780,3 +780,89 @@ describe('flattening: what review caught', () => {
     expect(cellOf(toMarkdown(html), 3)).toBe('');
   });
 });
+
+// The `text` fallback built its rows from cell.textContent, so it was the one
+// path that emitted the page's characters without passing a rule that escapes:
+// a cell showing `**bold**` came back as bold, and one showing an <img> tag came
+// back as a working <img>. The mode still emits text and no markup — that is
+// what it is for — but the text is now inert.
+describe('режимы text и skip экранируют текст страницы', () => {
+  const textMode = (html: string) => toMarkdown(html, { complexTableFallback: 'text' });
+  const skipMode = (html: string) => toMarkdown(html, { complexTableFallback: 'skip' });
+
+  it('тег и звёздочки со страницы не оживают', () => {
+    const result = textMode(
+      '<table><tr><td colspan="2">&lt;img src=x onerror=alert(1)&gt; and **bold**</td>' +
+        '<td>next</td></tr></table>',
+    );
+    expect(result).toContain('\\<img src=x onerror=alert(1)>');
+    expect(result).toContain('\\*\\*bold\\*\\*');
+    // Every `<` that could open a tag carries its backslash.
+    expect(result).not.toMatch(/(?<!\\)</);
+  });
+
+  it('экранирование не разрывает строку — строка остаётся одной', () => {
+    const result = textMode(
+      '<table><tr><td colspan="2"><pre>a\nb</pre></td><td>*x*</td></tr></table>',
+    );
+    expect(result.trim().split('\n')).toHaveLength(1);
+    expect(result).toContain('a b | \\*x\\*');
+  });
+
+  it('блочное начало экранируется на строке, а не в каждой ячейке', () => {
+    // A `#` in the second cell sits mid-sentence: a backslash there would be
+    // one the reader pays for and nothing gained.
+    const result = textMode(
+      '<table><tr><td colspan="2"># heading</td><td># not a heading</td></tr></table>',
+    );
+    expect(result).toContain('\\# heading | # not a heading');
+  });
+
+  it('строка из одних дефисов не подчёркивает строку над собой', () => {
+    const result = textMode(
+      '<table><tr><td colspan="2">title</td></tr><tr><td>---</td></tr></table>',
+    );
+    expect(result).toContain('\\---');
+  });
+
+  it('разделитель колонок экранируется один раз, а не поверх экранирования', () => {
+    // escapeCellText doubles the backslashes it finds, so escaping the pipe
+    // first would give `\\|` — a literal backslash next to a live separator.
+    const result = textMode('<table><tr><td colspan="2">a | b</td><td>c</td></tr></table>');
+    expect(result).toContain('a \\| b | c');
+    expect(result).not.toContain('\\\\|');
+  });
+
+  it('обратный слеш со страницы остаётся обратным слешем', () => {
+    const result = textMode('<table><tr><td colspan="2">C:\\path</td><td>x</td></tr></table>');
+    expect(result).toContain('C:\\\\path');
+  });
+
+  it('текст, которому экранирование не нужно, его не получает', () => {
+    const result = textMode('<table><tr><td colspan="2">Total 2026</td><td>ok</td></tr></table>');
+    expect(result.trim()).toBe('Total 2026 | ok');
+  });
+
+  it('подпись в режиме skip экранируется целиком', () => {
+    const result = skipMode(
+      '<table><caption># **C** &lt;b&gt;</caption><tr><td colspan="2">x</td></tr></table>',
+    );
+    expect(result.trim()).toBe('\\# \\*\\*C\\*\\* \\<b>');
+  });
+
+  it('подпись обычной таблицы тоже не открывает блок', () => {
+    // captionLine feeds every path, not just the fallbacks: the caption is a
+    // line of its own above the pipe table too.
+    const result = toMarkdown(
+      '<table><caption># Table 1</caption><tbody><tr><td>a</td></tr></tbody></table>',
+    );
+    expect(result.trim().startsWith('\\# Table 1')).toBe(true);
+  });
+
+  it('обычная подпись не обрастает обратными слешами', () => {
+    const result = toMarkdown(
+      '<table><caption>Sales 2026</caption><tbody><tr><td>a</td></tr></tbody></table>',
+    );
+    expect(result.trim().startsWith('Sales 2026')).toBe(true);
+  });
+});
