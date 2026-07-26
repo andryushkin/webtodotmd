@@ -15,10 +15,14 @@ export interface Part {
   /** Inline wrapper around the text, or null for a bare text node. */
   tag: string | null;
   text: string;
+  /** Attribute value for the tags that carry one — `href` on `a`, `src` on `img`. */
+  attr?: string;
 }
 export interface Block {
   kind: BlockKind;
   parts: Part[];
+  /** Attribute value for the kinds that carry one — the fence info string. */
+  attr?: string;
 }
 export type Doc = Block[];
 
@@ -39,10 +43,32 @@ const BLOCK_KINDS = [
   'td-rowspan',
   'td-nested',
   'td-pre',
+  // Three shapes of the nested-table fold that the plain `td-nested` never
+  // reaches. The fold joins cells with a separator, drops the ones it reads as
+  // empty, and finds the inner table by walking the cell — so an empty cell, a
+  // caption it has no slot for, and a wrapper between the cell and the table are
+  // each a different question about the same code.
+  'td-nested-empty',
+  'td-nested-caption',
+  'td-nested-div',
+  // A line break inside preformatted text: the source shows two lines, and the
+  // fence has to as well. `<br>` is how a page writes one when the markup was
+  // generated rather than typed.
+  'pre-br',
+  // The fence info string, which is an attribute value and reaches the file
+  // outside every text path.
+  'pre-lang',
 ] as const;
 type BlockKind = (typeof BLOCK_KINDS)[number];
 
-const INLINE_TAGS = [null, 'span', 'b', 'i', 'em', 'strong', 'a', 'code', 'sub'] as const;
+// `kbd` and `samp` are here because the core makes them code spans, which is the
+// one wrapper that changes what escaping is allowed inside it. `img` carries no
+// text of its own — its part text becomes the `alt`.
+const INLINE_TAGS = [
+  null, 'span', 'b', 'i', 'em', 'strong', 'a', 'code', 'sub', 'kbd', 'samp',
+] as const;
+
+const EMPHASIS_TAGS = ['b', 'i', 'em', 'strong'] as const;
 
 // Fragments, not whole constructs: a construct that is already complete inside one
 // text node is the case the per-node escaper handles. What it cannot handle is the
@@ -117,6 +143,37 @@ const HTML_PROSE = [
   '<table style="position:fixed">',
 ];
 
+// Attribute values reach the file inside the converter's own syntax — `[t](href)`,
+// `![alt](src)` — where a value that closes the construct from the inside leaves
+// everything after it as markup. Nothing in the text escaper ever sees an
+// attribute, so the hazards here are the ones that end a link destination:
+// whitespace, an unbalanced paren, a quote, a bracket that starts a new one.
+const ATTR_HAZARDS = [
+  'https://example.com/a(b)c',
+  'https://example.com/a)b',
+  'https://example.com/a b',
+  'https://example.com/a"b',
+  "https://example.com/a'b",
+  'https://example.com/a`b`',
+  'https://example.com/x?a=1&b=2',
+  'https://example.com/x#<div>',
+  'https://example.com/a](x)b',
+  'https://example.com/a\nb',
+  'javascript:alert(1)',
+  '',
+];
+
+// The info string after the opening fence. A newline in it closes the fence
+// immediately, and everything the page put in the block lands in prose.
+const LANG_HAZARDS = ['js', 'js x', 'js\n```\n<div>', '```', '<div>', 'a`b'];
+
+// Emphasis pressed against an emoji. CommonMark decides whether a marker may open
+// or close by the Unicode category on each side, and an emoji is neither a letter
+// nor ASCII punctuation — so this is where "is this marker allowed here" is least
+// obvious. The multi-codepoint ones are here because a naive look at the
+// neighbouring *code unit* sees half a surrogate pair.
+const EMOJI = ['🎉', '👍🏽', '👩‍💻', '❤️', '🇺🇸'];
+
 /** mulberry32 — small, seedable, good enough to spread choices. */
 function rng(seed: number): () => number {
   let s = seed + 0x6d2b79f5;
@@ -148,19 +205,35 @@ export function generate(seed: number): Doc {
         parts.push({ tag: null, text: second });
         continue;
       }
-      if (roll < 0.32) {
+      if (roll < 0.29) {
         parts.push({ tag: 'code', text: pick(CODE_HAZARDS) });
         continue;
       }
-      if (roll < 0.4) {
+      if (roll < 0.36) {
         parts.push({ tag: null, text: pick(HTML_PROSE) });
+        continue;
+      }
+      if (roll < 0.43) {
+        // The emoji has to sit in its own text node on each side, or the marker
+        // is not the thing being pressed against it.
+        const emoji = pick(EMOJI);
+        parts.push({ tag: null, text: emoji });
+        parts.push({ tag: pick(EMPHASIS_TAGS), text: pick(CALM) });
+        parts.push({ tag: null, text: emoji });
+        continue;
+      }
+      if (roll < 0.52) {
+        // A hostile attribute, with calm text around it: the text is not what is
+        // being tested here, and a hazard in both would not say which one leaked.
+        parts.push({ tag: rand() < 0.5 ? 'a' : 'img', text: pick(CALM), attr: pick(ATTR_HAZARDS) });
         continue;
       }
       // Hazards outnumber calm text: a document of prose proves little here.
       const text = roll < 0.8 ? pick(HAZARDS) : pick(CALM);
       parts.push({ tag: pick(INLINE_TAGS), text });
     }
-    blocks.push({ kind: pick(BLOCK_KINDS), parts });
+    const kind = pick(BLOCK_KINDS);
+    blocks.push(kind === 'pre-lang' ? { kind, parts, attr: pick(LANG_HAZARDS) } : { kind, parts });
   }
   return blocks;
 }
@@ -174,10 +247,24 @@ function escapeText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// An attribute value needs the quote and the newline neutralized as well, or the
+// fixture closes the attribute itself and the hazard never reaches the converter.
+function escapeAttr(value: string): string {
+  return escapeText(value).replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+}
+
 function renderPart(part: Part): string {
   const text = escapeText(part.text);
   if (part.tag === null) return text;
-  if (part.tag === 'a') return `<a href="https://example.com">${text}</a>`;
+  if (part.tag === 'a') {
+    return `<a href="${escapeAttr(part.attr ?? 'https://example.com')}">${text}</a>`;
+  }
+  // An image shows no text of its own, so the part's text is its alt — the other
+  // attribute that reaches the file inside the converter's own syntax.
+  if (part.tag === 'img') {
+    const src = escapeAttr(part.attr ?? 'https://example.com/i.png');
+    return `<img src="${src}" alt="${escapeAttr(part.text)}">`;
+  }
   return `<${part.tag}>${text}</${part.tag}>`;
 }
 
@@ -202,8 +289,24 @@ function renderBlock(block: Block): string {
     // around it.
     case 'td-nested':
       return `<table><tbody><tr><td><table><tbody><tr><td>${inner}</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>`;
+    // An empty inner cell: the fold drops the ones it reads as empty, and whether
+    // it drops the separator with them is a different question from whether it
+    // joins the rest.
+    case 'td-nested-empty':
+      return `<table><tbody><tr><td><table><tbody><tr><td></td><td>${inner}</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>`;
+    // A caption on the inner table, which the fold has no slot for at all.
+    case 'td-nested-caption':
+      return `<table><tbody><tr><td><table><caption>${inner}</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>`;
+    // A wrapper between the cell and the table it holds — the shape that decides
+    // whether the fold looks for the inner table or only at the cell's children.
+    case 'td-nested-div':
+      return `<table><tbody><tr><td><div><table><tbody><tr><td>${inner}</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>`;
     case 'td-pre':
       return `<table><tbody><tr><td><pre>${inner}</pre></td></tr></tbody></table>`;
+    case 'pre-br':
+      return `<pre>${block.parts.map(renderPart).join('<br>')}</pre>`;
+    case 'pre-lang':
+      return `<pre><code data-lang="${escapeAttr(block.attr ?? 'js')}">${inner}</code></pre>`;
     default:
       return `<${block.kind}>${inner}</${block.kind}>`;
   }

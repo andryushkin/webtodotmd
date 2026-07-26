@@ -11,9 +11,14 @@
 // working <img onerror>, <script> or positioned overlay into the file and into
 // the preview, so any new path that emits text has to be added to the contexts
 // below before it can be trusted.
+//
+// "Stays text" is two claims, and this file used to make only one of them. Every
+// case asks `liveMarkup` whether anything in the output can act — and empty output
+// can not, so a converter that dropped the payload passed as cleanly as one that
+// escaped it. Each case now also states the text the reader must be left with.
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
-import { installDOMAdapter, render } from './oracle';
+import { installDOMAdapter, render, visibleText } from './oracle';
 import { toMarkdown } from '../../core/src/server.js';
 import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
@@ -58,45 +63,86 @@ function liveMarkup(html: string): string[] {
   return [...found];
 }
 
+// The other half of the guarantee, and the half that was missing for as long as
+// this file existed. `liveMarkup` asks only whether anything in the output can
+// act — and output with nothing in it satisfies that perfectly. Dropping the
+// `</div>`, dropping a comment, dropping the payload entirely: every one of those
+// passed, and every one of them is the converter failing to keep what the page
+// showed. Escaping that works by deletion is not escaping.
+//
+// So each case below also says what the reader must be left with, and the two
+// assertions together are the promise this file is named for: the characters are
+// still there, and they are still only characters.
+const SHOWN_TEXT = PAYLOAD;
+
 describe('markup shown as text never becomes markup again', () => {
   it.each([
-    ['paragraph', `<p>${SHOWN}</p>`],
-    ['heading', `<h2>${SHOWN}</h2>`],
-    ['list item', `<ul><li>${SHOWN}</li></ul>`],
-    ['blockquote', `<blockquote>${SHOWN}</blockquote>`],
-    ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`],
-    ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`],
+    // input,                                          what the reader is left with
+    ['paragraph', `<p>${SHOWN}</p>`, SHOWN_TEXT],
+    ['heading', `<h2>${SHOWN}</h2>`, SHOWN_TEXT],
+    ['list item', `<ul><li>${SHOWN}</li></ul>`, SHOWN_TEXT],
+    ['blockquote', `<blockquote>${SHOWN}</blockquote>`, SHOWN_TEXT],
+    // Still wrong: the term and the definition are two blocks on the page and one
+    // run of text in the file, so the payloads land welded together with no space
+    // between them. Should be `${SHOWN_TEXT} ${SHOWN_TEXT}`. Nothing here is live
+    // — this is the loss the old version of this table could not see.
+    ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT}${SHOWN_TEXT}`],
+    ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`, SHOWN_TEXT],
     // Table cells reach the output through their own path in tables.ts, which
     // once bypassed the HTML escaping entirely.
-    ['pipe table cell', `<table><tbody><tr><td>${SHOWN}</td><td>b</td></tr></tbody></table>`],
-    ['table caption', `<table><caption>${SHOWN}</caption><tbody><tr><td>a</td></tr></tbody></table>`],
     [
-      'html fallback cell',
+      'pipe table cell',
+      `<table><tbody><tr><td>${SHOWN}</td><td>b</td></tr></tbody></table>`,
+      `${SHOWN_TEXT} b`,
+    ],
+    [
+      'table caption',
+      `<table><caption>${SHOWN}</caption><tbody><tr><td>a</td></tr></tbody></table>`,
+      `${SHOWN_TEXT} a`,
+    ],
+    // A nested table with the default `complexTableFallback`, which flattens
+    // rather than reaching for HTML. This row used to be labelled `html fallback
+    // cell` while passing no such option, so the HTML fallback had no coverage at
+    // all and this path had it twice under the wrong name. The real HTML mode is
+    // the block below.
+    [
+      'nested table, flattened',
       `<table><tbody><tr><td>${SHOWN}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`,
+      `${SHOWN_TEXT} n`,
     ],
     // Literal contexts are never Markdown-escaped, so each needs its own reason
     // to be inert: a fence, a code span, or a wrapper that makes one.
-    ['inline code', `<p><code>${SHOWN}</code></p>`],
-    ['kbd', `<p><kbd>${SHOWN}</kbd></p>`],
-    ['samp', `<p><samp>${SHOWN}</samp></p>`],
-    ['pre', `<pre>${SHOWN}</pre>`],
+    ['inline code', `<p><code>${SHOWN}</code></p>`, SHOWN_TEXT],
+    ['kbd', `<p><kbd>${SHOWN}</kbd></p>`, SHOWN_TEXT],
+    ['samp', `<p><samp>${SHOWN}</samp></p>`, SHOWN_TEXT],
+    ['pre', `<pre>${SHOWN}</pre>`, SHOWN_TEXT],
     // Tags the core emits itself, wrapping page text.
-    ['sub', `<p><sub>${SHOWN}</sub></p>`],
-    ['sup', `<p><sup>${SHOWN}</sup></p>`],
-    // Attribute values reach the file through the converter's own syntax.
-    ['link text', `<p><a href="https://e.com">${SHOWN}</a></p>`],
-    ['image alt', `<p><img src="${OWN_IMAGE}" alt="${SHOWN}"></p>`],
-    ['image title', `<p><img src="${OWN_IMAGE}" alt="a" title="${SHOWN}"></p>`],
-    ['href value', `<p><a href="https://e.com/?a=${escapeHtml('"><img src=x>')}">t</a></p>`],
-    // LaTeX is re-emitted verbatim between dollar signs.
+    ['sub', `<p><sub>${SHOWN}</sub></p>`, SHOWN_TEXT],
+    ['sup', `<p><sup>${SHOWN}</sup></p>`, SHOWN_TEXT],
+    // Attribute values reach the file through the converter's own syntax. The
+    // payload was never text on the page here, so what the reader is left with is
+    // the label around it — an `alt` shows nothing, a link shows its own words.
+    // A converter that dropped the whole construct would satisfy `liveMarkup` and
+    // fails this instead. What became of the value itself is the `attribute
+    // values` block at the end of this file.
+    ['link text', `<p><a href="https://e.com">${SHOWN}</a></p>`, SHOWN_TEXT],
+    ['image alt', `<p><img src="${OWN_IMAGE}" alt="${SHOWN}"></p>`, ''],
+    ['image title', `<p><img src="${OWN_IMAGE}" alt="a" title="${SHOWN}"></p>`, ''],
+    ['href value', `<p><a href="https://e.com/?a=${escapeHtml('"><img src=x>')}">t</a></p>`, 't'],
+    // LaTeX is re-emitted verbatim between dollar signs — the delimiters are the
+    // converter's, and the page did not show them. Deliberate: a formula is not
+    // judged by the characters it displayed, which is why the fidelity oracle
+    // leaves math alone too.
     [
       'katex',
       `<p><span class="katex"><annotation encoding="application/x-tex">${SHOWN}</annotation></span></p>`,
+      `$${SHOWN_TEXT}$`,
     ],
-    ['mathjax v2', `<p><script type="math/tex">${SHOWN}</script></p>`],
-  ])('%s', (_name, html) => {
-    const md = toMarkdown(html, { ...CONVERSION_OPTIONS });
-    expect(liveMarkup(render(md))).toEqual([]);
+    ['mathjax v2', `<p><script type="math/tex">${SHOWN}</script></p>`, `$${SHOWN_TEXT}$`],
+  ])('%s', (_name, html, shown) => {
+    const rendered = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));
+    expect(liveMarkup(rendered)).toEqual([]);
+    expect(visibleText(rendered)).toBe(shown);
   });
 });
 
@@ -224,6 +270,63 @@ describe('text fallback mode', () => {
     ],
   ])('%s', (_name, html) => {
     expect(liveMarkup(render(toMarkdown(html, TEXT_MODE)))).toEqual([]);
+  });
+});
+
+// The mode that emits real HTML, which the table at the top of this file claimed
+// to cover for as long as it existed and never did: the row was labelled `html
+// fallback cell` and passed no `complexTableFallback` at all, so it measured the
+// default flatten twice and this mode not once.
+//
+// It is the one output context where Markdown is not parsed, so nothing here is
+// protected by escaping the way prose is — a cell's contents are written as tags,
+// and the escaping is the other one, the HTML one. That inversion is exactly why
+// running it by accident under the wrong name was worth nothing.
+describe('html fallback mode', () => {
+  const HTML_MODE = { ...CONVERSION_OPTIONS, complexTableFallback: 'html' as const };
+  // A nested table is what forces the fallback; the payload rides beside it.
+  const nested = '<table><tbody><tr><td>n</td></tr></tbody></table>';
+  const forced = (inner: string) =>
+    `<table><tbody><tr><td>${inner}</td></tr><tr><td>${nested}</td></tr></tbody></table>`;
+
+  it.each([
+    // input,                                  what the reader is left with
+    ['cell text', forced(SHOWN), `${SHOWN_TEXT} n`],
+    [
+      'caption',
+      `<table><caption>${SHOWN}</caption><tbody><tr><td>a</td></tr><tr><td>${nested}</td></tr></tbody></table>`,
+      `${SHOWN_TEXT} a n`,
+    ],
+    // Literal contexts inside an HTML cell: a fence cannot open there, so each
+    // one has to be inert as a tag instead.
+    ['pre in a cell', forced(`<pre>${SHOWN}</pre>`), `${SHOWN_TEXT} n`],
+    ['code in a cell', forced(`<code>${SHOWN}</code>`), `${SHOWN_TEXT} n`],
+    ['kbd in a cell', forced(`<kbd>${SHOWN}</kbd>`), `${SHOWN_TEXT} n`],
+    // Emphasis emits a tag here rather than `**`, which would show as asterisks.
+    ['emphasis in a cell', forced(`<b>${SHOWN}</b>`), `${SHOWN_TEXT} n`],
+    ['link text', forced(`<a href="https://e.com">${SHOWN}</a>`), `${SHOWN_TEXT} n`],
+    // A link's scheme is checked before it becomes an `href` attribute.
+    ['link scheme', forced('<a href="javascript:alert(1)">t</a>'), 't n'],
+    // An image emits its alt as text here: letting `src` past the preview's
+    // allow-list would widen it for a case that rendered nothing anyway. So the
+    // alt becomes prose the page never showed — deliberate, and truncated at the
+    // first character that could end the cell.
+    [
+      'image alt',
+      forced(`<img src="${OWN_IMAGE}" alt="${SHOWN}">`),
+      '<img src=x onerror=alert(1)><div style= n',
+    ],
+    [
+      'katex',
+      forced(
+        `<span class="katex"><annotation encoding="application/x-tex">${SHOWN}</annotation></span>`,
+      ),
+      `$${SHOWN_TEXT}$ n`,
+    ],
+  ])('%s', (_name, html, shown) => {
+    const rendered = render(toMarkdown(html, HTML_MODE));
+    expect(liveMarkup(rendered)).toEqual([]);
+    expect(visibleText(rendered)).toBe(shown);
   });
 });
 

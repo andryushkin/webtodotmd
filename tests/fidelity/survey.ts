@@ -1,15 +1,18 @@
-// Phase 0 measurement: run the oracle over generated documents and report the
-// distinct defect classes, not the individual seeds.
+// Run the oracle over generated documents and report the distinct defect classes,
+// not the individual seeds.
 //
 //   bun tests/fidelity/survey.ts [seedCount]
 //
-// This is a survey, not a gate. It answers the question that made the plan
-// necessary — how large is the tail — so the decision about phase 3 rests on a
-// number instead of on how many defects the last review happened to notice.
+// Printed, this is a survey: it answers how large the tail is, so a decision about
+// what to repair next rests on a number instead of on how many defects the last
+// review happened to notice.
+//
+// Imported, it is the gate. `fidelity.test.ts` used to protect the total alone,
+// and a total cannot tell a repair from a swap: fix one seed, regress another, and
+// the number is unchanged. The classes are what the gate compares, and they were
+// already being computed here — only the reporting was in the way.
 import { installDOMAdapter, roundTrip, type RoundTrip } from './oracle';
 import { generate, renderDoc, shrink, type Doc } from './generator';
-
-installDOMAdapter();
 
 function check(doc: Doc): RoundTrip | null {
   const html = renderDoc(doc);
@@ -28,7 +31,7 @@ function check(doc: Doc): RoundTrip | null {
   }
 }
 
-interface DefectClass {
+export interface DefectClass {
   html: string;
   markdown: string;
   expected: string;
@@ -57,12 +60,20 @@ const AXES = [
   ['concatenation', (html: string) => (html.match(/<\/(span|i|em|b|strong|sub|code|a)>/g) ?? []).length > 0],
 ] as const;
 
-function axisOf(c: DefectClass): string {
+export function axisOf(c: DefectClass): string {
   for (const [name, test] of AXES) if (test(c.html, c)) return name;
   return 'other';
 }
 
-function survey(seedCount: number): Map<string, DefectClass> {
+/**
+ * The distinct ways conversion is unfaithful, keyed by the minimal input that
+ * still shows each one. Two seeds that shrink to the same document are the same
+ * defect, which is what makes this a list of defects rather than a list of seeds
+ * — and what lets a gate say *which* one changed.
+ *
+ * The caller installs the DOM adapter; this is a pure measurement.
+ */
+export function survey(seedCount: number): Map<string, DefectClass> {
   const classes = new Map<string, DefectClass>();
 
   for (let seed = 0; seed < seedCount; seed++) {
@@ -87,9 +98,11 @@ function survey(seedCount: number): Map<string, DefectClass> {
   return classes;
 }
 
-const seedCount = Number(process.argv[2] ?? 500);
-
-{
+// Only when run as a command. Importing this file must measure nothing and print
+// nothing — the gate calls `survey()` itself, with its own seed count.
+if (import.meta.main) {
+  installDOMAdapter();
+  const seedCount = Number(process.argv[2] ?? 500);
   const classes = survey(seedCount);
   const failing = [...classes.values()].reduce((n, c) => n + c.seeds.length, 0);
 
