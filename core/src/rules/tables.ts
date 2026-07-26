@@ -1,6 +1,7 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
+import { escapeInlineMarkdown, escapeTagStarts } from '../core/escape.js';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -56,7 +57,7 @@ function analyzeTable(table: Element): TableAnalysis {
     // With the row and the table, so rowspan="0" is asked the same question the
     // serializer will ask: resolved to a count, it can turn out to be no merge at
     // all, and then the pipe form was the better answer.
-  ).some((cell) => cellSpans(cell, cell.parentElement ?? undefined, table) !== '');
+  ).some((cell) => cellSpans(cell, cell.parentElement, table) !== '');
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
@@ -67,7 +68,11 @@ function analyzeTable(table: Element): TableAnalysis {
   // cannot hold. Lists, headings and quotes come out as the same <br>-joined
   // Markdown either way, so forcing the fallback for them only made the format
   // depend on whether a <div> happened to wrap the list.
-  const hasPreformatted = !!table.querySelector('td pre, th pre');
+  const hasPreformatted =
+    !!table.querySelector('td pre, th pre') ||
+    Array.from(table.querySelectorAll('td code, th code')).some((el) =>
+      (el.textContent ?? '').includes('\n'),
+    );
   const hasHead = !!table.querySelector('thead');
 
   if (hasMergedCells || hasNestedTable || hasPreformatted) {
@@ -75,6 +80,15 @@ function analyzeTable(table: Element): TableAnalysis {
   }
 
   return { level: hasHead ? 'simple' : 'medium', hasHead };
+}
+
+// A cell is one line, whichever form the table takes. The converter's hard break
+// is a trailing backslash plus a newline — a <br> directly in the cell is mapped
+// before conversion, but one inside an inline wrapper (<em>, <strong>, a <span>
+// the sanitizer kept) arrives as that pair, and dropping only the newline would
+// leave the backslash visible.
+function breaksToBr(md: string): string {
+  return md.replace(/\\\r?\n/g, '<br>').replace(/\s*\r?\n+\s*/g, '<br>');
 }
 
 function getCellContent(cell: Element, options: MarkItDownOptions): string {
@@ -88,22 +102,16 @@ function getCellContent(cell: Element, options: MarkItDownOptions): string {
         text += convert(child, options);
       }
     } else if (child.nodeType === TEXT_NODE) {
-      text += child.textContent ?? '';
+      // Straight from textContent, so convert()'s escaping never saw it: a cell
+      // reading `**bold**` on the page rendered as bold.
+      text += escapeInlineMarkdown(child.textContent ?? '');
     }
   }
   // A GFM row is one line: a newline anywhere inside a cell ends the row early
   // and the rest of the table falls apart. Block children (two paragraphs in a
   // cell, say) produce exactly that, so line breaks become <br>, the only break
   // a pipe table can carry.
-  return text
-    .trim()
-    .replace(/\|/g, '\\|')
-    // The converter's hard break is a trailing backslash plus a newline. Only a
-    // <br> directly in the cell is mapped above; one inside an inline wrapper —
-    // <em>, <strong>, a <span> the sanitizer kept — arrives here, and collapsing
-    // only the newline would leave the backslash visible in the cell.
-    .replace(/\\\n/g, '<br>')
-    .replace(/\s*\n+\s*/g, '<br>');
+  return breaksToBr(text.trim().replace(/\|/g, '\\|'));
 }
 
 function getAlignment(cell: Element): string {
@@ -224,6 +232,24 @@ function isMathSubtree(el: Element): boolean {
   );
 }
 
+function escapeMathText(root: Element): void {
+  // The parser splits text at every boundary, so `<` can sit in a node of its own
+  // where a lookahead cannot see what follows. The math rules read a container's
+  // whole textContent, so escape it as one string and let the assignment collapse
+  // the nodes.
+  const containers = [root, ...Array.from(root.querySelectorAll('annotation, script'))];
+  for (const el of containers) {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'annotation' || tag === 'script') {
+      el.textContent = escapeTagStarts(el.textContent ?? '');
+    }
+    // Wikipedia carries the formula in an attribute, where the general attribute
+    // escaping would replace every `<` and break the LaTeX.
+    const alttext = el.getAttribute('alttext');
+    if (alttext !== null) el.setAttribute('alttext', escapeTagStarts(alttext));
+  }
+}
+
 function escapedTextClone(el: Element): Element {
   const clone = el.cloneNode(true) as Element;
 
@@ -248,8 +274,13 @@ function escapedTextClone(el: Element): Element {
       // A nested table is serialized by serializeStructuralTable, which escapes
       // its own cells; walking into it here would escape them twice. A math
       // subtree becomes LaTeX, where escaping is corruption.
-      if (element.tagName.toLowerCase() === 'table' || isMathSubtree(element)) {
+      if (element.tagName.toLowerCase() === 'table') {
         escapeAttributes(element);
+      } else if (isMathSubtree(element)) {
+        // LaTeX keeps its `&` and a `<` that is not a tag start; only what could
+        // close this cell is neutralized. The general attribute escaping would
+        // replace every `<`, so it is skipped here.
+        escapeMathText(element);
       } else {
         walk(element);
       }
@@ -313,7 +344,8 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
   const clone = escapedTextClone(cell);
   // Nothing to lift: skip minting a token from the cell's outerHTML, pairing the
   // clone, and scanning the result — a large table is mostly plain cells.
-  if (originals.length === 0) return htmlSafeMarkdown(convert(clone, options));
+  const cellOptions = { ...options, escapeSyntax: false };
+  if (originals.length === 0) return htmlSafeMarkdown(convert(clone, cellOptions));
   // A deep clone with rewritten text and attributes has the same elements in the
   // same order, so the two lists line up index by index.
   const lifted = topLevelBlocks(clone);
@@ -337,7 +369,7 @@ function serializeCellContent(cell: Element, options: MarkItDownOptions): string
     if (placeholder) el.replaceWith(placeholder);
   });
 
-  const md = htmlSafeMarkdown(convert(clone, options));
+  const md = htmlSafeMarkdown(convert(clone, cellOptions));
   return md.replace(
     new RegExp(`${token}(\\d+)${token}`, 'g'),
     (_match, index: string) => blocks[Number(index)] ?? '',
@@ -374,10 +406,9 @@ function resolvedRowspan(cell: Element, row: Element, table: Element): string {
   return remaining > 1 ? ` rowspan="${remaining}"` : '';
 }
 
-function cellSpans(cell: Element, row?: Element, table?: Element): string {
-  const colspan = spanAttribute(cell, 'colspan');
-  const rowspan = row && table ? resolvedRowspan(cell, row, table) : spanAttribute(cell, 'rowspan');
-  return `${colspan}${rowspan}`;
+function cellSpans(cell: Element, row: Element | null, table: Element): string {
+  const rowspan = row ? resolvedRowspan(cell, row, table) : spanAttribute(cell, 'rowspan');
+  return `${spanAttribute(cell, 'colspan')}${rowspan}`;
 }
 
 function serializeStructuralTable(table: Element, options: MarkItDownOptions): string {

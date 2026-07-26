@@ -15,3 +15,15 @@ export const CONTENTFUL_TAGS = [
   'hr',
   'input',
 ] as const;
+
+const CONTENTFUL_SELECTOR = CONTENTFUL_TAGS.join(', ');
+
+/**
+ * True when an element holds neither text nor any of the elements above. One
+ * selector rather than one per tag: this runs for every element of every
+ * removal pass.
+ */
+export function isContentless(el: Element): boolean {
+  if ((el.textContent ?? '').trim() !== '') return false;
+  return el.querySelector(CONTENTFUL_SELECTOR) === null;
+}

@@ -50,6 +50,8 @@ function fenceChar(text: string): string {
 export const CODE_RULES: Rule[] = [
   {
     name: 'fenced-code-block',
+    // The fence is built from el.textContent; the subtree's Markdown is unused.
+    ignoresChildContent: true,
     filter: 'pre',
     replacement(el) {
       const clip = el.querySelector('clipboard-copy[value]');

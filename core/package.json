@@ -29,6 +29,10 @@
         "types": "./dist/server.d.ts",
         "default": "./dist/server.mjs"
       }
+    },
+    "./fallback-tags": {
+      "types": "./dist/fallback-tags.d.ts",
+      "default": "./dist/fallback-tags.mjs"
     }
   },
   "files": [

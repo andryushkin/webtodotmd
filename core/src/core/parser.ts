@@ -28,6 +28,10 @@ function opensBlock(node: Node): boolean {
   const parent = node.parentElement;
   if (!parent || !BLOCK_PARENTS.has(parent.tagName.toLowerCase())) return false;
   for (let prev = node.previousSibling; prev; prev = prev.previousSibling) {
+    // A <br> ends the line before it, so what follows starts one.
+    if (prev.nodeType === ELEMENT_NODE && (prev as Element).tagName.toLowerCase() === 'br') {
+      return true;
+    }
     if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
   }
   return true;
@@ -49,8 +53,9 @@ const ELEMENT_NODE = 1;
 export function convert(node: Node, options: MarkItDownOptions): string {
   if (node.nodeType === TEXT_NODE) {
     const text = node.textContent ?? '';
-    // Markdown the page showed as characters must render as characters.
-    if (isLiteralContext(node)) return text;
+    // Markdown the page showed as characters must render as characters — unless
+    // this text is headed for an HTML block, where Markdown does not apply.
+    if (options.escapeSyntax === false || isLiteralContext(node)) return text;
     const escaped = escapeInlineMarkdown(text);
     return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
   }

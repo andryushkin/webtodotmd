@@ -50,6 +50,46 @@ describe('экранирование markdown из текста страницы
     expect(toMarkdown(html).trim()).toBe(expected);
   });
 
+  it.each([
+    ['тематический разрыв', '<p>---</p>', '\\---'],
+    ['setext-подчёркивание', '<p>===</p>', '\\==='],
+    ['intraword подчёркивание', '<p>snake_case_name</p>', 'snake_case_name'],
+    ['одиночная тильда', '<p>a ~ b</p>', 'a ~ b'],
+    ['двойная тильда', '<p>a ~~b~~ c</p>', 'a \\~\\~b\\~\\~ c'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  it('текст после <br> экранируется как начало строки', () => {
+    expect(toMarkdown('<p>Intro<br>- item</p>').trim()).toContain('\\- item');
+  });
+
+  it('текст ячейки экранируется и в pipe-таблице', () => {
+    const html = '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>**bold**</td></tr></tbody></table>';
+    expect(toMarkdown(html)).toContain('\\*\\*bold\\*\\*');
+  });
+
+  it('в HTML-ячейке синтаксис не экранируется', () => {
+    const html = '<table><tr><td colspan="2">snake_case and *lit*</td></tr></table>';
+    expect(toMarkdown(html)).toContain('<td colspan="2">snake_case and *lit*</td>');
+  });
+
+  it('формула в ячейке не может закрыть её', () => {
+    const payload = 'x&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;img src=q onerror="alert(1)"&gt;';
+    const html = `<table><tr><td colspan="2"><span class="katex"><annotation encoding="application/x-tex">${payload}</annotation></span></td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html, { math: true })).document;
+    expect(reparsed.querySelectorAll('img, [onerror]')).toHaveLength(0);
+    expect(reparsed.querySelectorAll('td')).toHaveLength(1);
+  });
+
+  it.each([
+    ['матрица с &', '\\begin{matrix} a & b \\end{matrix}'],
+    ['неравенство', 'x < y'],
+  ])('LaTeX сохраняется: %s', (_name, latex) => {
+    const html = `<span class="katex"><annotation encoding="application/x-tex">${latex}</annotation></span>`;
+    expect(toMarkdown(html, { math: true }).trim()).toBe(`$${latex}$`);
+  });
+
   it('LaTeX не экранируется', () => {
     const html =
       '<span class="katex"><annotation encoding="application/x-tex">a_b^*</annotation></span>';

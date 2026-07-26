@@ -35,6 +35,9 @@ function toMathString(latex: string, display: boolean): string {
 export const MATH_RULES: Rule[] = [
   {
     name: 'katex',
+    // The LaTeX comes from the element, so converting the rendered subtree —
+    // hundreds of nodes on a Wikipedia or arXiv page — is work thrown away.
+    ignoresChildContent: true,
     filter: (el) => el.classList.contains('katex'),
     replacement: (el) => {
       const result = extractMath(el);
@@ -44,6 +47,7 @@ export const MATH_RULES: Rule[] = [
   },
   {
     name: 'mjx-container',
+    ignoresChildContent: true,
     filter: (el) => el.tagName.toLowerCase() === 'mjx-container',
     replacement: (el) => {
       const result = extractMath(el);
@@ -53,6 +57,7 @@ export const MATH_RULES: Rule[] = [
   },
   {
     name: 'math-script-v2',
+    ignoresChildContent: true,
     filter: (el) => {
       if (el.tagName.toLowerCase() !== 'script') return false;
       return (el.getAttribute('type') ?? '').startsWith('math/tex');
@@ -65,6 +70,7 @@ export const MATH_RULES: Rule[] = [
   },
   {
     name: 'math-element',
+    ignoresChildContent: true,
     filter: (el) => el.tagName.toLowerCase() === 'math',
     replacement: (el) => {
       const result = extractMath(el);

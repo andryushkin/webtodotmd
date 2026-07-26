@@ -14,13 +14,24 @@
  * happens to begin with `>` sits mid-sentence as often as it starts a quote.
  */
 
+function isWordChar(ch: string | undefined): boolean {
+  return ch !== undefined && /\w/.test(ch);
+}
+
 /** Marks that change the render wherever they appear. */
 export function escapeInlineMarkdown(text: string): string {
   return (
     text
       // Backslash first, or the escapes below would read as literal pairs.
       .replace(/\\/g, '\\\\')
-      .replace(/([*_`~])/g, '\\$1')
+      .replace(/([*`])/g, '\\$1')
+      // An underscore between word characters is not emphasis in CommonMark, so
+      // `snake_case` renders as itself — escaping it is noise in the source.
+      .replace(/_/g, (mark, index: number, text_: string) =>
+        isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
+      )
+      // Strikethrough needs a pair; a single tilde renders as itself.
+      .replace(/~~/g, '\\~\\~')
       // Only a bracket followed by a paren is link or image syntax. A lone `[1]`
       // — a footnote marker, and Wikipedia is full of them — renders as itself,
       // so escaping it would be noise in the source for no gain.
@@ -30,9 +41,25 @@ export function escapeInlineMarkdown(text: string): string {
 
 /** Constructs that only matter at the start of a line, escaped per line. */
 export function escapeBlockStarts(md: string): string {
-  return md
-    .replace(/^(\s*)(#{1,6})(\s|$)/gm, '$1\\$2$3')
-    .replace(/^(\s*)>/gm, '$1\\>')
-    .replace(/^(\s*)([-+])(\s)/gm, '$1\\$2$3')
-    .replace(/^(\s*)(\d+)\.(\s)/gm, '$1$2\\.$3');
+  return (
+    md
+      .replace(/^(\s*)(#{1,6})(\s|$)/gm, '$1\\$2$3')
+      .replace(/^(\s*)>/gm, '$1\\>')
+      .replace(/^(\s*)([-+])(\s)/gm, '$1\\$2$3')
+      .replace(/^(\s*)(\d+)\.(\s)/gm, '$1$2\\.$3')
+      // A line of dashes or equals signs is a thematic break or a setext
+      // underline: it turns the line above it into a heading, or draws a rule
+      // where the page showed characters. Escaping the first one is enough.
+      .replace(/^(\s*)(-{3,}|={2,})(\s*)$/gm, '$1\\$2$3')
+  );
+}
+
+/**
+ * Escapes only what could open an HTML tag: `<` followed by a letter or a slash.
+ * For text the converter re-emits as LaTeX, full escaping is corruption — `a & b`
+ * is a matrix separator — but a literal `</td>` inside a formula still closes the
+ * cell it lands in when the table falls back to HTML.
+ */
+export function escapeTagStarts(text: string): string {
+  return text.replace(/<(?=[a-zA-Z/])/g, '&lt;');
 }

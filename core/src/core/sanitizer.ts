@@ -1,4 +1,4 @@
-import { CONTENTFUL_TAGS } from './contentful.js';
+import { isContentless } from './contentful.js';
 const REMOVE_TAGS = new Set(['style', 'noscript', 'iframe', 'object', 'embed', 'template', 'svg']);
 const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
@@ -101,7 +101,7 @@ function removeEmptyWrappers(root: Element | Document): void {
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const el = node as Element;
-      if (UNWRAP_IF_EMPTY.has(el.tagName.toLowerCase()) && isEmptyWrapper(el)) {
+      if (UNWRAP_IF_EMPTY.has(el.tagName.toLowerCase()) && isContentless(el)) {
         toRemove.push(el);
       }
     }
@@ -112,14 +112,6 @@ function removeEmptyWrappers(root: Element | Document): void {
   }
 }
 
-function isEmptyWrapper(el: Element): boolean {
-  const text = el.textContent ?? '';
-  if (text.trim() !== '') return false;
-  for (const tag of CONTENTFUL_TAGS) {
-    if (el.querySelector(tag)) return false;
-  }
-  return true;
-}
 
 function collapseWhitespace(root: Element | Document): void {
   const walker = document_createTreeWalker(root, 0x4 /* NodeFilter.SHOW_TEXT */);

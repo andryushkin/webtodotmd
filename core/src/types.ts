@@ -14,6 +14,12 @@ export interface Rule {
 }
 
 export interface MarkItDownOptions {
+  /**
+   * Internal. False while serializing a cell of the HTML table fallback: Markdown
+   * is not parsed inside an HTML block, so escaping its syntax there protects
+   * nothing and the backslashes are displayed to the reader.
+   */
+  escapeSyntax?: boolean;
   baseUrl?: string;
   math?: boolean;
   footnotes?: boolean;

@@ -55,6 +55,16 @@ describe('escapeHtmlTagsInMarkdown', () => {
     expect(out).toContain('&lt;div&gt;after&lt;/div&gt;');
   });
 
+  // One left-to-right pass: splitting on code first cut a table whose cell text
+  // held backticks; scanning tables first escaped a <table> sitting in a fence.
+  test.each([
+    ['a table whose cell text holds backticks', '<table>\n<tr><td colspan="2">use `foo` here</td></tr>\n</table>'],
+    ['a <table> inside a code span', 'inline: `<table>`'],
+    ['a <table> inside a fence', '```html\n<table class="x">\n<tr><td>a</td></tr>\n</table>\n```'],
+  ])('leaves %s untouched', (_name, md) => {
+    expect(escapeHtmlTagsInMarkdown(md)).toBe(md);
+  });
+
   test('escapes tags the core never emits', () => {
     expect(escapeHtmlTagsInMarkdown('<script>alert(1)</script>')).toBe(
       '&lt;script&gt;alert(1)&lt;/script&gt;',

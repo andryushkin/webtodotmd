@@ -2,7 +2,9 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig([
   {
-    entry: { browser: 'src/browser.ts' },
+    // fallback-tags ships as its own entry: consumers that must tell this
+    // library's table output from a page's text import the set from there.
+    entry: { browser: 'src/browser.ts', 'fallback-tags': 'src/fallback-tags.ts' },
     format: ['esm'],
     outExtension: () => ({ js: '.mjs' }),
     dts: true,

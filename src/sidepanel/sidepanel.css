@@ -260,6 +260,13 @@ body {
   outline: none;
 }
 
+/* Display math is carried by an inline placeholder so it cannot open an HTML
+   block in the Markdown; the block behaviour belongs here instead. */
+span[data-display='1'] {
+  display: block;
+  margin: 0.75em 0;
+}
+
 .preview-source::placeholder {
   color: var(--text-muted);
 }

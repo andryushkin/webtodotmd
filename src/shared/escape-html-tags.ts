@@ -86,32 +86,67 @@ function escapeStrayTags(text: string): string {
   });
 }
 
-function escapeOutsideCode(text: string): string {
-  return text
-    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g)
-    .map((part, i) => (i % 2 === 1 ? part : escapeStrayTags(part))) // code span or fence — untouched
-    .join('');
+// Code fences and code spans are shown as written, and a table block is our own
+// markup — everything else is the page's text and gets escaped. All three are
+// found in one left-to-right pass: splitting on code first cut a table whose cell
+// text held backticks, and scanning tables first escaped a `<table>` that sat
+// inside a fence.
+function fenceEnd(md: string, start: number): number {
+  const marker = md.slice(start).match(/^(`{3,}|~{3,})/)?.[1];
+  if (!marker) return -1;
+  const close = md.indexOf(`\n${marker}`, start + marker.length);
+  if (close === -1) return md.length;
+  const lineEnd = md.indexOf('\n', close + 1);
+  return lineEnd === -1 ? md.length : lineEnd;
+}
+
+function spanEnd(md: string, start: number): number {
+  const close = md.indexOf('`', start + 1);
+  if (close === -1) return -1;
+  const lineEnd = md.indexOf('\n', start);
+  if (lineEnd !== -1 && close > lineEnd) return -1; // a span does not cross lines
+  return close + 1;
 }
 
 export function escapeHtmlTagsInMarkdown(md: string): string {
   let out = '';
+  let escapeFrom = 0;
   let pos = 0;
-  for (;;) {
-    const start = md.indexOf('<table', pos);
-    if (start === -1) break;
-    const end = coreTableBlockEnd(md, start);
-    if (end === null) {
-      const tagEnd = md.indexOf('>', start);
-      const stop = tagEnd === -1 ? md.length : tagEnd + 1;
-      out += escapeOutsideCode(md.slice(pos, stop));
-      pos = stop;
-      continue;
+
+  const flush = (upTo: number): void => {
+    out += escapeStrayTags(md.slice(escapeFrom, upTo));
+  };
+
+  while (pos < md.length) {
+    const ch = md[pos];
+    const atLineStart = pos === 0 || md[pos - 1] === '\n';
+
+    if (ch === '`' || ch === '~') {
+      const end = atLineStart && /^(`{3,}|~{3,})/.test(md.slice(pos)) ? fenceEnd(md, pos) : -1;
+      const verbatimEnd = end !== -1 ? end : ch === '`' ? spanEnd(md, pos) : -1;
+      if (verbatimEnd !== -1) {
+        flush(pos);
+        out += md.slice(pos, verbatimEnd);
+        pos = verbatimEnd;
+        escapeFrom = pos;
+        continue;
+      }
     }
-    // A cell's text may hold backticks, so the block has to be taken out before
-    // the code-span split — otherwise the split cut the table in half and both
-    // halves were escaped as unbalanced markup.
-    out += escapeOutsideCode(md.slice(pos, start)) + md.slice(start, end);
-    pos = end;
+
+    if (ch === '<' && md.startsWith('<table', pos)) {
+      const end = coreTableBlockEnd(md, pos);
+      if (end !== null) {
+        flush(pos);
+        out += md.slice(pos, end);
+        pos = end;
+        escapeFrom = pos;
+        continue;
+      }
+    }
+
+    pos += 1;
   }
-  return out + escapeOutsideCode(md.slice(pos));
+
+  flush(md.length);
+  return out;
 }
