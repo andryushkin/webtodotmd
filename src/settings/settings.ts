@@ -1,5 +1,6 @@
 import { getSettings, saveSettings } from '../shared/settings-store';
 import { initI18n, applyI18n, t } from '../shared/i18n';
+import { CWS_REVIEWS_URL } from '../shared/store-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
@@ -47,21 +48,6 @@ highlighterColor.addEventListener('input', onChange);
 
 // ---- Rating ----
 
-const CWS_REVIEWS_URL = 'https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego/reviews';
-const RATING_LOCALES = new Set(['en','de','fr','es','it','nl','sv','da','no','fi','ar','id','ru','pt-PT','ja','fil','vi','tr','th','ko']);
-
-function getRatingUrl(stars: number): string {
-  if (stars >= 4) return CWS_REVIEWS_URL;
-  const lang = chrome.i18n.getUILanguage().replace('_', '-');
-  let locale = RATING_LOCALES.has(lang) ? lang : (() => {
-    const base = lang.split('-')[0];
-    if (base === 'pt') return 'pt-PT';
-    if (base === 'nb' || base === 'nn') return 'no';
-    return RATING_LOCALES.has(base) ? base : 'en';
-  })();
-  return `https://2md.site/${locale}/feedback`;
-}
-
 function initRatingStars() {
   const ratingRow = document.querySelector('.rating-row') as HTMLDivElement;
   const stars = ratingRow.querySelectorAll('.star') as NodeListOf<HTMLButtonElement>;
@@ -72,7 +58,7 @@ function initRatingStars() {
       stars.forEach(s => s.classList.toggle('highlighted', parseInt(s.dataset.value!) <= val));
     });
     star.addEventListener('click', () => {
-      chrome.tabs.create({ url: getRatingUrl(parseInt(star.dataset.value!)) });
+      chrome.tabs.create({ url: CWS_REVIEWS_URL });
     });
   });
 

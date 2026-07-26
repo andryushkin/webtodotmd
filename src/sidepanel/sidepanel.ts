@@ -10,6 +10,7 @@ import type { CaptureSelectionResponse, CaptureErrorResponse, PageMeta } from '.
 import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
+import { CWS_REVIEWS_URL } from '../shared/store-links';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -128,24 +129,6 @@ function attachStatusTooltip(btn: HTMLButtonElement, i18nKey: string) {
 
 // ---- Rating ----
 
-const CWS_REVIEWS_URL = 'https://chromewebstore.google.com/detail/text-to-md-html-to-markdo/gkplehkbkofmdjhafgbclcmfcficoego/reviews';
-const RATING_LOCALES = new Set(['en','de','fr','es','it','nl','sv','da','no','fi','ar','id','ru','pt-PT','ja','fil','vi','tr','th','ko']);
-
-function getRatingLocale(): string {
-  const lang = chrome.i18n.getUILanguage().replace('_', '-');
-  if (RATING_LOCALES.has(lang)) return lang;
-  const base = lang.split('-')[0];
-  if (base === 'pt') return 'pt-PT';
-  if (base === 'nb' || base === 'nn') return 'no';
-  if (RATING_LOCALES.has(base)) return base;
-  return 'en';
-}
-
-function getRatingUrl(stars: number): string {
-  if (stars >= 4) return CWS_REVIEWS_URL;
-  return `https://2md.site/${getRatingLocale()}/feedback`;
-}
-
 async function initRatingWidget() {
   const { actionCount = 0, ratingHiddenUntil = 0 } = await chrome.storage.local.get(['actionCount', 'ratingHiddenUntil']);
   if (actionCount >= 2 && ratingHiddenUntil < Date.now()) {
@@ -179,7 +162,7 @@ async function incrementActionCount() {
       const val = parseInt(star.dataset.value!);
       trackEvent(`rating_${val}`);
       hideRatingRow(true);
-      chrome.tabs.create({ url: getRatingUrl(val) });
+      chrome.tabs.create({ url: CWS_REVIEWS_URL });
     });
   });
 
