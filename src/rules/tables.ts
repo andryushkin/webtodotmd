@@ -120,6 +120,52 @@ function buildGFMTable(headers: string[], bodyRows: string[][], alignments: stri
 
 const UNSAFE_CELL_TAGS = 'script, style, noscript, iframe, object, embed';
 
+// A blank line anywhere in the serialized cell ends the HTML block and hands the
+// rest of the table to the Markdown parser as text — including a blank line
+// inside an attribute value, which Markdown cannot see is inside a tag. Deleting
+// those newlines would be data loss: they are content inside <pre> and inside
+// attributes. So they are carried through serialization as this token and come
+// out as &#10;, which re-parses to the same text. The private-use characters
+// make a collision with page content effectively impossible.
+const NEWLINE_TOKEN = 'htmltodotmd:nl';
+
+function isPreformatted(el: Element): boolean {
+  let node: Element | null = el;
+  while (node) {
+    const tag = node.tagName?.toLowerCase();
+    if (tag === 'pre' || tag === 'textarea') return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+function protectNewlines(root: Element): void {
+  for (const el of [root, ...Array.from(root.querySelectorAll('*'))]) {
+    for (const attr of Array.from(el.attributes)) {
+      if (/\r?\n/.test(attr.value)) {
+        el.setAttribute(attr.name, attr.value.replace(/\r?\n/g, NEWLINE_TOKEN));
+      }
+    }
+  }
+
+  const walk = (parent: Element): void => {
+    const preformatted = isPreformatted(parent);
+    for (const child of Array.from(parent.childNodes)) {
+      if (child.nodeType === TEXT_NODE) {
+        const text = child.textContent ?? '';
+        // Outside <pre> a blank line is formatting, not content: collapse it.
+        // Inside, every newline is data and gets encoded instead.
+        child.textContent = preformatted
+          ? text.replace(/\r?\n/g, NEWLINE_TOKEN)
+          : text.replace(/\r?\n[ \t]*(?:\r?\n)+/g, '\n');
+      } else if (child.nodeType === ELEMENT_NODE) {
+        walk(child as Element);
+      }
+    }
+  };
+  walk(root);
+}
+
 // The fallback claims to keep what a pipe table cannot express, so it has to
 // keep the markup: textContent turned a list in a cell into "ab", losing both
 // the structure and the separation between items. Scripts and event handlers do
@@ -138,9 +184,8 @@ function serializeCell(cell: Element): string {
       if (attr.name.toLowerCase().startsWith('on')) el.removeAttribute(attr.name);
     }
   }
-  // A blank line inside the block would end the HTML block and hand the rest of
-  // the table to the Markdown parser as text.
-  return clone.outerHTML.replace(/\n[ \t]*\n+/g, '\n');
+  protectNewlines(clone);
+  return clone.outerHTML.split(NEWLINE_TOKEN).join('&#10;');
 }
 
 function serializeComplexTable(table: Element): string {

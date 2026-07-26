@@ -265,6 +265,43 @@ describe('HTML fallback сохраняет разметку ячейки', () =>
     expect(result).not.toContain('>ab<');
   });
 
+  // A blank line would end the HTML block and give the rest of the table to the
+  // Markdown parser as text — but newlines inside <pre> and inside attribute
+  // values are content, so they are encoded rather than dropped.
+  it('пустая строка внутри <pre> сохраняется, а не удаляется', () => {
+    const html = `<table><tr><td colspan="2"><pre>line 1\n\nline 3</pre></td></tr></table>`;
+    const result = toMarkdown(html);
+    const reparsed = parseHTML(result).document;
+    expect(reparsed.querySelector('pre')?.textContent).toBe('line 1\n\nline 3');
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+  });
+
+  it('отступы и пустые строки в <pre> проходят round-trip точно', () => {
+    const source = 'def f():\n\n\treturn 1\n';
+    const html = `<table><tr><td colspan="2"><pre>${source}</pre></td></tr></table>`;
+    const reparsed = parseHTML(toMarkdown(html)).document;
+    expect(reparsed.querySelector('pre')?.textContent).toBe(source);
+  });
+
+  it('перевод строки в значении атрибута сохраняется', () => {
+    const html = `<table><tr><td colspan="2" title="a\n\nb">x</td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(parseHTML(result).document.querySelector('td')?.getAttribute('title')).toBe('a\n\nb');
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+  });
+
+  it('форматирующие пустые строки вне <pre> схлопываются, структура цела', () => {
+    const html = `<table><tr><td colspan="2">\n\n  <ul>\n\n    <li>a</li>\n\n  </ul>\n\n</td></tr></table>`;
+    const result = toMarkdown(html);
+    expect(result).not.toMatch(/\n[ \t]*\n/);
+    expect(parseHTML(result).document.querySelectorAll('li')).toHaveLength(1);
+  });
+
+  it('служебный токен не протекает в вывод', () => {
+    const html = `<table><tr><td colspan="2"><pre>a\n\nb</pre></td></tr></table>`;
+    expect(toMarkdown(html)).not.toMatch(/[\uE000-\uF8FF]/);
+  });
+
   it('кавычка в значении атрибута не разрывает сериализацию', () => {
     // The page writes &quot;, the parser hands back a literal quote: hand-built
     // `name="value"` would let it close the attribute and inject live markup.
