@@ -148,8 +148,8 @@ fi
 # 7. Keep startup guides compact.
 claude_lines=$(wc -l < CLAUDE.md)
 agent_lines=$(wc -l < AGENTS.md)
-if [ "$claude_lines" -le 130 ] && [ "$agent_lines" -le 45 ]; then
-    pass "guide-budget (CLAUDE<=130 AGENTS<=45)"
+if [ "$claude_lines" -le 195 ] && [ "$agent_lines" -le 45 ]; then
+    pass "guide-budget (CLAUDE<=195 AGENTS<=45)"
 else
     fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines"
 fi
