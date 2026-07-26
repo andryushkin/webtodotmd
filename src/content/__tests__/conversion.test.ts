@@ -137,6 +137,10 @@ describe('code blocks', () => {
 
 // ---- Tables ----
 
+// Table serialization is the part of conversion users see fail: a broken row
+// looks like a lost paragraph. These pin the shape of the output, not the
+// presence of words — a `toContain('Alice')` passes on a table that no longer
+// parses as a table.
 describe('tables', () => {
   test('simple table with thead/tbody', () => {
     const html = `
@@ -144,11 +148,66 @@ describe('tables', () => {
         <thead><tr><th>Name</th><th>Age</th></tr></thead>
         <tbody><tr><td>Alice</td><td>30</td></tr></tbody>
       </table>`;
+    const lines = convert(html).split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatch(/^\| Name\s+\| Age\s+\|$/);
+    expect(lines[1]).toMatch(/^\| -+ \| -+ \|$/);
+    expect(lines[2]).toMatch(/^\| Alice\s+\| 30\s+\|$/);
+  });
+
+  test('table without thead promotes the first row to the header', () => {
+    const html = '<table><tr><td>Name</td><td>Age</td></tr><tr><td>Alice</td><td>30</td></tr></table>';
+    const lines = convert(html).split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('Name');
+    expect(lines[1]).toMatch(/^\| -+ \| -+ \|$/);
+    expect(lines[2]).toContain('Alice');
+  });
+
+  test('pipe inside a cell is escaped instead of breaking the row', () => {
+    const html = '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>a|b</td></tr></tbody></table>';
+    const lines = convert(html).split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[2]).toContain('a\\|b');
+  });
+
+  test('pipe inside inline code in a cell is escaped too', () => {
+    const html = '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td><code>a|b</code></td></tr></tbody></table>';
+    const lines = convert(html).split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[2]).toContain('`a\\|b`');
+  });
+
+  test('link in a cell survives as a link', () => {
+    const html =
+      '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td><a href="https://example.com">text</a></td></tr></tbody></table>';
+    expect(convert(html)).toContain('[text](https://example.com)');
+  });
+
+  test('block content in a cell stays on one row', () => {
+    const html =
+      '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td><p>para one</p><p>two</p></td></tr></tbody></table>';
+    const lines = convert(html).split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[2]).toContain('para one<br>two');
+  });
+
+  test('colspan falls back to HTML rather than flattening', () => {
+    const html = '<table><tr><th colspan="2">Header</th></tr><tr><td>A</td><td>B</td></tr></table>';
     const md = convert(html);
-    expect(md).toContain('Name');
-    expect(md).toContain('Age');
-    expect(md).toContain('Alice');
-    expect(md).toContain('---');
+    expect(md).toContain('<table>');
+    expect(md).toContain('colspan="2"');
+  });
+
+  test('nested table is kept once, not duplicated', () => {
+    const html = '<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>';
+    expect(convert(html).match(/inner/g)).toHaveLength(1);
+  });
+
+  test('HTML fallback keeps markup inside the cell', () => {
+    const html =
+      '<table><thead><tr><th>Items</th></tr></thead><tbody><tr><td><ul><li>a</li><li>b</li></ul></td></tr></tbody></table>';
+    expect(convert(html)).toContain('<ul><li>a</li><li>b</li></ul>');
   });
 });
 

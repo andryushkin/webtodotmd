@@ -84,6 +84,10 @@ Headings H1–H6, bold, italic, nested ordered and unordered lists, tables,
 fenced code blocks with language, inline code, links (absolute URLs), images,
 blockquotes, horizontal rules, `<sub>` and `<sup>`.
 
+- **Tables** — pipe tables, with `|` inside a cell escaped and line breaks
+  turned into `<br>` so a cell cannot end its own row. What GFM has no syntax
+  for — merged cells, a list or heading inside a cell, a nested table — is kept
+  as HTML with its markup intact, rather than flattened into text.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
   the page is converted to LaTeX first. If rendering fails, the LaTeX source is
   shown.
