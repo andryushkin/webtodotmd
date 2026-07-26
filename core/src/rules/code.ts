@@ -76,6 +76,9 @@ function removeLineNumbers(el: Element): void {
 // them — plenty do, and so does anything that pasted HTML into a code sample —
 // collapsed into one unreadable line. Read from a clone: the page's own DOM must
 // come back unchanged.
+// `rules/tables.ts` keeps a copy under the same name and says there why it is not
+// an import: a cell is that module's business and the fenced block is this one's,
+// and neither rule file depends on the other. Change one and change the other.
 function textWithLineBreaks(el: Element): string {
   if (!el.querySelector('br')) return el.textContent ?? '';
   const clone = el.cloneNode(true) as Element;
