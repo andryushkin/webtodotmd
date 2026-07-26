@@ -3,6 +3,7 @@ import {
   charAfter,
   charBefore,
   extractFlankingWhitespace,
+  followsEmphasis,
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext } from '../core/parser.js';
@@ -31,7 +32,19 @@ function emphasis(
 
   // Inside an HTML block no delimiter would ever be parsed, so there is nothing
   // to choose between: the tag is the only spelling that renders.
-  if (!isHtmlContext(options)) {
+  //
+  // Two emphasis elements pressed together are the other case with no choice.
+  // Their delimiters meet and merge into one run: `<em>a</em><em>b</em>` written
+  // `*a**b*` is a single emphasis around `a**b`, so the second one is gone and
+  // the reader gains two asterisks a page never showed; `<strong>` pairs make
+  // `****` and `<del>` pairs `~~~~`. Picking a different marker cannot separate
+  // them — rules run bottom-up and hand back finished strings, so this call
+  // cannot learn which of `*`/`_` the neighbour chose, and `~~` has no second
+  // spelling at all. The tag has no delimiter to merge with, so the element that
+  // *follows* gives way: one break is enough to part the pair, and the one in
+  // front keeps the lighter spelling. Whitespace of its own already parts them,
+  // which is why `leading` excuses the test.
+  if (!isHtmlContext(options) && (leading !== '' || !followsEmphasis(el))) {
     // Whitespace pulled outside the delimiters is what the marker sits against.
     const before = leading ? ' ' : charBefore(el);
     const after = trailing ? ' ' : charAfter(el);
@@ -43,6 +56,78 @@ function emphasis(
     }
   }
   return `${leading}<${tag}>${trimmed}</${tag}>${trailing}`;
+}
+
+const TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
+
+const CODE_TAGS = new Set(['code', 'kbd', 'samp']);
+
+/**
+ * Whether this element becomes a code span — the inline-code rule's own filter,
+ * named because the merge below has to ask it about the neighbours too.
+ *
+ * One span, however deeply these nest. `<code>press <kbd>X</kbd></code>` wrapped
+ * twice and the inner backticks came out as characters; a `code` inside a `pre`
+ * is the same problem, already handled this way. Content that is empty or all
+ * whitespace is not wrapped either, and a neighbour must not expect a backtick
+ * from it.
+ */
+function emitsCodeSpan(el: Element): boolean {
+  if (!CODE_TAGS.has(el.tagName.toLowerCase()) || (el.textContent ?? '').trim() === '') {
+    return false;
+  }
+  for (let up = el.parentElement; up; up = up.parentElement) {
+    const tag = up.tagName.toLowerCase();
+    if (tag === 'pre' || CODE_TAGS.has(tag)) return false;
+  }
+  return true;
+}
+
+/**
+ * The characters a code span is meant to hold.
+ *
+ * The rule used to wrap the *converted* children, so `<code><strong>token</strong>`
+ * came out as `` `**token**` `` and `<kbd><em>Ctrl</em></kbd>` as `` `_Ctrl_` ``:
+ * nothing is parsed inside a code span, so those marks are literal characters the
+ * page never showed. Inside a code span the page showed only the text.
+ *
+ * A `<br>` is the one child that is not text and is still something the reader
+ * saw — a line break — so it becomes one, which the fold below turns into the
+ * space it renders as. Anything else contributes its text and nothing more.
+ */
+function literalText(el: Element): string {
+  let text = '';
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === TEXT_NODE) text += child.textContent ?? '';
+    else if (child.nodeType === ELEMENT_NODE) {
+      const element = child as Element;
+      text += element.tagName.toLowerCase() === 'br' ? '\n' : literalText(element);
+    }
+  }
+  return text;
+}
+
+/**
+ * The code span directly against this one on the given side, if there is one.
+ *
+ * Direct siblings only. Reaching through a wrapper would move text across it —
+ * in `<em><code>a</code></em><code>b</code>` the `b` would end up inside the
+ * emphasis — and no rearrangement is worth that.
+ */
+function adjacentCodeSpan(el: Element, side: 'prev' | 'next'): Element | undefined {
+  for (
+    let sibling = side === 'prev' ? el.previousSibling : el.nextSibling;
+    sibling;
+    sibling = side === 'prev' ? sibling.previousSibling : sibling.nextSibling
+  ) {
+    // A node with no text emits nothing and cannot part the two spans.
+    if ((sibling.textContent ?? '') === '') continue;
+    if (sibling.nodeType !== ELEMENT_NODE) return undefined;
+    const element = sibling as Element;
+    return emitsCodeSpan(element) ? element : undefined;
+  }
+  return undefined;
 }
 
 // Only schemes that are safe to write into an href the preview will render. The
@@ -248,24 +333,32 @@ export const INLINE_RULES: Rule[] = [
     // into the file raw: a page documenting `<div onclick=…>` inside <samp> put
     // working markup in the output. A code span is both the right rendering and
     // the thing that makes the text inert.
-    filter: (el) => {
-      const tag = el.tagName.toLowerCase();
-      if (tag !== 'code' && tag !== 'kbd' && tag !== 'samp') return false;
-      // One span, however deeply these nest. `<code>press <kbd>X</kbd></code>`
-      // wrapped twice and the inner backticks came out as characters; a `code`
-      // inside a `pre` is the same problem, already handled this way.
-      for (let el_ = el.parentElement; el_; el_ = el_.parentElement) {
-        const parent = el_.tagName.toLowerCase();
-        if (parent === 'pre' || parent === 'code' || parent === 'kbd' || parent === 'samp') {
-          return false;
-        }
+    filter: emitsCodeSpan,
+    replacement: (el, childContent, options) => {
+      if (isHtmlContext(options)) {
+        // An HTML block carries the children's own tags, so `<code><strong>x`
+        // renders there as the page had it and the converted content is right.
+        const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
+        if (!trimmed) return childContent;
+        return `${leading}<code>${trimmed}</code>${trailing}`;
       }
-      return true;
-    },
-    replacement: (_el, childContent, options) => {
-      const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
-      if (!trimmed) return childContent;
-      if (isHtmlContext(options)) return `${leading}<code>${trimmed}</code>${trailing}`;
+      // Two code spans pressed together run their backticks into one string:
+      // `` `word` `` and `` `hello world` `` become `` `word``hello world` ``,
+      // one span whose text carries two backticks the page never showed. No
+      // spelling separates them — a backtick run is matched by a run of exactly
+      // the same length, and a joined run is never that length, whatever
+      // delimiters the two sides pick — and unlike emphasis there is no tag to
+      // fall back to, because an HTML `<code>` does not make its content inert
+      // and this text is never escaped. So the run is written as the single span
+      // the page already looked like: the first element takes the text of the
+      // ones behind it, and they emit nothing.
+      if (adjacentCodeSpan(el, 'prev')) return '';
+      let text = literalText(el);
+      for (let next = adjacentCodeSpan(el, 'next'); next; next = adjacentCodeSpan(next, 'next')) {
+        text += literalText(next);
+      }
+      const { leading, trimmed, trailing } = extractFlankingWhitespace(text);
+      if (!trimmed) return text;
       // A code span cannot cross a blank line: the line ends the paragraph, the
       // opening backtick is left as a literal, and whatever followed renders as
       // markup. Newlines inside a span collapse to spaces when rendered anyway,
