@@ -39,6 +39,14 @@ function findAncestorElement(node: Node, tagName: string): Element | null {
   return null;
 }
 
+// Temporary marks, so a cloned node can be matched back to the original it came
+// from: a clone carries no such link, and both repairs below need one. Every
+// setter is paired with a `finally` — touching the page's DOM is only safe when
+// the cleanup cannot be skipped.
+const ORIGIN_ATTR = 'data-s2md-origin';
+const ORIGIN_ROW_ATTR = 'data-s2md-row';
+const HEADER_ROW_MARK = 'header';
+
 /** Возвращает строку-шапку из исходной таблицы — ТОЛЬКО если есть явный <thead> */
 function getTableHeaderRow(table: Element): Element | null {
   return table.querySelector('thead tr') ?? null;
@@ -117,20 +125,29 @@ function tryEnrichTableFragment(range: Range): DocumentFragment | null {
   const ancestorTable = findAncestorElement(range.commonAncestorContainer, 'table');
   if (!ancestorTable) return null;
 
-  const rawFragment = range.cloneContents();
   const doc = ancestorTable.ownerDocument!;
-  const selectedRows = collectFragmentRows(rawFragment, doc);
-
-  if (selectedRows.length === 0) return null;
-
   const originalHeaderRow = getTableHeaderRow(ancestorTable);
 
-  if (originalHeaderRow) {
-    // Проверяем: не выделена ли уже шапка
-    const headerText = originalHeaderRow.textContent?.trim() ?? '';
-    const firstRowText = selectedRows[0]!.textContent?.trim() ?? '';
-    const headerAlreadySelected = headerText !== '' && headerText === firstRowText;
+  // Marked before cloning so the clone can be recognised as the header itself
+  // rather than merely reading like it.
+  originalHeaderRow?.setAttribute(ORIGIN_ROW_ATTR, HEADER_ROW_MARK);
+  let selectedRows: Element[];
+  try {
+    selectedRows = collectFragmentRows(range.cloneContents(), doc);
+  } finally {
+    originalHeaderRow?.removeAttribute(ORIGIN_ROW_ATTR);
+  }
+  if (selectedRows.length === 0) return null;
 
+  // "Is the header already selected?" — by identity, not by text. Comparing
+  // textContent called it selected whenever a body row happened to repeat the
+  // header's words, and that body row was then promoted into the header and lost.
+  const headerAlreadySelected = selectedRows.some(
+    (row) => row.getAttribute(ORIGIN_ROW_ATTR) === HEADER_ROW_MARK,
+  );
+  for (const row of selectedRows) row.removeAttribute(ORIGIN_ROW_ATTR);
+
+  if (originalHeaderRow) {
     if (headerAlreadySelected) {
       // Шапка уже есть в выделении — оформляем корректную структуру
       return buildTableFragment(selectedRows[0]!, selectedRows.slice(1), doc);
@@ -195,6 +212,11 @@ function findNearestSemanticAncestor(node: Node): Element | null {
 
 function buildPreFragment(range: Range, ancestorPre: Element): DocumentFragment | null {
   const rawFragment = range.cloneContents();
+  // `textContent` reads a <br> as nothing, and a <pre> that breaks its lines with
+  // them — plenty do — collapsed into a single line of code.
+  for (const br of Array.from(rawFragment.querySelectorAll('br'))) {
+    br.replaceWith(rawFragment.ownerDocument!.createTextNode('\n'));
+  }
   const selectedText = rawFragment.textContent ?? '';
   if (!selectedText.trim()) return null;
 
@@ -274,6 +296,54 @@ function buildListItemFragment(range: Range, ancestorLi: Element): DocumentFragm
 const TABLE_TAGS = new Set(['td', 'th', 'tr', 'tbody', 'thead', 'tfoot', 'table']);
 const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 
+
+/**
+ * Restores the header of every table the fragment carries, not just the one the
+ * range happens to sit inside.
+ *
+ * The dispatcher below can only speak for a range whose common ancestor *is* a
+ * semantic element. Drag from the last rows of a table down into the paragraph
+ * beneath it and the common ancestor becomes an ordinary `<div>`: no semantic
+ * ancestor, no enrichment, and the header — the whole point of the table branch —
+ * is silently dropped. That is the common way to select part of a table.
+ *
+ * Cloned nodes carry no link back to the originals, so the tables are marked
+ * before cloning and the marks are removed in a `finally`: touching the page's
+ * DOM is only safe if the cleanup cannot be skipped.
+ */
+function cloneWithTableHeaders(range: Range): DocumentFragment {
+  const root = range.commonAncestorContainer;
+  const doc = root.ownerDocument ?? (root as Document);
+  const scope: ParentNode = (root.nodeType === 1 ? root : root.parentElement) as ParentNode;
+  if (!scope?.querySelectorAll) return range.cloneContents();
+
+  const originals = Array.from(scope.querySelectorAll('table'));
+  // Marked before cloning, or the clone carries no mark and there is nothing to
+  // match it back to.
+  originals.forEach((table, index) => table.setAttribute(ORIGIN_ATTR, String(index)));
+  try {
+    const fragment = range.cloneContents();
+    for (const clone of Array.from(fragment.querySelectorAll('table'))) {
+      const index = clone.getAttribute(ORIGIN_ATTR);
+      clone.removeAttribute(ORIGIN_ATTR);
+      if (index === null) continue;
+      // A header already in the selection needs nothing; one that was scrolled
+      // past does.
+      if (clone.querySelector('thead tr')) continue;
+      const headerRow = originals[Number(index)] && getTableHeaderRow(originals[Number(index)]!);
+      if (!headerRow) continue;
+
+      const thead = doc.createElement('thead');
+      thead.appendChild(headerRow.cloneNode(true));
+      (thead.firstElementChild as Element | null)?.removeAttribute(ORIGIN_ATTR);
+      clone.insertBefore(thead, clone.firstChild);
+    }
+    return fragment;
+  } finally {
+    for (const table of originals) table.removeAttribute(ORIGIN_ATTR);
+  }
+}
+
 /**
  * Обобщённый диспетчер: определяет семантический контекст range
  * и возвращает обогащённый фрагмент, или null если контекст неизвестен.
@@ -293,13 +363,26 @@ function tryEnrichFragment(range: Range): DocumentFragment | null {
   return null;
 }
 
+/**
+ * The enrichment a selection gets: the semantic wrapper its range sits in, and —
+ * whether or not there was one — the headers of any tables it crosses.
+ */
+function enrichFragment(range: Range): DocumentFragment {
+  return tryEnrichFragment(range) ?? cloneWithTableHeaders(range);
+}
+
 export function selectionToMarkdown(selection: Selection, options: MarkItDownOptions = {}): string {
   if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') return '';
 
-  const container = document.createElement('div');
+  const first = selection.getRangeAt(0);
+  // The range's own document, not the global one: the conversion has no reason
+  // to need a browser global, and reaching for it put this function out of reach
+  // of every test.
+  const doc = first.commonAncestorContainer.ownerDocument ?? document;
+  const container = doc.createElement('div');
   for (let i = 0; i < selection.rangeCount; i++) {
     const range = expandRangeToWordBoundaries(selection.getRangeAt(i));
-    const fragment = tryEnrichFragment(range) ?? range.cloneContents();
+    const fragment = enrichFragment(range);
     container.appendChild(fragment);
   }
 

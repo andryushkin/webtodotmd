@@ -58,6 +58,16 @@ markup that showed the reader asterisks.
    `finally` block.
 3. `selectionToMarkdown()` converts the selection. Multiple ranges
    (`rangeCount > 1`) are converted separately and joined with `\n\n`.
+   `Range.cloneContents()` already closes whatever tags the selection cut
+   through, so the work here is the opposite one: restoring context the
+   selection left behind. A range inside a `<pre>`, a heading, a list item, a
+   blockquote or a table is rebuilt with that wrapper — the table's `<thead>`,
+   the code block's `data-lang`, the list's `<ol start>`. A range that *crosses
+   out* of a table has no semantic common ancestor at all (drag from the last
+   rows into the paragraph below and it is a plain `<div>`), so table headers are
+   restored separately, for every table the fragment carries. Clones keep no link
+   to their originals, so the originals are marked before cloning and unmarked in
+   a `finally`.
 4. On success the script calls `removeAllRanges()`, so a second capture with
    nothing selected reports `NO_SELECTION` instead of repeating the last
    result.

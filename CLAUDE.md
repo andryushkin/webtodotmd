@@ -48,24 +48,18 @@ Each of these has cost a bug already; the reason is what makes it stick.
   `pre`, `code`, `kbd`, `samp` or a math subtree: there a backslash is
   corruption, and in a math subtree only a tag start (`<` before a letter or
   slash) is neutralized, because that is what can close a fallback cell.
-- HTML in the page's own text is escaped too (`\<`, `\&`), and just as narrowly:
-  only a `<` that could open a tag and an `&` that could complete a reference.
-  Markdown carries raw HTML through, so without this a page *about* HTML lost the
-  text it showed. This needs `sanitize()` to call `normalize()` last — a parser
-  hands `&lt;/td&gt;` over as three text nodes, each harmless alone.
-- Emphasis picks the first marker that CommonMark's flanking rules let render:
-  `_`/`**`, then `*`/`__`, then an HTML tag (`core/src/utils/flanking.ts`).
-  Content starting or ending in punctuation, pressed against a word, has no
-  marker that works — emitting one anyway lost the italics and left the
-  characters. Preferred markers are kept wherever they render, so ordinary pages
-  produce the source they always did.
-- The HTML table fallback sets `outputContext: 'html'` for its cells, and that is
-  the whole switch: an HTML block is not parsed as Markdown, so escaping there
-  shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
-  emit tags instead; an image emits its alt text, because allowing `src`/`alt`
-  through the preview's allow-list would widen it for a case that already
-  rendered nothing. A link's scheme is checked — an unusable one costs the link,
-  not the text.
+- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Needs
+  `sanitize()` to call `normalize()` last — a parser hands `&lt;/td&gt;` over as
+  three text nodes, each harmless alone.
+- Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`,
+  then `*`/`__`, then an HTML tag (`core/src/utils/flanking.ts`). Content starting
+  or ending in punctuation, pressed against a word, has no marker that works —
+  emitting one anyway lost the italics and left the characters.
+- The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML
+  block is not parsed as Markdown, so escaping shows backslashes *and* `**bold**`
+  shows asterisks. Emphasis, code and links emit tags; an image emits alt text,
+  since allowing `src`/`alt` past the preview's allow-list would widen it for a
+  case that already rendered nothing. A link's scheme is checked.
 
 **Side panel**
 
@@ -85,6 +79,14 @@ Each of these has cost a bug already; the reason is what makes it stick.
 - `setButtonContent()` always sets `aria-label`: in compact mode the visible
   label is gone. `updateToolbarDensity()` measures in the non-compact state,
   which is what stops it oscillating.
+
+**Selection**
+
+- `cloneContents()` already closes cut tags; the work is restoring what the
+  selection left behind. A range crossing *out* of a table has no semantic common
+  ancestor, so table headers are restored separately. Clones carry no link to
+  originals: mark before cloning, unmark in a `finally`, and detect the header by
+  that mark — comparing `textContent` promoted a body row that repeated it.
 
 **Content script**
 

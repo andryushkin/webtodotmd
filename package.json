@@ -10,6 +10,7 @@
     "test": "bun test"
   },
   "devDependencies": {
+    "happy-dom": "^20.11.1",
     "linkedom": "^0.18.12"
   },
   "workspaces": [
