@@ -324,6 +324,7 @@ describe('link scheme check in an HTML fallback cell', () => {
   it.each([
     ['https', 'https://e.com', true],
     ['mailto', 'mailto:a@e.com', true],
+    ['tel', 'tel:+15551234', true],
     // Relative URLs may contain a colon; matching "no colon anywhere" dropped them.
     ['relative with a colon', '2024:notes.html', true],
     ['query with a colon', '?filter=a:b', true],
@@ -332,6 +333,101 @@ describe('link scheme check in an HTML fallback cell', () => {
     const md = toHtmlTable(cell(href));
     expect(md.includes('<a href=')).toBe(kept);
     expect(md).toContain('t');
+  });
+});
+
+// One allow-list, two paths. The check was written for the HTML fallback and only
+// later put in front of `[text](href)` as well — which is where almost every link
+// goes, so a list of `https` and `mailto` quietly stopped being a precaution and
+// started being a loss: a `tel:` number in a page header came back as bare digits
+// with nothing to tap.
+describe('схемы ссылок', () => {
+  const link = (href: string) => toMarkdown(`<p><a href="${href}">t</a></p>`).trim();
+
+  it.each([
+    ['http', 'http://e.com/', '[t](http://e.com/)'],
+    ['https', 'https://e.com/a', '[t](https://e.com/a)'],
+    ['mailto', 'mailto:a@e.com', '[t](mailto:a@e.com)'],
+    // An address handed to whichever application owns that kind of address —
+    // the same shape as `mailto`, and the reason this list was widened.
+    ['tel', 'tel:+15551234', '[t](tel:+15551234)'],
+    ['sms', 'sms:+15551234', '[t](sms:+15551234)'],
+    ['callto', 'callto:someone', '[t](callto:someone)'],
+    ['xmpp', 'xmpp:a@e.com', '[t](xmpp:a@e.com)'],
+    ['matrix', 'matrix:u/a:e.com', '[t](matrix:u/a:e.com)'],
+    ['cid', 'cid:part1@e.com', '[t](cid:part1@e.com)'],
+    // A browser no longer follows these, but the address still names the file,
+    // and what is being written is a document rather than a browser.
+    ['ftp', 'ftp://e.com/f', '[t](ftp://e.com/f)'],
+    ['ftps', 'ftps://e.com/f', '[t](ftps://e.com/f)'],
+  ])('%s keeps its target', (_name, href, expected) => {
+    expect(link(href)).toBe(expected);
+  });
+
+  it.each([
+    // Following one of these runs the page's code inside the reader's document.
+    ['javascript', 'javascript:alert(1)'],
+    ['vbscript', 'vbscript:msgbox(1)'],
+    // An href holding a `data:` URL is a whole document, `text/html` included —
+    // a script wearing a label. An image `src` is the other question; see below.
+    ['data', 'data:text/html,<script>alert(1)</script>'],
+    // A URL parser strips these before it reads the scheme, so by the time
+    // anything acts on the string it is `javascript:`. Reading the attribute as
+    // written finds no scheme at all and would pass it on as a relative URL.
+    ['javascript split by a newline', 'java\nscript:alert(1)'],
+    ['javascript split by a tab', 'java\tscript:alert(1)'],
+  ])('%s costs the link, not the text', (_name, href) => {
+    expect(toMarkdown(`<p><a href="${href.replace(/"/g, '&quot;')}">click</a></p>`)).toBe('click\n');
+  });
+
+  it('an image still inlines a data: picture', () => {
+    // Deliberate, and not the same question: a `src` is fetched and never
+    // navigated, and `data:image/…` is how a page carries a picture inside itself.
+    expect(toMarkdown('<img src="data:image/png;base64,AAA" alt="x">').trim()).toBe(
+      '![x](data:image/png;base64,AAA)',
+    );
+  });
+});
+
+// `markdownUrl()` closed the ways out of a destination one at a time: the space,
+// the backtick, the backslash, the unbalanced paren. `](` was the one left open,
+// and it is the only one that needs nothing to be wrong with the URL itself.
+describe('назначение ссылки не обрывается', () => {
+  const link = (href: string) =>
+    toMarkdown(
+      `<p><a href="${href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">t</a></p>`,
+    ).trim();
+
+  it.each([
+    // A second `](` is a complete label boundary sitting inside the address. It
+    // bites once a bracket in the page's own text has thrown the renderer's
+    // bracket count off — and that bracket is deliberately left unescaped, since
+    // `[1]` is a footnote marker. Nothing here can see the text ahead of the
+    // link, so the `]` is escaped every time; the renderer strips the backslash
+    // and the address the reader follows is unchanged.
+    ['a ]( in the middle', 'https://e.com/a](x)b', '[t](https://e.com/a\\](x)b)'],
+    // A bracket that opens nothing ends nothing, so it costs no backslash.
+    ['a lone ]', 'https://e.com/a]b', '[t](https://e.com/a]b)'],
+    ['a lone [', 'https://e.com/a[b', '[t](https://e.com/a[b)'],
+    // Balanced parens are still left alone — `…/Foo_(bar)` is most of Wikipedia —
+    // and the `](` beside them is escaped on its own.
+    [
+      'balanced parens beside it',
+      'https://e.com/Foo_(bar)](x)y',
+      '[t](https://e.com/Foo_(bar)\\](x)y)',
+    ],
+    // Unbalanced, both escapes apply, and the renderer undoes both.
+    ['unbalanced parens beside it', 'https://e.com/a](x', '[t](https://e.com/a\\]\\(x)'],
+    // The backslash pass runs first, so the backslash this adds is not doubled.
+    ['a backslash in front of it', 'https://e.com/a\\](x)b', '[t](https://e.com/a\\\\\\](x)b)'],
+  ])('href with %s', (_name, href, expected) => {
+    expect(link(href)).toBe(expected);
+  });
+
+  it('an image src is written the same way', () => {
+    expect(toMarkdown('<img src="https://e.com/a](x)b" alt="p">').trim()).toBe(
+      '![p](https://e.com/a\\](x)b)',
+    );
   });
 });
 
@@ -414,6 +510,23 @@ describe('значения атрибутов в синтаксисе markdown',
     // Without a URL the alt is all that is left, and it goes into the document
     // as prose — where `<b>` is a tag and `**x**` is bold.
     expect(toMarkdown('<p><img alt="&lt;b&gt;**x**"></p>').trim()).toBe('\\<b>\\*\\*x\\*\\*');
+  });
+
+  it.each([
+    // Prose is also where `#` is a heading. The alt went through the inline and
+    // the HTML escapers and never through the block one, so an image with no
+    // usable src turned its description into a section of the document.
+    ['a heading', '# heading', '\\# heading'],
+    ['a quote', '&gt; quoted', '\\> quoted'],
+    ['a bullet', '- item', '\\- item'],
+    ['a number', '1. item', '1\\. item'],
+    // A line of dashes draws a rule, or turns whatever is above it into a heading.
+    ['a rule', '---', '\\---'],
+    // The escape belongs to the front of the line only: a sharp inside a sentence
+    // is a sharp, and a backslash there would be one the reader pays for.
+    ['a sharp mid-sentence', 'issue #3', 'issue #3'],
+  ])('an alt with no src cannot open a block: %s', (_name, alt, expected) => {
+    expect(toMarkdown(`<p><img alt="${alt}"></p>`).trim()).toBe(expected);
   });
 
   it.each([

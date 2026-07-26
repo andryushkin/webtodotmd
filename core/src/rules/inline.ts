@@ -7,7 +7,7 @@ import {
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext } from '../core/parser.js';
-import { escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
+import { escapeBlockStarts, escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
 
 /**
  * Emphasis, in the first form that will actually render.
@@ -130,18 +130,44 @@ function adjacentCodeSpan(el: Element, side: 'prev' | 'next'): Element | undefin
   return undefined;
 }
 
-// Only schemes that are safe to write into an href the preview will render. The
-// side panel runs DOMPurify too, but this library is published on its own, and a
-// converter that can emit `javascript:` from page input is a converter that must
-// not be trusted alone.
+// The schemes a Markdown file can carry in an href. A link is there to be
+// followed, so the only question each scheme has to answer is what happens then:
+// `http`/`https` fetch a document, `ftp`/`ftps` name a file on a host, and
+// `mailto`, `tel`, `callto`, `sms`, `cid`, `xmpp` and `matrix` hand an address to
+// whatever application owns that kind of address. Not one of them can run code,
+// and all of them occur in ordinary page markup — `tel:` sits in the header of
+// nearly every business site, which is what made the narrower list expensive: the
+// check began guarding the Markdown path as well as the HTML one, and a phone
+// number that had always been a link became bare text.
 //
+// The list is DOMPurify's default set, unchanged. That is not borrowed authority
+// for its own sake — it is the same set the side panel puts the finished render
+// through, so anything shorter here would only name links the sanitizer downstream
+// was going to keep anyway, and the two halves of the product would disagree about
+// what a link is.
+//
+// `javascript:` and `vbscript:` stay out because following one runs code inside
+// the reader's document, and `data:` because it carries a document of its own,
+// `text/html` and all, which makes an href holding one a script wearing a label.
+// An image `src` is a different question and keeps `data:` deliberately, with
+// tests of its own: it is fetched, never navigated, and `data:image/…` is simply
+// how a page inlines a picture. Everything unlisted loses its target and keeps its
+// text — the safe way round for a scheme nobody here has thought about.
+const RENDERABLE_SCHEME = /^(?:https?|ftps?|mailto|tel|callto|sms|cid|xmpp|matrix)$/i;
+
 // A URL with no scheme is relative and always fine — including one that merely
 // contains a colon, like `2024:notes.html` or `?filter=a:b`. Matching "no colon
 // anywhere" instead dropped those links entirely.
 const URL_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
 function isRenderableUrl(url: string): boolean {
-  const scheme = URL_SCHEME.exec(url.trim());
-  return scheme === null || /^(?:https?|mailto)$/i.test(scheme[1]!);
+  // Whitespace and control characters come out before the scheme is read, because
+  // that is what a URL parser does with them: `java\nscript:` is `javascript:` by
+  // the time a browser acts on it, while the pattern above finds no scheme at all
+  // in the raw string and would pass it on as relative. The percent-encoding below
+  // happens to defuse that particular one — but a check that answers "no scheme
+  // here" about a scheme is wrong in a way its next caller inherits.
+  const scheme = URL_SCHEME.exec(url.replace(/[\u0000-\u0020\u007f]/g, ''));
+  return scheme === null || RENDERABLE_SCHEME.test(scheme[1]!);
 }
 
 function htmlAttr(value: string): string {
@@ -196,12 +222,27 @@ function parensBalanced(url: string): boolean {
  * otherwise break: `…/Foo_(bar)` is most of Wikipedia, it has always rendered,
  * and a backslash there is a character the reader pays for and gains nothing by.
  *
+ * `](` is the other way out, and unlike a stray paren it does not need the URL to
+ * be malformed. A renderer finds the end of the label by counting brackets from
+ * the opening `[`, and an unescaped `[` in the page's own text ahead of the link
+ * throws that count off — the text escaper leaves such a bracket alone on purpose,
+ * since `[1]` is a footnote marker and Wikipedia is full of them. The next `](`
+ * the scan meets is then taken for the label boundary, and the link is cut open in
+ * the middle of its own address: `[[x](https://e.com/a](x)b)` renders as a link to
+ * `x` labelled `[x](https://e.com/a`, with `b)` left standing as prose — the
+ * target lost, the address on screen, and the tail as text. One backslash on the
+ * `]` puts the boundary back where it belongs. Only a `]` that a `(` follows is
+ * escaped, which is the line the text escaper already draws: a bracket on its own
+ * is not link syntax and ends nothing.
+ *
  * The backslash itself is always escaped, and first. A URL ending in one would
  * otherwise escape the closing delimiter, and a URL containing `\(` would have
  * the renderer read the parenthesis as escaped and hand back a different URL.
  */
 function markdownUrl(url: string): string {
-  const escaped = encodeUrl(url).replace(/\\/g, '\\\\');
+  const escaped = encodeUrl(url)
+    .replace(/\\/g, '\\\\')
+    .replace(/\](?=\()/g, '\\$&');
   return parensBalanced(escaped) ? escaped : escaped.replace(/[()]/g, '\\$&');
 }
 
@@ -416,10 +457,22 @@ export const INLINE_RULES: Rule[] = [
       // a reader would have got from a broken image anyway. The cell escapes it.
       if (isHtmlContext(options)) return alt || '';
       // With no URL the alt is all that survives, and it lands in the document as
-      // ordinary text — so it needs what ordinary text gets. It never had it: an
-      // attribute never passes the text escaper, so an `alt` holding
-      // `<img onerror=…>` went into the file as working markup.
-      if (!src) return alt ? escapeHtmlSyntax(escapeInlineMarkdown(alt)) : '';
+      // ordinary text — so it needs everything ordinary text gets, in the order
+      // the parser applies it: inline marks, then HTML, then the constructs that
+      // only bite at the start of a line. It had none of it to begin with, because
+      // an attribute never passes the text escaper: an `alt` holding
+      // `<img onerror=…>` went into the file as working markup, and one holding
+      // `# heading` became a real H1 — a heading the page never had, swallowing
+      // the picture's description into the document's outline.
+      //
+      // The block pass runs unconditionally here, where a text node gets it only
+      // when it opens a line. `opensBlock()` is that question and it lives
+      // unexported in the parser; without it the whole cost is one backslash, and
+      // only on an image that had no usable src, whose alt starts with `#`, `>`, a
+      // bullet or a number, and that sits mid-sentence rather than at the front of
+      // one. The backslash renders as nothing; the heading it prevents was a
+      // structural claim invented out of an attribute.
+      if (!src) return alt ? escapeBlockStarts(escapeHtmlSyntax(escapeInlineMarkdown(alt))) : '';
       const title = el.getAttribute('title');
       const dest = markdownUrl(src);
       const urlPart = title ? `${dest} '${markdownTitle(title)}'` : dest;
