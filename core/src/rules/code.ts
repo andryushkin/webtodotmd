@@ -14,7 +14,23 @@ const LANG_PATTERNS = [
 // Классы нумерации строк §6.4
 const LINE_NUMBER_CLASSES = new Set(['line-numbers-rows', 'linenumber', 'line-number', 'hljs-ln']);
 
-function detectLang(codeEl: Element | null, preEl: Element): string {
+/**
+ * What may follow the opening fence.
+ *
+ * The info string is written on the fence's own line, and `data-lang` is page
+ * input with no shape imposed on it: a newline and three backticks in that
+ * attribute closed the fence immediately, and everything below — the code, and
+ * the rest of the document — was read as markup. An info string has no escape
+ * syntax to hide that in, so the only encoding available is refusal.
+ *
+ * A language name is a token, so the pattern is one: letters and digits with the
+ * punctuation real names carry (`c++`, `c#`, `objective-c`, `asp.net`), bounded
+ * in length. Anything else is not a language anyone was going to highlight by,
+ * and dropping it costs colour; keeping it costs the code block.
+ */
+const LANG_TOKEN = /^[a-zA-Z0-9][a-zA-Z0-9+#._-]{0,31}$/;
+
+function readLang(codeEl: Element | null, preEl: Element): string {
   if (codeEl) {
     const dl = codeEl.getAttribute('data-lang') ?? codeEl.getAttribute('data-language');
     if (dl) return dl.trim();
@@ -28,6 +44,14 @@ function detectLang(codeEl: Element | null, preEl: Element): string {
     }
   }
   return '';
+}
+
+// One gate for every source. The class patterns above already capture `\w+` and
+// could not produce anything else, but a rule that holds in one place and is
+// merely implied in the others is the shape this defect had to begin with.
+function detectLang(codeEl: Element | null, preEl: Element): string {
+  const lang = readLang(codeEl, preEl);
+  return LANG_TOKEN.test(lang) ? lang : '';
 }
 
 function removeLineNumbers(el: Element): void {
