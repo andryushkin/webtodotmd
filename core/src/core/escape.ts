@@ -72,8 +72,16 @@ export function escapeInlineMarkdown(text: string, upcoming = ''): string {
     .replace(/_/g, (mark, index: number, text_: string) =>
       isWordChar(text_[index - 1]) && isWordChar(text_[index + 1]) ? mark : '\\_',
     )
-    // Strikethrough needs a pair; a single tilde renders as itself.
-    .replace(/~~/g, '\\~\\~');
+    // Strikethrough needs a pair, so a tilde in the middle of a sentence renders as
+    // itself and is left alone — `~/src`, `~5 min`.
+    //
+    // At an edge it is a half, and the node next to it supplies the other: `~`
+    // followed by a struck `x` writes `~~~x~~`, a three-character run that closes
+    // nothing, and the reader loses the text outright rather than seeing a stray
+    // marker. `~~` has no second spelling to fall back to the way emphasis picks
+    // between `_` and `*`, so the backslash is the only repair, and only the edges
+    // can ever meet a neighbour.
+    .replace(/~~|^~|~$/g, (mark) => (mark === '~' ? '\\~' : '\\~\\~'));
   return escapeLinkSyntax(marks, upcoming);
 }
 

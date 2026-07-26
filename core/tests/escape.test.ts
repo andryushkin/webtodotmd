@@ -64,6 +64,28 @@ describe('экранирование markdown из текста страницы
     expect(toMarkdown('<p>Intro<br>- item</p>').trim()).toContain('\\- item');
   });
 
+  // A tilde alone renders as itself, which is why it used to be left alone — but a
+  // tilde at the edge of a text node is a half, and a struck neighbour supplies the
+  // other. `~~~x~~` closes nothing and the reader loses `x` from the page entirely,
+  // the one defect the fidelity survey has found that costs content rather than
+  // characters. `~~` has no second spelling to fall back to, so the escape is the
+  // only repair.
+  it.each([
+    ['перед зачёркнутым тегом', '<p>~<del>x</del></p>', '\\~~~x~~'],
+    ['перед зачёркнутым стилем', '<p>~<span style="text-decoration-line:line-through">x</span></p>', '\\~~~x~~'],
+    ['после зачёркнутого', '<p><del>x</del>~</p>', '~~x~~\\~'],
+    ['оба края узла', '<p>~home~</p>', '\\~home\\~'],
+  ])('край текстового узла: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  it.each([
+    ['путь', '<p>see ~/src for it</p>', 'see ~/src for it'],
+    ['приближение', '<p>about ~5 min</p>', 'about ~5 min'],
+  ])('середина предложения не платит: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
   it('текст ячейки экранируется и в pipe-таблице', () => {
     const html = '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>**bold**</td></tr></tbody></table>';
     expect(toMarkdown(html)).toContain('\\*\\*bold\\*\\*');

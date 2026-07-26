@@ -116,8 +116,21 @@ beforeAll(() => {
 // once with the snapshot attribute. That pair is deliberate: it is the standing
 // proof that the two paths are read as one, and repairing the defect must move
 // both lines or the seam has come apart.
+//
+// Then 89 -> 84, and this one is ground won. A single tilde at the edge of a text
+// node is now escaped: it used to render as itself, which is true of a tilde alone
+// and false of one standing next to a node that emits `~~`. `~` then a struck `x`
+// wrote `~~~x~~`, a run that closes nothing, and the text disappeared from the
+// page rather than gaining a stray marker — the only defect the survey has found
+// that costs content instead of characters. A tilde mid-sentence still pays
+// nothing, so `~/src` and `~5 min` read as they always did.
+//
+// Eight classes arrived with that repair and none of them is new: each was
+// checked directly against the previous commit and fails there identically. A
+// class is keyed by its shrunk document, so a seed that stops failing on the
+// tilde shrinks to whatever else it was already carrying.
 const SEEDS = 200;
-const CEILING = 89;
+const CEILING = 84;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -127,6 +140,9 @@ const CEILING = 89;
 // Regenerate with `bun tests/fidelity/survey.ts 200` after a deliberate change.
 const RECORDED_CLASSES: readonly string[] = [
   "<p style=\"font-weight:700;font-style:italic\"><b>**</b></p>",
+  "<p>!-- swallowed --&gt; b~word~</p>",
+  "<p>!-- swallowed --&gt;~word~</p>",
+  "<p>&amp;amp;~word~</p>",
   "<p>(https://example.com)&lt;div&gt; x `</p>",
   "<p>(https://example.com)&lt;table&gt;</p>",
   "<p>(https://example.com)<b>text</b></p>",
@@ -145,11 +161,11 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p><samp data-s2md-style=\"display:block\">x</samp>x](https://example.com)</p>",
   "<p><span data-s2md-style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
+  "<p><span style=\"text-decoration-line:line-through\">~~</span></p>",
   "<p><span># </span></p>",
   "<p><span>1. </span></p>",
   "<p>x](https://example.com)&lt;/table&gt;</p>",
-  "<p>~<span style=\"text-decoration-line:line-through\">x</span></p>",
-  "<p>~word~</p>",
+  "<p>x](https://example.com)<strong>hello world</strong></p>",
   "<p>🇺🇸<i data-s2md-style=\"font-weight:700\">x</i></p>",
   "<p>🎉<b>:</b></p>",
   "<table><tbody><tr><td colspan=\"2\"><span data-s2md-style=\"display:block\">\\</span>foo bar</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>",
@@ -172,6 +188,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><caption>&amp;amp;</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>&lt;!--</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>(https://example.com)</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><caption>(https://example.com/i.png)</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>*bold*</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>===</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -184,6 +201,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><tbody><tr><td>&lt;td colspan=\"2\"&gt;</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>*bold*</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>--&gt;</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td></td><td>!-- swallowed --&gt;</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>#</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>&lt;/td&gt;</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td></td><td>)</td><td></td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -194,6 +212,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><tbody><tr><td>===</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>word</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>x](https://example.com)</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
+  "<table><tbody><tr><td><table><tbody><tr><td>~word~</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
 ];
 
 // The survey shrinks every failing seed, so it is measured once and shared.

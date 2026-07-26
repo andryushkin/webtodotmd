@@ -46,6 +46,12 @@ Each of these has cost a bug already; the reason is what makes it stick.
   boundary. Never escape inside `pre`, `code`, `kbd`, `samp` or a math subtree: a backslash there is
   corruption, and in a math subtree only a tag start (`<` before a letter or slash) is neutralized,
   because that is what can close a fallback cell.
+- A lone `~` is escaped at a text node's edges and nowhere else. It renders as itself in isolation,
+  which is why it was left alone, but a struck neighbour supplies the other half: `~` before a
+  `<del>` wrote `~~~x~~`, a run closing nothing, and `x` left the page — the only defect the survey
+  has found that costs content rather than characters. `~~` has no second spelling the way emphasis
+  picks between `_` and `*`, so a backslash is the only repair, and `~/src` mid-sentence still pays
+  nothing.
 - HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves must not assemble across
   a node boundary: `sanitize()` calls `normalize()` last, and a node whose tail is still an open
   construct escapes it defensively, since it cannot see what the next node adds.
