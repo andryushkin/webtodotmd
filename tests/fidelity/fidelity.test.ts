@@ -31,8 +31,15 @@ beforeAll(() => {
 // It rose again when the generator regained merged-cell coverage. Removing the
 // merged-cell block kind had left `expandSpans` — the newest code here, and now
 // the default path for every merged table — with no generated input at all.
+//
+// It fell from 98 when escaping learned to hold across a node boundary. Two whole
+// classes went with it — `<span>&lt;</span>!-- swallowed --&gt;` and the same
+// shape mid-sentence — 26 seeds between them, where a `<` ending one text node and
+// a comment opener starting the next joined into a comment that ate the rest of
+// the line. What is left on the concatenation axis is the Markdown half of the
+// same problem: `<span>[</span>x](url)` still assembles into a link.
 const SEEDS = 200;
-const CEILING = 98;
+const CEILING = 74;
 
 function countFailures(): number {
   let failures = 0;

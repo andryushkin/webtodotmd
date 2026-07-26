@@ -65,11 +65,24 @@ export function escapeBlockStarts(md: string): string {
  * `Tom & Jerry` are not markup, and a backslash there is noise the reader pays
  * for. Only a `<` that could open a tag, a comment or a processing instruction,
  * and only an `&` that could complete a character reference.
+ *
+ * `continues` says another node's text will be joined onto the end of this one.
+ * Both lookaheads stop where the string does, so a construct that begins at the
+ * very end has nothing to be checked against and passes — a highlighter puts
+ * `&lt;` in one span and `img src=…&gt;` in the next, each half harmless, and the
+ * join is a live tag. There is no way to look at what is coming, so an unfinished
+ * tail is escaped on suspicion instead.
  */
-export function escapeHtmlSyntax(text: string): string {
-  return text
+export function escapeHtmlSyntax(text: string, continues = false): string {
+  const escaped = text
     .replace(/&(?=[a-zA-Z][a-zA-Z0-9]*;|#\d+;|#[xX][0-9a-fA-F]+;)/g, '\\&')
     .replace(/<(?=[a-zA-Z/!?])/g, '\\<');
+  if (!continues) return escaped;
+  // Only a tail that is still open: a `<` with nothing after it to judge, or an
+  // `&` and the part of a character reference written so far. A `<` that already
+  // has its next character here was decided above, and `&` in `Tom & Jerry` or
+  // `AT&T ships` is followed by text that cannot be a reference either way.
+  return escaped.replace(/(?:<|&(?:[a-zA-Z][a-zA-Z0-9]*|#[xX][0-9a-fA-F]*|#\d*)?)$/, '\\$&');
 }
 
 /**
@@ -91,9 +104,15 @@ export function escapeTagStarts(text: string): string {
  * every escape costs a formula: `a < b` and `x <y` are ordinary mathematics and
  * must survive untouched. Only a `<` that begins something a parser would take as
  * a tag or a comment — a name, then a matching `>` — is neutralized.
+ *
+ * `continues` means the same thing as in `escapeHtmlSyntax`, and here it is worse:
+ * this rule wants the whole tag, opener and closing `>`, inside one string, so a
+ * split anywhere in the middle defeats it. MathML splits by construction —
+ * `<mo>&lt;</mo><mi>b</mi><mo>&gt;</mo>` is how a page writes `a < b > c`, and
+ * with no math rule claiming it that is three text nodes joining into `<b>`.
  */
-export function escapeMathTags(latex: string): string {
-  return latex.replace(
+export function escapeMathTags(latex: string, continues = false): string {
+  const escaped = latex.replace(
     /<(?:[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][a-zA-Z0-9]*\s*>|!--)/g,
     // Both delimiters, not just the opener: leaving the `>` behind produced
     // `&lt;b>` — half an entity, which KaTeX shows verbatim and no renderer
@@ -102,5 +121,13 @@ export function escapeMathTags(latex: string): string {
       const inner = match.slice(1);
       return `&lt;${inner.endsWith('>') ? `${inner.slice(0, -1)}&gt;` : inner}`;
     },
+  );
+  if (!continues) return escaped;
+  // A tag that is still being written when the node ends: the `<` alone, a name
+  // and its attributes so far, or a comment opener half typed. `x <=` keeps its
+  // `<` — nothing appended after `=` can make that a tag.
+  return escaped.replace(
+    /<(?:\/?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?|\/|!-?)?$/,
+    (match) => `&lt;${match.slice(1)}`,
   );
 }
