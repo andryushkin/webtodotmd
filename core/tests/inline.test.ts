@@ -263,3 +263,101 @@ describe('link scheme check in an HTML fallback cell', () => {
     expect(md).toContain('t');
   });
 });
+
+// An attribute is page input dropped straight inside the converter's own syntax
+// — `[text](href)`, `![alt](src 'title')`, the info string after a fence — and
+// nothing encoded it for that position. A value could therefore end the
+// construct from inside, and whatever followed stopped being text: the URL's own
+// tail, a paragraph of the page, the whole of a code block.
+describe('значения атрибутов в синтаксисе markdown', () => {
+  it('a scheme that cannot be followed costs the link, not the text', () => {
+    expect(toMarkdown('<p><a href="javascript:alert(1)">click</a></p>')).toBe('click\n');
+  });
+
+  it.each([
+    ['https', 'https://e.com/a', '[t](https://e.com/a)'],
+    ['mailto', 'mailto:a@e.com', '[t](mailto:a@e.com)'],
+    ['relative with a colon', '2024:notes.html', '[t](2024:notes.html)'],
+  ])('an ordinary href is written as it always was: %s', (_name, href, expected) => {
+    expect(toMarkdown(`<p><a href="${href}">t</a></p>`).trim()).toBe(expected);
+  });
+
+  it.each([
+    // A newline ends the destination and the rest of the attribute starts a new
+    // paragraph — as markup, since Markdown carries raw HTML.
+    ['newline', 'https://e.com/x\n\n<b>y</b>', '[t](https://e.com/x%0A%0A%3Cb%3Ey%3C/b%3E)'],
+    // A space ends it just as well, and an unquoted URL is where spaces live.
+    ['space', 'https://e.com/a b.png', '[t](https://e.com/a%20b.png)'],
+    // A code span outranks a link, so a backtick can swallow the `)` and beyond.
+    ['backtick', 'https://e.com/a`b', '[t](https://e.com/a%60b)'],
+    // `<` in first position asks for the angle-bracket form, which this is not.
+    ['angle bracket', '<https://e.com/a>', '[t](%3Chttps://e.com/a%3E)'],
+    // Parentheses are read as balanced pairs: a lone one closes the link and the
+    // remainder of the URL is left standing in the paragraph as text.
+    ['unbalanced close', 'https://e.com/a)b', '[t](https://e.com/a\\)b)'],
+    ['unbalanced open', 'https://e.com/a(b', '[t](https://e.com/a\\(b)'],
+    // Balanced ones have always rendered — most of Wikipedia is this URL — so a
+    // backslash there would be a character the reader pays for and gains nothing by.
+    ['balanced pair', 'https://e.com/Foo_(bar)', '[t](https://e.com/Foo_(bar))'],
+    // A backslash is always escaped: left alone it would either escape the
+    // closing delimiter or turn the parenthesis after it into an escaped one.
+    ['backslash', 'https://e.com/a\\b', '[t](https://e.com/a\\\\b)'],
+  ])('href with a %s', (_name, href, expected) => {
+    const doc = `<p><a href="${href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">t</a></p>`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it('src is encoded the same way, in the same position', () => {
+    expect(toMarkdown('<img src="https://e.com/a b.png" alt="x">').trim()).toBe(
+      '![x](https://e.com/a%20b.png)',
+    );
+  });
+
+  it.each([
+    // The label is parsed as inline content, and `alt` never went through the
+    // text escaper — it is an attribute, not a text node.
+    ['closing bracket', 'left]right', '![left\\]right](x.png)'],
+    ['opening bracket', 'a[b', '![a\\[b](x.png)'],
+    ['backtick', 'a`b', '![a\\`b](x.png)'],
+    ['backslash', 'a\\b', '![a\\\\b](x.png)'],
+    // Emphasis cannot break the label, so it is left alone: a backslash there
+    // would surface in the alt text a reader sees when the image fails to load.
+    ['asterisks', 'a*b*c', '![a*b*c](x.png)'],
+  ])('alt with a %s', (_name, alt, expected) => {
+    const doc = `<img src="x.png" alt="${alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it.each([
+    ['an apostrophe closes the title early', "Bob's photo", "![a](x.png 'Bob\\'s photo')"],
+    ['a backslash would escape the quote after it', 'a\\b', "![a](x.png 'a\\\\b')"],
+    // A blank line inside the title ends the paragraph and leaves the whole
+    // construct as source. A title is a tooltip; it has no lines to keep.
+    ['a blank line', 'a\n\nb', "![a](x.png 'a b')"],
+  ])('title with %s', (_name, title, expected) => {
+    const doc = `<img src="x.png" alt="a" title="${title.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it('an alt with no src lands as ordinary text and is escaped like it', () => {
+    // Without a URL the alt is all that is left, and it goes into the document
+    // as prose — where `<b>` is a tag and `**x**` is bold.
+    expect(toMarkdown('<p><img alt="&lt;b&gt;**x**"></p>').trim()).toBe('\\<b>\\*\\*x\\*\\*');
+  });
+
+  it.each([
+    // `data-lang` is page input written straight after the opening fence: a
+    // newline and three backticks in it closed the fence on the spot, and the
+    // code — and everything under it — was read as markup.
+    ['fence and payload', 'js\n```\n<b>y</b>', '```\nsafe\n```'],
+    ['a space', 'js onload=alert(1)', '```\nsafe\n```'],
+    ['a backtick', 'j`s', '```\nsafe\n```'],
+    // A name that is a name is kept, punctuation and all.
+    ['a plain name', 'rust', '```rust\nsafe\n```'],
+    ['punctuation real names carry', 'c++', '```c++\nsafe\n```'],
+    ['a sharp', 'f#', '```f#\nsafe\n```'],
+  ])('data-lang with %s', (_name, lang, expected) => {
+    const attr = lang.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+    expect(toMarkdown(`<pre><code data-lang="${attr}">safe</code></pre>`).trim()).toBe(expected);
+  });
+});

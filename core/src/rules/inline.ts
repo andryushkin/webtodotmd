@@ -6,6 +6,7 @@ import {
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext } from '../core/parser.js';
+import { escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
 
 /**
  * Emphasis, in the first form that will actually render.
@@ -64,6 +65,87 @@ function htmlAttr(value: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/**
+ * A URL on its way into markup, out of an attribute the page controls entirely.
+ *
+ * These are exactly the characters a URL has to percent-encode anyway — the
+ * WHATWG URL standard's fragment set, plus DEL — so encoding them still names
+ * the same resource and only stops the syntax around it from ending early. Each
+ * one is a way out of the construct: a space or a newline terminates a `(…)`
+ * destination, a `<` in first position switches it to the angle-bracket form, a
+ * backtick opens a code span, which CommonMark resolves before it resolves
+ * links, and in the HTML table fallback a blank line closes the HTML block in
+ * the middle of a tag.
+ *
+ * Percent-encoding rather than an angle-bracket destination `<…>`: that form
+ * still cannot hold `<`, `>` or a newline, so it would need this pass anyway,
+ * and it does nothing for the `href="…"` the fallback writes.
+ */
+const URL_MUST_ENCODE = /[\u0000-\u0020\u007f"<>`]/g;
+function encodeUrl(url: string): string {
+  return url.replace(
+    URL_MUST_ENCODE,
+    (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`,
+  );
+}
+
+/** CommonMark's own condition for leaving parentheses in a destination alone. */
+function parensBalanced(url: string): boolean {
+  let depth = 0;
+  for (const ch of url) {
+    if (ch === '(') depth++;
+    else if (ch === ')' && --depth < 0) return false;
+  }
+  return depth === 0;
+}
+
+/**
+ * The destination of `[text](dest)`.
+ *
+ * CommonMark reads parentheses there only as balanced pairs, so a single `)`
+ * from the page — `https://e.com/a)b` — closes the link early and the rest of
+ * the URL is left standing as text. Backslash-escaping them is exact, since the
+ * renderer strips the backslash again, but it is only done where the URL would
+ * otherwise break: `…/Foo_(bar)` is most of Wikipedia, it has always rendered,
+ * and a backslash there is a character the reader pays for and gains nothing by.
+ *
+ * The backslash itself is always escaped, and first. A URL ending in one would
+ * otherwise escape the closing delimiter, and a URL containing `\(` would have
+ * the renderer read the parenthesis as escaped and hand back a different URL.
+ */
+function markdownUrl(url: string): string {
+  const escaped = encodeUrl(url).replace(/\\/g, '\\\\');
+  return parensBalanced(escaped) ? escaped : escaped.replace(/[()]/g, '\\$&');
+}
+
+/**
+ * The label of `[text](…)` and `![alt](…)`, which is parsed as inline content.
+ *
+ * Link text arrives already escaped — it is page text and went through the text
+ * escaper — but `alt` is an attribute and has never been near it. An unmatched
+ * bracket or a lone backtick swallows the `](` that follows, and the image
+ * collapses into visible source: the reader loses the picture *and* gains the
+ * markup. Only the three characters that can do that are escaped. Emphasis
+ * marks cannot break the label, and a backslash in front of one would surface in
+ * the alt text a reader sees when the image fails to load.
+ */
+function markdownLabel(text: string): string {
+  return text.replace(/[\\[\]`]/g, '\\$&');
+}
+
+/**
+ * The title of `![alt](src 'title')`.
+ *
+ * An apostrophe from the page — `Bob's photo` — closes the title early, and a
+ * blank line inside it ends the paragraph and leaves the whole construct as
+ * text. Whitespace is folded the way `alt` is already folded, because a title is
+ * a tooltip and has no lines; the quote is backslash-escaped, which CommonMark
+ * undoes, so the reader still gets the apostrophe.
+ */
+function markdownTitle(title: string): string {
+  return title.replace(/\s+/g, ' ').trim().replace(/[\\']/g, '\\$&');
 }
 
 function resolveUrl(url: string, baseUrl?: string): string {
@@ -203,12 +285,15 @@ export const INLINE_RULES: Rule[] = [
       const href = resolveUrl(el.getAttribute('href') ?? '', options.baseUrl);
       const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
       if (!trimmed) return childContent;
+      // An unusable scheme costs the link, not the text it was wrapping. The
+      // check guarded the HTML fallback only, so `javascript:` was refused on the
+      // rare path and written straight into `[text](href)` on the ordinary one —
+      // the wrong way round, since almost every link takes the ordinary one.
+      if (!isRenderableUrl(href)) return `${leading}${trimmed}${trailing}`;
       if (isHtmlContext(options)) {
-        // An unusable scheme costs the link, not the text it was wrapping.
-        if (!isRenderableUrl(href)) return `${leading}${trimmed}${trailing}`;
-        return `${leading}<a href="${htmlAttr(href)}">${trimmed}</a>${trailing}`;
+        return `${leading}<a href="${htmlAttr(encodeUrl(href))}">${trimmed}</a>${trailing}`;
       }
-      return `${leading}[${trimmed}](${href})${trailing}`;
+      return `${leading}[${trimmed}](${markdownUrl(href)})${trailing}`;
     },
   },
   {
@@ -227,16 +312,21 @@ export const INLINE_RULES: Rule[] = [
     replacement: (el, _childContent, options: MarkItDownOptions) => {
       const src = resolveUrl(extractImageUrl(el), options.baseUrl);
       const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
-      if (!src) return alt || '';
       // Inside an HTML block `![alt](src)` would not render, but emitting an
       // <img> would mean allowing `src` and `alt` through the preview's
       // allow-list — a real widening of what counts as the core's own markup,
       // for a case that is rare and already showed nothing. The alt text is what
-      // a reader would have got from a broken image anyway.
+      // a reader would have got from a broken image anyway. The cell escapes it.
       if (isHtmlContext(options)) return alt || '';
+      // With no URL the alt is all that survives, and it lands in the document as
+      // ordinary text — so it needs what ordinary text gets. It never had it: an
+      // attribute never passes the text escaper, so an `alt` holding
+      // `<img onerror=…>` went into the file as working markup.
+      if (!src) return alt ? escapeHtmlSyntax(escapeInlineMarkdown(alt)) : '';
       const title = el.getAttribute('title');
-      const urlPart = title ? `${src} '${title}'` : src;
-      return `![${alt}](${urlPart})`;
+      const dest = markdownUrl(src);
+      const urlPart = title ? `${dest} '${markdownTitle(title)}'` : dest;
+      return `![${markdownLabel(alt)}](${urlPart})`;
     },
   },
 ];

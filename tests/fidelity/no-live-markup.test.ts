@@ -148,3 +148,43 @@ describe('paths the first version of this file missed', () => {
     expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
   });
 });
+
+// The cases above put the payload in the page's text. These put it in an
+// attribute — `href`, `src`, `alt`, `title`, `data-lang` — which reaches the file
+// inside the converter's own syntax, `[text](href)` and `![alt](src 'title')` and
+// the info string after a fence. A value that ends its construct from inside
+// leaves everything after it in the document as markup, and an attribute never
+// went near the text escaper, so nothing was stopping it.
+describe('attribute values', () => {
+  // The payload spelled for an attribute: the `style="…"` above carries double
+  // quotes, which would close the attribute in the fixture and never reach the
+  // converter at all. Unquoted, it still positions an overlay.
+  const IN_ATTR = escapeHtml(`${PAYLOAD.split('<div')[0]}<div style=position:fixed>X</div>`);
+
+  it.each([
+    ['href newline', `<p><a href="https://e.com/x&#10;&#10;${IN_ATTR}">link</a> tail</p>`],
+    ['href javascript', '<p><a href="javascript:alert(1)">click</a></p>'],
+    ['href unbalanced paren', `<p><a href="https://e.com/a)b ${IN_ATTR}">link</a></p>`],
+    ['href backtick', `<p><a href="https://e.com/a\`b\` ${IN_ATTR}">link</a></p>`],
+    ['alt bracket', `<p><img src="${OWN_IMAGE}" alt="a](x) ${IN_ATTR}"></p>`],
+    ['alt backtick', `<p><img src="${OWN_IMAGE}" alt="a\`b](x) ${IN_ATTR}"></p>`],
+    ['title quote', `<p><img src="${OWN_IMAGE}" alt="a" title="Bob's ${IN_ATTR}"></p>`],
+    // With no URL the alt is not a label any more, it is prose.
+    ['alt without src', `<p><img alt="${IN_ATTR}"></p>`],
+    ['code fence info string', `<pre><code data-lang="js&#10;\`\`\`&#10;${IN_ATTR}">safe</code></pre>`],
+  ])('%s', (_name, html) => {
+    expect(liveMarkup(render(toMarkdown(html, { ...CONVERSION_OPTIONS })))).toEqual([]);
+  });
+
+  it('src', () => {
+    // `liveMarkup` recognises the converter's own image by its exact URL, and a
+    // broken `src` is the whole point here — so this one counts elements instead:
+    // one image, the one that was asked for, and nothing that escaped from it.
+    const html = `<p><img src="https://e.com/a b.png?q=${IN_ATTR}" alt="a"></p>`;
+    const rendered = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));
+    const doc = parseHTML(`<html><body>${rendered}</body></html>`).document;
+    expect(doc.querySelectorAll('img').length).toBe(1);
+    expect(doc.querySelector('img')!.getAttribute('onerror')).toBe(null);
+    expect(doc.querySelectorAll('[style]').length).toBe(0);
+  });
+});
