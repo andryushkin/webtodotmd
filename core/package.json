@@ -70,5 +70,11 @@
     "happy-dom": {
       "optional": true
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andryushkin/webtodotmd.git",
+    "directory": "core"
+  },
+  "homepage": "https://github.com/andryushkin/webtodotmd/tree/main/core"
 }

@@ -135,6 +135,6 @@ captured text are escaped rather than rendered.
 Manifest V3, no runtime dependencies loaded from the network. The content
 script bundle is ~275 KB, dominated by the complete WHATWG entity table and the
 conversion core; the side panel bundle is larger because it embeds KaTeX.
-Conversion is [htmltodotmd](https://github.com/andryushkin/htmltodotmd);
+Conversion is `htmltodotmd`, the library in [core/](../core/README.md);
 preview is marked + DOMPurify; math is KaTeX; icons are inline Lucide-style
 SVG.
