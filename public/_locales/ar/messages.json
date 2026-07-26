@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "إظهار فقاعة عائمة عند التحديد"
   },
+  "labelHtmlTables": {
+    "message": "الإبقاء على الجداول المعقّدة بصيغة HTML"
+  },
   "labelDefaultView": {
     "message": "وضع العرض الافتراضي"
   },

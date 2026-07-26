@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Mostrar botão flutuante ao selecionar"
   },
+  "labelHtmlTables": {
+    "message": "Manter tabelas complexas como HTML"
+  },
   "labelDefaultView": {
     "message": "Modo de exibição padrão"
   },

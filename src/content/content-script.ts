@@ -108,10 +108,15 @@ function expandShadowRoots(): () => void {
   return () => cleanups.forEach(fn => fn());
 }
 
+/** The one conversion option the user can change; see Settings.htmlTables. */
+function tableOptions(): { complexTableFallback: 'flatten' | 'html' } {
+  return { complexTableFallback: htmlTablesSetting ? 'html' : 'flatten' };
+}
+
 function selectionToMd(selection: Selection): string {
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
     if (selection.rangeCount > 1) {
       const fragments: string[] = [];
       for (let i = 0; i < selection.rangeCount; i++) {
@@ -141,17 +146,44 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
 // ---- Settings & i18n ----
 
 let showBubbleSetting = true;
+let htmlTablesSetting = false;
 let translations: Record<string, string> = {};
 
-chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
-  if (settings?.showBubble === false) showBubbleSetting = false;
-  if (contentI18n) translations = contentI18n;
+/**
+ * Resolves once the stored settings have been read — every capture waits on it.
+ *
+ * `ensureContentScript()` resolves as soon as `executeScript()` has evaluated
+ * the script, and the panel sends CAPTURE_SELECTION straight after; this
+ * callback had not run yet. The first capture on a freshly injected page
+ * therefore converted with `htmlTables` at its initial `false`, and a table the
+ * user had asked to keep as HTML came out flattened — once, unreproducibly,
+ * exactly when the user was least able to explain it.
+ */
+const settingsLoaded = new Promise<void>((resolve) => {
+  // A capture waits for this, so it must always settle. If the extension context
+  // is invalidated after the read is issued — a reload or an update while the page
+  // is open — the callback is simply dropped, and without this timer the handler
+  // would never answer and the panel would wait forever. Falling back to the
+  // defaults gives the reader the old behaviour instead of nothing.
+  setTimeout(resolve, 500);
+  try {
+    chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
+      if (settings?.showBubble === false) showBubbleSetting = false;
+      htmlTablesSetting = settings?.htmlTables === true;
+      if (contentI18n) translations = contentI18n;
+      resolve();
+    });
+  } catch {
+    // Context already invalidated — the defaults are all this page will get.
+    resolve();
+  }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   if (changes.settings) {
     showBubbleSetting = changes.settings.newValue?.showBubble !== false;
+    htmlTablesSetting = changes.settings.newValue?.htmlTables === true;
   }
   if (changes.contentI18n) {
     translations = changes.contentI18n.newValue ?? {};
@@ -424,7 +456,7 @@ function captureHighlightsMd(): string {
 
   const cleanup = expandShadowRoots();
   try {
-    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS };
+    const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
     const fragments = sorted.map(el => {
       const range = document.createRange();
       range.selectNodeContents(el);
@@ -475,17 +507,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       sendResponse({ error: 'NO_SELECTION' } satisfies CaptureErrorResponse);
       return true;
     }
-    try {
-      const md = captureHighlightsMd();
-      const meta: PageMeta = {
-        title: findPageTitle(),
-        url: window.location.href,
-        date: new Date().toISOString(),
-      };
-      sendResponse({ md, meta } satisfies CaptureSelectionResponse);
-    } catch {
-      sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
-    }
+    (async () => {
+      await settingsLoaded;
+      try {
+        const md = captureHighlightsMd();
+        const meta: PageMeta = {
+          title: findPageTitle(),
+          url: window.location.href,
+          date: new Date().toISOString(),
+        };
+        sendResponse({ md, meta } satisfies CaptureSelectionResponse);
+      } catch {
+        sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
+      }
+    })();
     return true;
   }
 
@@ -507,18 +542,21 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       return true;
     }
 
-    try {
-      const md = selectionToMd(selection);
-      const meta: PageMeta = {
-        title: findPageTitle(),
-        url: window.location.href,
-        date: new Date().toISOString(),
-      };
-      window.getSelection()?.removeAllRanges();
-      sendResponse({ md, meta } satisfies CaptureSelectionResponse);
-    } catch {
-      sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
-    }
+    (async () => {
+      await settingsLoaded;
+      try {
+        const md = selectionToMd(selection);
+        const meta: PageMeta = {
+          title: findPageTitle(),
+          url: window.location.href,
+          date: new Date().toISOString(),
+        };
+        window.getSelection()?.removeAllRanges();
+        sendResponse({ md, meta } satisfies CaptureSelectionResponse);
+      } catch {
+        sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
+      }
+    })();
 
     return true;
   }
@@ -532,6 +570,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     }
 
     (async () => {
+      await settingsLoaded;
       try {
         const md = selectionToMd(selection);
         await navigator.clipboard.writeText(md);

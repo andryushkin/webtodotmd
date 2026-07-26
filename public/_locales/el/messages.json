@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Εμφάνιση κουμπιού κατά την επιλογή"
   },
+  "labelHtmlTables": {
+    "message": "Διατήρηση σύνθετων πινάκων ως HTML"
+  },
   "labelDefaultView": {
     "message": "Προεπιλεγμένη προβολή"
   },

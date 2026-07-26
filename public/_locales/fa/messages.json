@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "نمایش دکمه شناور هنگام انتخاب متن"
   },
+  "labelHtmlTables": {
+    "message": "نگه داشتن جدول‌های پیچیده به‌صورت HTML"
+  },
   "labelDefaultView": {
     "message": "حالت نمایش پیش‌فرض"
   },

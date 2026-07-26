@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Показывать кнопку при выделении текста"
   },
+  "labelHtmlTables": {
+    "message": "Сохранять сложные таблицы как HTML"
+  },
   "labelDefaultView": {
     "message": "Режим просмотра по умолчанию"
   },

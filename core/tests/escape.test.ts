@@ -71,13 +71,13 @@ describe('экранирование markdown из текста страницы
 
   it('в HTML-ячейке синтаксис не экранируется', () => {
     const html = '<table><tr><td colspan="2">snake_case and *lit*</td></tr></table>';
-    expect(toMarkdown(html)).toContain('<td colspan="2">snake_case and *lit*</td>');
+    expect(toMarkdown(html, { complexTableFallback: 'html' })).toContain('<td colspan="2">snake_case and *lit*</td>');
   });
 
   it('формула в ячейке не может закрыть её', () => {
     const payload = 'x&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;img src=q onerror="alert(1)"&gt;';
     const html = `<table><tr><td colspan="2"><span class="katex"><annotation encoding="application/x-tex">${payload}</annotation></span></td></tr></table>`;
-    const reparsed = parseHTML(toMarkdown(html, { math: true })).document;
+    const reparsed = parseHTML(toMarkdown(html, { math: true, complexTableFallback: 'html' })).document;
     expect(reparsed.querySelectorAll('img, [onerror]')).toHaveLength(0);
     expect(reparsed.querySelectorAll('td')).toHaveLength(1);
   });
@@ -94,5 +94,150 @@ describe('экранирование markdown из текста страницы
     const html =
       '<span class="katex"><annotation encoding="application/x-tex">a_b^*</annotation></span>';
     expect(toMarkdown(html, { math: true }).trim()).toBe('$a_b^*$');
+  });
+});
+
+// Экранирование решает про каждый текстовый узел отдельно, а результаты потом
+// склеиваются. Безобидный хвост одного узла и безобидное начало следующего
+// собирались в разметку уже после того, как оба прошли проверку: подсветка
+// синтаксиса кладёт `<` и имя тега в разные span-ы, и читатель терял текст,
+// который страница ему показывала.
+describe('экранирование через границу узлов', () => {
+  it.each([
+    [
+      'открывающий тег',
+      '<p>before <span>&lt;</span>img src=x onerror=alert(1)&gt; after</p>',
+      'before \\<img src=x onerror=alert(1)> after',
+    ],
+    ['закрывающий тег', '<p><span>&lt;</span>/td&gt; tail</p>', '\\</td> tail'],
+    [
+      'начало комментария',
+      '<p>before <span>&lt;</span>!-- note --&gt; after</p>',
+      'before \\<!-- note --> after',
+    ],
+    ['имя тега разорвано', '<p><span>&lt;im</span>g src=x&gt;</p>', '\\<img src=x>'],
+    ['ссылка на символ', '<p>write <span>&amp;</span>amp; here</p>', 'write \\&amp; here'],
+    ['ссылка разорвана в середине', '<p>write <span>&amp;a</span>mp; here</p>', 'write \\&amp; here'],
+    ['числовая ссылка', '<p><span>&amp;#</span>60; sign</p>', '\\&#60; sign'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // Защита на подозрении стоит обратного слеша в исходнике, поэтому она включается
+  // только там, где к строке действительно что-то допишут.
+  it.each([
+    ['неравенство', '<p>a &lt; b</p>', 'a < b'],
+    ['амперсанд в тексте', '<p>Tom &amp; Jerry</p>', 'Tom & Jerry'],
+    ['числа', '<p>5 &lt; 6</p>', '5 < 6'],
+    ['меньше либо равно', '<p>x &lt;= y</p>', 'x <= y'],
+    ['амперсанд внутри слова', '<p>AT&amp;T ships</p>', 'AT&T ships'],
+    ['строка кончается на <', '<p>5 &lt;</p>', '5 <'],
+    ['заголовок кончается на ссылку', '<h2>Q&amp;A</h2>', '## Q&A'],
+    ['соседний абзац — другая строка', '<p>5 &lt;</p><p>img&gt;</p>', '5 <\n\nimg>'],
+  ])('не экранирует лишнего: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // <br> заканчивает строку — дописывать к ней уже нечего. Сам перенос конвертер
+  // пишет обратным слешем, поэтому проверяем именно отсутствие `\&`.
+  it('после <br> строка кончилась', () => {
+    expect(toMarkdown('<p>Q&amp;A<br>next</p>')).not.toContain('\\&');
+  });
+
+  // Дописывает не только страница: правило вставляет свой текст сразу за чужим,
+  // и `![` из картинки превращает висящий `<` в начало комментария.
+  it('собственная разметка конвертера тоже дописывается', () => {
+    const html = '<p>a &lt;<img src="https://e.com/a.png" alt="t"></p>';
+    expect(toMarkdown(html).trim()).toBe('a \\<![t](https://e.com/a.png)');
+  });
+
+  // В MathML разрыв — не редкость, а способ записи: `<mo>&lt;</mo>` это оператор
+  // «меньше». Правило для формул требует тег целиком в одной строке, поэтому там
+  // разрывает вообще любой соседний узел.
+  it.each([
+    ['оператор между операндами', '<p><math><mi>a</mi><mo>&lt;</mo><mi>b</mi><mo>&gt;</mo><mi>c</mi></math></p>', 'a&lt;b>c'],
+    ['тег по узлам', '<p><math><mo>&lt;</mo><mi>img</mi><mo>&gt;</mo></math></p>', '&lt;img>'],
+  ])('формула не собирается в тег: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  it('формула целиком в одном узле не теряет «меньше»', () => {
+    const html = '<span class="katex"><annotation encoding="application/x-tex">a &lt; b</annotation></span>';
+    expect(toMarkdown(html, { math: true }).trim()).toBe('$a < b$');
+  });
+});
+
+// Та же склейка, но для markdown-разметки. Скобка становится ссылкой только когда
+// за ней придёт `](`, и половинки приходят из разных узлов: страница показывала
+// скобки, а в файл попадала живая ссылка — читатель терял то, что видел.
+describe('markdown через границу узлов', () => {
+  it.each([
+    ['скобка открыта в узле', '<p><span>[</span>x](https://e.com)</p>', '\\[x](https://e.com)'],
+    ['подпись в узле', '<p><span>[text]</span>(https://e.com)</p>', '\\[text](https://e.com)'],
+    [
+      'картинка',
+      '<p><span>![alt]</span>(https://e.com/i.png)</p>',
+      '!\\[alt](https://e.com/i.png)',
+    ],
+    ['подпись разорвана элементом', '<p><span>[</span><b>x</b>](y)</p>', '\\[**x**](y)'],
+    ['три узла', '<p><span>[</span><span>x]</span>(y)</p>', '\\[x](y)'],
+    // Восклицательный знак остался в предыдущем узле: скобку экранирует тот узел,
+    // в котором она лежит, и `![` собирается уже неработающим.
+    ['разрыв внутри `![`', '<p><span>!</span>[x](y)</p>', '!\\[x\\](y)'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // Ради этого экранирование и смотрит вперёд, а не на последний символ узла:
+  // `[1]` в конце span-а неотличим от начала ссылки, если не прочитать продолжение,
+  // а сносок на любой вики-странице больше, чем ссылок в тексте.
+  it.each([
+    ['сноска в отдельном узле', '<p>see [1] and <span>[2]</span> below</p>', 'see [1] and [2] below'],
+    ['скобки в одном узле', '<p>a [note] here</p>', 'a [note] here'],
+    ['сноска в конце строки', '<p><span>see [1]</span></p>', 'see [1]'],
+    ['скобка и скобка порознь', '<p><span>[a]</span> and <span>[b]</span></p>', '[a] and [b]'],
+    ['абзац — другая строка', '<p><span>[a]</span></p><p>(b)</p>', '[a]\n\n(b)'],
+  ])('не экранирует лишнего: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // <br> заканчивает строку: дописать `(b)` к `[a]` уже нечему.
+  it('после <br> строка кончилась', () => {
+    expect(toMarkdown('<p><span>[a]</span><br>(b)</p>')).not.toContain('\\[');
+  });
+
+  it.each([
+    ['ссылка', '<p><a href="https://e.com">t</a></p>', '[t](https://e.com)'],
+    ['картинка', '<p><img src="https://e.com/a.png" alt="t"></p>', '![t](https://e.com/a.png)'],
+  ])('настоящая разметка не затронута: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // Обратный слеш ставится на скобку, а не на `!`: `\!` понижает картинку до
+  // ссылки, а ссылки на странице тоже не было.
+  it('картинка в одном узле не остаётся ссылкой', () => {
+    expect(toMarkdown('<p>![alt](url)</p>').trim()).toBe('!\\[alt\\](url)');
+  });
+});
+
+// Found by an agent that could not reach parser.ts: only `<br>` was asked about,
+// so any other element that ends a line left the text after it unescaped at the
+// start of one — and the page's literal `## y` became a real heading.
+describe('блочный сосед открывает строку', () => {
+  it.each([
+    ['горизонтальная линия', '<div>x<hr>## y</div>', '\\## y'],
+    ['параграф', '<div>x<p>a</p>## y</div>', '\\## y'],
+    ['список', '<div>x<ul><li>a</li></ul>- item</div>', '\\- item'],
+    ['таблица', '<div>x<table><tr><td>a</td></tr></table>> quote</div>', '\\> quote'],
+    ['перенос строки, как и раньше', '<div>x<br>## y</div>', '\\## y'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toContain(expected);
+  });
+
+  it.each([
+    ['середина предложения', '<p>mid # sentence</p>', 'mid # sentence'],
+    ['после инлайна', '<div><em>a</em> # not a heading</div>', '_a_ # not a heading'],
+  ])('не экранирует лишнего: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
   });
 });

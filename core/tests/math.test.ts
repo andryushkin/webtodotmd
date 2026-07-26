@@ -75,3 +75,51 @@ describe('math', () => {
     expect(result).not.toContain('$');
   });
 });
+
+// Правило для формул читало имя тега как «буква и дальше буквы с цифрами», а
+// пользовательский элемент по спецификации обязан нести дефис — поэтому
+// `<x-foo style="position:fixed">` проходил как обычная математика и попадал в
+// файл рабочим позиционированным элементом, закрывая собой текст формулы.
+describe('дефисные теги в формуле', () => {
+  // Формула на странице — это символы, а не разметка: `<` в ней записан
+  // сущностью, иначе парсер прочитал бы её как элементы ещё до конвертера.
+  const esc = (text: string) =>
+    text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const katex = (latex: string) =>
+    `<span class="katex"><annotation encoding="application/x-tex">${esc(latex)}</annotation></span>`;
+  const asText = (latex: string) => toMarkdown(katex(latex), { math: true }).trim();
+
+  it.each([
+    ['пользовательский элемент', 'x <x-foo style="position:fixed">X</x-foo> y'],
+    ['подчёркивание в имени', 'x <x_foo style="position:fixed">X</x_foo> y'],
+    ['цифра и дефис', 'a <ui-1 onclick="alert(1)">b</ui-1> c'],
+    ['одиночный самозакрывающийся', 'a <my-el/> b'],
+  ])('обезвреживает: %s', (_name, latex) => {
+    const md = asText(latex);
+    // Оба разделителя, иначе в файле остаётся половина сущности.
+    expect(md).not.toContain('<');
+    expect(md).not.toContain('>');
+    // Текст формулы читатель всё равно видит — уходит только разметка.
+    expect(md).toContain('&lt;');
+    expect(md).toContain('&gt;');
+  });
+
+  it('текст элемента остаётся на месте', () => {
+    expect(asText('x <x-foo style="position:fixed">X</x-foo> y')).toBe(
+      '$x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y$',
+    );
+  });
+
+  // Каждое экранирование стоит формулы, поэтому дефис в имени ничего не меняет
+  // там, где имени нет вовсе.
+  it.each([
+    ['неравенство', 'a < b'],
+    ['без пробела справа', 'x <y'],
+    ['без пробелов', 'a<b'],
+    ['меньше либо равно', 'x <= y'],
+    ['дробь и неравенство', '\\frac{a}{b} < c'],
+    ['минус после переменной', 'a < b-c'],
+  ])('не трогает: %s', (_name, latex) => {
+    expect(asText(latex)).toBe(`$${latex}$`);
+  });
+});

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Tunjukkan butang terapung semasa memilih"
   },
+  "labelHtmlTables": {
+    "message": "Kekalkan jadual kompleks sebagai HTML"
+  },
   "labelDefaultView": {
     "message": "Mod paparan lalai"
   },

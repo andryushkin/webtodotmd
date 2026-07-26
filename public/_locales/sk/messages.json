@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Zobrazovať tlačidlo pri výbere textu"
   },
+  "labelHtmlTables": {
+    "message": "Ponechať zložité tabuľky ako HTML"
+  },
   "labelDefaultView": {
     "message": "Predvolené zobrazenie"
   },

@@ -4,6 +4,7 @@ import { getRatingUrl } from '../shared/store-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
+const htmlTables = document.getElementById('html-tables') as HTMLInputElement;
 const defaultView = document.getElementById('default-view') as HTMLSelectElement;
 const highlighterColor = document.getElementById('highlighter-color') as HTMLInputElement;
 const uiLanguage = document.getElementById('ui-language') as HTMLSelectElement;
@@ -21,6 +22,7 @@ async function load() {
   const s = await getSettings();
   autoMetadata.checked = s.autoMetadata;
   showBubble.checked = s.showBubble;
+  htmlTables.checked = s.htmlTables;
   defaultView.value = s.defaultViewMode;
   highlighterColor.value = s.highlighterColor;
   uiLanguage.value = s.uiLanguage;
@@ -30,6 +32,7 @@ function onChange() {
   saveSettings({
     autoMetadata: autoMetadata.checked,
     showBubble: showBubble.checked,
+    htmlTables: htmlTables.checked,
     defaultViewMode: defaultView.value as 'preview' | 'source',
     highlighterColor: highlighterColor.value,
   });
@@ -43,6 +46,7 @@ uiLanguage.addEventListener('change', async () => {
 
 autoMetadata.addEventListener('change', onChange);
 showBubble.addEventListener('change', onChange);
+htmlTables.addEventListener('change', onChange);
 defaultView.addEventListener('change', onChange);
 highlighterColor.addEventListener('input', onChange);
 

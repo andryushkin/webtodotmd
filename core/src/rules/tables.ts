@@ -1,7 +1,16 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
-import { convert } from '../core/parser.js';
+import { convert, lookAhead } from '../core/parser.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
-import { escapeHtmlSyntax, escapeInlineMarkdown, escapeTagStarts } from '../core/escape.js';
+import {
+  escapeBlockStarts,
+  escapeHtmlSyntax,
+  escapeInlineMarkdown,
+  escapeTagStarts,
+  mayOpenLink,
+} from '../core/escape.js';
+
+// Wide enough for any table a person laid out by hand.
+const MAX_FLATTENED_SPAN = 32;
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -48,15 +57,10 @@ function ownCells(row: Element): Element[] {
 }
 
 function analyzeTable(table: Element): TableAnalysis {
-  // A span attribute is only a reason for the fallback if it survives
-  // spanAttribute() — colspan="1" (Wikipedia, Word and Confluence exports write
-  // it) and colspan="abc" mean nothing, and a table whose only oddity was such a
-  // value used to lose its pipe form for an HTML table with no merged cells.
+  // What the shape *is*; what to do about it is the rule's decision, and by
+  // default it is to flatten rather than to emit HTML.
   const hasMergedCells = Array.from(
     table.querySelectorAll('td[colspan], th[colspan], td[rowspan], th[rowspan]'),
-    // With the row and the table, so rowspan="0" is asked the same question the
-    // serializer will ask: resolved to a count, it can turn out to be no merge at
-    // all, and then the pipe form was the better answer.
   ).some((cell) => cellSpans(cell, cell.parentElement, table) !== '');
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
@@ -82,6 +86,39 @@ function analyzeTable(table: Element): TableAnalysis {
   return { level: hasHead ? 'simple' : 'medium', hasHead };
 }
 
+/**
+ * `|` ends a column and is escaped everywhere in a cell, formulas included.
+ *
+ * Sparing `$…$` was tried and was worse: GFM splits a row into columns before
+ * anything looks at maths, so `| $|x| < 2$ | ok |` reparsed as two cells reading
+ * `$` and `x` — the formula and the neighbouring cell both vanished. Escaping
+ * costs the formula instead (`\|` is `\Vert`, the norm, not an absolute value),
+ * and a damaged formula is a smaller loss than a destroyed row. A cell holding a
+ * `|` inside maths has no faithful pipe-table form at all; `htmlTables` does.
+ */
+function escapeCellPipes(text: string): string {
+  return text.replace(/\|/g, '\\|');
+}
+
+/**
+ * What the converter applies to any text node it emits: the page's own
+ * characters, made to render as themselves. Named because two places need the
+ * same answer — the text node of a cell the converter walks, and the flattened
+ * cell of the `text` fallback, which never reaches the converter at all.
+ *
+ * Block starts are not here, and deliberately: they depend on standing at the
+ * beginning of a line, which a text node — or a cell — is not. Whoever builds
+ * the line escapes them.
+ */
+function escapeCellText(text: string, node?: Node): string {
+  // The same lookahead the parser gives a text node, for the same reason: a cell
+  // is not one string either. `<td>a &lt;<span>img src=…&gt;</span></td>` reached
+  // the file as a working tag, and `<td>[y<span>](url)</span></td>` as a link the
+  // page never had — this path escapes its own text nodes and so had to ask too.
+  const ahead = node ? lookAhead(node, mayOpenLink(text)) : undefined;
+  return escapeHtmlSyntax(escapeInlineMarkdown(text, ahead?.text ?? ''), ahead?.continues ?? false);
+}
+
 // A cell is one line, whichever form the table takes. The converter's hard break
 // is a trailing backslash plus a newline — a <br> directly in the cell is mapped
 // before conversion, but one inside an inline wrapper (<em>, <strong>, a <span>
@@ -91,28 +128,239 @@ function breaksToBr(md: string): string {
   return md.replace(/\\\r?\n/g, '<br>').replace(/\s*\r?\n+\s*/g, '<br>');
 }
 
-function getCellContent(cell: Element, options: MarkItDownOptions): string {
+/**
+ * The text of an element, with the lines a `<br>` draws still in it.
+ *
+ * `textContent` reads a `<br>` as nothing, so `a<br>b` — how plenty of pages
+ * write a code sample, and what anything that pasted HTML into one produces —
+ * arrived as `ab` and the reader lost the line with no trace of it. All three
+ * table fallbacks read the page this way and all three lost it: the `html` one
+ * through `preformattedText`, the flattening one through `preInCell`, and the
+ * `text` one straight off the cell, which is why this is named for text rather
+ * than for a `<pre>`.
+ *
+ * Deliberately a copy of the function of the same name in `rules/code.ts` rather
+ * than an import: that rule owns the fenced block and this module owns the cell,
+ * and a two-line helper is a smaller thing to keep in step than a dependency
+ * between two rule files. Read from a clone either way — the page's own DOM must
+ * come back unchanged, and here the element handed over is the page's, not a
+ * clone.
+ */
+function textWithLineBreaks(el: Element): string {
+  if (!el.querySelector('br')) return el.textContent ?? '';
+  const clone = el.cloneNode(true) as Element;
+  for (const br of Array.from(clone.querySelectorAll('br'))) {
+    br.replaceWith(clone.ownerDocument!.createTextNode('\n'));
+  }
+  return clone.textContent ?? '';
+}
+
+/**
+ * Preformatted text folded into one pipe cell: every line keeps its own code span
+ * and its own indentation, and the lines are joined with the only break a pipe
+ * cell can carry. A single span across the whole thing would lose the newlines —
+ * a code span renders them as spaces — and a fence cannot live in a cell at all.
+ */
+function preInCell(pre: Element): string {
+  const text = textWithLineBreaks(pre).replace(/\n$/, '');
+  return text
+    .split('\n')
+    .map((line) => {
+      if (line.trim() === '') return '';
+      // Leading whitespace is the shape of the code; a code span keeps it only if
+      // it is not the very first character, which a non-breaking space fixes.
+      const indented = line.replace(/^ +/, (spaces) => '\u00a0'.repeat(spaces.length));
+      // The fence must outrun the longest backtick run inside, exactly as a
+      // fenced block does. Choosing `` because the line merely contains a
+      // backtick closed the span early on ``a `` b``, and everything after it —
+      // page text — was read as markup.
+      const longest = Math.max(0, ...Array.from(indented.matchAll(/`+/g), (m) => m[0].length));
+      const fence = '`'.repeat(longest + 1);
+      // A span whose content touches a backtick needs the padding spaces, which
+      // a reader never sees; CommonMark strips one from each end.
+      const padding = longest > 0 ? ' ' : '';
+      // No pipe escaping here: getCellContent escapes the finished cell, and
+      // doing it twice produced `\\|`, a literal backslash followed by a column
+      // separator — the row split and a cell was lost.
+      return `${fence}${padding}${indented}${padding}${fence}`;
+    })
+    .join('<br>');
+}
+
+/**
+ * The outermost elements matching `selector` under `root`. One that sits inside
+ * an element of `containers` is that container's business, not the caller's —
+ * and `root` counts, because a caller may hand over a container itself.
+ *
+ * Both places that lift a block out of a cell ask this, with the list of what
+ * counts as a container being the only difference between them.
+ */
+function outermostWithin(root: Element, selector: string, containers: string[]): Element[] {
+  const isContainer = (el: Element): boolean => containers.includes(el.tagName.toLowerCase());
+  if (isContainer(root)) return [];
+  return Array.from(root.querySelectorAll(selector)).filter((el) => {
+    let node = el.parentElement;
+    while (node && node !== root) {
+      if (isContainer(node)) return false;
+      node = node.parentElement;
+    }
+    return true;
+  });
+}
+
+// What owns a <pre> instead of the cell's walk: another <pre>, and a nested
+// <table>, which folds its own cells and reaches them through getCellContent
+// again. <code> is left off — a <pre> inside one is not a content model any page
+// writes on purpose, and the inline rule reads text either way.
+const PRE_CONTAINERS = ['pre', 'table'];
+
+/**
+ * A cell's child that holds a `<pre>` somewhere below it, converted with every
+ * such block folded into the line rather than fenced.
+ *
+ * `getCellContent` named `pre` among the cell's *own* children, so a `<div>`
+ * around one — ordinary page markup, not a decision about format — hid it, and
+ * the fenced block the code rule emits landed inside a pipe cell. There a fence
+ * is not a fence: ``| ```<br>a<br>b<br>``` |`` reparses as a code span holding
+ * the literal text `<br>a<br>b<br>`, so the reader lost the lines *and* got the
+ * breaks as characters. `analyzeTable` flags a `td pre` at any depth, so this
+ * shape reaches the flattening path by construction.
+ *
+ * The nested table behind a wrapper was the same defect, and the cure there was
+ * symmetrical — the table rule reads its own ancestry, which no wrapper can hide.
+ * That remedy is not available here: the fenced block belongs to `rules/code.ts`,
+ * and teaching it to fold when it stands in a cell would make it import
+ * `preInCell` from this module — a dependency between two rule files, which is
+ * the very thing `textWithLineBreaks` above is duplicated to avoid. So the fold
+ * stays this module's decision. The `<pre>`s are lifted out of a clone, the
+ * wrapper converts without them, and each is put back folded — the technique the
+ * HTML fallback already uses on a whole cell. Converting the wrapper rather than
+ * walking it is what keeps its own Markdown: a list marker or emphasis around the
+ * block still reaches the reader.
+ *
+ * A `<pre>` under a nested `<table>` is left where it is: that table folds itself,
+ * and its cells come back through this same walk.
+ */
+function wrapperWithPre(el: Element, options: MarkItDownOptions): string {
+  // The cheap question first: this stands on the path of every element child of
+  // every cell, and hardly any of them hold a <pre> at all. The second check is a
+  // different one — every <pre> below this element may belong to a container that
+  // folds it itself — and it earns skipping the clone and the token.
+  if (!el.querySelector('pre')) return convert(el, options);
+  const originals = outermostWithin(el, 'pre', PRE_CONTAINERS);
+  if (originals.length === 0) return convert(el, options);
+
+  // A deep clone has the same elements in the same order, so the two lists line
+  // up index by index.
+  const clone = el.cloneNode(true) as Element;
+  const lifted = outermostWithin(clone, 'pre', PRE_CONTAINERS);
+  // outerHTML, not textContent: an href, an alt or a title reaches the output
+  // too, so a placeholder written into one would be substituted as well.
+  const token = mintPlaceholder(el.outerHTML);
+  lifted.forEach((pre, index) => {
+    const placeholder = pre.ownerDocument?.createTextNode(`${token}${index}${token}`);
+    if (placeholder) pre.replaceWith(placeholder);
+  });
+
+  // Folded from the page's own element rather than the clone, and put back before
+  // getCellContent escapes the finished cell — which is what the direct-child
+  // branch relies on too, and why preInCell escapes no pipes of its own.
+  return convert(clone, options).replace(
+    new RegExp(`${token}(\\d+)${token}`, 'g'),
+    (_match, index: string) => {
+      const original = originals[Number(index)];
+      return original ? preInCell(original) : '';
+    },
+  );
+}
+
+/**
+ * A nested table folded into its cell: its caption on the first line, then the
+ * rows it held, one per line, cells separated by a middle dot. A pipe table
+ * cannot nest, and the alternative — the inner table's own pipe syntax,
+ * separator row and all — arrives as noise.
+ *
+ * The caption used to be left out, because this walked rows and a caption is not
+ * one: the page showed it and the file did not. It goes on its own line, above
+ * the rows, which is where `captionLine` puts the outer table's caption too —
+ * but without that function's block escaping. There a caption is a line of the
+ * document and a leading `#` opens a heading; here it is part of a pipe cell,
+ * where nothing opens a block and a backslash would be visible for nothing.
+ */
+function nestedTableInCell(table: Element, options: MarkItDownOptions): string {
+  const caption = ownCaption(table);
+  // `escapePipes: false` throughout: the outer getCellContent escapes the
+  // finished cell, and escaping the inner cells first turned every `|` into
+  // `\\|`.
+  const captionText = caption ? getCellContent(caption, options, false) : '';
+  // A caption is not a row, and an empty one is not a line: the page showed
+  // nothing there, so all it could add is a leading break.
+  const lines = captionText ? [captionText] : [];
+  for (const row of ownRows(table)) {
+    // Every cell, the empty ones included. Dropping them was a third loss in this
+    // fold and the only silent one: a row reading `a`, nothing, `b` came out
+    // `a · b`, which is exactly what a genuine two-cell row produces, and nothing
+    // was left to tell the reader that `b` had stood in the third column. Down
+    // here a cell carries no header — its neighbours are the whole of what says
+    // where it was — so closing the gap does not shorten the line, it moves the
+    // values. The flattening path one level up answers the same question the same
+    // way, writing `| 120 |  |` for a merge rather than pulling the row together;
+    // a fold that disagreed with the table around it would report two different
+    // grids in one document.
+    //
+    // Whole rows are kept for the same reason, and keeping both is what lets
+    // `types.ts` go on naming the merge as the one thing this fold costs: what it
+    // promises is the inner table's rows, one per line, and a row it declines to
+    // emit is a row the reader cannot count. Dropping only the empty rows would
+    // also draw a line no page ever meant — with the cells preserved, a wholly
+    // empty row of two survives as ` · ` while a wholly empty row of one does not.
+    lines.push(
+      ownCells(row)
+        .map((cell) => getCellContent(cell, options, false))
+        .join(' · '),
+    );
+  }
+  return lines.join('<br>');
+}
+
+function getCellContent(
+  cell: Element,
+  options: MarkItDownOptions,
+  escapePipes = true,
+): string {
   let text = '';
   for (const child of Array.from(cell.childNodes)) {
     if (child.nodeType === ELEMENT_NODE) {
       const el = child as Element;
-      if (el.tagName.toLowerCase() === 'br') {
+      const childTag = el.tagName.toLowerCase();
+      if (childTag === 'br') {
         text += '<br>';
+      } else if (childTag === 'pre') {
+        text += preInCell(el);
       } else {
-        text += convert(child, options);
+        // A <table> is not named here, and deliberately: this walk sees the
+        // cell's own children, so a <div> around the inner table — ordinary page
+        // markup — hid it, and the pipe table the converter emitted instead
+        // landed inside a pipe cell, where the reader got `| x | y |` and a row
+        // of dashes as literal text. The fold is the table rule's own decision
+        // now, taken from the element's ancestry, which a wrapper cannot hide.
+        // A <pre> could not be moved the same way — see wrapperWithPre — so the
+        // wrapper is asked about one here instead. It converts as before when it
+        // holds none, which is nearly every cell there is.
+        text += wrapperWithPre(el, options);
       }
     } else if (child.nodeType === TEXT_NODE) {
       // Straight from textContent, so convert()'s escaping never saw it: a cell
       // reading `**bold**` on the page rendered as bold, and one reading
       // `<img src=x onerror=…>` put working markup in the file.
-      text += escapeHtmlSyntax(escapeInlineMarkdown(child.textContent ?? ''));
+      text += escapeCellText(child.textContent ?? '', child);
     }
   }
   // A GFM row is one line: a newline anywhere inside a cell ends the row early
   // and the rest of the table falls apart. Block children (two paragraphs in a
   // cell, say) produce exactly that, so line breaks become <br>, the only break
   // a pipe table can carry.
-  return breaksToBr(text.trim().replace(/\|/g, '\\|'));
+  return breaksToBr(escapePipes ? escapeCellPipes(text.trim()) : text.trim());
 }
 
 function getAlignment(cell: Element): string {
@@ -202,7 +450,7 @@ function spanAttribute(cell: Element, name: 'colspan' | 'rowspan'): string {
 // same text. A blank line would end the HTML block and hand the rest of the
 // table to the Markdown parser as prose.
 function preformattedText(el: Element): string {
-  return escapeHtmlText(el.textContent ?? '').replace(/\r?\n/g, '&#10;');
+  return escapeHtmlText(textWithLineBreaks(el)).replace(/\r?\n/g, '&#10;');
 }
 
 // A blank line ends the HTML block and hands the rest of the table to the
@@ -229,8 +477,22 @@ function isMathSubtree(el: Element): boolean {
     tag === 'math' ||
     tag === 'mjx-container' ||
     tag === 'annotation' ||
+    // MathJax v2 keeps the LaTeX in a <script type="math/tex">, which the
+    // sanitizer spares only when math is on. Without it named here the walk below
+    // treated the formula as prose: `a & b_1` — a matrix separator and a
+    // subscript — came back as `$a &amp; b_1$` and the reader saw `&amp;`.
+    (tag === 'script' && (el.getAttribute('type') ?? '').startsWith('math/tex')) ||
     el.classList?.contains('katex') === true
   );
+}
+
+/**
+ * A `<` still open when the node ends. `escapeTagStarts` judges a `<` by the
+ * character after it, and at the end of a node that character belongs to the next
+ * node — which is joined on afterwards, when nothing is looking.
+ */
+function escapeDanglingTagStart(text: string): string {
+  return text.replace(/<$/, '&lt;');
 }
 
 function escapeMathText(root: Element): void {
@@ -248,6 +510,30 @@ function escapeMathText(root: Element): void {
     // escaping would replace every `<` and break the LaTeX.
     const alttext = el.getAttribute('alttext');
     if (alttext !== null) el.setAttribute('alttext', escapeTagStarts(alttext));
+  }
+  escapeMathElementText(root);
+}
+
+/**
+ * MathML that carries no LaTeX of its own, where the formula *is* the elements:
+ * `<mo>&lt;</mo><mi>img src=x onerror=…&gt;</mi>` is how a page writes that text,
+ * and this cell is an HTML block, so the two nodes joined into a working tag.
+ *
+ * Collapsing the subtree into one string — what the containers above do — is not
+ * available here: the elements are the notation, and the rule that turns raw
+ * MathML into LaTeX reads the subtree's markup. So each text node is escaped on
+ * its own, and a `<` left dangling at its end is neutralized on suspicion, which
+ * is the only thing a per-node rule can do about a seam it cannot see across.
+ * `&lt;` and not a backslash, for the same reason as everywhere in this file: the
+ * cell is HTML, where an entity is what renders as the character.
+ */
+function escapeMathElementText(el: Element): void {
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === TEXT_NODE) {
+      child.textContent = escapeDanglingTagStart(escapeTagStarts(child.textContent ?? ''));
+    } else if (child.nodeType === ELEMENT_NODE) {
+      escapeMathElementText(child as Element);
+    }
   }
 }
 
@@ -303,14 +589,7 @@ const LIFTED_TAGS = ['pre', 'table', 'code'];
 const LIFTED_SELECTOR = LIFTED_TAGS.join(', ');
 
 function topLevelBlocks(cell: Element): Element[] {
-  return Array.from(cell.querySelectorAll(LIFTED_SELECTOR)).filter((el) => {
-    let node = el.parentElement;
-    while (node && node !== cell) {
-      if (LIFTED_TAGS.includes(node.tagName.toLowerCase())) return false;
-      node = node.parentElement;
-    }
-    return true;
-  });
+  return outermostWithin(cell, LIFTED_SELECTOR, LIFTED_TAGS);
 }
 
 // The placeholder must not occur in the cell's own text: the substitution back
@@ -387,7 +666,15 @@ function ownCaption(table: Element): Element | undefined {
 function captionLine(table: Element, options: MarkItDownOptions): string {
   const caption = ownCaption(table);
   if (!caption) return '';
-  return getCellContent(caption, options).replace(/<br>/g, ' ').trim();
+  // getCellContent escapes the inline marks of every text node but not the
+  // block starts — inside a pipe cell nothing opens a block, so escaping them
+  // there would be backslashes for nothing. Here the caption *is* a line of the
+  // document, standing on its own above the table, so a caption reading
+  // "# Table 1" or "- totals" opened a heading or a list the page never had.
+  // The whole line is escaped, not its first text node: everything blockish in
+  // the caption has already been folded onto this one line, so nothing on it is
+  // still a block that escaping could cost.
+  return escapeBlockStarts(getCellContent(caption, options).replace(/<br>/g, ' ').trim());
 }
 
 function captionOnly(table: Element, options: MarkItDownOptions): string {
@@ -405,6 +692,52 @@ function resolvedRowspan(cell: Element, row: Element, table: Element): string {
   const groupRows = ownRows(table).filter((candidate) => candidate.parentElement === row.parentElement);
   const remaining = groupRows.length - groupRows.indexOf(row);
   return remaining > 1 ? ` rowspan="${remaining}"` : '';
+}
+
+/** The number inside ` colspan="3"`, or 1 when the attribute did not survive. */
+function spanCount(attribute: string): number {
+  const value = /="(\d+)"/.exec(attribute);
+  return value ? Number(value[1]) : 1;
+}
+
+/**
+ * The table as a grid of positions, with merged cells expanded.
+ *
+ * A pipe table has no syntax for a merge, so the cell is placed where it starts
+ * and every further position it covered is left empty — `<td colspan="2">120</td>`
+ * becomes `| 120 |  |`. Walking positions rather than cells is what keeps the
+ * columns lined up: a `rowspan` consumes a position in later rows too, and
+ * without accounting for it every row below a merge shifted left.
+ */
+function expandSpans(rows: Element[], table: Element): (Element | null)[][] {
+  const grid: (Element | null)[][] = rows.map(() => []);
+  const taken: Set<number>[] = rows.map(() => new Set());
+
+  rows.forEach((row, r) => {
+    let column = 0;
+    for (const cell of ownCells(row)) {
+      while (taken[r]!.has(column)) column += 1;
+      // Capped: a merge is written as real, empty grid positions now, so a
+      // colspan the page got wrong — or meant hostilely — costs a column of output
+      // each instead of one attribute. 400 rows of colspan="1000" produced 2.4 MB
+      // of pipes. Past the cap the cell keeps its text and stops claiming width.
+      const across = Math.min(spanCount(spanAttribute(cell, 'colspan')), MAX_FLATTENED_SPAN);
+      const down = Math.min(spanCount(resolvedRowspan(cell, row, table)), MAX_FLATTENED_SPAN);
+
+      for (let dr = 0; dr < down && r + dr < rows.length; dr += 1) {
+        // A rowspan stops at its row group: a browser does not let a <tbody>
+        // cell reach into <tfoot>, and following it there put the totals row's
+        // values one column to the right, under the wrong header.
+        if (rows[r + dr]!.parentElement !== row.parentElement) break;
+        for (let dc = 0; dc < across; dc += 1) {
+          taken[r + dr]!.add(column + dc);
+          grid[r + dr]![column + dc] = dr === 0 && dc === 0 ? cell : null;
+        }
+      }
+      column += across;
+    }
+  });
+  return grid;
 }
 
 function cellSpans(cell: Element, row: Element | null, table: Element): string {
@@ -438,27 +771,67 @@ export const TABLE_RULES: Rule[] = [
     // be built and discarded — twice over for a nested table.
     ignoresChildContent: true,
     replacement(el, _childContent, options) {
+      // Inside another table, at whatever depth: a pipe table has no nesting, so
+      // the inner grid is folded into the one cell that holds it. Asked of the
+      // ancestry rather than of the parent, because the wrapper a page puts
+      // around a table — a <div>, a <figure> — must not decide the format.
+      // The other two paths never reach here: the HTML fallback lifts a nested
+      // table out of the cell before converting it, and the text fallback reads
+      // textContent and converts nothing.
+      if (closestTag(el, 'table')) return nestedTableInCell(el, options);
+
       const analysis = analyzeTable(el);
 
-      if (analysis.level === 'complex') {
-        const fallback = options.complexTableFallback ?? 'html';
+      // 'flatten' is the default: an HTML table renders nowhere that Markdown
+      // alone is read, and every cell inside one stops being Markdown, so the
+      // structure is folded into the pipe form unless HTML is asked for.
+      if (analysis.level === 'complex' && (options.complexTableFallback ?? 'flatten') !== 'flatten') {
+        const fallback = options.complexTableFallback ?? 'flatten';
         if (fallback === 'skip') return captionOnly(el, options);
         if (fallback === 'text') {
-          const text = ownRows(el)
-            .map((row) =>
-              ownCells(row)
-                // A newline inside a cell would split the row this mode builds.
-                .map((c) =>
-                  (c.textContent ?? '')
-                    .trim()
-                    .replace(/\s*\n+\s*/g, ' ')
-                    // The row is ' | ' separated, so a pipe inside a cell would
-                    // add a column that was never there.
-                    .replace(/\|/g, '\\|'),
-                )
-                .join(' | '),
-            )
-            .join('\n');
+          // The cell's characters, escaped here rather than converted. Routing
+          // this mode through getCellContent was the other candidate and is the
+          // wrong one: the converter answers with markup — **bold** for a
+          // <strong>, a link for an <a>, a code span per line of a <pre> — and
+          // this mode exists to produce none. What it does owe the reader is the
+          // rest of the contract every other path keeps: text the page merely
+          // *showed* must render as itself. Before this, `**bold**` on the page
+          // came back as real bold and `<img src=x onerror=…>` as working
+          // markup, because textContent reaches the file without ever passing a
+          // rule that escapes.
+          //
+          // Escaping inside a <pre>, <code> or a formula is corruption
+          // elsewhere, but not here: this mode strips the code span and the
+          // dollar signs too, so the text lands in ordinary prose where a lone
+          // `*` really would start emphasis.
+          const rows = ownRows(el).map((row) =>
+            ownCells(row)
+              .map((c) =>
+                // After the escaping, not before: escapeCellText doubles the
+                // backslashes it finds, so escaping the pipe first produced
+                // `\\|` — a literal backslash next to a live separator.
+                escapeCellPipes(
+                  escapeCellText(
+                    // Read with the <br>s the page drew, not off textContent,
+                    // which sees one as nothing: `a<br>b` in a <pre> arrived as
+                    // `ab`, two lines welded into a word the page never showed.
+                    // The other two fallbacks were repaired and this call site
+                    // was missed. What the line becomes here is a space, the same
+                    // as a real newline in a <pre> — this mode writes a row on
+                    // one line, so a break has nowhere else to go, but a space
+                    // still marks where it was.
+                    // A newline inside a cell would split the row this mode builds.
+                    textWithLineBreaks(c).trim().replace(/\s*\n+\s*/g, ' '),
+                  ),
+                ),
+              )
+              .join(' | '),
+          );
+          // Once per row, on the finished line: a row is a line of the document
+          // here, so a leading `#`, `>`, `- ` or a row that is nothing but
+          // dashes opens a block. A `#` in the second cell is mid-sentence and
+          // needs nothing, which is why this cannot be done per cell.
+          const text = escapeBlockStarts(rows.join('\n'));
           const caption = captionLine(el, options);
           return caption ? `\n\n${caption}\n${text}\n\n` : `\n\n${text}\n\n`;
         }
@@ -483,13 +856,21 @@ export const TABLE_RULES: Rule[] = [
       }
       const bodyRowEls = allRows.filter((row) => row !== headerRow);
 
-      const headerCells = ownCells(headerRow);
-      const headers = headerCells.map((c) => getCellContent(c, options));
-      const alignments = headerCells.map(getAlignment);
+      // From the grid, not from the row's own cells: a merged cell occupies
+      // positions its row does not list, and reading the cells directly put the
+      // columns out of step with each other.
+      const grid = expandSpans(allRows, el);
+      const rowIndex = new Map(allRows.map((row, index) => [row, index]));
+      const positionsOf = (row: Element): (Element | null)[] =>
+        grid[rowIndex.get(row) ?? -1] ?? [];
+      const contentOf = (cell: Element | null | undefined): string =>
+        cell ? getCellContent(cell, options) : '';
 
-      const bodyData = bodyRowEls.map((row) =>
-        ownCells(row).map((c) => getCellContent(c, options)),
-      );
+      const headerCells = positionsOf(headerRow);
+      const headers = Array.from(headerCells, contentOf);
+      const alignments = headerCells.map((c) => (c ? getAlignment(c) : 'none'));
+
+      const bodyData = bodyRowEls.map((row) => Array.from(positionsOf(row), contentOf));
 
       if (headers.every((h) => !h) && bodyData.length === 0) return captionOnly(el, options);
 

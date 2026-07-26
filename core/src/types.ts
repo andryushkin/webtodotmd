@@ -31,7 +31,20 @@ export interface MarkItDownOptions {
   baseUrl?: string;
   math?: boolean;
   footnotes?: boolean;
-  complexTableFallback?: 'html' | 'text' | 'skip';
+  /**
+   * What to do with a table GFM cannot express — merged cells, a nested table, a
+   * cell holding preformatted text.
+   *
+   * `'flatten'` (the default) keeps the pipe form: merged cells are expanded onto
+   * a grid, a nested table and preformatted text are folded into their cell with
+   * `<br>` breaks. Nothing is lost that a reader can see, but the *fact* of a
+   * merge is: `| 120 |  |` reads the same as a genuinely empty neighbour.
+   *
+   * `'html'` emits an HTML table instead, which keeps the structure exactly — at
+   * the price that Markdown is not parsed inside an HTML block, so every cell
+   * stops being Markdown, and renderers that strip HTML show nothing at all.
+   */
+  complexTableFallback?: 'flatten' | 'html' | 'text' | 'skip';
   rules?: Rule[];
   domAdapter?: DOMAdapterFn;
   headingOffset?: number; // Phase 8: сдвиг уровней заголовков для selectionToMarkdown

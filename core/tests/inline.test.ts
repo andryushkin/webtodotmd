@@ -246,20 +246,370 @@ describe('code spans that nest', () => {
   });
 });
 
+// Two wrappers pressed together put their delimiters side by side, and the pair
+// merges into one longer run: `*a**b*` is a single emphasis around `a**b`, so the
+// second wrapper is gone and the reader gains asterisks the page never showed.
+// The element that follows drops to its tag, which has no delimiter to merge.
+describe('соседние выделения', () => {
+  it.each([
+    ['italic pair', '<p><em>a</em><em>b</em></p>', '_a_<em>b</em>'],
+    ['bold pair', '<p><strong>a</strong><strong>b</strong></p>', '**a**<strong>b</strong>'],
+    ['strikethrough pair', '<p><del>a</del><del>b</del></p>', '~~a~~<del>b</del>'],
+    ['the other spellings of the same pair', '<p><i>a</i><em>b</em></p>', '_a_<em>b</em>'],
+    // Bold and italic draw from the same two characters, so `**a***b*` collides
+    // exactly as a matching pair does.
+    ['bold then italic', '<p><strong>a</strong><em>b</em></p>', '**a**<em>b</em>'],
+    ['three in a row', '<p><em>a</em><em>b</em><em>c</em></p>', '_a_<em>b</em><em>c</em>'],
+    // Whichever side it comes from, a space already parts the delimiters and both
+    // wrappers keep the lighter spelling.
+    ['parted by a text node', '<p><em>a</em> <em>b</em></p>', '_a_ _b_'],
+    ['parted by a space inside the first', '<p><em>a </em><em>b</em></p>', '_a_ _b_'],
+    ['parted by a space inside the second', '<p><em>a</em><em> b</em></p>', '_a_ _b_'],
+    // The neighbour is found through a wrapper that emits nothing of its own.
+    ['through a span', '<p><span><em>a</em></span><em>b</em></p>', '_a_<em>b</em>'],
+
+    // Other delimiters do not collide with emphasis, so nothing gives way. A code
+    // span is read for its text rather than its backtick: emphasis is resolved
+    // after code spans, and renderers disagree about what is left at that seam.
+    ['a code span next door', '<p><em>a</em><code>b</code></p>', '*a*`b`'],
+    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '_a_<sub>b</sub>'],
+
+    // Flanking is decided per code point. Indexing UTF-16 handed the test half a
+    // surrogate pair, which is in no category at all: an emoji is symbol
+    // punctuation, so pressed against letters no marker can open and `a*😀*b`
+    // rendered with the asterisks showing and no emphasis at all.
+    ['emoji against words', '<p>a<em>😀</em>b</p>', 'a<em>😀</em>b'],
+    ['emoji at the line edges', '<p><em>😀</em></p>', '_😀_'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// Two wrappers collide only when their delimiters really do meet, and a line
+// ending between them means they never do. The search for the neighbour skipped
+// anything holding no text, so it read straight past a `<br>` to the wrapper on
+// the line above: `<em>a</em><br><em>b</em>` was judged a collision and the second
+// wrapper gave up `_b_` — which renders perfectly on a line of its own — for a
+// tag. The character each end is pressed against comes from the same search, so a
+// wrapper at the start of a line was reading the one before the break.
+describe('перенос строки разделяет соседей', () => {
+  it.each([
+    ['an italic pair', '<p><em>a</em><br><em>b</em></p>', '_a_\\\n_b_'],
+    ['a bold pair', '<p><strong>a</strong><br><strong>b</strong></p>', '**a**\\\n**b**'],
+    ['a strikethrough pair', '<p><del>a</del><br><del>b</del></p>', '~~a~~\\\n~~b~~'],
+    // The break may sit inside the wrapper in front and still end the line.
+    ['a break inside the wrapper in front', '<p><span><em>a</em><br></span><em>b</em></p>', '_a_\\\n_b_'],
+    // A block ends a line as surely as a break does, and an `<hr>` writes one of
+    // its own.
+    ['a block between them', '<div><em>a</em><p>x</p><em>b</em></div>', '_a_\n\nx\n\n_b_'],
+    ['a rule between them', '<div><em>a</em><hr><em>b</em></div>', '_a_\n\n---\n\n_b_'],
+
+    // The neighbouring character, not just the neighbouring wrapper: `_` never
+    // works inside a word, and the word was on the other line.
+    ['the letter before the break is not the one in front', '<p>a<br><em>b</em></p>', 'a\\\n_b_'],
+    ['nor the one after it behind', '<p><em>a</em><br>b</p>', '_a_\\\nb'],
+
+    // On one line the collision is real and the second wrapper still gives way.
+    ['a pair on the same line still collides', '<p><em>a</em><em>b</em></p>', '_a_<em>b</em>'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// Nothing is parsed inside a code span, so every mark in one is a character the
+// reader sees. The rule wrapped the converted children, which put the emphasis
+// delimiters of `<code><strong>token</strong></code>` into the file as text.
+describe('code span не показывает разметку', () => {
+  it.each([
+    ['bold inside code', '<p><code><strong>token</strong></code></p>', '`token`'],
+    ['italic inside kbd', '<p><kbd><em>Ctrl</em></kbd></p>', '`Ctrl`'],
+    ['a link inside code', '<p><code><a href="https://e.com">x</a></code></p>', '`x`'],
+    // A <br> is the one child that is not text and is still something the reader
+    // saw; a span renders its newlines as spaces, so that is what it becomes.
+    ['a break inside code', '<p><code>a<br>b</code></p>', '`a b`'],
+
+    // Adjacent spans merge their backticks into one run — `` `word``hello world` ``
+    // is a single span whose text carries two backticks — and no delimiter length
+    // separates them, so the run is written as the one span the page looked like.
+    ['adjacent spans', '<p><code>word</code><code>hello world</code></p>', '`wordhello world`'],
+    ['three spans', '<p><code>a</code><code>b</code><code>c</code></p>', '`abc`'],
+    ['a span and a kbd', '<p><code>a</code><kbd>b</kbd></p>', '`ab`'],
+    ['merged text still sizes the delimiter', '<p><code>a`b</code><code>c</code></p>', '`` a`bc ``'],
+    ['text on both sides', '<p>x<code>a</code><code>b</code>y</p>', 'x`ab`y'],
+    // A space already parts the backticks, so the two spans stay two.
+    ['parted by a text node', '<p><code>a</code> <code>b</code></p>', '`a` `b`'],
+    // Reaching through a wrapper would move `b` inside the emphasis, so it is not
+    // done — and here the closing `_` parts the backticks anyway.
+    ['not merged across a wrapper', '<p><em><code>a</code></em><code>b</code></p>', '<em>`a`</em>`b`'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
+// The two spans merge because nothing stood between them, and emptiness of
+// `textContent` was the test for that. It is a different question: a `<br>` and an
+// `<img>` hold no text and are exactly what the reader saw in between. Stepping
+// over one welded two lines into one and left the break at the end of the merged
+// span, and moved the picture behind text it had been standing in front of.
+describe('пустой сосед не сливает спаны', () => {
+  it.each([
+    ['a break between them', '<p><code>a</code><br><code>b</code></p>', '`a`\\\n`b`'],
+    [
+      'an image between them',
+      '<p><code>a</code><img src="https://e.com/i.png" alt="P"><code>b</code></p>',
+      '`a`![P](https://e.com/i.png)`b`',
+    ],
+    // Neither the break nor the picture has to be the sibling itself: a wrapper
+    // is only as empty as what it holds.
+    ['a break inside a wrapper', '<p><code>a</code><span><br></span><code>b</code></p>', '`a`\\\n`b`'],
+    [
+      'a picture inside a wrapper',
+      '<p><code>a</code><picture><img src="https://e.com/i.png" alt="P"></picture><code>b</code></p>',
+      '`a`![P](https://e.com/i.png)`b`',
+    ],
+    // A `<sub>` writes its tags whatever it holds, and an `<hr>` its rule.
+    ['a sub between them', '<p><code>a</code><sub></sub><code>b</code></p>', '`a`<sub></sub>`b`'],
+    ['a rule between them', '<div><code>a</code><hr><code>b</code></div>', '`a`\n\n---\n\n`b`'],
+    ['every span keeps its own delimiters', '<p><code>a`b</code><br><code>c</code></p>', '`` a`b ``\\\n`c`'],
+    ['a run of them', '<p><code>a</code><br><code>b</code><br><code>c</code></p>', '`a`\\\n`b`\\\n`c`'],
+
+    // What really writes nothing is still stepped over — and has to be, since the
+    // spans are then adjacent in the file and their backticks would run together.
+    ['a wrapper holding nothing', '<p><code>a</code><span></span><code>b</code></p>', '`ab`'],
+    ['a comment', '<p><code>a</code><!-- x --><code>b</code></p>', '`ab`'],
+    ['nothing at all', '<p><code>a</code><code>b</code></p>', '`ab`'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});
+
 describe('link scheme check in an HTML fallback cell', () => {
   const cell = (href: string) =>
     `<table><tbody><tr><td colspan="2"><a href="${href}">t</a></td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
 
+  const toHtmlTable = (html: string) => toMarkdown(html, { complexTableFallback: 'html' });
+
   it.each([
     ['https', 'https://e.com', true],
     ['mailto', 'mailto:a@e.com', true],
+    ['tel', 'tel:+15551234', true],
     // Relative URLs may contain a colon; matching "no colon anywhere" dropped them.
     ['relative with a colon', '2024:notes.html', true],
     ['query with a colon', '?filter=a:b', true],
     ['javascript', 'javascript:alert(1)', false],
   ])('%s', (_name, href, kept) => {
-    const md = toMarkdown(cell(href));
+    const md = toHtmlTable(cell(href));
     expect(md.includes('<a href=')).toBe(kept);
     expect(md).toContain('t');
+  });
+});
+
+// One allow-list, two paths. The check was written for the HTML fallback and only
+// later put in front of `[text](href)` as well — which is where almost every link
+// goes, so a list of `https` and `mailto` quietly stopped being a precaution and
+// started being a loss: a `tel:` number in a page header came back as bare digits
+// with nothing to tap.
+describe('схемы ссылок', () => {
+  const link = (href: string) => toMarkdown(`<p><a href="${href}">t</a></p>`).trim();
+
+  it.each([
+    ['http', 'http://e.com/', '[t](http://e.com/)'],
+    ['https', 'https://e.com/a', '[t](https://e.com/a)'],
+    ['mailto', 'mailto:a@e.com', '[t](mailto:a@e.com)'],
+    // An address handed to whichever application owns that kind of address —
+    // the same shape as `mailto`, and the reason this list was widened.
+    ['tel', 'tel:+15551234', '[t](tel:+15551234)'],
+    ['sms', 'sms:+15551234', '[t](sms:+15551234)'],
+    ['callto', 'callto:someone', '[t](callto:someone)'],
+    ['xmpp', 'xmpp:a@e.com', '[t](xmpp:a@e.com)'],
+    ['matrix', 'matrix:u/a:e.com', '[t](matrix:u/a:e.com)'],
+    ['cid', 'cid:part1@e.com', '[t](cid:part1@e.com)'],
+    // A browser no longer follows these, but the address still names the file,
+    // and what is being written is a document rather than a browser.
+    ['ftp', 'ftp://e.com/f', '[t](ftp://e.com/f)'],
+    ['ftps', 'ftps://e.com/f', '[t](ftps://e.com/f)'],
+  ])('%s keeps its target', (_name, href, expected) => {
+    expect(link(href)).toBe(expected);
+  });
+
+  it.each([
+    // Following one of these runs the page's code inside the reader's document.
+    ['javascript', 'javascript:alert(1)'],
+    ['vbscript', 'vbscript:msgbox(1)'],
+    // An href holding a `data:` URL is a whole document, `text/html` included —
+    // a script wearing a label. An image `src` is the other question; see below.
+    ['data', 'data:text/html,<script>alert(1)</script>'],
+    // A URL parser strips these before it reads the scheme, so by the time
+    // anything acts on the string it is `javascript:`. Reading the attribute as
+    // written finds no scheme at all and would pass it on as a relative URL.
+    ['javascript split by a newline', 'java\nscript:alert(1)'],
+    ['javascript split by a tab', 'java\tscript:alert(1)'],
+  ])('%s costs the link, not the text', (_name, href) => {
+    expect(toMarkdown(`<p><a href="${href.replace(/"/g, '&quot;')}">click</a></p>`)).toBe('click\n');
+  });
+
+  it('an image still inlines a data: picture', () => {
+    // Deliberate, and not the same question: a `src` is fetched and never
+    // navigated, and `data:image/…` is how a page carries a picture inside itself.
+    expect(toMarkdown('<img src="data:image/png;base64,AAA" alt="x">').trim()).toBe(
+      '![x](data:image/png;base64,AAA)',
+    );
+  });
+});
+
+// `markdownUrl()` closed the ways out of a destination one at a time: the space,
+// the backtick, the backslash, the unbalanced paren. `](` was the one left open,
+// and it is the only one that needs nothing to be wrong with the URL itself.
+describe('назначение ссылки не обрывается', () => {
+  const link = (href: string) =>
+    toMarkdown(
+      `<p><a href="${href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">t</a></p>`,
+    ).trim();
+
+  it.each([
+    // A second `](` is a complete label boundary sitting inside the address. It
+    // bites once a bracket in the page's own text has thrown the renderer's
+    // bracket count off — and that bracket is deliberately left unescaped, since
+    // `[1]` is a footnote marker. Nothing here can see the text ahead of the
+    // link, so the `]` is escaped every time; the renderer strips the backslash
+    // and the address the reader follows is unchanged.
+    ['a ]( in the middle', 'https://e.com/a](x)b', '[t](https://e.com/a\\](x)b)'],
+    // A bracket that opens nothing ends nothing, so it costs no backslash.
+    ['a lone ]', 'https://e.com/a]b', '[t](https://e.com/a]b)'],
+    ['a lone [', 'https://e.com/a[b', '[t](https://e.com/a[b)'],
+    // Balanced parens are still left alone — `…/Foo_(bar)` is most of Wikipedia —
+    // and the `](` beside them is escaped on its own.
+    [
+      'balanced parens beside it',
+      'https://e.com/Foo_(bar)](x)y',
+      '[t](https://e.com/Foo_(bar)\\](x)y)',
+    ],
+    // Unbalanced, both escapes apply, and the renderer undoes both.
+    ['unbalanced parens beside it', 'https://e.com/a](x', '[t](https://e.com/a\\]\\(x)'],
+    // The backslash pass runs first, so the backslash this adds is not doubled.
+    ['a backslash in front of it', 'https://e.com/a\\](x)b', '[t](https://e.com/a\\\\\\](x)b)'],
+  ])('href with %s', (_name, href, expected) => {
+    expect(link(href)).toBe(expected);
+  });
+
+  it('an image src is written the same way', () => {
+    expect(toMarkdown('<img src="https://e.com/a](x)b" alt="p">').trim()).toBe(
+      '![p](https://e.com/a\\](x)b)',
+    );
+  });
+});
+
+// An attribute is page input dropped straight inside the converter's own syntax
+// — `[text](href)`, `![alt](src 'title')`, the info string after a fence — and
+// nothing encoded it for that position. A value could therefore end the
+// construct from inside, and whatever followed stopped being text: the URL's own
+// tail, a paragraph of the page, the whole of a code block.
+describe('значения атрибутов в синтаксисе markdown', () => {
+  it('a scheme that cannot be followed costs the link, not the text', () => {
+    expect(toMarkdown('<p><a href="javascript:alert(1)">click</a></p>')).toBe('click\n');
+  });
+
+  it.each([
+    ['https', 'https://e.com/a', '[t](https://e.com/a)'],
+    ['mailto', 'mailto:a@e.com', '[t](mailto:a@e.com)'],
+    ['relative with a colon', '2024:notes.html', '[t](2024:notes.html)'],
+  ])('an ordinary href is written as it always was: %s', (_name, href, expected) => {
+    expect(toMarkdown(`<p><a href="${href}">t</a></p>`).trim()).toBe(expected);
+  });
+
+  it.each([
+    // A newline ends the destination and the rest of the attribute starts a new
+    // paragraph — as markup, since Markdown carries raw HTML.
+    ['newline', 'https://e.com/x\n\n<b>y</b>', '[t](https://e.com/x%0A%0A%3Cb%3Ey%3C/b%3E)'],
+    // A space ends it just as well, and an unquoted URL is where spaces live.
+    ['space', 'https://e.com/a b.png', '[t](https://e.com/a%20b.png)'],
+    // A code span outranks a link, so a backtick can swallow the `)` and beyond.
+    ['backtick', 'https://e.com/a`b', '[t](https://e.com/a%60b)'],
+    // `<` in first position asks for the angle-bracket form, which this is not.
+    ['angle bracket', '<https://e.com/a>', '[t](%3Chttps://e.com/a%3E)'],
+    // Parentheses are read as balanced pairs: a lone one closes the link and the
+    // remainder of the URL is left standing in the paragraph as text.
+    ['unbalanced close', 'https://e.com/a)b', '[t](https://e.com/a\\)b)'],
+    ['unbalanced open', 'https://e.com/a(b', '[t](https://e.com/a\\(b)'],
+    // Balanced ones have always rendered — most of Wikipedia is this URL — so a
+    // backslash there would be a character the reader pays for and gains nothing by.
+    ['balanced pair', 'https://e.com/Foo_(bar)', '[t](https://e.com/Foo_(bar))'],
+    // A backslash is always escaped: left alone it would either escape the
+    // closing delimiter or turn the parenthesis after it into an escaped one.
+    ['backslash', 'https://e.com/a\\b', '[t](https://e.com/a\\\\b)'],
+  ])('href with a %s', (_name, href, expected) => {
+    const doc = `<p><a href="${href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">t</a></p>`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it('src is encoded the same way, in the same position', () => {
+    expect(toMarkdown('<img src="https://e.com/a b.png" alt="x">').trim()).toBe(
+      '![x](https://e.com/a%20b.png)',
+    );
+  });
+
+  it.each([
+    // The label is parsed as inline content, and `alt` never went through the
+    // text escaper — it is an attribute, not a text node.
+    ['closing bracket', 'left]right', '![left\\]right](x.png)'],
+    ['opening bracket', 'a[b', '![a\\[b](x.png)'],
+    ['backtick', 'a`b', '![a\\`b](x.png)'],
+    ['backslash', 'a\\b', '![a\\\\b](x.png)'],
+    // Emphasis cannot break the label, so it is left alone: a backslash there
+    // would surface in the alt text a reader sees when the image fails to load.
+    ['asterisks', 'a*b*c', '![a*b*c](x.png)'],
+  ])('alt with a %s', (_name, alt, expected) => {
+    const doc = `<img src="x.png" alt="${alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it.each([
+    ['an apostrophe closes the title early', "Bob's photo", "![a](x.png 'Bob\\'s photo')"],
+    ['a backslash would escape the quote after it', 'a\\b', "![a](x.png 'a\\\\b')"],
+    // A blank line inside the title ends the paragraph and leaves the whole
+    // construct as source. A title is a tooltip; it has no lines to keep.
+    ['a blank line', 'a\n\nb', "![a](x.png 'a b')"],
+  ])('title with %s', (_name, title, expected) => {
+    const doc = `<img src="x.png" alt="a" title="${title.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+    expect(toMarkdown(doc).trim()).toBe(expected);
+  });
+
+  it('an alt with no src lands as ordinary text and is escaped like it', () => {
+    // Without a URL the alt is all that is left, and it goes into the document
+    // as prose — where `<b>` is a tag and `**x**` is bold.
+    expect(toMarkdown('<p><img alt="&lt;b&gt;**x**"></p>').trim()).toBe('\\<b>\\*\\*x\\*\\*');
+  });
+
+  it.each([
+    // Prose is also where `#` is a heading. The alt went through the inline and
+    // the HTML escapers and never through the block one, so an image with no
+    // usable src turned its description into a section of the document.
+    ['a heading', '# heading', '\\# heading'],
+    ['a quote', '&gt; quoted', '\\> quoted'],
+    ['a bullet', '- item', '\\- item'],
+    ['a number', '1. item', '1\\. item'],
+    // A line of dashes draws a rule, or turns whatever is above it into a heading.
+    ['a rule', '---', '\\---'],
+    // The escape belongs to the front of the line only: a sharp inside a sentence
+    // is a sharp, and a backslash there would be one the reader pays for.
+    ['a sharp mid-sentence', 'issue #3', 'issue #3'],
+  ])('an alt with no src cannot open a block: %s', (_name, alt, expected) => {
+    expect(toMarkdown(`<p><img alt="${alt}"></p>`).trim()).toBe(expected);
+  });
+
+  it.each([
+    // `data-lang` is page input written straight after the opening fence: a
+    // newline and three backticks in it closed the fence on the spot, and the
+    // code — and everything under it — was read as markup.
+    ['fence and payload', 'js\n```\n<b>y</b>', '```\nsafe\n```'],
+    ['a space', 'js onload=alert(1)', '```\nsafe\n```'],
+    ['a backtick', 'j`s', '```\nsafe\n```'],
+    // A name that is a name is kept, punctuation and all.
+    ['a plain name', 'rust', '```rust\nsafe\n```'],
+    ['punctuation real names carry', 'c++', '```c++\nsafe\n```'],
+    ['a sharp', 'f#', '```f#\nsafe\n```'],
+  ])('data-lang with %s', (_name, lang, expected) => {
+    const attr = lang.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+    expect(toMarkdown(`<pre><code data-lang="${attr}">safe</code></pre>`).trim()).toBe(expected);
   });
 });

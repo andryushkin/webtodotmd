@@ -4,6 +4,33 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.0 — 2026-07-26
+
+- **Tables with merged cells now stay tables.** A table Markdown has no syntax
+  for — merged cells, a table inside a cell, a cell holding code — used to be
+  copied out as raw HTML, which renders nowhere except the panel and stops the
+  cell from being Markdown at all. It is now folded into an ordinary table: a
+  merged cell keeps its text and leaves the space it spanned empty, a nested
+  table becomes its rows, and code keeps its lines. **Keep complex tables as
+  HTML** in the settings restores the old output.
+- **What the page shows as text stays text.** A page written *about* HTML — a
+  tutorial, a changelog, API documentation — used to lose it: `</td>` vanished
+  from the file, and an HTML comment swallowed the sentence after it. The same
+  now holds for text split across styling, which is how syntax highlighting
+  writes it.
+- **Bold and italics survive where they used to be dropped.** Emphasis pressed
+  against punctuation, against a word, or against another emphasis produced
+  asterisks the reader could see and formatting they could not. So did an emoji
+  next to it.
+- **A partial selection keeps its context.** Dragging out of a table into the
+  paragraph below no longer loses the header row; a table with no `<thead>` keeps
+  its first row; the eighth item of a numbered list is captured as the eighth.
+  Code in a `<pre>` keeps the lines it was broken into.
+- Links keep targets they used to lose — `tel:`, `ftp:` and addresses containing
+  brackets — while `javascript:` loses the link and keeps the text.
+- Definition lists (`<dl>`) convert instead of running the term into the
+  definition.
+
 ## 1.3.0 — 2026-07-25
 
 - **Send to EditMD is a macOS button.** EditMD is a Mac app, and on other

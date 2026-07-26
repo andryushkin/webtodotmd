@@ -118,3 +118,57 @@ describe('empty items', () => {
     expect(toMarkdown('<ul><li>A</li><li></li><li>C</li></ul>')).toBe('- A\n- C\n');
   });
 });
+
+// В Markdown нет списка определений, и до этого правила все три тега проваливались
+// в default, который возвращает текст детей как есть: `<dt>aa</dt><dd>bb</dd>`
+// доходил как `aabb` — страница показывала две строки, читатель получал одно слово.
+describe('списки определений', () => {
+  it('термин и определение — два блока', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd>bb</dd></dl>')).toBe('aa\n\nbb\n');
+  });
+
+  it('несколько пар не слипаются', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd>bb</dd><dt>cc</dt><dd>dd</dd></dl>')).toBe(
+      'aa\n\nbb\n\ncc\n\ndd\n',
+    );
+  });
+
+  it('два определения у одного термина', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd>b1</dd><dd>b2</dd></dl>')).toBe('aa\n\nb1\n\nb2\n');
+  });
+
+  it('inline-разметка внутри сохраняется', () => {
+    expect(toMarkdown('<dl><dt><b>aa</b></dt><dd>see <a href="https://e.com">x</a></dd></dl>')).toBe(
+      '**aa**\n\nsee [x](https://e.com)\n',
+    );
+  });
+
+  it('блочное содержимое определения остаётся блочным', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd><p>one</p><p>two</p></dd></dl>')).toBe(
+      'aa\n\none\n\ntwo\n',
+    );
+  });
+
+  it('список внутри определения остаётся списком', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd><ul><li>x</li><li>y</li></ul></dd></dl>')).toBe(
+      'aa\n\n- x\n- y\n',
+    );
+  });
+
+  it('пустые <dt>/<dd> ничего не добавляют', () => {
+    expect(toMarkdown('<dl><dt>aa</dt><dd></dd></dl>')).toBe('aa\n');
+  });
+
+  it('<dl> отделяется от соседних абзацев', () => {
+    expect(toMarkdown('<p>before</p><dl><dt>aa</dt><dd>bb</dd></dl><p>after</p>')).toBe(
+      'before\n\naa\n\nbb\n\nafter\n',
+    );
+  });
+
+  // Markdown, которую страница показала как текст, остаётся текстом: `dt` и `dd`
+  // уже перечислены в BLOCK_PARENTS парсера, то есть экранирование давно считает
+  // их началом строки — теперь это правда и на выходе.
+  it('текст страницы не становится разметкой', () => {
+    expect(toMarkdown('<dl><dt># term</dt><dd>- def</dd></dl>')).toBe('\\# term\n\n\\- def\n');
+  });
+});

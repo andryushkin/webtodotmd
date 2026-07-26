@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Visa flytande bubbla vid markering"
   },
+  "labelHtmlTables": {
+    "message": "Behåll komplexa tabeller som HTML"
+  },
   "labelDefaultView": {
     "message": "Standardvisningsläge"
   },

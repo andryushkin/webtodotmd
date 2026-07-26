@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "选中文本时显示浮动按钮"
   },
+  "labelHtmlTables": {
+    "message": "复杂表格保留为 HTML"
+  },
   "labelDefaultView": {
     "message": "默认视图模式"
   },

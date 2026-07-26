@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "選取文字時顯示浮動按鈕"
   },
+  "labelHtmlTables": {
+    "message": "複雜表格保留為 HTML"
+  },
   "labelDefaultView": {
     "message": "預設檢視模式"
   },

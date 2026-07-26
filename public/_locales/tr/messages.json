@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Seçimde kayan balon göster"
   },
+  "labelHtmlTables": {
+    "message": "Karmaşık tabloları HTML olarak koru"
+  },
   "labelDefaultView": {
     "message": "Varsayılan görünüm modu"
   },

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "הצג כפתור צף בעת בחירת טקסט"
   },
+  "labelHtmlTables": {
+    "message": "לשמור טבלאות מורכבות כ‑HTML"
+  },
   "labelDefaultView": {
     "message": "מצב תצוגה ברירת מחדל"
   },

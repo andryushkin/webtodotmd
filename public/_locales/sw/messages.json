@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Onyesha kitufe kinachoelea wakati wa uteuzi"
   },
+  "labelHtmlTables": {
+    "message": "Weka majedwali changamano kama HTML"
+  },
   "labelDefaultView": {
     "message": "Hali ya mwonekano wa chaguo-msingi"
   },

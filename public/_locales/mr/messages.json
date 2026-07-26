@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "मजकूर निवडताना फ्लोटिंग बटण दाखवा"
   },
+  "labelHtmlTables": {
+    "message": "जटिल तक्ते HTML म्हणून ठेवा"
+  },
   "labelDefaultView": {
     "message": "डीफॉल्ट व्ह्यू मोड"
   },

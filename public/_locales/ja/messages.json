@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "選択時にフローティングバブルを表示"
   },
+  "labelHtmlTables": {
+    "message": "複雑な表を HTML のまま保持する"
+  },
   "labelDefaultView": {
     "message": "デフォルト表示モード"
   },

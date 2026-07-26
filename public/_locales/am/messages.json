@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "ጽሑፍ ሲመረጥ ተንሳፋፊ ቁልፍ አሳይ"
   },
+  "labelHtmlTables": {
+    "message": "ውስብስብ ሠንጠረዦችን እንደ HTML አቆይ"
+  },
   "labelDefaultView": {
     "message": "ነባሪ ዕይታ ሁነታ"
   },

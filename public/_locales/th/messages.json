@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "แสดงฟองลอยเมื่อเลือก"
   },
+  "labelHtmlTables": {
+    "message": "คงตารางที่ซับซ้อนไว้เป็น HTML"
+  },
   "labelDefaultView": {
     "message": "โหมดการแสดงผลเริ่มต้น"
   },

@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Lebegő gomb megjelenítése kijelöléskor"
   },
+  "labelHtmlTables": {
+    "message": "Összetett táblázatok megtartása HTML-ként"
+  },
   "labelDefaultView": {
     "message": "Alapértelmezett nézet"
   },

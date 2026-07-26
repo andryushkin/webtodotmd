@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Pokazuj przycisk przy zaznaczeniu tekstu"
   },
+  "labelHtmlTables": {
+    "message": "Zachowaj złożone tabele jako HTML"
+  },
   "labelDefaultView": {
     "message": "Domyślny widok"
   },

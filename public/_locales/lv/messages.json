@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Rādīt peldošo pogu, atlasot"
   },
+  "labelHtmlTables": {
+    "message": "Saglabāt sarežģītas tabulas kā HTML"
+  },
   "labelDefaultView": {
     "message": "Noklusējuma skats"
   },

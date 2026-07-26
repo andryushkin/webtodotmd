@@ -115,6 +115,9 @@
   "labelShowBubble": {
     "message": "Näytä kelluva kupla valinnan yhteydessä"
   },
+  "labelHtmlTables": {
+    "message": "Säilytä monimutkaiset taulukot HTML-muodossa"
+  },
   "labelDefaultView": {
     "message": "Oletusnäkymätila"
   },

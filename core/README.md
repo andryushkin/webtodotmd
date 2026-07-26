@@ -69,7 +69,7 @@ if (selection) {
 | `baseUrl` | `string` | — | Resolve relative URLs in links and images |
 | `math` | `boolean` | `false` | Convert KaTeX / MathJax / Wikipedia math |
 | `footnotes` | `boolean` | `false` | Convert footnotes |
-| `complexTableFallback` | `'html' \| 'text' \| 'skip'` | `'html'` | Tables with merged cells: keep as HTML, extract text, or skip |
+| `complexTableFallback` | `'flatten' \| 'html' \| 'text' \| 'skip'` | `'flatten'` | Tables GFM cannot express — merged cells, a nested table, a preformatted cell. `'flatten'` folds them into the pipe form: a merged cell keeps its text where it starts and leaves the positions it spanned empty, a nested table becomes its rows, preformatted text becomes one code span per line. `'html'` emits an HTML table instead, which keeps the structure exactly but stops every cell from being Markdown |
 | `headingOffset` | `number` | `0` | Shift heading levels (`1` turns h1→h2, h2→h3…) |
 | `rules` | `Rule[]` | `[]` | Custom rules — override any element's conversion |
 
@@ -136,3 +136,10 @@ the commands above are `--filter`ed on purpose.
 ## License
 
 MIT
+
+## Versioning
+
+`0.2.0` changed `complexTableFallback` from `'html'` to `'flatten'`. A table GFM
+cannot express — merged cells, a nested table, a preformatted cell — now folds
+into the pipe form instead of becoming an HTML table. Pass
+`complexTableFallback: 'html'` to keep the previous output.
