@@ -72,7 +72,7 @@ describe('markup shown as text never becomes markup again', () => {
     ['table caption', `<table><caption>${SHOWN}</caption><tbody><tr><td>a</td></tr></tbody></table>`],
     [
       'html fallback cell',
-      `<table><tbody><tr><td colspan="2">${SHOWN}</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`,
+      `<table><tbody><tr><td>${SHOWN}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`,
     ],
     // Literal contexts are never Markdown-escaped, so each needs its own reason
     // to be inert: a fence, a code span, or a wrapper that makes one.

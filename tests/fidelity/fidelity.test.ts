@@ -56,9 +56,9 @@ describe('math inside the HTML table fallback', () => {
   const katex = (tex: string) =>
     `<span class="katex"><annotation encoding="application/x-tex">${esc(tex)}</annotation></span>`;
   const mathjaxV2 = (tex: string) => `<script type="math/tex">${esc(tex)}</script>`;
-  // A merged cell is what forces the fallback; the formula rides inside it.
+  // A nested table is what forces the fallback; the formula rides beside it.
   const table = (inner: string) =>
-    `<table><tbody><tr><td colspan="2">${inner}</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
+    `<table><tbody><tr><td>${inner}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`;
 
   const cellCount = (html: string): number =>
     parseHTML(`<html><body>${html}</body></html>`).document.querySelectorAll('td,th').length;
@@ -70,8 +70,10 @@ describe('math inside the HTML table fallback', () => {
     // that reads as a comment swallows the rest of the table.
     ['x<!--oops', katex, true, false],
     ['x<!--oops', mathjaxV2, true, false],
-    ['a</td><td>b', katex, true, true],
-    ['a</td><td>b', mathjaxV2, true, true],
+    // A `</td>` in a formula is neutralized now — it would close the cell it
+    // rides in — so the cell survives and the LaTeX does not.
+    ['a</td><td>b', katex, true, false],
+    ['a</td><td>b', mathjaxV2, true, false],
     ['a & b_1', katex, true, true],
     // Still wrong: isMathSubtree does not cover <script>, so the cell escaping
     // reaches LaTeX it should have left alone.

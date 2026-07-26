@@ -48,16 +48,12 @@ function ownCells(row: Element): Element[] {
 }
 
 function analyzeTable(table: Element): TableAnalysis {
-  // A span attribute is only a reason for the fallback if it survives
-  // spanAttribute() — colspan="1" (Wikipedia, Word and Confluence exports write
-  // it) and colspan="abc" mean nothing, and a table whose only oddity was such a
-  // value used to lose its pipe form for an HTML table with no merged cells.
-  const hasMergedCells = Array.from(
-    table.querySelectorAll('td[colspan], th[colspan], td[rowspan], th[rowspan]'),
-    // With the row and the table, so rowspan="0" is asked the same question the
-    // serializer will ask: resolved to a count, it can turn out to be no merge at
-    // all, and then the pipe form was the better answer.
-  ).some((cell) => cellSpans(cell, cell.parentElement, table) !== '');
+  // Merged cells no longer send a table to the HTML fallback. They are flattened
+  // onto a grid instead: the cell keeps its text where it starts, and the
+  // positions it spanned become empty. That loses the fact of the merge — a
+  // reader cannot tell `| 120 | |` from a genuinely empty neighbour — and it is
+  // the chosen trade: an HTML table renders nowhere that Markdown alone is read,
+  // and every cell inside one stops being Markdown.
   const hasNestedTable = !!table.querySelector('table table');
   // A <pre> at any depth is decisive: a pipe table has nowhere to put its
   // newlines, and collapsing them edits the code. The rest stay direct-child
@@ -75,7 +71,7 @@ function analyzeTable(table: Element): TableAnalysis {
     );
   const hasHead = !!table.querySelector('thead');
 
-  if (hasMergedCells || hasNestedTable || hasPreformatted) {
+  if (hasNestedTable || hasPreformatted) {
     return { level: 'complex', hasHead };
   }
 
@@ -407,6 +403,44 @@ function resolvedRowspan(cell: Element, row: Element, table: Element): string {
   return remaining > 1 ? ` rowspan="${remaining}"` : '';
 }
 
+/** The number inside ` colspan="3"`, or 1 when the attribute did not survive. */
+function spanCount(attribute: string): number {
+  const value = /="(\d+)"/.exec(attribute);
+  return value ? Number(value[1]) : 1;
+}
+
+/**
+ * The table as a grid of positions, with merged cells expanded.
+ *
+ * A pipe table has no syntax for a merge, so the cell is placed where it starts
+ * and every further position it covered is left empty — `<td colspan="2">120</td>`
+ * becomes `| 120 |  |`. Walking positions rather than cells is what keeps the
+ * columns lined up: a `rowspan` consumes a position in later rows too, and
+ * without accounting for it every row below a merge shifted left.
+ */
+function expandSpans(rows: Element[], table: Element): (Element | null)[][] {
+  const grid: (Element | null)[][] = rows.map(() => []);
+  const taken: Set<number>[] = rows.map(() => new Set());
+
+  rows.forEach((row, r) => {
+    let column = 0;
+    for (const cell of ownCells(row)) {
+      while (taken[r]!.has(column)) column += 1;
+      const across = spanCount(spanAttribute(cell, 'colspan'));
+      const down = spanCount(resolvedRowspan(cell, row, table));
+
+      for (let dr = 0; dr < down && r + dr < rows.length; dr += 1) {
+        for (let dc = 0; dc < across; dc += 1) {
+          taken[r + dr]!.add(column + dc);
+          grid[r + dr]![column + dc] = dr === 0 && dc === 0 ? cell : null;
+        }
+      }
+      column += across;
+    }
+  });
+  return grid;
+}
+
 function cellSpans(cell: Element, row: Element | null, table: Element): string {
   const rowspan = row ? resolvedRowspan(cell, row, table) : spanAttribute(cell, 'rowspan');
   return `${spanAttribute(cell, 'colspan')}${rowspan}`;
@@ -483,13 +517,21 @@ export const TABLE_RULES: Rule[] = [
       }
       const bodyRowEls = allRows.filter((row) => row !== headerRow);
 
-      const headerCells = ownCells(headerRow);
-      const headers = headerCells.map((c) => getCellContent(c, options));
-      const alignments = headerCells.map(getAlignment);
+      // From the grid, not from the row's own cells: a merged cell occupies
+      // positions its row does not list, and reading the cells directly put the
+      // columns out of step with each other.
+      const grid = expandSpans(allRows, el);
+      const rowIndex = new Map(allRows.map((row, index) => [row, index]));
+      const positionsOf = (row: Element): (Element | null)[] =>
+        grid[rowIndex.get(row) ?? -1] ?? [];
+      const contentOf = (cell: Element | null | undefined): string =>
+        cell ? getCellContent(cell, options) : '';
 
-      const bodyData = bodyRowEls.map((row) =>
-        ownCells(row).map((c) => getCellContent(c, options)),
-      );
+      const headerCells = positionsOf(headerRow);
+      const headers = Array.from(headerCells, contentOf);
+      const alignments = headerCells.map((c) => (c ? getAlignment(c) : 'none'));
+
+      const bodyData = bodyRowEls.map((row) => Array.from(positionsOf(row), contentOf));
 
       if (headers.every((h) => !h) && bodyData.length === 0) return captionOnly(el, options);
 

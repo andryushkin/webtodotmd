@@ -31,10 +31,11 @@ const BLOCK_KINDS = [
   'td',
   'caption',
   'figcaption',
-  // The last two force the HTML table fallback — a merged cell and a cell holding
-  // preformatted text are exactly what a pipe table cannot express, and the
-  // fallback has escaping rules of its own.
-  'td-merged',
+  // The last two force the HTML table fallback — a nested table and a cell
+  // holding preformatted text are what a pipe table cannot express, and the
+  // fallback has escaping rules of its own. A merged cell no longer qualifies:
+  // it is flattened onto the grid instead.
+  'td-nested',
   'td-pre',
 ] as const;
 type BlockKind = (typeof BLOCK_KINDS)[number];
@@ -190,8 +191,8 @@ function renderBlock(block: Block): string {
       return `<table><caption>${inner}</caption><tbody><tr><td>cell</td></tr></tbody></table>`;
     case 'figcaption':
       return `<figure><figcaption>${inner}</figcaption></figure>`;
-    case 'td-merged':
-      return `<table><tbody><tr><td colspan="2">${inner}</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>`;
+    case 'td-nested':
+      return `<table><tbody><tr><td>${inner}</td></tr><tr><td><table><tbody><tr><td>n</td></tr></tbody></table></td></tr></tbody></table>`;
     case 'td-pre':
       return `<table><tbody><tr><td><pre>${inner}</pre></td></tr></tbody></table>`;
     default:
