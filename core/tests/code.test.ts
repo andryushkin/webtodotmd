@@ -253,3 +253,16 @@ describe('blank lines inside a fence', () => {
     expect(toMarkdown('<p>a</p>\n\n\n\n<p>b</p>')).toBe('a\n\nb\n');
   });
 });
+
+// The buttons sit in the caption bar as often as beside it, and their text is
+// not part of the label: read whole, `<figcaption>python<button>Copy</button>`
+// gave the info string `pythonCopy`. Found by the spec fixture, where the copy
+// button has a word in it — Perplexity's holds an icon and hid this.
+describe('a caption bar with a button in it', () => {
+  it('reads the label alone', () => {
+    const html =
+      '<pre><figure><figcaption>python<button type="button">Copy</button></figcaption>' +
+      '<code>x = 1</code></figure></pre>';
+    expect(toMarkdown(html)).toBe('```python\nx = 1\n```\n');
+  });
+});

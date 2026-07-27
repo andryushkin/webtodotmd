@@ -59,9 +59,19 @@ function readLang(codeEl: Element | null, preEl: Element): string {
   return captionOf(preEl);
 }
 
-/** The text of the block's own caption bar, if it has one. */
+/**
+ * The text of the block's own caption bar, if it has one — the label alone.
+ *
+ * The buttons live in that bar as often as beside it, and their text is not part
+ * of the label: read whole, a `<figcaption>python<button>Copy</button>` gave the
+ * info string `pythonCopy`, which is a language no highlighter has.
+ */
 function captionOf(preEl: Element): string {
-  return (preEl.querySelector('figcaption')?.textContent ?? '').trim();
+  const bar = preEl.querySelector('figcaption');
+  if (!bar) return '';
+  const label = bar.cloneNode(true) as Element;
+  removeChrome(label);
+  return (label.textContent ?? '').trim();
 }
 
 // One gate for every source. The class patterns above already capture `\w+` and

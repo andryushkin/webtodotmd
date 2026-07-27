@@ -91,6 +91,30 @@
      and `.case` clips what overflows — so a `position:fixed` table showed one row
      and hid the rest. The case has to be readable to be checkable. */
   .subject.holds-fixed { min-height: 8.5rem; }
+  /* K7: inline code a page writes with a class instead of a `code` tag. */
+  .mono-chip {
+    padding: .1rem .3rem;
+    background: #fff1e7;
+    color: #b45309;
+    border-radius: 3px;
+    font: .9em ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  /* K8: the gap Perplexity draws before a citation pill, in CSS and not markup. */
+  .drawn-gap::before { content: " "; }
+  /* C7: a code block whose language bar sits beside the `pre`, not inside it. */
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .35rem .6rem;
+    background: var(--wash);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    font: .8rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
   .subject > :first-child { margin-top: 0; }
   .subject > :last-child { margin-bottom: 0; }
   .subject h1, .subject h2, .subject h3, .subject h4,
@@ -202,9 +226,12 @@
     </p>
     <p>
       Each gray strip describes the assertion and is outside the subject. The
-      extension adds one heading level, so an <code>h2</code> selected here is
-      expected to become <code>###</code>. Cases marked “setting” require the
-      named option. Known limitations are collected at the end.
+      extension puts the <em>shallowest</em> heading of a capture at <code>##</code>
+      and moves the rest by the same amount, so what a heading becomes depends on
+      what else the selection caught: take B1 whole and its <code>h1</code> is
+      <code>##</code>, take B5 alone and its <code>aria-level="3"</code> is
+      <code>##</code> as well. Cases marked “setting” require the named option.
+      Known limitations are collected at the end.
     </p>
   </aside>
 
@@ -273,6 +300,18 @@
         <bdo dir="rtl">visible order</bdo>
         <tt>terminal</tt>
         <font color="red">legacy</font>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>B5.</strong> A heading stated with a role rather than a tag. An interface built out of divs writes them this way and a screen reader announces them as headings, so they convert like the tags above: the level comes from <code>aria-level</code>, and one that is missing or outside 1…6 reads as 2. These count towards the level normalisation too — this group starts at <code>aria-level="3"</code>, so it lands where an <code>h3</code> would.</aside>
+      <div class="subject">
+        <div role="heading" aria-level="3">Section stated by role</div>
+        <p>Body under a heading that has no heading tag.</p>
+        <div role="heading" aria-level="4">Subsection stated by role</div>
+        <p>Body under the deeper one.</p>
+        <div role="heading">Level not stated, read as two</div>
+        <div role="heading" aria-level="9">Level nine is not a level Markdown can write</div>
       </div>
     </article>
   </section>
@@ -455,6 +494,35 @@
         <pre><code class="prettyprint lang-rust">fn main() {}</code></pre>
         <pre><code class="language-js"></code><clipboard-copy value="const copied = true;">const copied = true;</clipboard-copy></pre>
         <pre><code data-lang="js&#10;```">safe content, unsafe language hint</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C5.</strong> The block's own furniture, drawn inside the <code>pre</code>: a caption bar naming the language and a copy button. Neither is code — the button goes, and the caption becomes the info string because it names a language. A caption that is not a language stays, as the line it was drawn as, above the fence. Perplexity writes the first shape; the file used to open with <code>pythondef hello(name):</code>.</aside>
+      <div class="subject">
+        <pre><figure><figcaption>python<button type="button">Copy</button></figcaption><code>def hello(name):
+    print(f"Hello, {name}!")</code></figure></pre>
+        <pre><figure><figcaption>Listing 1: the parser entry point</figcaption><code>parse(document)</code></figure></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C6.</strong> Blank lines inside a sample are the page's own text. Two of them separated the body from the trailing <code>print</code> in a ChatGPT answer and arrived as one, because the collapse that tidies the space between blocks was reaching inside the fence.</aside>
+      <div class="subject">
+        <pre><code>import tensorflow as tf
+
+
+print(tf.__version__)</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C7.</strong> <em>Known limitation.</em> The same bar drawn <em>beside</em> the <code>pre</code> rather than inside it — Google's AI answers, Grok and the chat interfaces all do this. The language and the button text arrive welded into one paragraph above the fence — <code>pythonКопировать</code> — and the fence itself has no info string.</aside>
+      <div class="subject">
+        <div class="code-block">
+          <div class="code-head"><span>python</span><button type="button">Копировать</button></div>
+          <pre><code>print("the language label is in the sibling div")</code></pre>
+        </div>
       </div>
     </article>
   </section>
@@ -677,6 +745,16 @@ path\file | a &lt; b &amp; c
         <p><img data-src=" " src="images/hero.jpg" alt="Lazy attribute is blank, the real src wins"></p>
       </div>
     </article>
+
+    <article class="case">
+      <aside><strong>M6.</strong> An <code>alt</code> that is present and empty is the markup saying the image is not content — a favicon in a citation pill, a spacer, an icon beside a label. It goes wherever something else in its parent carries text, and stays when it was all that was there, because dropping it would leave an empty link or an empty paragraph. A <em>missing</em> alt claims nothing of the kind and is kept. Google's AI answers put a 2.5 KB base64 favicon inside a sentence this way.</aside>
+      <div class="subject">
+        <p>Cited by <img alt="" src="images/favicon.png" width="12" height="12"> Smashing Magazine +1</p>
+        <p><a href="https://commonmark.org/"><img alt="" src="images/favicon.png" width="12" height="12"><span>CommonMark</span></a></p>
+        <p><img alt="" src="images/diagram.png"></p>
+        <p>An author who simply forgot: <img src="images/photo.jpg"></p>
+      </div>
+    </article>
   </section>
 
   <section id="escaping">
@@ -738,6 +816,15 @@ path\file | a &lt; b &amp; c
           <span> must still make one space.</span></p>
         <p><span>Neither side offers one</span><span>and they stay welded.</span></p>
         <p>A non-breaking&nbsp; space beside an ordinary one keeps both characters.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>E6.</strong> A hard break starts a line, and everything a line start makes dangerous is dangerous there — even when the run sits inside a wrapper, which is how every chat interface writes one. The literal <code>#</code> below became a real heading and swallowed the break before it. A wrapper that writes a delimiter of its own is the exception: inside emphasis the backslash would be visible, so nothing is escaped there.</aside>
+      <div class="subject">
+        <p><span>**two asterisks**</span><br><span># a hash at the start of a line</span><br><span>`backticks`</span></p>
+        <p>plain text<br>&gt; a quote marker<br>- a bullet<br>1. numbering</p>
+        <p>after a break<br><em># inside emphasis, where a backslash would show</em></p>
       </div>
     </article>
   </section>
@@ -1184,6 +1271,20 @@ Fourth line after an empty line</span></p>
       <aside><strong>K6.</strong> <span class="known">Known defect:</span> adjacent structural containers without block children currently run together as <code>SectionArticleFormLegendField</code>.</aside>
       <div class="subject">
         <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K7.</strong> <span class="known">Known defect:</span> inline code written with a class rather than a <code>code</code> tag. Grok styles <code>Markdown.pl</code> as a monospaced chip with a background; the reader sees code and the file gets plain text, because the snapshot records no <code>font-family</code>.</aside>
+      <div class="subject">
+        <p>Developers followed the original <span class="mono-chip">Markdown.pl</span>, and <span class="mono-chip">commonmark.py</span> is deprecated.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K8.</strong> <span class="known">Known defect:</span> a gap drawn by CSS rather than by markup. The empty span below has <code>content: " "</code> on its <code>::before</code>, which is how Perplexity separates a sentence from the citation pill after it — pseudo-elements are read nowhere, so the file welds them: <code>Markdown.[commonmark]</code>.</aside>
+      <div class="subject">
+        <p>It also includes a conformance test suite.<span class="drawn-gap"></span><a href="https://commonmark.org/">commonmark</a></p>
       </div>
     </article>
   </section>

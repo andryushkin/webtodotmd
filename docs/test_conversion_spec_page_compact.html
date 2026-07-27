@@ -92,6 +92,30 @@
      and `.case` clips what overflows — so a `position:fixed` table showed one row
      and hid the rest. The case has to be readable to be checkable. */
   .case.holds-fixed { min-height: 8.5rem; }
+  /* K7: inline code a page writes with a class instead of a `code` tag. */
+  .mono-chip {
+    padding: .1rem .3rem;
+    background: #fff1e7;
+    color: #b45309;
+    border-radius: 3px;
+    font: .9em ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  /* K8: the gap Perplexity draws before a citation pill, in CSS and not markup. */
+  .drawn-gap::before { content: " "; }
+  /* C7: a code block whose language bar sits beside the `pre`, not inside it. */
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .35rem .6rem;
+    background: var(--wash);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    font: .8rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
   .case > :first-child { margin-top: 0; }
   .case > :last-child { margin-bottom: 0; }
   .case h1, .case h2, .case h3, .case h4,
@@ -259,6 +283,17 @@
       
 </div>
 
+<div class="case" data-case="B5">
+
+        <div role="heading" aria-level="3">Section stated by role</div>
+        <p>Body under a heading that has no heading tag.</p>
+        <div role="heading" aria-level="4">Subsection stated by role</div>
+        <p>Body under the deeper one.</p>
+        <div role="heading">Level not stated, read as two</div>
+        <div role="heading" aria-level="9">Level nine is not a level Markdown can write</div>
+      
+</div>
+
 <div class="case" data-case="I1">
 
         <p><strong>bold</strong>, <em>italic</em>, <del>deleted</del>, <s>struck</s>, and <strike>legacy struck</strike>.</p>
@@ -410,6 +445,32 @@
         <pre><code class="language-js"></code><clipboard-copy value="const copied = true;">const copied = true;</clipboard-copy></pre>
         <pre><code data-lang="js
 ```">safe content, unsafe language hint</code></pre>
+      
+</div>
+
+<div class="case" data-case="C5">
+
+        <pre><figure><figcaption>python<button type="button">Copy</button></figcaption><code>def hello(name):
+    print(f"Hello, {name}!")</code></figure></pre>
+        <pre><figure><figcaption>Listing 1: the parser entry point</figcaption><code>parse(document)</code></figure></pre>
+      
+</div>
+
+<div class="case" data-case="C6">
+
+        <pre><code>import tensorflow as tf
+
+
+print(tf.__version__)</code></pre>
+      
+</div>
+
+<div class="case" data-case="C7">
+
+        <div class="code-block">
+          <div class="code-head"><span>python</span><button type="button">Копировать</button></div>
+          <pre><code>print("the language label is in the sibling div")</code></pre>
+        </div>
       
 </div>
 
@@ -609,6 +670,15 @@ path\file | a &lt; b &amp; c
       
 </div>
 
+<div class="case" data-case="M6">
+
+        <p>Cited by <img alt="" src="images/favicon.png" width="12" height="12"> Smashing Magazine +1</p>
+        <p><a href="https://commonmark.org/"><img alt="" src="images/favicon.png" width="12" height="12"><span>CommonMark</span></a></p>
+        <p><img alt="" src="images/diagram.png"></p>
+        <p>An author who simply forgot: <img src="images/photo.jpg"></p>
+      
+</div>
+
 <div class="case" data-case="E1">
 
         <p># not a heading</p>
@@ -659,6 +729,14 @@ path\file | a &lt; b &amp; c
           <span> must still make one space.</span></p>
         <p><span>Neither side offers one</span><span>and they stay welded.</span></p>
         <p>A non-breaking&#160; space beside an ordinary one keeps both characters.</p>
+      
+</div>
+
+<div class="case" data-case="E6">
+
+        <p><span>**two asterisks**</span><br><span># a hash at the start of a line</span><br><span>`backticks`</span></p>
+        <p>plain text<br>&gt; a quote marker<br>- a bullet<br>1. numbering</p>
+        <p>after a break<br><em># inside emphasis, where a backslash would show</em></p>
       
 </div>
 
@@ -1049,6 +1127,18 @@ Fourth line after an empty line</span></p>
 <div class="case" data-case="K6">
 
         <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
+      
+</div>
+
+<div class="case" data-case="K7">
+
+        <p>Developers followed the original <span class="mono-chip">Markdown.pl</span>, and <span class="mono-chip">commonmark.py</span> is deprecated.</p>
+      
+</div>
+
+<div class="case" data-case="K8">
+
+        <p>It also includes a conformance test suite.<span class="drawn-gap"></span><a href="https://commonmark.org/">commonmark</a></p>
       
 </div>
 </main>
