@@ -64,5 +64,26 @@ export interface MarkItDownOptions {
   mode?: 'full' | 'selection';
   rules?: Rule[];
   domAdapter?: DOMAdapterFn;
-  headingOffset?: number; // Phase 8: сдвиг уровней заголовков для selectionToMarkdown
+  /**
+   * Shift every heading by this many levels, clamped to 1…6.
+   *
+   * For a caller that knows what it is handing over. A capture does not: use
+   * `topHeadingLevel` instead, and this becomes the answer it works out.
+   */
+  headingOffset?: number;
+  /**
+   * Put the shallowest heading of the input at this level, moving the rest by
+   * the same amount.
+   *
+   * A page is not a document: an article's own title is an `<h1>` the capture
+   * usually did not include, and a chat interface writes its whole answer under
+   * `<h3>`. Shifting by a constant — what the extension did — turned that answer
+   * into a file whose first heading is `####`, with no `#`, `##` or `###` above
+   * it anywhere. What matters is the hierarchy the reader saw, which is the
+   * distance between the levels and not the levels themselves.
+   *
+   * `headingOffset` wins where both are given: it is the caller stating the
+   * answer rather than asking for one.
+   */
+  topHeadingLevel?: number;
 }

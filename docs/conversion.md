@@ -20,7 +20,7 @@ backslash: a `>` on its own opens nothing.
 
 | HTML | Markdown |
 | --- | --- |
-| `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` — **0 in the library, 1 in the extension** — and clamped to 1…6 |
+| `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` or by `topHeadingLevel` — **neither in the library, `topHeadingLevel: 2` in the extension** — and clamped to 1…6 |
 | a heading's own anchor link | dropped, when its class is `anchor`, `heading-link` or `headerlink` — the `¶` a docs generator hangs off every heading |
 | `<p>` | paragraph, blank line either side |
 | `<div>` | paragraph, blank line either side |
@@ -191,7 +191,7 @@ and steps of its own around them:
 
 | | |
 | --- | --- |
-| `headingOffset: 1` | a page's `<h1>` becomes `##`, leaving `#` for the note's own title |
+| `topHeadingLevel: 2` | the shallowest heading of the capture becomes `##` and the rest keep their distance from it, leaving `#` for the note's own title. Not a fixed shift: a chat interface writes a whole answer under `<h3>`, and shifting by one made a file whose first heading was `####` with nothing above it. Worked out per capture — across every fragment when there are several, so two ranks a highlighter picked out do not collapse into one |
 | `math: true` plus a rule of its own | `src/content/raw-mathml-rule.ts`, for the MathML the core does not read |
 | `baseUrl: document.baseURI` | so a relative URL resolves |
 | `complexTableFallback` | `html` or `flatten`, from Settings — never `text` or `skip` |

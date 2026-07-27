@@ -3,7 +3,7 @@ import { parseHTML } from 'linkedom';
 import { toMarkdown } from '../../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from '../raw-mathml-rule.ts';
 import { Window as HappyWindow } from 'happy-dom';
-import { cloneRangeWithBr } from '../capture.ts';
+import { cloneRangeWithBr, highlightsToMd } from '../capture.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;
@@ -317,6 +317,43 @@ describe('selection mode: the extension keeps what a person selected', () => {
     expect(md).toContain('Above');
     expect(md).toContain('Pull quote');
     expect(md).toContain('Below');
+  });
+});
+
+// What the capture ships with, and the reason it is not a fixed shift: an
+// answer on claude.ai is written under `<h3>`, so `headingOffset: 1` produced a
+// file starting at `####` with no `#`, `##` or `###` above it anywhere.
+describe('heading levels the extension writes', () => {
+  const withExtensionOptions = (html: string): string =>
+    toMarkdown(`<body>${html}</body>`, { domAdapter, ...CONVERSION_OPTIONS }).trim();
+
+  test('a page that starts at h3 comes back starting at ##', () => {
+    expect(withExtensionOptions('<h3>Answer</h3><h4>Detail</h4>')).toBe('## Answer\n\n### Detail');
+  });
+
+  test('a page that starts at h1 still leaves # for the note title', () => {
+    expect(withExtensionOptions('<h1>Article</h1><h2>Section</h2>')).toBe(
+      '## Article\n\n### Section',
+    );
+  });
+
+  test('one base for a capture of several fragments, so ranks stay apart', () => {
+    const window = new HappyWindow();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
+    // The highlighter path sorts its elements with `Node.DOCUMENT_POSITION_*`,
+    // which a content script reads off the page's own window and a test has to
+    // lend it.
+    const priorNode = (globalThis as { Node?: unknown }).Node;
+    (globalThis as { Node?: unknown }).Node = window.Node;
+    try {
+      const md = highlightsToMd([doc.getElementById('a')!, doc.getElementById('b')!], doc).md;
+      // Converted fragment by fragment, each would put its own heading at `##`.
+      expect(md).toContain('## Section');
+      expect(md).toContain('### Under it');
+    } finally {
+      (globalThis as { Node?: unknown }).Node = priorNode;
+    }
   });
 });
 

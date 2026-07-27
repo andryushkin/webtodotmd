@@ -43,3 +43,33 @@ describe('headings', () => {
     expect(toMarkdown('<h1>Title</h1>', { headingOffset: 10 })).toBe('###### Title\n');
   });
 });
+
+// A capture is a piece of a page and its headings start wherever the page's do:
+// a chat interface writes a whole answer under `<h3>`, and a fixed shift made a
+// file whose first heading was `####` with nothing above it anywhere.
+describe('topHeadingLevel', () => {
+  it('puts the shallowest heading at the level asked for', () => {
+    expect(toMarkdown('<h3>A</h3><h4>B</h4>', { topHeadingLevel: 2 })).toBe('## A\n\n### B\n');
+  });
+
+  it('keeps the distance between levels rather than the levels', () => {
+    expect(toMarkdown('<h1>A</h1><h2>B</h2>', { topHeadingLevel: 2 })).toBe('## A\n\n### B\n');
+  });
+
+  it('lifts a lone deep heading', () => {
+    expect(toMarkdown('<h6>Deep</h6>', { topHeadingLevel: 2 })).toBe('## Deep\n');
+  });
+
+  it('a document with no heading is unaffected', () => {
+    expect(toMarkdown('<p>text</p>', { topHeadingLevel: 2 })).toBe('text\n');
+  });
+
+  it('a heading nobody saw does not set the base', () => {
+    const html = '<h1 style="display:none">hidden</h1><h3>Shown</h3>';
+    expect(toMarkdown(html, { topHeadingLevel: 2 })).toBe('## Shown\n');
+  });
+
+  it('an explicit offset wins — the caller stating the answer, not asking', () => {
+    expect(toMarkdown('<h3>A</h3>', { topHeadingLevel: 2, headingOffset: 0 })).toBe('### A\n');
+  });
+});

@@ -4,6 +4,7 @@ import { sanitize } from './core/sanitizer.js';
 import { convertChildren } from './core/parser.js';
 import { normalize } from './core/normalizer.js';
 import { collectFootnoteDefs, buildFootnotesSection } from './core/footnotes.js';
+import { resolveHeadingOffset } from './utils/headings.js';
 
 export type { DOMAdapterFn, Rule, MarkItDownOptions } from './types.js';
 
@@ -19,7 +20,7 @@ export function toMarkdown(input: string | Node, options: MarkItDownOptions = {}
   const footnoteDefs = options.footnotes ? collectFootnoteDefs(root, options) : undefined;
 
   sanitize(root, options.mode ?? 'full', options.math);
-  const raw = convertChildren(root as Element, options);
+  const raw = convertChildren(root as Element, resolveHeadingOffset(root, options));
   let result = normalize(raw);
 
   if (footnoteDefs && footnoteDefs.size > 0) {

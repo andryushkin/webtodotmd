@@ -71,6 +71,7 @@ if (selection) {
 | `footnotes` | `boolean` | `false` | Convert footnotes |
 | `complexTableFallback` | `'flatten' \| 'html' \| 'text' \| 'skip'` | `'flatten'` | Tables GFM cannot express — merged cells, a nested table, a preformatted cell. `'flatten'` folds them into the pipe form: a merged cell keeps its text where it starts and leaves the positions it spanned empty, a nested table becomes its rows, preformatted text becomes one code span per line. `'html'` emits an HTML table instead, which keeps the structure exactly but stops every cell from being Markdown |
 | `headingOffset` | `number` | `0` | Shift heading levels (`1` turns h1→h2, h2→h3…) |
+| `topHeadingLevel` | `number` | — | Put the input's shallowest heading at this level and move the rest by the same amount, so a fragment that starts at `<h3>` reads as a document. `headingOffset` wins where both are given |
 | `rules` | `Rule[]` | `[]` | Custom rules — override any element's conversion |
 
 ## Supported Elements

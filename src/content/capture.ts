@@ -8,7 +8,7 @@
  * driving a real page. What the page-facing script keeps is the part that talks
  * to the extension; what moved is the part that reads the page.
  */
-import { toMarkdown, enrichRange } from '../../core/src/browser.ts';
+import { toMarkdown, enrichRange, headingOffsetAcross } from '../../core/src/browser.ts';
 import type { MarkItDownOptions } from '../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
@@ -64,6 +64,23 @@ function conversionOptions(doc: Document, options: CaptureOptions): MarkItDownOp
     ...CONVERSION_OPTIONS,
     complexTableFallback: options.htmlTables ? 'html' : 'flatten',
   };
+}
+
+/**
+ * The heading shift, settled across the whole capture rather than per fragment.
+ *
+ * One fragment needs nothing here: `toMarkdown` reads the level off the document
+ * it was given, after its own sanitize, which is the more accurate answer and
+ * costs no second pass. Several fragments cannot each answer for themselves —
+ * `headingOffsetAcross` says why — and there the probe is worth what it costs,
+ * because a highlighter run is a handful of small fragments and not an article.
+ */
+function sharedHeadingOffset(
+  fragments: DocumentFragment[],
+  opts: MarkItDownOptions,
+): MarkItDownOptions {
+  if (fragments.length < 2) return opts;
+  return { ...opts, headingOffset: headingOffsetAcross(fragments, opts) };
 }
 
 // Expands a Range to whitespace boundaries when start/end land mid-token
@@ -182,11 +199,17 @@ export function selectionToCapture(
     try {
       const opts = conversionOptions(doc, options);
       const markup: string[] = [];
-      const fragments = ranges.map((range) => {
+      // Cloned first and converted after, because the heading shift is a question
+      // about every fragment and `toMarkdown` consumes the one it is given.
+      const clones = ranges.map((range) => {
         const fragment = cloneRangeWithBr(expandRangeToWords(range));
         if (options.withHtml) markup.push(serialize(fragment, doc));
-        return collapseHardBreaksToParagraphs(toMarkdown(fragment, opts));
+        return fragment;
       });
+      const shifted = sharedHeadingOffset(clones, opts);
+      const fragments = clones.map((fragment) =>
+        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted)),
+      );
       return {
         md: joinFragments(fragments),
         html: options.withHtml ? markup.join('\n') : undefined,
@@ -219,13 +242,19 @@ export function highlightsToMd(
     try {
       const opts = conversionOptions(doc, options);
       const markup: string[] = [];
-      const fragments = sorted.map(el => {
+      // Two passes for the reason `sharedHeadingOffset` states, and this is the
+      // path that needs it: each highlighted element is its own fragment.
+      const clones = sorted.map(el => {
         const range = doc.createRange();
         range.selectNodeContents(el);
         const fragment = cloneRangeWithBr(range);
         if (options.withHtml) markup.push(serialize(fragment, doc));
-        return collapseHardBreaksToParagraphs(toMarkdown(fragment, opts));
+        return fragment;
       });
+      const shifted = sharedHeadingOffset(clones, opts);
+      const fragments = clones.map(fragment =>
+        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted)),
+      );
       return {
         md: joinFragments(fragments),
         html: options.withHtml ? markup.join('\n') : undefined,

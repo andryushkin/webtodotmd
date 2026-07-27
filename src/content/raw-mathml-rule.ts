@@ -32,7 +32,12 @@ export const rawMathmlRule = {
 
 /** The options the content script converts with, shared so tests can match them. */
 export const CONVERSION_OPTIONS: MarkItDownOptions = {
-  headingOffset: 1,
+  // Not a fixed shift: a capture is a piece of a page, and where its headings
+  // start is the page's business. Claude writes an answer under `<h3>`, so
+  // `headingOffset: 1` — what this used to be — produced a file whose first
+  // heading was `####` with nothing above it, while the reader had seen the
+  // topmost heading there is. `#` stays free for the note's own title.
+  topHeadingLevel: 2,
   math: true,
   // Neither capture path is ever handed a page: one converts what a drag
   // selected, the other what a click highlighted, and both are a person pointing

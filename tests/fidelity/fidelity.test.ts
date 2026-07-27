@@ -404,10 +404,13 @@ describe('structural sanity', () => {
     ],
 
     // --- deliberate: differences the product chose ---
-    // `headingOffset: 1` — the page title takes h1, so everything below moves
-    // down one. Nothing to repair; the case is here so that a change to the
-    // offset cannot happen quietly.
-    ['a heading is demoted by one', '<h2>a <em>b</em> c</h2>', false],
+    // `topHeadingLevel: 2` — the shallowest heading of a capture lands at `##`,
+    // the rest keeping their distance from it, and `#` stays free for the note's
+    // own title. So a document that starts at `<h1>` still moves down one, while
+    // one starting anywhere below comes back at the level the reader saw. Both
+    // are here so that a change to the policy cannot happen quietly.
+    ['a top-level heading moves under the note title', '<h1>a <em>b</em> c</h1>', false],
+    ['a heading below the top keeps its level', '<h2>a <em>b</em> c</h2>', true],
     // A pipe table has no caption, so it becomes a paragraph above the table.
     [
       'a caption becomes a paragraph',

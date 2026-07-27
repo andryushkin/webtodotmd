@@ -4,6 +4,7 @@ import { convertChildren } from './core/parser.js';
 import { normalize } from './core/normalizer.js';
 import { normalizeFragment } from './core/fragment.js';
 import { collectFootnoteDefs, buildFootnotesSection } from './core/footnotes.js';
+import { minHeadingLevel, resolveHeadingOffset } from './utils/headings.js';
 
 export type { DOMAdapterFn, Rule, MarkItDownOptions } from './types.js';
 
@@ -20,7 +21,7 @@ export function toMarkdown(input: string | Node, options: MarkItDownOptions = {}
   const footnoteDefs = options.footnotes ? collectFootnoteDefs(root, options) : undefined;
 
   sanitize(root, options.mode ?? 'full', options.math);
-  const raw = convertChildren(root as Element, options);
+  const raw = convertChildren(root as Element, resolveHeadingOffset(root, options));
   let result = normalize(raw);
 
   if (footnoteDefs && footnoteDefs.size > 0) {
@@ -601,6 +602,33 @@ function tryEnrichFragment(range: Range): DocumentFragment | null {
  */
 export function enrichRange(range: Range): DocumentFragment {
   return tryEnrichFragment(range) ?? cloneWithContext(range);
+}
+
+/**
+ * One heading shift for a capture that is several fragments, each converted on
+ * its own.
+ *
+ * `topHeadingLevel` is worked out per call to `toMarkdown`, which is right for a
+ * document and wrong for a highlighter run: pick out an `<h2>` and the `<h3>`
+ * under it and each fragment would put its own heading at the top level, so two
+ * ranks the reader saw come back as one. Asking every fragment first is what
+ * keeps the distance between them.
+ *
+ * The probe is a copy: `sanitize()` edits what it is handed, and these fragments
+ * are about to be converted for real. It is also what makes the answer the same
+ * one `toMarkdown` would reach alone — a heading hidden from the reader is gone
+ * by the time the level is read, on both paths.
+ */
+export function headingOffsetAcross(nodes: Iterable<Node>, options: MarkItDownOptions = {}): number {
+  if (options.topHeadingLevel === undefined) return 0;
+  let min: number | null = null;
+  for (const node of nodes) {
+    const probe = node.cloneNode(true) as Element;
+    sanitize(probe, options.mode ?? 'full', options.math);
+    const level = minHeadingLevel(probe as unknown as ParentNode);
+    if (level !== null && (min === null || level < min)) min = level;
+  }
+  return min === null ? 0 : options.topHeadingLevel - min;
 }
 
 export function selectionToMarkdown(selection: Selection, options: MarkItDownOptions = {}): string {
