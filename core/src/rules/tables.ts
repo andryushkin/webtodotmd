@@ -2,6 +2,7 @@ import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert, lookAhead } from '../core/parser.js';
 import { applyStyleEmphasis } from './inline.js';
 import { alignFrom, elementStyle } from '../utils/inline-style.js';
+import { CODE_INDENT_MARK } from '../core/normalizer.js';
 import { FALLBACK_ATTR_PATTERN } from '../fallback-tags.js';
 import {
   escapeBlockStarts,
@@ -178,9 +179,14 @@ function preInCell(pre: Element): string {
     .split('\n')
     .map((line) => {
       if (line.trim() === '') return '';
-      // Leading whitespace is the shape of the code; a code span keeps it only if
-      // it is not the very first character, which a non-breaking space fixes.
-      const indented = line.replace(/^ +/, (spaces) => '\u00a0'.repeat(spaces.length));
+      // Leading whitespace is the shape of the code, and an ordinary space cannot
+      // carry it: the preview renders a code span as inline <code>, where leading
+      // spaces collapse, and the reader gets the sample flush left. A
+      // non-breaking space is what survives that, written as the marker
+      // `normalize()` expands, because the pass that folds the page's own
+      // non-breaking spaces into ordinary ones cannot tell the two apart and used
+      // to undo this line's work before the file was ever written.
+      const indented = line.replace(/^ +/, (spaces) => CODE_INDENT_MARK.repeat(spaces.length));
       // The fence must outrun the longest backtick run inside, exactly as a
       // fenced block does. Choosing `` because the line merely contains a
       // backtick closed the span early on ``a `` b``, and everything after it —

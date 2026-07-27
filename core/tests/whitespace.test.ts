@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { toMarkdown, setDOMAdapter } from '../src/server.js';
-import { normalize } from '../src/core/normalizer.js';
+import { CODE_INDENT_MARK, normalize } from '../src/core/normalizer.js';
 import { extractFlankingWhitespace } from '../src/utils/flanking.js';
 
 beforeAll(() => {
@@ -41,6 +41,43 @@ describe('whitespace phase 3 — output normalization', () => {
 
   it('removes leading newlines', () => {
     expect(normalize('\n\ntext')).toBe('text\n');
+  });
+});
+
+// The other half of the same rule: what the *page* wrote goes on becoming an
+// ordinary space wherever it lands, and the marker the converter writes for a
+// folded code line does not. Asserted on whole strings rather than trimmed ones,
+// because U+00A0 and U+0020 print alike and trim() removes both.
+describe("nbsp folding: the page's own non-breaking space", () => {
+  it.each([
+    ['prose', '<p>Price:&nbsp;100</p>', 'Price: 100\n'],
+    ['a heading', '<h2>Q&nbsp;A</h2>', '## Q A\n'],
+    [
+      'a table cell',
+      '<table><tr><th>a&nbsp;b</th></tr><tr><td>c&nbsp;d</td></tr></table>',
+      '| a b |\n| --- |\n| c d |\n',
+    ],
+    // Not in a table, so this is the fenced block rather than the fold: a path
+    // that reads the page off textContent and never sees a text node.
+    ['a <pre>', '<pre>x&nbsp;y</pre>', '```\nx y\n```\n'],
+    ['a code span', '<p><code>x&nbsp;y</code></p>', '`x y`\n'],
+  ])('becomes an ordinary space in %s', (_name, html, expected) => {
+    const md = toMarkdown(html);
+    expect(md).toBe(expected);
+    expect(md).not.toContain('\u00A0');
+  });
+});
+
+describe('nbsp folding: the marker the converter writes', () => {
+  it('becomes a non-breaking space, and the fold runs first', () => {
+    // Order is the whole of it. Expanded before the fold, the marker would be
+    // folded away with the page's own; expanded after, the two are already
+    // apart and each gets its own answer.
+    expect(normalize('a\u00A0b' + CODE_INDENT_MARK + 'c')).toBe('a b\u00A0c\n');
+  });
+
+  it('leaves no marker behind', () => {
+    expect(normalize('x' + CODE_INDENT_MARK + 'y')).not.toContain(CODE_INDENT_MARK);
   });
 });
 

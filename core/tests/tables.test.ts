@@ -1288,3 +1288,64 @@ describe('выравнивание колонки из ячеек данных',
     expect(sep(toMarkdown(html))).toBe(expected);
   });
 });
+
+// A pipe table has no room for a fence, so a <pre> in a cell is folded into one
+// code span per line — and a code span is rendered as inline <code>, where
+// leading ordinary spaces collapse. The indentation therefore has to be
+// non-breaking, and it was: `normalize()` then folded every non-breaking space
+// in the document into an ordinary one, this one included, so the reader was
+// shown the sample flush left and nothing in the file recorded that it had ever
+// been indented. Asserted on the characters, because the two spellings are
+// indistinguishable once the string is trimmed or printed.
+describe('nbsp folding: the converter keeps the indentation it writes', () => {
+  const cellOf = (md: string, row: number): string =>
+    (md.trim().split('\n')[row] ?? '').split('|')[1] ?? '';
+
+  it('a folded <pre> keeps its indentation as U+00A0', () => {
+    const md = toMarkdown(
+      '<table><tr><th>H</th></tr><tr><td><pre>def f():\n    return 1\n</pre></td></tr></table>',
+    );
+    expect(md).toContain('`def f():`<br>`\u00A0\u00A0\u00A0\u00A0return 1`');
+    // The ordinary space is what the defect produced, and it is what an inline
+    // <code> collapses.
+    expect(md).not.toContain('`    return 1`');
+  });
+
+  it('deeper indentation keeps every level', () => {
+    const md = toMarkdown(
+      '<table><tr><th>H</th></tr><tr><td><pre>if x:\n  a\n      b\n</pre></td></tr></table>',
+    );
+    expect(cellOf(md, 2).trim()).toBe(
+      '`if x:`<br>`\u00A0\u00A0a`<br>`\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0b`',
+    );
+  });
+
+  it('the marker itself never reaches the file', () => {
+    // `preInCell` writes a marker and `normalize()` expands it. One that slipped
+    // past the expansion would be a permanent noncharacter sitting in the .md,
+    // which is worse than the defect it was introduced to fix.
+    const md = toMarkdown(
+      '<table><tr><th>H</th></tr><tr><td><pre>  a\n</pre></td></tr></table>',
+    );
+    expect(md).not.toContain('\uFDD0');
+  });
+
+  it('a non-breaking space the page wrote inside that same <pre> is still folded', () => {
+    // The two live in one cell and are told apart by who wrote them, not by
+    // where they are: the leading run is the converter's and stays, the one
+    // between the words is the page's and goes.
+    const md = toMarkdown(
+      '<table><tr><th>H</th></tr><tr><td><pre>  a\u00A0b\n</pre></td></tr></table>',
+    );
+    expect(md).toContain('`\u00A0\u00A0a b`');
+  });
+
+  it('a <pre> behind a wrapper is folded with the same indentation', () => {
+    // wrapperWithPre substitutes the fold back into the converted wrapper, so it
+    // is a second route to the same string and had the same defect.
+    const md = toMarkdown(
+      '<table><tr><th>H</th></tr><tr><td><div><pre>  a\n</pre></div></td></tr></table>',
+    );
+    expect(md).toContain('`\u00A0\u00A0a`');
+  });
+});
