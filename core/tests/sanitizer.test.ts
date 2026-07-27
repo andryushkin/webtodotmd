@@ -246,3 +246,148 @@ describe('sanitizer traversal: roots with more than one element child', () => {
     expect(rootText(frag)).toBe('firsttwo spaces');
   });
 });
+
+// A rendered formula is two things at once: something drawn for the eye — a
+// `<span>` grid, an SVG, an image — and an invisible twin carrying the meaning,
+// which is where every LaTeX the converter reads lives. The twin is *made*
+// invisible on purpose, in exactly the shape a skip link uses, so
+// `visuallyHiddenFrom()` deleted it before any math rule could run and the
+// capture kept the picture and threw the formula away.
+//
+// Each shape below is what its renderer actually emits, in both spellings the
+// core can be handed it in — the page's own `style` attribute, which is all a
+// library caller ever has, and the computed style `style-snapshot.ts` records
+// beside it. Which one arrives is not the same per renderer, and the notes say so.
+describe('math carrier: what the sanitizer leaves of an invisible twin', () => {
+  // The `.sr-only` idiom, and what `.mwe-math-mathml-a11y` computes to on a live
+  // Wikipedia page: `clip:rect(1px,1px,1px,1px);overflow:hidden;position:
+  // absolute;width:1px;height:1px;opacity:0`. Written out twice because the two
+  // spellings carry different halves of it — a page's attribute states the
+  // opacity, and `clippedDeclarations()` never records one.
+  const SR_ONLY = 'clip:rect(1px,1px,1px,1px);position:absolute;width:1px;height:1px;opacity:0';
+  const PINHOLE =
+    'clip:rect(1px, 1px, 1px, 1px);position:absolute;width:1px;height:1px;overflow:hidden';
+
+  const sanitized = (html: string, math = true): Document => {
+    const doc = makeDoc(html);
+    sanitize(doc.body as Element, 'full', math);
+    return doc;
+  };
+
+  const latexOf = (doc: Document): string | undefined =>
+    (doc.body as Element).querySelector('annotation')?.textContent ?? undefined;
+
+  // `buildMathML` in vendor/katex.mjs: the MathML with its TeX annotation goes in
+  // a `<span class="katex-mathml">`, the glyphs in a sibling `.katex-html`. KaTeX
+  // clips from its own stylesheet, and `style-snapshot.ts` stops its walk at the
+  // `.katex` above — so on a live page neither attribute reaches this element,
+  // and it is a page that inlines the CSS, or a library caller handed one, that
+  // meets the defect.
+  const katex = (attrs: string) =>
+    '<p>x <span class="katex">' +
+    `<span class="katex-mathml"${attrs}><math><semantics><mrow><mi>E</mi></mrow>` +
+    '<annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span>' +
+    '<span class="katex-html" aria-hidden="true">E=mc²</span></span> y</p>';
+
+  // Live markup from Mass–energy equivalence. The a11y span holds the `<math>`
+  // alone and the drawing is its sibling; `style="display: none"` is in the
+  // served HTML and the stylesheet overrules it with `display:inline !important`,
+  // so what really hides it is the clip — which only a computed style can state.
+  // Both halves have to be survived: the attribute is all a library caller reads,
+  // and the snapshot answers over it without ever mentioning `display`.
+  const wikipedia = (attrs: string) =>
+    '<p>x <span class="mwe-math-element mwe-math-element-inline">' +
+    '<a href="/w/index.php?title=Special:MathWikibase&amp;qid=Q35875" style="color:inherit;">' +
+    `<span class="mwe-math-mathml-inline mwe-math-mathml-a11y"${attrs}>` +
+    '<math alttext="{\\displaystyle E=mc^{2}}"><semantics><mrow><mi>E</mi></mrow>' +
+    '<annotation encoding="application/x-tex">{\\displaystyle E=mc^{2}}</annotation>' +
+    '</semantics></math></span>' +
+    '<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/9f73" ' +
+    'class="mwe-math-fallback-image-inline" aria-hidden="true" ' +
+    'alt="{\\displaystyle E=mc^{2}}"></a></span> y</p>';
+
+  // MathJax v3 appends `<mjx-assistive-mml>` to the container, marks the drawing
+  // `aria-hidden` and serializes the MathML with its TeX annotation. Its own
+  // stylesheet clips to `rect(1px,1px,1px,1px)` with `width:auto` — no zero side
+  // and no pinhole, so the live shape never tripped this. A snapshot of a
+  // narrower box, or a page writing the plain idiom, does.
+  const mathjax3 = (attrs: string) =>
+    '<p>x <mjx-container class="MathJax" jax="CHTML" style="position: relative;">' +
+    '<mjx-math aria-hidden="true">E=mc2</mjx-math>' +
+    `<mjx-assistive-mml unselectable="on" display="inline"${attrs}>` +
+    '<math><semantics><mrow><mi>E</mi></mrow>' +
+    '<annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math>' +
+    '</mjx-assistive-mml></mjx-container> y</p>';
+
+  const shapes: Array<[string, string, string]> = [
+    ['KaTeX, style attribute', katex(` style="${SR_ONLY}"`), 'E=mc^2'],
+    ['KaTeX, snapshot attribute', katex(` data-s2md-style="${SR_ONLY}"`), 'E=mc^2'],
+    [
+      'Wikipedia as served, style attribute',
+      wikipedia(' style="display: none;"'),
+      '{\\displaystyle E=mc^{2}}',
+    ],
+    [
+      'Wikipedia captured, snapshot over the attribute',
+      wikipedia(` style="display: none;" data-s2md-style="${PINHOLE}"`),
+      '{\\displaystyle E=mc^{2}}',
+    ],
+    ['MathJax v3, style attribute', mathjax3(` style="${SR_ONLY}"`), 'E=mc^2'],
+    ['MathJax v3, snapshot attribute', mathjax3(` data-s2md-style="${PINHOLE}"`), 'E=mc^2'],
+  ];
+
+  it.each(shapes)('keeps the carrier: %s', (_name, html, latex) => {
+    expect(latexOf(sanitized(html))).toBe(latex);
+  });
+
+  // The exemption belongs to the maths option, not to the sanitizer: with `math`
+  // off no rule would read the carrier, and keeping it would only put the
+  // MathML's own glyphs into the file as prose nobody was shown.
+  it.each(shapes)('with math off it goes as it always did: %s', (_name, html) => {
+    expect(latexOf(sanitized(html, false))).toBeUndefined();
+  });
+
+  it('a formula the page hid whole still goes', () => {
+    const doc = sanitized(`<div style="display:none">${katex('')}</div><p>after</p>`);
+    expect(latexOf(doc)).toBeUndefined();
+    expect(bodyText(doc)).toBe('after');
+  });
+
+  // The twin is the witness, and it is what makes this a statement about the
+  // carrier rather than about the formula. A box holding the carrier *and* the
+  // drawing is a whole formula: hiding it hid what the reader would have seen, so
+  // it goes. The same box holding the carrier alone is the wrapper a renderer put
+  // round it, and its invisibility is the design.
+  it('a hidden box holding the drawing as well as the carrier still goes', () => {
+    const doc = sanitized(
+      `<p>x <span class="katex" style="${SR_ONLY}">` +
+        '<span class="katex-mathml"><math><semantics>' +
+        '<annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span>' +
+        '<span class="katex-html" aria-hidden="true">E=mc²</span></span> y</p>',
+    );
+    expect(latexOf(doc)).toBeUndefined();
+    expect(bodyText(doc)).toBe('x  y');
+  });
+
+  it('an ordinary .sr-only paragraph beside a formula still goes', () => {
+    const doc = sanitized(`<p style="${SR_ONLY}">Skip to main content</p>${katex('')}`);
+    expect(bodyText(doc)).not.toContain('Skip to main content');
+    expect(latexOf(doc)).toBe('E=mc^2');
+  });
+
+  // A carrier is what a rule can read a formula *out of*, not whatever is spelled
+  // in MathML. MathJax v2's assistive MathML carries no TeX — `toMathML` writes
+  // an `<annotation>` only under `menuSettings.semantics`, which is off by
+  // default — and the LaTeX sits in the `<script type="math/tex">` beside the
+  // frame, which converts already. Keeping that twin put a second copy of the
+  // same formula in the file: `$E = m c^{2}$$E=mc^2$` where one was shown.
+  it('MathML no rule can read a formula out of is not a carrier', () => {
+    const doc = sanitized(
+      `<p>x <span class="MathJax"><span class="MJX_Assistive_MathML" style="${PINHOLE}">` +
+        '<math><semantics><mrow><mi>E</mi></mrow></semantics></math></span></span>' +
+        '<script type="math/tex">E=mc^2</script> y</p>',
+    );
+    expect((doc.body as Element).querySelector('math')).toBeNull();
+    expect((doc.body as Element).querySelector('script')?.textContent).toBe('E=mc^2');
+  });
+});

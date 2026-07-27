@@ -132,6 +132,36 @@ export const MATH_RULES: Rule[] = [
       return toMathString(result.latex, result.display);
     },
   },
+  // The third renderer wrapper, and the one that holds a picture beside the
+  // meaning. Wikipedia's Math extension publishes both halves of every formula —
+  // an invisible `<math>` for anything that is not an eye, and a drawing for the
+  // eye: an `<img class="mwe-math-fallback-image-*">` of an SVG, or a `<span
+  // class="mwe-math-fallback-source-*">` of the TeX. Once the sanitizer stops
+  // deleting the carrier, both halves convert and the reader who saw one formula
+  // gets a formula and a picture of it.
+  //
+  // Settled here rather than by refusing the picture, for the same reason
+  // `.katex` and `<mjx-container>` are: the wrapper is the only element that
+  // knows the two are one formula, and it says so whichever fallback the
+  // extension chose — including the source-text one, which no rule about images
+  // would have covered, and the next one it adds. `ignoresChildContent` is what
+  // makes that true; the `<a>` to Wikidata that Wikipedia wraps round the pair
+  // goes the same way, and it was never the formula either.
+  //
+  // The filter asks for the LaTeX rather than the class alone. In `source` mode
+  // the extension emits no MathML at all, and a rule claiming that wrapper with
+  // nothing to read would return the empty string and delete the TeX the reader
+  // was actually shown.
+  {
+    name: 'mwe-math-element',
+    ignoresChildContent: true,
+    filter: (el) => el.classList.contains('mwe-math-element') && extractMath(el) !== null,
+    replacement: (el) => {
+      const result = extractMath(el);
+      if (!result) return '';
+      return toMathString(result.latex, result.display);
+    },
+  },
   {
     name: 'math-script-v2',
     ignoresChildContent: true,

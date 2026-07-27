@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { toMarkdown, setDOMAdapter } from '../src/server.js';
+import type { MarkItDownOptions } from '../src/types.js';
 
 beforeAll(() => {
   setDOMAdapter((html) => parseHTML(html).document as unknown as Document);
@@ -352,5 +353,136 @@ describe('дефисные теги в формуле', () => {
     ['минус после переменной', 'a < b-c'],
   ])('не трогает: %s', (_name, latex) => {
     expect(asText(latex)).toBe(`$${latex}$`);
+  });
+});
+
+// What a capture of a maths page handed the reader instead of the formula. The
+// LaTeX lives in a twin the renderer hides beside the drawing, `.sr-only` is the
+// shape it is hidden with, and the sanitizer read that shape as hidden content:
+// a KaTeX formula came out of the capture as nothing at all, and a Wikipedia one
+// as a link to a picture of itself, its alt text carrying the `{\displaystyle …}`
+// wrapper the converter had just learned to take off the formula.
+describe('math carrier: a hidden twin reaches the file', () => {
+  const md = (html: string, options: MarkItDownOptions = { math: true }) =>
+    toMarkdown(html, options);
+
+  const SR_ONLY = 'clip:rect(1px,1px,1px,1px);position:absolute;width:1px;height:1px;opacity:0';
+  const PINHOLE =
+    'clip:rect(1px, 1px, 1px, 1px);position:absolute;width:1px;height:1px;overflow:hidden';
+
+  const katex = (attrs: string) =>
+    '<p>x <span class="katex">' +
+    `<span class="katex-mathml"${attrs}><math><semantics><mrow><mi>E</mi></mrow>` +
+    '<annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span>' +
+    '<span class="katex-html" aria-hidden="true">E=mc²</span></span> y</p>';
+
+  const mathjax3 = (attrs: string) =>
+    '<p>x <mjx-container class="MathJax" jax="CHTML" style="position: relative;">' +
+    '<mjx-math aria-hidden="true">E=mc2</mjx-math>' +
+    `<mjx-assistive-mml unselectable="on" display="inline"${attrs}>` +
+    '<math><semantics><mrow><mi>E</mi></mrow>' +
+    '<annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math>' +
+    '</mjx-assistive-mml></mjx-container> y</p>';
+
+  // The live Wikipedia construct: one wrapper holding the invisible `<math>` and
+  // the picture of it, both inside a link to Wikidata. `display` is written on
+  // the `<math>`, so the same markup states inline and block.
+  const wikipedia = (attrs: string, display = '') =>
+    '<p>x <span class="mwe-math-element mwe-math-element-inline">' +
+    '<a href="/w/index.php?title=Special:MathWikibase&amp;qid=Q35875" style="color:inherit;">' +
+    `<span class="mwe-math-mathml-inline mwe-math-mathml-a11y"${attrs}>` +
+    `<math ${display}alttext="{\\displaystyle E=mc^{2}}"><semantics><mrow><mi>E</mi></mrow>` +
+    '<annotation encoding="application/x-tex">{\\displaystyle E=mc^{2}}</annotation>' +
+    '</semantics></math></span>' +
+    '<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/9f73" ' +
+    'class="mwe-math-fallback-image-inline" aria-hidden="true" ' +
+    'alt="{\\displaystyle E=mc^{2}}"></a></span> y</p>';
+
+  it.each([
+    ['KaTeX, style attribute', katex(` style="${SR_ONLY}"`), 'x $E=mc^2$ y\n'],
+    ['KaTeX, snapshot attribute', katex(` data-s2md-style="${SR_ONLY}"`), 'x $E=mc^2$ y\n'],
+    ['MathJax v3, style attribute', mathjax3(` style="${SR_ONLY}"`), 'x $E=mc^2$ y\n'],
+    ['MathJax v3, snapshot attribute', mathjax3(` data-s2md-style="${PINHOLE}"`), 'x $E=mc^2$ y\n'],
+    [
+      'Wikipedia as served, style attribute',
+      wikipedia(' style="display: none;"'),
+      'x $E=mc^{2}$ y\n',
+    ],
+    [
+      'Wikipedia captured, snapshot over the attribute',
+      wikipedia(` style="display: none;" data-s2md-style="${PINHOLE}"`),
+      'x $E=mc^{2}$ y\n',
+    ],
+  ])('the formula, not what was left of it: %s', (_name, html, expected) => {
+    expect(md(html)).toBe(expected);
+  });
+
+  // Wikipedia publishes both halves of every formula, so once the carrier
+  // survives, both convert: the base already wrote `$E=mc^{2}$` beside the
+  // picture wherever the `<math>` was not hidden. The reader saw one formula.
+  //
+  // Settled on the wrapper, the way `.katex` and `<mjx-container>` already are,
+  // because the wrapper is the only element that knows the two are one thing —
+  // and because it holds whichever fallback the Math extension chose. A rule that
+  // refused the image would still have to be told about
+  // `mwe-math-fallback-source-*`, the TeX-as-text fallback, and about the next
+  // one the extension adds.
+  it.each([
+    ['carrier hidden', wikipedia(' style="display: none;"')],
+    ['carrier not hidden', wikipedia('')],
+  ])('one formula rather than a formula and a picture: %s', (_name, html) => {
+    const out = md(html);
+    expect(out).toBe('x $E=mc^{2}$ y\n');
+    expect(out).not.toContain('![');
+    expect(out).not.toContain('wikimedia.org');
+  });
+
+  // The delimiters come off the `<math display="block">` the wrapper holds, which
+  // is the element MathML's own attribute belongs to. Whether the formula also
+  // opens a line is the wrapper's `display` and nothing to do with this: Wikipedia
+  // makes `.mwe-math-element-block` a block only under a max-width media query, so
+  // a capture from a wide window really does leave it in the line.
+  it('a display formula keeps its own delimiters through the wrapper', () => {
+    expect(md(wikipedia(' style="display: none;"', 'display="block" '))).toBe(
+      'x $$E=mc^{2}$$ y\n',
+    );
+  });
+
+  // In `source` mode the Math extension publishes no MathML at all, only the TeX
+  // as text. The wrapper rule asks for a formula it can read before claiming the
+  // element, because claiming it with nothing to read would emit the empty string
+  // and delete the only thing the reader was shown.
+  it('a wrapper with no formula in it keeps what the page displayed', () => {
+    const html =
+      '<p>x <span class="mwe-math-element mwe-math-element-inline">' +
+      '<span class="mwe-math-fallback-source-inline">E = mc^2</span></span> y</p>';
+    expect(md(html)).toBe('x E = mc^2 y\n');
+  });
+
+  // The exemption is for the carrier inside a visible formula, not for the
+  // formula: the construct here is hidden twin, drawing and all.
+  it('a formula the page hid whole is still not in the file', () => {
+    expect(md(`<div style="display:none">${katex('')}</div><p>after</p>`)).toBe('after\n');
+  });
+
+  it('an ordinary .sr-only paragraph beside a formula is still not in the file', () => {
+    expect(md(`<p style="${SR_ONLY}">Skip to main content</p>${katex('')}`)).toBe(
+      'x $E=mc^2$ y\n',
+    );
+  });
+
+  // With `math` off every one of these converts exactly as it did before: the
+  // carrier goes, and Wikipedia's picture is what is left of the formula.
+  it.each([
+    ['KaTeX', katex(` style="${SR_ONLY}"`), 'x E=mc² y\n'],
+    ['MathJax v3', mathjax3(` style="${SR_ONLY}"`), 'x E=mc2 y\n'],
+    [
+      'Wikipedia',
+      wikipedia(' style="display: none;"'),
+      'x [![{\\\\displaystyle E=mc^{2}}](https://wikimedia.org/api/rest_v1/media/math/render/svg/9f73)]' +
+        '(/w/index.php?title=Special:MathWikibase&qid=Q35875) y\n',
+    ],
+  ])('with math off nothing changes: %s', (_name, html, expected) => {
+    expect(md(html, {})).toBe(expected);
   });
 });

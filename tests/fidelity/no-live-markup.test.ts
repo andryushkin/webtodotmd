@@ -93,6 +93,15 @@ describe('markup shown as text never becomes markup again', () => {
     // wraps text is exactly where a wrapper could be mistaken for a delimiter,
     // so both spellings are pinned here rather than assumed.
     ['quotation marks', `<p><q>${SHOWN}</q></p>`, `“${SHOWN_TEXT}”`],
+    // Wikipedia's wrapper is the fourth element whose rule writes a formula out
+    // of a subtree the sanitizer no longer removes. Its LaTeX reaches the file
+    // between dollar signs, which is not inert — an annotation is page text like
+    // any other, and this is the payload arriving where a formula is expected.
+    [
+      'wikipedia maths wrapper',
+      `<p><span class="mwe-math-element"><math alttext="${SHOWN}"><annotation encoding="application/x-tex">${SHOWN}</annotation></math><img class="mwe-math-fallback-image-inline" src="${OWN_IMAGE}" alt="${SHOWN}"></span></p>`,
+      `$${SHOWN_TEXT}$`,
+    ],
     ['ruby reading', `<p><ruby>word<rt>${SHOWN}</rt></ruby></p>`, `word(${SHOWN_TEXT})`],
     // A style is the second way to be a block, and `convert()` writes such an
     // element between blank lines — so its text opens a line exactly as a `<div>`

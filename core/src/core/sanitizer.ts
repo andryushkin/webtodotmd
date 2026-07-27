@@ -19,7 +19,7 @@ export function sanitize(
   removeByTagSet(root, REMOVE_TAGS);
   removeScripts(root, math);
   if (mode === 'full') removeByTagSet(root, REMOVE_STRUCTURAL);
-  removeHidden(root);
+  removeHidden(root, math);
   removeEmptyWrappers(root);
   collapseWhitespace(root);
   // Adjacent text nodes are one line to the reader but separate nodes to the
@@ -88,10 +88,10 @@ function removeByTagSet(root: SanitizeRoot, tags: Set<string>): void {
 // nothing spoke for it and it walked straight into the file. `dropOwnText` is
 // that question asked on its behalf, at every depth the same box recurs — a
 // hidden box inside a hidden box is kept for the same one visible leaf.
-function removeHidden(root: SanitizeRoot): void {
+function removeHidden(root: SanitizeRoot, math: boolean): void {
   const toRemove: Node[] = [];
   walkElements(root, (el) => {
-    const hiding = hidingOf(el);
+    const hiding = hidingOf(el, math);
     if (hiding === 'removed') {
       toRemove.push(el);
       return false;
@@ -102,6 +102,80 @@ function removeHidden(root: SanitizeRoot): void {
   for (const node of toRemove) {
     node.parentNode?.removeChild(node);
   }
+}
+
+const TEX_ANNOTATION = 'annotation[encoding="application/x-tex"]';
+const MATH_CARRIER_SELECTOR = `math[alttext], ${TEX_ANNOTATION}, script[type^="math/tex"]`;
+
+/**
+ * An element a maths rule can read a formula out of — the three sources
+ * `readMath()` has, put here as a question about the node.
+ *
+ * "Can read", not "is MathML", and MathJax v2 is what paid for the difference.
+ * Its assistive MathML carries no TeX — `toMathML` writes an `<annotation>` only
+ * under `menuSettings.semantics`, which is off by default — while the formula's
+ * LaTeX sits in the `<script type="math/tex">` beside the frame, which converts
+ * already. Keeping that twin put a second copy of the same formula in the file,
+ * `$E = m c^{2}$$E=mc^2$` where the reader saw one. The `<script>` needs no
+ * sparing of its own: `removeScripts` has done it long before this pass asks.
+ */
+function isMathCarrier(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'annotation') return el.getAttribute('encoding') === 'application/x-tex';
+  if (tag === 'script') return (el.getAttribute('type') ?? '').startsWith('math/tex');
+  if (tag !== 'math') return false;
+  return el.hasAttribute('alttext') || el.querySelector?.(TEX_ANNOTATION) != null;
+}
+
+// Whether everything this element holds is carried by maths — no glyph of its
+// own outside a carrier's subtree. That is the whole of what tells a renderer's
+// wrapper from a hidden section: `<span class="katex-mathml">`, `<span
+// class="mwe-math-mathml-a11y">` and `<mjx-assistive-mml>` each hold one `<math>`
+// and nothing else, while a box a page really hid holds prose, or the formula's
+// own visible twin, beside it.
+function showsOnlyMath(el: Element): boolean {
+  let only = true;
+  const step = (node: Node): void => {
+    for (let child = node.firstChild; child && only; child = child.nextSibling) {
+      if (child.nodeType === 3 /* TEXT_NODE */) {
+        if (/\S/.test(child.nodeValue ?? '')) only = false;
+      } else if (child.nodeType === 1 /* ELEMENT_NODE */ && !isMathCarrier(child as Element)) {
+        step(child);
+      }
+    }
+  };
+  step(el);
+  return only;
+}
+
+/**
+ * Whether this element is a formula's meaning rather than a formula.
+ *
+ * A rendered formula is two things at once: something drawn for the eye — a
+ * `<span>` grid, an SVG, an image — and a carrier holding the LaTeX or the
+ * MathML, which is where every rule in `rules/math.ts` reads from. The carrier is
+ * *made* invisible on purpose, in exactly the `.sr-only` shape a skip link uses,
+ * because a reader who can see the drawing must not meet the source twice; and
+ * `hidingVerdict()` cannot tell that shape from the one that hides a menu.
+ *
+ * The twin is the witness. A box holding a carrier *and* something the reader
+ * could see is a whole formula, and a page that hid it hid the formula — that is
+ * the KaTeX construct inside a `display:none` section, and it still goes. A box
+ * holding a carrier and nothing else is the wrapper a renderer put round it, and
+ * its invisibility is the design rather than a decision about the reader.
+ *
+ * Which is also why no property is named here. The renderers spell it every way
+ * there is — Wikipedia writes `display:none` in the attribute and lets the
+ * stylesheet clip it to a pinhole instead, KaTeX and MathJax v3 clip from a
+ * stylesheet the clone never sees, MathJax v2 writes a 1×1 box — and a list of
+ * declarations would repair whichever of them was measured. What the formula's
+ * own box says still decides: an ancestor that is hidden is removed with
+ * everything under it, and the walk never reaches the carrier to ask.
+ */
+function carriesMath(el: Element): boolean {
+  if (isMathCarrier(el)) return true;
+  if (el.querySelector?.(MATH_CARRIER_SELECTOR) == null) return false;
+  return showsOnlyMath(el);
 }
 
 // Every way a page writes "this is here but nobody sees it". `hidingVerdict`
@@ -126,9 +200,14 @@ function removeHidden(root: SanitizeRoot): void {
 // only a coincidence on the pages that bothered; and the price of the
 // coincidence was deleting the visible text of everything else the attribute
 // is put on.
-function hidingOf(el: Element): Hiding {
-  if (el.hasAttribute('hidden')) return 'removed';
-  return hidingVerdict(el);
+//
+// None of it is asked of a maths carrier while `math` is on — see `carriesMath`
+// below for why an invisible carrier is not hidden content, and why the exemption
+// names the element rather than the declaration that hid it.
+function hidingOf(el: Element, math: boolean): Hiding {
+  const verdict: Hiding = el.hasAttribute('hidden') ? 'removed' : hidingVerdict(el);
+  if (verdict !== 'removed' || !math) return verdict;
+  return carriesMath(el) ? 'shown' : 'removed';
 }
 
 // The text held directly by an invisible box — not the text under a descendant,

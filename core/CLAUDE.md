@@ -83,6 +83,17 @@ threshold sits where no layout lands by accident.
   inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
   `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
   reader alone.
+- One thing is exempt from all of it, and only with `math: true`: an element a maths rule can read a
+  formula out of — a `<math alttext>`, an `<annotation encoding="application/x-tex">`, a `<script
+  type="math/tex">`. A rendered formula is two things at once, something drawn for the eye and an
+  invisible twin holding the meaning, and every renderer hides the twin the way `.sr-only` hides a
+  skip link. Removing it left a Wikipedia article with 31 pictures and no formulas, and a KaTeX page
+  with the formula gone from the sentence altogether. The exemption names the element and not a
+  property list, because Wikipedia hides its twin with an inline `display:none` *and* a stylesheet
+  pinhole — a clipped-only exemption repairs the snapshot path and leaves every library caller
+  broken. What still removes a formula the page really hid is structural: the drawing is the witness,
+  so a box holding a carrier *and* something visible is a whole formula and goes, while a box holding
+  a carrier and nothing else is a renderer's wrapper and stays.
 - Which is why two of those hold back. An `opacity: 0` under a transition or an animation is a
   section on its way in, not one withheld, and reveal-on-scroll libraries put it on half an article;
   `revealsFrom()` reads the shorthand and the longhands, because an attribute writes one and a
@@ -117,6 +128,13 @@ threshold sits where no layout lands by accident.
   `<math display="block">` written with it would come back inline. The start anchor is what keeps a
   formula's own `\displaystyle` safe, and a brace-balance check is what keeps `{\displaystyle a}+{\displaystyle b}`
   from being read as one group.
+- A carrier is what a rule can read a formula *out of*, never any MathML: an assistive twin with no
+  annotation is not one, and reading it as one made MathJax v2 write the formula twice — once from
+  the twin the extension's own MathML rule then converted, once from the `<script>` that always
+  carried it. Where a renderer puts a picture beside the twin, the duplication is settled on the
+  *wrapper* — `.katex`, `<mjx-container>`, `.mwe-math-element` each have a rule that ignores its
+  children — because the wrapper is the only element that knows the two are one formula. A rule that
+  merely refused the `<img>` would have to be taught every further fallback the renderer adds.
 
 ## Tables
 

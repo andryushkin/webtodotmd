@@ -143,11 +143,13 @@ Content nobody could read is not content:
 
 | CSS | |
 | --- | --- |
-| `display: none`, `visibility: hidden\|collapse`, `opacity: 0` | removed |
+| `display: none`, `visibility: hidden\|collapse`, `opacity: 0` | removed — unless it is a maths carrier, see below |
 | `clip: rect(0…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written. A zero side of the rect counts written bare or in `px`, with or without commas; in another unit it stays unread, since the direction that costs is the one that deletes |
 | `opacity: 0` under a transition or animation | **kept** — a section on its way in. The transition has to name `opacity` or `all`; any animation counts |
 | `visibility: hidden` under a transition, in the flow | **kept** — a reveal, not an overlay. Here the transition may name `visibility`, `opacity` or `all`: the fade idiom is `transition: opacity .3s, visibility 0s .3s`, which carries the duration on the opacity and gives the visibility a zero one, so each half is evidence for the other |
 | `visibility: hidden` under such a transition, `absolute`/`fixed` | removed — a dropdown standing by |
+| a maths carrier, with `math: true` | **kept, however it is hidden** — a `<math alttext>`, an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`. A rendered formula is two things at once: something drawn for the eye and an invisible twin holding the meaning, and the twin is hidden *by design*. Deleting it left a Wikipedia article with 31 pictures and no formulas. The exemption names the element rather than a property, because Wikipedia hides its twin with an inline `display:none` **and** a stylesheet pinhole |
+| a box holding a carrier **and** something visible | removed as usual — that is a whole formula, and the drawing beside the twin is the witness that the page meant to show it |
 | a hidden box holding something declared visible again | kept, and what is still hidden inside says so — except its own text, which has no style to say it with and is dropped where it stands. Whitespace stays: a blank looks the same hidden or shown, and removing it welds the runs on either side together. Where the hiding comes from a class, the snapshot states it at both ends, so a `visibility` mark no longer means only "remove this" |
 
 Removed by markup rather than by style:
