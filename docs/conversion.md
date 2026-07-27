@@ -140,7 +140,7 @@ Content nobody could read is not content:
 | CSS | |
 | --- | --- |
 | `display: none`, `visibility: hidden\|collapse`, `opacity: 0` | removed |
-| `clip: rect(0px…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written. The lengths must carry a unit: a computed style always writes `0px`, so the extension's snapshot is read, while a bare `clip: rect(0,0,0,0)` in a `style` attribute is missed |
+| `clip: rect(0…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written. A zero side of the rect counts written bare or in `px`, with or without commas; in another unit it stays unread, since the direction that costs is the one that deletes |
 | `opacity: 0` under a transition or animation | **kept** — a section on its way in. The transition has to name `opacity` or `all`; any animation counts |
 | `visibility: hidden` under such a transition, in the flow | **kept** — a reveal, not an overlay |
 | `visibility: hidden` under such a transition, `absolute`/`fixed` | removed — a dropdown standing by |

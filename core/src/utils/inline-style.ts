@@ -407,14 +407,36 @@ function px(value: string | undefined): number | undefined {
 // column's width to the left is a layout, not a hiding place.
 const OFFSCREEN_PX = -1000;
 
-// `clip: rect(0px, 0px, 0px, 0px)`, the CSS 2 spelling of "none of this". The
-// property is deprecated and this is very nearly the only thing it is still
-// written for; commas are optional in the legacy syntax, so both are accepted.
+// A zero side of a `clip` rect, in either spelling. Zero is the one length CSS
+// lets you write without a unit, so `rect(0, 0, 0, 0)` is not an oddity but the
+// commoner half of the idiom — and reading only `0px` meant every page that
+// spelled it that way had its screen-reader text copied into the file. The
+// extension hid the gap, because a computed style always states `0px` and the
+// snapshot is what the clone reads; a library caller reading a page's own
+// `style` attribute walked straight into it.
+//
+// Deliberately not a widening of `px()`. That reader also answers for
+// `text-indent`, `left`, `top`, `width` and `height`, where a bare number is not
+// a length at all — `width: 1` is a typo CSS discards, not a one-pixel box, and
+// taking it for pixels would let it call an element a pinhole and delete what is
+// inside. Here the number is compared against zero and nothing else, where every
+// unit agrees, so there is nothing a unitless one can be mistaken for. A unit
+// this does not know stays unread rather than being assumed away: `0em` is zero
+// too, but the direction that costs is the one that deletes.
+const ZERO_SIDE = /^-?\d*\.?\d+(?:px)?$/;
+
+function zeroSide(side: string): boolean {
+  return ZERO_SIDE.test(side) && Number.parseFloat(side) === 0;
+}
+
+// `clip: rect(0, 0, 0, 0)`, the CSS 2 spelling of "none of this". The property is
+// deprecated and this is very nearly the only thing it is still written for;
+// commas are optional in the legacy syntax, so both are accepted.
 function clippedToNothing(value: string | undefined): boolean {
   const inside = value === undefined ? null : /^rect\(([^)]*)\)$/.exec(value.trim());
   if (!inside) return false;
   const sides = inside[1]!.split(/[\s,]+/).filter((side) => side !== '');
-  return sides.length === 4 && sides.every((side) => px(side) === 0);
+  return sides.length === 4 && sides.every(zeroSide);
 }
 
 // `clip-path: inset(50%)` and anything deeper: half the box taken off every side

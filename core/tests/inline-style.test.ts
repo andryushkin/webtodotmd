@@ -520,6 +520,39 @@ describe('clipped out of sight', () => {
   });
 });
 
+// Zero is the one length that needs no unit, so the idiom is written `rect(0, 0,
+// 0, 0)` more often than it is written `rect(0px, 0px, 0px, 0px)`. The cases
+// above happened to use the spelling a computed style produces, which is the
+// spelling the extension's snapshot always carries — so the gap stayed shut on
+// the extension's side of the product and open on the library's, where the
+// page's own `style` attribute is all there is.
+describe('unitless clip: a zero side needs no unit', () => {
+  it.each([
+    ['bare zeros with commas', 'clip:rect(0,0,0,0)'],
+    ['bare zeros without commas', 'clip:rect(0 0 0 0)'],
+    ['the two spellings mixed', 'clip:rect(0, 0px, 0, 0px)'],
+    ['a zero written long', 'clip:rect(0.0, 00, 0, -0)'],
+  ])('%s drops the text', (_name, style) => {
+    expect(md(`<span data-s2md-style="${style}">HIDDEN</span>ok`)).toBe('ok');
+    expect(md(`<span style="${style}">HIDDEN</span>ok`)).toBe('ok');
+  });
+
+  // Only a zero. A side that is a keyword or a real length clips nothing away,
+  // and a `clip` that is not a rect at all was never this idiom — reading any of
+  // them as "none of this" would take a paragraph the reader was looking at.
+  it.each([
+    ['auto on every side', 'clip:rect(auto, auto, auto, auto)'],
+    ['a bare zero beside a real length', 'clip:rect(0, 0, 0, 10px)'],
+    ['a unit this does not read', 'clip:rect(0em, 0em, 0em, 0em)'],
+    ['three sides instead of four', 'clip:rect(0, 0, 0)'],
+    ['no rect at all', 'clip:auto'],
+    ['a shape that is not a rect', 'clip:inset(0, 0, 0, 0)'],
+  ])('%s keeps it', (_name, style) => {
+    expect(md(`<span data-s2md-style="${style}">SHOWN</span> ok`)).toBe('SHOWN ok');
+    expect(md(`<span style="${style}">SHOWN</span> ok`)).toBe('SHOWN ok');
+  });
+});
+
 describe('a style on other elements', () => {
   it('a link keeps its target and gains the mark', () => {
     expect(md('<a href="https://e.com" style="font-weight:bold">link</a>'))
