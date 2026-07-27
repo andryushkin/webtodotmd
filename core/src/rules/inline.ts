@@ -149,6 +149,141 @@ function shifted(content: string, table: Map<string, string>): string {
   return out;
 }
 
+type QuotePair = readonly [open: string, close: string];
+
+/** A language's two levels: the pair it quotes with, and the pair it nests. */
+type QuoteLevels = readonly [QuotePair, QuotePair];
+
+// Nothing said which language this is in — a page that never wrote a `lang`, or
+// a fragment cut out below the element that did. English's pair is the answer
+// because it is also the one the largest family in the table below carries.
+const DEFAULT_QUOTES: QuoteLevels = [
+  ['“', '”'],
+  ['‘', '’'],
+];
+
+// The marks a `<q>` draws, by content language.
+//
+// CSS's own default for the element is `quotes: auto`, which resolves against
+// the language: the same markup shows “yes” on an English page, „ja“ on a German
+// one and «да» on a Russian one. The language is an *attribute* — `lang` on the
+// nearest ancestor that carries one — so this rule reads it the way the core
+// reads everything else, with no layout engine behind it, and the extension and
+// a library caller answer alike.
+//
+// The pairs are CLDR's `delimiters` — `quotationStart`/`quotationEnd` and the
+// alternate pair beside them — which is the table `quotes: auto` is defined
+// against and the one browsers build their own from. Taken from `cldr-json`
+// (`cldr-misc-full/main/<lang>/delimiters.json`) rather than invented, and
+// narrowed to the languages `public/_locales/` carries, plus English.
+//
+// Grouped by the pair, because the languages repeat far more than they differ:
+// twenty-three of the fifty-two locales share the English row alone, and fifteen
+// rows hold the lot. Each row says which family it is, and a script or region tag
+// appears only where it disagrees with its own language.
+const QUOTE_FAMILIES: ReadonlyArray<readonly [QuoteLevels, readonly string[]]> = [
+  // “…‘…’…” — English and most of the world with it: Iberian, Indic, Malay,
+  // Korean, Thai, Turkish, Vietnamese, simplified Chinese.
+  [DEFAULT_QUOTES, [
+    'en', 'bn', 'da', 'es', 'fil', 'gu', 'hi', 'id', 'kn', 'ko', 'lv', 'ml', 'mr', 'ms', 'pt',
+    'sw', 'ta', 'te', 'th', 'tr', 'vi', 'zh',
+  ]],
+  // „…‚…‘…“ — the German family: the low opening mark, the high closing one.
+  [[['„', '“'], ['‚', '‘']], ['de', 'cs', 'et', 'hr', 'sk', 'sl']],
+  // «…“…”…» — guillemets outside, English marks within: the Mediterranean, and
+  // European Portuguese, which quotes unlike Brazilian Portuguese above.
+  [[['«', '»'], ['“', '”']], ['ca', 'el', 'it', 'pt-pt']],
+  // «…„…“…» — guillemets outside, the German pair within: East Slavic.
+  [[['«', '»'], ['„', '“']], ['ru', 'uk']],
+  // ”…’…’…” — both marks are the closing one: Finnish, Swedish, Hebrew.
+  [[['”', '”'], ['’', '’']], ['fi', 'sv', 'he']],
+  // «…‹…›…» — guillemets at both levels, single ones within.
+  [[['«', '»'], ['‹', '›']], ['am', 'fa']],
+  // „…«…»…” — a low opening mark outside, guillemets within.
+  [[['„', '”'], ['«', '»']], ['pl', 'ro']],
+  // 「…『…』…」 — the CJK corner brackets: Japanese and traditional Chinese.
+  [[['「', '」'], ['『', '』']], ['ja', 'zh-hant', 'zh-tw', 'zh-hk', 'zh-mo']],
+  // „…“ at both levels — Bulgarian and Lithuanian nest the same pair.
+  [[['„', '“'], ['„', '“']], ['bg', 'lt']],
+  // «…‘…’…» — Norwegian, in both of its written forms.
+  [[['«', '»'], ['‘', '’']], ['no', 'nb', 'nn']],
+  // ”…’…‘…“ — Arabic, whose marks are the English ones the other way round.
+  [[['”', '“'], ['’', '‘']], ['ar']],
+  // «…» at both levels — French. CLDR carries no spaces inside the guillemets,
+  // and the narrow ones French typography sets are the page's business, not this
+  // rule's: inventing a space here would add a character no table asked for.
+  [[['«', '»'], ['«', '»']], ['fr']],
+  // „…»…«…” — Hungarian, whose inner guillemets point inward.
+  [[['„', '”'], ['»', '«']], ['hu']],
+  // ‘…’ at both levels — Dutch quotes with the single marks.
+  [[['‘', '’'], ['‘', '’']], ['nl']],
+  // „…’…’…” — Serbian.
+  [[['„', '”'], ['’', '’']], ['sr']],
+];
+
+// A Map for the reason every lookup here is one: the page picks the key, and an
+// object literal would answer `lang="constructor"` with something truthy.
+const QUOTES = new Map<string, QuoteLevels>(
+  QUOTE_FAMILIES.flatMap(([levels, languages]) =>
+    languages.map((language) => [language, levels] as [string, QuoteLevels]),
+  ),
+);
+
+/**
+ * The pairs for a `lang` value, by the language tag's own fallback: `zh-Hant-TW`
+ * asks for `zh-hant-tw`, then `zh-hant`, then `zh`. That is what makes the two
+ * script keys above enough — `pt-BR` finds `pt` and `zh-CN` finds `zh`, while
+ * `pt-PT` and `zh-TW` stop at a key of their own.
+ */
+function quotesFor(lang: string): QuoteLevels {
+  let tag = lang.trim().toLowerCase().replace(/_/g, '-');
+  while (tag !== '') {
+    const found = QUOTES.get(tag);
+    if (found) return found;
+    const cut = tag.lastIndexOf('-');
+    tag = cut < 0 ? '' : tag.slice(0, cut);
+  }
+  return DEFAULT_QUOTES;
+}
+
+/**
+ * The language this element's content is in — `lang` on the nearest ancestor
+ * that states one, which is how a browser resolves `quotes: auto` too.
+ *
+ * A blank `lang=""` states nothing and the walk carries on past it: it is how a
+ * page says the language is unknown, and unknown is what the fallback answers.
+ *
+ * The walk stops where the fragment stops, and that is this rule's limit rather
+ * than a fault in it. A selection is cloned out of the page, so a `lang="ru"` on
+ * the `<html>` above it is not in what the core is handed, and a phrase captured
+ * on its own from a Russian page is quoted with the English pair. Whole-document
+ * conversion keeps the attribute and answers right.
+ */
+function contentLanguage(el: Element): string {
+  for (let up: Element | null = el; up; up = up.parentElement) {
+    const lang = up.getAttribute('lang');
+    if (lang !== null && lang.trim() !== '') return lang;
+  }
+  return '';
+}
+
+/**
+ * Whether this `<q>` stands inside another one, which decides which pair it
+ * takes: the language's own at the top level, its second everywhere below —
+ * `“a ‘b’”` in English, `«a „b“»` in Russian. A third level goes on using the
+ * second, which is what CSS does when the depth runs past the end of the
+ * `quotes` list.
+ *
+ * Only `<q>` counts. It is the element a UA stylesheet writes `open-quote` for;
+ * a `<blockquote>` around it is a block, not a level.
+ */
+function insideQuote(el: Element): boolean {
+  for (let up = el.parentElement; up; up = up.parentElement) {
+    if (up.tagName.toLowerCase() === 'q') return true;
+  }
+  return false;
+}
+
 /**
  * Whether this element becomes a code span — the inline-code rule's own filter,
  * named because the merge below has to ask it about the neighbours too.
@@ -603,6 +738,46 @@ export const INLINE_RULES: Rule[] = [
     name: 'ruby-parenthesis',
     filter: 'rp',
     replacement: () => '',
+  },
+  // The same idea as the two above, for the marks a `<q>` shows: characters the
+  // reader saw, written as characters. Here they were never in the document at
+  // all — every UA stylesheet draws them from `q::before { content: open-quote }`
+  // — so the element converted to its text alone and `He said <q>quoted</q>` came
+  // out as `He said quoted`, a sentence that now claims nobody was quoted. The
+  // marks are not decoration around the words; they are the whole of what the tag
+  // draws.
+  //
+  // `cite` is not read. It is a URL saying where the quotation came from, and no
+  // browser draws it — the reader saw the marks and the words between them and
+  // nothing else, so writing it out would put an address in the file that was
+  // never on the page. A `<q>` the page itself wrapped in an `<a>` still becomes a
+  // link, because that is the page's own markup and the link rule owns it.
+  //
+  // An empty `<q>` writes nothing, and this is the one place the rule knowingly
+  // says less than the screen: a browser does paint `“”` there. Two marks with
+  // nothing between them quote nothing, an empty one is a template with no text
+  // to put in it, and the characters would press against whatever stands on
+  // either side — the way an empty `<sub>` used to part two code spans. Content
+  // that is only whitespace is the same case, and the whitespace is handed back
+  // untouched.
+  //
+  // What the rule cannot see is a page that turned the marks off. `q { quotes:
+  // none }`, or a `q::before { content: none }`, is a stylesheet rule; the core
+  // reads attributes, and the content script's snapshot records computed
+  // *properties* on the element, never generated content, so nothing carries that
+  // fact across. Such a page gets two marks the reader was not shown. That is the
+  // trade taken deliberately: two characters added on a page that styled the
+  // quoting away, against a quotation silently unmarked on every ordinary one.
+  {
+    name: 'quotation',
+    filter: 'q',
+    replacement: (el, childContent) => {
+      const { leading, trimmed, trailing } = extractFlankingWhitespace(childContent);
+      if (!trimmed) return childContent;
+      const levels = quotesFor(contentLanguage(el));
+      const [open, close] = insideQuote(el) ? levels[1] : levels[0];
+      return `${leading}${open}${trimmed}${close}${trailing}`;
+    },
   },
   {
     name: 'inline-code',

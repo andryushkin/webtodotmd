@@ -87,6 +87,13 @@ describe('markup shown as text never becomes markup again', () => {
     // escaper had assumed this while nothing downstream made it true.
     ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT} ${SHOWN_TEXT}`],
     ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`, SHOWN_TEXT],
+    // Two rules that write characters of their own around the page's text. The
+    // marks and the parentheses are this converter's, the text between them is
+    // the page's and goes through the escaper like any other — but a rule that
+    // wraps text is exactly where a wrapper could be mistaken for a delimiter,
+    // so both spellings are pinned here rather than assumed.
+    ['quotation marks', `<p><q>${SHOWN}</q></p>`, `“${SHOWN_TEXT}”`],
+    ['ruby reading', `<p><ruby>word<rt>${SHOWN}</rt></ruby></p>`, `word(${SHOWN_TEXT})`],
     // A style is the second way to be a block, and `convert()` writes such an
     // element between blank lines — so its text opens a line exactly as a `<div>`
     // does, and everything a line start makes dangerous is dangerous here. Only

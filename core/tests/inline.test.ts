@@ -759,3 +759,65 @@ describe('надстрочный и подстрочный', () => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });
 });
+
+// A `<q>` shows its marks from the UA stylesheet's `q::before { content:
+// open-quote }`, so no node in the document holds them and the element used to
+// convert to its text alone: a sentence that had quoted something arrived saying
+// it had not. Which pair is the content language's business — CSS's own default
+// is `quotes: auto`, and the pairs are CLDR's.
+describe('q quotation marks: the pair the reader saw', () => {
+  it.each([
+    ['English by default', '', '“quoted”'],
+    ['Russian', ' lang="ru"', '«quoted»'],
+    ['German', ' lang="de"', '„quoted“'],
+    ['French', ' lang="fr"', '«quoted»'],
+    // A region tag falls back to its language — unless it has a pair of its own.
+    ['Brazilian Portuguese, quoting like English', ' lang="pt-BR"', '“quoted”'],
+    ['European Portuguese, which does not', ' lang="pt-PT"', '«quoted»'],
+    // A language no table covers is no reason to write nothing.
+    ['an unknown language', ' lang="qqq"', '“quoted”'],
+    // The element's own attribute wins over the ancestor's, as `:lang()` does.
+    ['the nearest lang, not the outermost', ' lang="ru"><span lang="de"', '„quoted“'],
+  ])('%s', (_name, lang, expected) => {
+    expect(toMarkdown(`<body${lang}><p><q>quoted</q></p></body>`).trim()).toBe(expected);
+  });
+
+  it('the sentence around it stays exactly where it was', () => {
+    expect(toMarkdown('<body><p>He said <q>quoted</q> and left.</p></body>').trim()).toBe(
+      'He said “quoted” and left.',
+    );
+  });
+
+  // The second level is the language's second pair, which is what CSS reaches
+  // for when the depth passes one.
+  it.each([
+    ['English', '', '“a ‘b’ c”'],
+    ['Russian', ' lang="ru"', '«a „b“ c»'],
+  ])('a nested quotation takes the second pair: %s', (_name, lang, expected) => {
+    expect(toMarkdown(`<body${lang}><p><q>a <q>b</q> c</q></p></body>`).trim()).toBe(expected);
+  });
+
+  // The text inside is page text and goes through the escaper like any other;
+  // the marks are this rule's own characters and go outside what it wrote.
+  it('quoted text ending in a Markdown character keeps its escape', () => {
+    expect(toMarkdown('<body><p>He said <q>done*</q> today.</p></body>').trim()).toBe(
+      'He said “done\\*” today.',
+    );
+  });
+
+  // A URL is not what the reader saw — no browser draws `cite` at all.
+  it('a cite attribute does not reach the file', () => {
+    expect(toMarkdown('<body><p><q cite="https://e.com/src">quoted</q></p></body>').trim()).toBe(
+      '“quoted”',
+    );
+  });
+
+  // Marks around nothing quote nothing, and would press against the words on
+  // either side. The blank between two runs is still the blank the reader saw.
+  it.each([
+    ['empty', '<body><p>a<q></q>b</p></body>', 'ab'],
+    ['whitespace only', '<body><p>a<q> </q>b</p></body>', 'a b'],
+  ])('an %s q writes no marks', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+});

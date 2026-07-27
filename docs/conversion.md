@@ -89,6 +89,7 @@ debts, not features.
 | `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped, and only the text: a `<strong>` inside writes no `**`. Two spans with nothing between them merge into one, since two backtick runs meeting cannot be told apart |
 | `<sub>` `<sup>` | Unicode: `H₂O`, `x²` | see below |
 | `<ruby>` + `<rt>` | `漢字(かんじ)` | the reading beside the word rather than welded onto it — `漢字かんじ` is the word read twice and a search for either half then fails. `<rp>` is dropped: it holds the same two characters for a browser that cannot draw ruby, and keeping both gives `((かんじ))` |
+| `<q>` | `“quoted”` | the marks a UA stylesheet draws, written as characters. The pair comes from the nearest `lang` — `«…»` under `ru`, `„…“` under `de`, `「…」` under `ja` — out of CLDR's delimiters, which is what CSS's `quotes: auto` resolves against; unknown falls back to `“…”`, and a nested `<q>` takes the second pair. An empty one writes nothing, and a page that styled the marks off (`quotes: none`) gets them anyway: that is a stylesheet, and the core reads attributes |
 | KaTeX, MathJax, `<math alttext>` | `$latex$` / `$$latex$$` | when `math` is on. The core reads LaTeX the page already carries — an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`, Wikipedia's `alttext` |
 | display or inline | `$$…$$` only where the page says display: `<math display="block">`, a `.katex-display` ancestor, `<mjx-container display="true">`, `type="math/tex; mode=display"` | Wikipedia's `{\displaystyle …}` wrapper is **not** evidence — it wraps its inline formulas too, and reading it as display turned a sentence carrying three of them into three centred blocks |
 | MathML carrying no LaTeX | `$latex$`, converted by `src/content/raw-mathml-rule.ts` | that rule is the extension's, not the core's. In the library `math: true` **drops such a formula**; with `math` off its text falls through as prose (`<mi>x</mi><mo>+</mo>` → `x+`) |
@@ -167,8 +168,7 @@ Markdown has no way to say these, and inventing one would state something the
 page did not:
 
 `<ins>` `<u>` (no underline syntax) · `<small>` `<big>` (no size syntax) ·
-`<abbr>` (the title is not shown) · `<q>` (its quotes exist only as generated
-content, which no DOM walk can reach) · `<time>` `<data>` `<output>` `<bdi>`
+`<abbr>` (the title is not shown) · `<time>` `<data>` `<output>` `<bdi>`
 `<tt>` `<font>`
 
 `<bdo>` is in that list with a caveat worth stating: the reader saw its
