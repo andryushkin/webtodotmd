@@ -340,9 +340,14 @@ function clippedDeclarations(read: StyleReader): string[] {
  * `finally`, because until it runs the page is carrying attributes it did not
  * ask for.
  */
-export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyleOf): () => void {
+export function snapshotStyles(
+  roots: Iterable<Element>,
+  computed: ComputedStyleOf,
+  diagnostics = false,
+): () => void {
   const pending: Pending[] = [];
   const rows: Element[] = [];
+  const diagnosed: Array<{ el: Element; text: string }> = [];
   const seen = new WeakSet<Element>();
 
   const record = (
@@ -375,6 +380,7 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     if (seen.has(el)) return true;
     seen.add(el);
     const read = computed(el);
+    if (diagnostics) diagnosed.push({ el, text: everythingRead(read) });
     const tag = el.tagName.toLowerCase();
     // Read once: the hiding check below, the mark this element writes and the
     // question its children ask about their parent are all the same property.
@@ -602,6 +608,21 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
   }
 
   try {
+    for (const { el, text } of diagnosed) {
+      if (text === '') continue;
+      const previous = el.getAttribute(DIAGNOSTIC_ATTR);
+      undo.push(
+        previous === null
+          ? () => el.removeAttribute(DIAGNOSTIC_ATTR)
+          : () => el.setAttribute(DIAGNOSTIC_ATTR, previous),
+      );
+      el.setAttribute(DIAGNOSTIC_ATTR, text);
+    }
+  } catch {
+    /* same: every attribute already written is in `undo` */
+  }
+
+  try {
     for (const el of rows) {
       // The page may own this attribute the way it may own the style one, so the
       // undo restores its value rather than removing what it finds.
@@ -618,6 +639,16 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
   }
 
   return restore;
+}
+
+/** Every property the walk consults, as declarations, skipping the silent ones. */
+function everythingRead(read: StyleReader): string {
+  const out: string[] = [];
+  for (const property of DIAGNOSTIC_PROPERTIES) {
+    const value = read(property);
+    if (value !== undefined && value !== '') out.push(`${property}:${value}`);
+  }
+  return out.join(';');
 }
 
 function contextOf(read: StyleReader, el: Element): Context {

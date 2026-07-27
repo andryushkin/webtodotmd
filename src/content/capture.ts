@@ -118,7 +118,11 @@ export function cloneRangeWithBr(range: Range): DocumentFragment {
  * The cleanup takes every attribute back off, so it belongs in a `finally`
  * outside the conversion — the clone is taken while they are still on.
  */
-export function captureStyles(scopes: Array<Element | null>, doc: Document): () => void {
+export function captureStyles(
+  scopes: Array<Element | null>,
+  doc: Document,
+  diagnostics = false,
+): () => void {
   const roots = scopes.filter((el): el is Element => el !== null);
   if (roots.length === 0) return () => {};
   const computed = computedStyleIn(doc.defaultView ?? window);
@@ -126,7 +130,7 @@ export function captureStyles(scopes: Array<Element | null>, doc: Document): () 
   // `snapshotStyles` swallows its own faults and always hands back a working
   // undo: a style the browser cannot resolve is a worse conversion, never a
   // failed capture, and never an attribute left on the page.
-  const restoreStyles = snapshotStyles(roots, computed);
+  const restoreStyles = snapshotStyles(roots, computed, diagnostics);
   const unmark = markPreservedNewlines(preserving);
   return () => {
     unmark();
@@ -155,6 +159,7 @@ export function selectionToCapture(
   const restoreStyles = captureStyles(
     ranges.map((range) => styleScopeOf(range, snapshotScope(range))),
     doc,
+    options.withHtml,
   );
   try {
     const cleanup = mirrorShadowRoots(shadowRoots);
@@ -188,7 +193,11 @@ export function highlightsToMd(
     return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
   });
 
-  const restoreStyles = captureStyles(sorted.map(el => el.closest('table') ?? el), doc);
+  const restoreStyles = captureStyles(
+    sorted.map(el => el.closest('table') ?? el),
+    doc,
+    options.withHtml,
+  );
   try {
     const cleanup = mirrorShadowRoots(openShadowRoots(doc));
     try {

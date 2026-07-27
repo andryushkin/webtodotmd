@@ -4,6 +4,29 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.5 — 2026-07-27
+
+- **Indented code stays indented.** Every syntax highlighter puts the blank
+  between two tokens in a tag of its own, and those blanks were being dropped
+  with the tag: a YAML sample came back flush left with `anchor_linenums:true`,
+  and a Python one as `importtensorflowastf`. Off a code block the same removal
+  ran two ordinary words together.
+- **A row of tags reads as a row.** Items laid side by side by CSS had nothing
+  between them in the markup, so a list of tags arrived as `c#pythonjava`. The
+  blank the reader saw is written, and with it emphasis can be spelled the way
+  Markdown spells it — 47 tags in one capture had been falling back to raw
+  `<strong>`.
+- **A collapsed section stays collapsed.** The body of a `<details>` nobody
+  opened was being captured: one documentation page carried 500 words of folded
+  sidebar the reader never saw.
+- **A web component's fallback text no longer doubles.** A date shown as
+  `3 days ago` was arriving as `3 days agoJul 24, 2026`, the second half being
+  the text the component replaces for readers without JavaScript.
+- **New setting: show the captured HTML view.** Off by default. It adds a third
+  view holding the markup the conversion was given, so a conversion defect can
+  be reported — and reproduced — without anyone having to guess what was on the
+  page.
+
 ## 1.4.4 — 2026-07-27
 
 - **A paragraph is a paragraph again.** Every line of an ordinary indented page
