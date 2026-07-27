@@ -51,12 +51,24 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
   both ways — a style declining its tag's mark drops it — and emits through `emphasis()` like every
   other mark.
+- A mark goes round a run of text, never round a block: delimiters do not cross the blank between
+  two of them, so a bolded `<div>` holding two paragraphs came out `**a\n\nb**` — asterisks shown at
+  both ends and no bold anywhere. Blocks take the mark one at a time, and a block that opens with
+  syntax of its own takes none: `**` before a `##`, a `|` row or a fence is either printed or eaten
+  by the construct, and a heading is bold already, which is the same reason a `<th>` is refused.
 - `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
   wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
   running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask
   about it too — while only the tag was asked, `<span style="display:block"># heading</span>` put a
   real H1 in the file. Only tags whose whole output is content between blank lines can decline one:
   a `<br>` carries `display:inline` in every computed style there is, and a `<table>` writes a grid.
+  A heading declines one only where something drew before it on its line. `inline` is how a skin
+  puts a control *beside* a title — Vector 2022 wraps every `<h2>` in a `<div class="mw-heading">`
+  and inlines the heading so `[edit]` lands on its line — and taking the declaration at its word
+  cost a Wikipedia article all 60 of its section headings: the `<h2>`s arrived as prose and the
+  `<h3>`s as `**bold**`, which is all a heading's weight leaves once the level is gone. The case the
+  declaration is really for keeps working: `<div>x<h2 style="display:inline">a</h2>y` is one
+  sentence, and there a `##` would break it in two.
 
 ## Reading a style
 

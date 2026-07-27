@@ -263,6 +263,36 @@ describe('display', () => {
     expect(toMarkdown(html)).toBe(expected);
   });
 
+  // A heading is the exception, because `inline` is how a skin puts something
+  // *beside* the title rather than how it stops being one. Wikipedia's Vector
+  // 2022 is the case that found this: every `<h2>` sits in a
+  // `<div class="mw-heading">` and is inlined so the `[edit]` link lands on its
+  // line, and an article arrived with all 60 of its section headings as prose —
+  // the `<h3>`s as `**bold**`, since bold is what a heading's weight leaves once
+  // the level is gone. What decides is whether anything drew before it, which is
+  // also what leaves the sentence case above untouched.
+  it.each([
+    ['opening its line', '<div><h2 style="display:inline">a</h2><span>[edit]</span></div>', '## a\n\n[edit]\n'],
+    ['first in a wrapper', '<div><div><h3 style="display:inline">a</h3></div></div>', '### a\n'],
+    ['after a heavier wrapper', '<div data-s2md-style="font-weight:700"><h3 style="display:inline">a</h3></div>', '### a\n'],
+  ])('a heading %s keeps its level', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
+  // A delimiter does not cross the blank between two blocks: `**a\n\nb**` renders
+  // as the asterisks themselves at both ends and no bold anywhere. So the mark is
+  // written per block — and never around one that opens with syntax of its own,
+  // where it would be printed or eaten by the construct. A heading is bold
+  // already, the same reason a `<th>` is refused the weight it is handed.
+  it.each([
+    ['paragraphs', '<div style="font-weight:bold"><p>a</p><p>b</p></div>', '**a**\n\n**b**\n'],
+    ['a heading', '<div style="font-weight:700"><h3>Title</h3></div>', '### Title\n'],
+    ['a list', '<div style="font-weight:bold"><ul><li>a</li></ul></div>', '- a\n'],
+    ['one run of text', '<div style="font-weight:bold">plain</div>', '**plain**\n'],
+  ])('a style mark goes round %s, not round a block', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
   // Only a tag that would have drawn a block has a block to decline. Reading the
   // declaration off anything else would strip the marks its rule writes — and a
   // `<br>` carries `display:inline` in every computed style there is, so the

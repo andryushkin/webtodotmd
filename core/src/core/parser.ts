@@ -50,7 +50,9 @@ const BLOCK_PARENTS = new Set([
 // first one it meets, and a `<li>` is reached long before its `<ul>`. Anything
 // unlisted counts as inline, which costs at most a backslash — reading an
 // unknown tag as a block boundary would cost the escape.
-const LINE_ENDS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre']);
+const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
+const LINE_ENDS = new Set([...BLOCK_PARENTS, ...HEADING_TAGS, 'pre']);
 
 // Everything that leaves the next text at the start of a line: the blocks above,
 // plus the ones that are never a text node's parent and so are absent from them —
@@ -63,7 +65,7 @@ const ENDS_THE_LINE = new Set([
 // these can decline the block a `display:inline` says they did not draw: a `<br>`
 // writes a break and no content, a `<table>` writes a grid and a `<pre>` a fence,
 // and for those the tag's own output is still the closest the file can come.
-const INLINEABLE_BLOCKS = new Set([...BLOCK_PARENTS, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+const INLINEABLE_BLOCKS = new Set([...BLOCK_PARENTS, ...HEADING_TAGS]);
 
 /**
  * Whether this element's style puts its content on a line of its own, which the
@@ -353,8 +355,31 @@ function inlinedBlock(el: Element): boolean {
 function endsTheLine(el: Element): boolean {
   if (styledBlock(el)) return true;
   const tag = el.tagName.toLowerCase();
-  if (INLINEABLE_BLOCKS.has(tag) && inlinedBlock(el)) return false;
+  if (declinesBlock(el, tag)) return false;
   return ENDS_THE_LINE.has(tag);
+}
+
+/**
+ * Whether a block tag's `display:inline` really takes its block away.
+ *
+ * For most of `INLINEABLE_BLOCKS` the declaration settles it. A heading is the
+ * exception, because `inline` is how a skin puts something *beside* the title
+ * rather than how it stops being one: Wikipedia's Vector 2022 wraps every `<h2>`
+ * in a `<div class="mw-heading">` and inlines the heading so the `[edit]` link
+ * lands on its line — and the reader still met a line of large type. Taking the
+ * declaration at its word cost a 1,100-line article every one of its 60 section
+ * headings; they arrived as prose, and the `<h3>`s as `**bold**`, since bold is
+ * all a heading's weight leaves once the level is gone.
+ *
+ * What is left is the case the declaration is really for: a heading with text
+ * written before it on its own line, `<div>x<h2 style="display:inline">a</h2>y`,
+ * where a `##` would break a sentence in two. So the question is not what the
+ * style says but whether anything drew before it — the tag carries a level no
+ * `display` can spell, and a heading that opens its line kept one.
+ */
+function declinesBlock(el: Element, tag: string): boolean {
+  if (!INLINEABLE_BLOCKS.has(tag) || !inlinedBlock(el)) return false;
+  return !HEADING_TAGS.has(tag) || !atLineEdge(el, 'previousSibling');
 }
 
 /** The same question about a container: whether its edge is the line's edge. */
@@ -609,7 +634,7 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // question and only `<div>` was answering it, while the snapshot records the
     // declaration for all of them: two `<p style="display:inline">` were two
     // paragraphs in the file and one sentence on the page.
-    if (INLINEABLE_BLOCKS.has(tag) && displaysInline(el)) return content;
+    if (declinesBlock(el, tag)) return content;
     const out = rule.replacement(el, content, options);
     if (!displaysAsBlock(el)) return out;
     const trimmed = out.trim();

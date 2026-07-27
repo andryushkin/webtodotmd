@@ -10,6 +10,10 @@ dist/
 # Scratch checkouts for background agents; never part of the source tree.
 .claude/worktrees/
 
+# Captures handed over for a manual pass — a page's own HTML and what the
+# conversion made of it. Megabytes, and someone else's text.
+/inbox/
+
 # Chrome Web Store material: listing copy, store translations, screenshots and
 # banner sources. Kept out of the repository — it is dashboard input, not code.
 /store/

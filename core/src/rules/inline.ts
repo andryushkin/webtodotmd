@@ -89,6 +89,47 @@ export function applyStyleEmphasis(
   options: MarkItDownOptions,
 ): string {
   const marks = addedMarks(el);
+  if (!marks.italic && !marks.strike && !marks.bold) return content;
+  // A run of text takes the marks whole. Blocks take them one at a time, because
+  // a delimiter does not reach across the blank between two of them: a bolded
+  // `<div>` holding two paragraphs came out `**a\n\nb**`, which renders as the
+  // asterisks themselves at both ends and no bold anywhere.
+  if (!BLOCK_BREAK.test(content)) return marked(el, content, marks, options);
+  return content
+    .split(BLOCK_SPLIT)
+    .map((part) => (carriesMarkup(part) ? part : marked(el, part, marks, options)))
+    .join('');
+}
+
+/** The blank line between two blocks — what a delimiter cannot cross. */
+const BLOCK_BREAK = /\n{2,}/;
+const BLOCK_SPLIT = /(\n{2,})/;
+
+/**
+ * Whether a block writes something a mark around it would break or duplicate.
+ *
+ * A heading, a cell row, a fence, a rule and a list item each open their line
+ * with syntax, and `**` in front of it is either shown as characters or read as
+ * part of the construct. A heading is the case that keeps coming: it is already
+ * bold, so the page's own `font-weight` on the `<div>` around it says nothing
+ * new — the same reason `addedMarks` refuses the weight a `<th>` is handed.
+ *
+ * The list is what a block *starts with*, and it is deliberately narrow: prose
+ * beginning with an escaped `\#` is not a heading, and the escape is what tells
+ * them apart by the time this runs.
+ */
+function carriesMarkup(part: string): boolean {
+  return BLOCK_MARKUP.test(part);
+}
+
+const BLOCK_MARKUP = /^\s*(?:#{1,6} |[-*+] |\d+[.)] |> |\||```|~~~|<|-{3,}$|\*{3,}$)/;
+
+function marked(
+  el: Element,
+  content: string,
+  marks: { italic: boolean; strike: boolean; bold: boolean },
+  options: MarkItDownOptions,
+): string {
   let out = content;
   if (marks.italic) out = emphasis(el, out, ['_', '*'], 'em', options);
   if (marks.strike) out = emphasis(el, out, ['~~'], 'del', options);
