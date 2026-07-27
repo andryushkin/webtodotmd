@@ -51,6 +51,12 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
   both ways — a style declining its tag's mark drops it — and emits through `emphasis()` like every
   other mark.
+- A mark nothing wears is not written. A container states a weight its children take back, and only
+  the children hold text: Reddit's comment header is a `<summary>` at 700 whose every child is a
+  `<div>` at 400, with the author's name declaring 700 again for itself — so the header line came out
+  bold and the name, bold in its own right, as `**[**name**](…)**`. `addedMarks` walks to the first
+  text still carrying the mark, stopping at any declaration that takes it back; one step deep in the
+  ordinary case, since `<span style="font-weight:700">word</span>` answers on its first child.
 - A mark goes round a run of text, never round a block: delimiters do not cross the blank between
   two of them, so a bolded `<div>` holding two paragraphs came out `**a\n\nb**` — asterisks shown at
   both ends and no bold anywhere. Blocks take the mark one at a time, and a block that opens with

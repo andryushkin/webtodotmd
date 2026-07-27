@@ -760,3 +760,33 @@ describe('reveal per property: an opacity:0 wants its own property named', () =>
     section(style, expected);
   });
 });
+
+// A container states a weight its own children take back, and only the children
+// hold text. Reddit's comment header is a `<summary>` at 700 whose every child
+// is a `<div>` back at 400, with the author's name declaring 700 again inside —
+// so the file bolded the header line, and the name, bold in its own right, came
+// out `**[**name**](…)**`. Nothing on screen was bold but the name.
+describe('a mark nothing wears', () => {
+  it('a weight every child declines writes nothing', () => {
+    const html =
+      '<div data-s2md-style="font-weight:700"><div data-s2md-style="font-weight:400">plain <a href="https://e.com" data-s2md-style="font-weight:700">name</a></div></div>';
+    expect(toMarkdown(html).trim()).toBe('plain [**name**](https://e.com)');
+  });
+
+  it('text of its own still wears it', () => {
+    expect(toMarkdown('<div data-s2md-style="font-weight:700">heavy</div>').trim()).toBe('**heavy**');
+  });
+
+  // One branch is enough: the mark is written where the page could still show it.
+  it('one child that inherits it is enough', () => {
+    const html =
+      '<div data-s2md-style="font-weight:700"><span data-s2md-style="font-weight:400">a</span><span>b</span></div>';
+    expect(toMarkdown(html).trim()).toBe('**ab**');
+  });
+
+  it('the same holds for italics', () => {
+    const html =
+      '<div data-s2md-style="font-style:italic"><span data-s2md-style="font-style:normal">upright</span></div>';
+    expect(toMarkdown(html).trim()).toBe('upright');
+  });
+});

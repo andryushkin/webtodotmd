@@ -765,11 +765,48 @@ export function addedMarks(el: Element): StyleMarks {
   const struck = struckFrom(read) ?? baseStruck;
 
   return {
-    bold: weight >= BOLD_THRESHOLD && baseWeight < BOLD_THRESHOLD,
-    italic: italic && !baseItalic,
-    strike: struck && !baseStruck,
+    bold:
+      weight >= BOLD_THRESHOLD &&
+      baseWeight < BOLD_THRESHOLD &&
+      reachesText(el, (child) => (weightFrom(elementStyle(child), weight) ?? weight) < BOLD_THRESHOLD),
+    italic: italic && !baseItalic && reachesText(el, (child) => italicFrom(elementStyle(child)) === false),
+    strike: struck && !baseStruck && reachesText(el, (child) => struckFrom(elementStyle(child)) === false),
   };
 }
+
+/**
+ * Whether any of this element's text is still wearing the mark by the time it is
+ * drawn — that is, whether a run reaches a text node without a descendant taking
+ * the mark back on the way.
+ *
+ * A container states a weight its own children then decline, and only the
+ * children have any text: Reddit's comment header is a `<summary>` at
+ * `font-weight:700` whose every child is a `<div>` back at 400, with the author's
+ * name inside declaring 700 again for itself. Read off the `<summary>` alone,
+ * that is bold — so the file bolded the whole header line, and the name, already
+ * bold in its own right, came out `**[**name**](…)**`. Nothing on screen was
+ * bold but the name.
+ *
+ * The walk stops at the first declaration that takes the mark back, and at the
+ * first text that still carries it, which is the ordinary case and one step deep:
+ * a `<span style="font-weight:700">word</span>` answers on its first child.
+ */
+function reachesText(el: Element, declines: (child: Element) => boolean): boolean {
+  for (const node of el.childNodes) {
+    if (node.nodeType === TEXT_NODE) {
+      if ((node.textContent ?? '').trim() !== '') return true;
+      continue;
+    }
+    if (node.nodeType !== ELEMENT_NODE) continue;
+    const child = node as Element;
+    if (declines(child)) continue;
+    if (reachesText(child, declines)) return true;
+  }
+  return false;
+}
+
+const TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
 
 /**
  * What this element's style takes back from what its tag would emit.
