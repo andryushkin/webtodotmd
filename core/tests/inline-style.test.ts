@@ -652,3 +652,75 @@ describe('скрытое с переходом: раскрытие или ове
     expect(toMarkdown(`<div>a<section data-s2md-style="${style}">SECTION</section>b</div>`)).toBe(expected);
   });
 });
+
+const SHOWN = 'aSECTIONb\n';
+const GONE = 'ab\n';
+
+const section = (style: string, expected: string): void => {
+  expect(toMarkdown(`<div>a<section style="${style}">SECTION</section>b</div>`)).toBe(expected);
+  expect(toMarkdown(`<div>a<section data-s2md-style="${style}">SECTION</section>b</div>`)).toBe(expected);
+};
+
+// Every one of those transitions above names no property, which is the one thing
+// both questions accept. Name one and the answer used to depend on the wrong
+// property: `transition: visibility 30s` — the plainest way a page can say this
+// box is about to be shown — was tested for the word `opacity`, found to say
+// nothing, and the paragraph under it left the file.
+describe('reveal per property: a visibility:hidden under its own transition', () => {
+  it.each([
+    ['the shorthand a style attribute writes', 'visibility:hidden;transition:visibility 30s'],
+    ['the longhands a computed style states', 'visibility:hidden;transition-property:visibility;transition-duration:30s'],
+    ['a list with visibility in it', 'visibility:hidden;transition:color .2s,visibility .4s'],
+    // Whatever it animates, a running animation says the element is on its way
+    // somewhere — and it is `none` on everything that is merely hidden.
+    ['an animation, which counts for either property', 'visibility:hidden;animation:fade-in 1s ease'],
+  ])('%s keeps the text', (_name, style) => {
+    section(style, SHOWN);
+  });
+
+  // The other half of the same rule, and the expensive one: an overlay is
+  // written identically and has to leave the flow, or it would hold space open
+  // while it is closed. Judged wrong here the file loses a menu; judged wrong
+  // above it loses the article.
+  it.each([
+    ['an absolute overlay', 'visibility:hidden;transition:visibility 30s;position:absolute'],
+    ['a fixed overlay', 'visibility:hidden;transition:visibility 30s;position:fixed'],
+    ['no transition at all', 'visibility:hidden'],
+    ['a transition naming neither property', 'visibility:hidden;transition:color 30s'],
+    ['an animation set to none', 'visibility:hidden;animation:none'],
+  ])('%s still drops it', (_name, style) => {
+    section(style, GONE);
+  });
+
+  // Asked the other way round: a `visibility:hidden` whose transition names only
+  // `opacity`. The two are one idiom, and the duration sits on the `opacity`
+  // half of it — `visibility` has no in-between value to animate, so a fade
+  // writes it with a zero duration and a delay, to hold the box out of the way
+  // of the mouse until the fade has finished. Refusing `opacity` here for the
+  // sake of symmetry would refuse the only part of that declaration carrying a
+  // duration at all, and delete text this converter keeps today.
+  it.each([
+    ['the fade idiom in full', 'visibility:hidden;transition:opacity .3s,visibility 0s .3s'],
+    ['its opacity half alone', 'visibility:hidden;transition:opacity .3s'],
+    ['the longhands of it', 'visibility:hidden;transition-property:opacity,visibility;transition-duration:.3s,0s'],
+  ])('%s keeps the text: opacity is evidence for visibility too', (_name, style) => {
+    section(style, SHOWN);
+  });
+});
+
+// The asymmetry stated from the opacity side. `opacity` is evidence for either
+// property; nothing else is evidence for `opacity`, because a transition on
+// `color` or on `visibility` says nothing about a transparent element ever being
+// painted.
+describe('reveal per property: an opacity:0 wants its own property named', () => {
+  it.each([
+    ['a transition naming opacity', 'opacity:0;transition:opacity .4s', SHOWN],
+    ['a transition naming all', 'opacity:0;transition:all .4s', SHOWN],
+    ['an animation', 'opacity:0;animation:fade-in 1s ease', SHOWN],
+    ['a transition on something else', 'opacity:0;transition:color 30s', GONE],
+    ['a transition naming only visibility', 'opacity:0;transition:visibility .3s', GONE],
+    ['the same, in longhands', 'opacity:0;transition-property:visibility;transition-duration:.3s', GONE],
+  ])('%s', (_name, style, expected) => {
+    section(style, expected);
+  });
+});

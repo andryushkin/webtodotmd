@@ -279,8 +279,21 @@ const TIME = /^-?\d*\.?\d+m?s$/;
 // transitioned: the easings, by keyword and by function.
 const EASING = /^(?:linear|ease(?:-in)?(?:-out)?|step-start|step-end|allow-discrete|normal|cubic-bezier\(|steps\(|linear\()/;
 
-// `all` covers `opacity`, and `all` is also what a part naming no property means.
-const REVEALED = /\ball\b|\bopacity\b/;
+// What a transition has to name to be evidence, one list per question it is
+// asked. `all` is in both, and is also what a part naming no property means.
+//
+// They are not the same list, and the difference is not an oversight. A
+// transition on `color` says nothing about an `opacity: 0` ever reaching 1, so
+// the opacity question refuses everything but its own property. The visibility
+// question takes `opacity` too, because the pair is written as one idiom and the
+// duration sits on the opacity half of it: `transition: opacity .3s, visibility
+// 0s .3s` is how a fade holds the box open until the fade has finished, and the
+// only part of that declaration with a duration at all names `opacity`. Asking
+// the narrow question there would delete every element written that way — which
+// is a tooltip and a dropdown, but also every section a fade library reveals.
+// The box test in `revealsInFlow` is what still tells those apart.
+const REVEALS_OPACITY = /\ball\b|\bopacity\b/;
+const REVEALS_VISIBILITY = /\ball\b|\bopacity\b|\bvisibility\b/;
 
 /** Whether any time in a comma-separated CSS time list is above zero. */
 function anyPositive(list: string): boolean {
@@ -296,7 +309,7 @@ function anyPositive(list: string): boolean {
  * commas cuts some parts in half; every half it produces is read the same way,
  * and a half that cannot name a property or a time simply answers no.
  */
-function transitionReveals(value: string): boolean {
+function transitionReveals(value: string, revealed: RegExp): boolean {
   for (const part of value.split(',')) {
     let duration: number | undefined;
     let property: string | undefined;
@@ -306,13 +319,14 @@ function transitionReveals(value: string): boolean {
       if (TIME.test(token)) duration ??= Number.parseFloat(token);
       else if (property === undefined && !EASING.test(token)) property = token;
     }
-    if ((duration ?? 0) > 0 && REVEALED.test(property ?? 'all')) return true;
+    if ((duration ?? 0) > 0 && revealed.test(property ?? 'all')) return true;
   }
   return false;
 }
 
 /**
- * Whether the element is on its way in rather than kept out.
+ * Whether the element is on its way in rather than kept out — asked about the
+ * property that hid it, because the evidence is not the same for both.
  *
  * `opacity: 0` is two different things on a modern page: text a script has put
  * beyond reach, and a section a reveal-on-scroll library has not animated in yet.
@@ -320,11 +334,22 @@ function transitionReveals(value: string): boolean {
  * half of every such page out of a select-all. A declared transition or a running
  * animation is the difference between them.
  *
+ * `visibility: hidden` splits the same way, and the two questions were once asked
+ * with one answer: the transition had to name `opacity` whichever property was
+ * hiding the element, so `transition: visibility 30s` — the plainest statement a
+ * page can make that this box is about to be shown — was read as no evidence at
+ * all and the paragraph went out of the file. An animation is still evidence for
+ * both: a running animation says the element is on its way somewhere whatever it
+ * animates, and it is `none` on everything that is merely hidden.
+ *
+ * The default is the opacity question, which is the one `removedFrom` asks and
+ * the one an outside caller holding a computed style asks with it.
+ *
  * Both spellings are read, because both sources spell it their own way: a
  * computed style always states the longhands, and a `style` attribute almost
  * always writes the shorthand.
  */
-export function revealsFrom(read: StyleReader): boolean {
+export function revealsFrom(read: StyleReader, hiddenBy: 'opacity' | 'visibility' = 'opacity'): boolean {
   const name = read('animation-name');
   if (name !== undefined) {
     if (name !== 'none') return true;
@@ -332,14 +357,15 @@ export function revealsFrom(read: StyleReader): boolean {
     const animation = read('animation');
     if (animation !== undefined && firstToken(animation) !== 'none') return true;
   }
+  const revealed = hiddenBy === 'visibility' ? REVEALS_VISIBILITY : REVEALS_OPACITY;
   const duration = read('transition-duration');
   // A property list too long for a snapshot to carry arrives as silence, and
   // CSS's own default for it is `all` — so silence reveals rather than hides.
   if (duration !== undefined) {
-    return anyPositive(duration) && REVEALED.test(read('transition-property') ?? 'all');
+    return anyPositive(duration) && revealed.test(read('transition-property') ?? 'all');
   }
   const shorthand = read('transition');
-  return shorthand !== undefined && transitionReveals(shorthand);
+  return shorthand !== undefined && transitionReveals(shorthand, revealed);
 }
 
 /** Whether this style takes the element out of the render, for good. */
@@ -381,7 +407,7 @@ export function invisibleFrom(read: StyleReader): boolean {
  * navigation menu; the other way costs it the article.
  */
 function revealsInFlow(read: StyleReader): boolean {
-  if (!revealsFrom(read)) return false;
+  if (!revealsFrom(read, 'visibility')) return false;
   const position = read('position');
   return position !== 'absolute' && position !== 'fixed';
 }

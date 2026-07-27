@@ -142,7 +142,7 @@ Content nobody could read is not content:
 | `display: none`, `visibility: hidden\|collapse`, `opacity: 0` | removed |
 | `clip: rect(0…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written. A zero side of the rect counts written bare or in `px`, with or without commas; in another unit it stays unread, since the direction that costs is the one that deletes |
 | `opacity: 0` under a transition or animation | **kept** — a section on its way in. The transition has to name `opacity` or `all`; any animation counts |
-| `visibility: hidden` under such a transition, in the flow | **kept** — a reveal, not an overlay |
+| `visibility: hidden` under a transition, in the flow | **kept** — a reveal, not an overlay. Here the transition may name `visibility`, `opacity` or `all`: the fade idiom is `transition: opacity .3s, visibility 0s .3s`, which carries the duration on the opacity and gives the visibility a zero one, so each half is evidence for the other |
 | `visibility: hidden` under such a transition, `absolute`/`fixed` | removed — a dropdown standing by |
 | a hidden box holding something declared visible again | kept, and what is still hidden inside says so — except its own text, which has no style to say it with and is dropped where it stands. Whitespace stays: a blank looks the same hidden or shown, and removing it welds the runs on either side together. Where the hiding comes from a class, the snapshot states it at both ends, so a `visibility` mark no longer means only "remove this" |
 
