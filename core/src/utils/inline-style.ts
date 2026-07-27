@@ -759,18 +759,43 @@ function revealedBelow(el: Element): boolean {
 }
 
 /**
+ * What a style leaves of an element: nothing, all of it, or the box alone.
+ *
+ * `'removed'` takes the element and its subtree. `'invisible-but-kept'` is the
+ * one box that cannot be removed while being invisible — it holds something that
+ * declared itself visible again, and removal takes the subtree, so the box stays
+ * and the visible part with it. Nothing under such a box is painted except what
+ * declares itself back, which is a claim about the element's own text as much as
+ * about its children, and only a caller holding the node can act on it.
+ *
+ * One function rather than two predicates beside each other, for a reason that is
+ * measurable rather than tidy: the derivation walks the ancestors for every
+ * element that declares no `visibility` of its own, which is very nearly every
+ * element on a page. The sanitizer needs both answers about every element it
+ * visits, and two predicates would charge it that walk twice.
+ */
+export type Hiding = 'shown' | 'removed' | 'invisible-but-kept';
+
+export function hidingVerdict(el: Element): Hiding {
+  const read = elementStyle(el);
+  if (removedFrom(read) || visuallyHiddenFrom(read)) return 'removed';
+  const own = read('visibility');
+  const invisible = own === undefined ? invisibleAbove(el) : invisibleFrom(read);
+  if (!invisible) return 'shown';
+  return revealedBelow(el) ? 'invisible-but-kept' : 'removed';
+}
+
+/**
  * Whether this element is styled out of the render, or out of sight.
  *
  * `visibility` is the one property here that a descendant can take back, and
  * removing an element removes everything under it: a box that hid itself and
  * then let a child be seen again has to stay, or the text the reader was looking
  * at goes with the box. What is still hidden inside it says so for itself —
- * `visibility` inherits, so a child that declares nothing is invisible too.
+ * `visibility` inherits, so a child that declares nothing is invisible too. Every
+ * child *element*, that is: a text node has no style to be asked about, which is
+ * what `'invisible-but-kept'` above is for.
  */
 export function hiddenByStyle(el: Element): boolean {
-  const read = elementStyle(el);
-  if (removedFrom(read) || visuallyHiddenFrom(read)) return true;
-  const own = read('visibility');
-  const invisible = own === undefined ? invisibleAbove(el) : invisibleFrom(read);
-  return invisible && !revealedBelow(el);
+  return hidingVerdict(el) === 'removed';
 }

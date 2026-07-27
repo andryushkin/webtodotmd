@@ -144,7 +144,7 @@ Content nobody could read is not content:
 | `opacity: 0` under a transition or animation | **kept** — a section on its way in. The transition has to name `opacity` or `all`; any animation counts |
 | `visibility: hidden` under such a transition, in the flow | **kept** — a reveal, not an overlay |
 | `visibility: hidden` under such a transition, `absolute`/`fixed` | removed — a dropdown standing by |
-| a hidden box holding something declared visible again | kept, and what is still hidden inside says so |
+| a hidden box holding something declared visible again | kept, and what is still hidden inside says so — except its own text, which has no style to say it with and is dropped where it stands. Whitespace stays: a blank looks the same hidden or shown, and removing it welds the runs on either side together |
 
 Removed by markup rather than by style:
 

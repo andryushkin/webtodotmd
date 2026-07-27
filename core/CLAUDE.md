@@ -88,7 +88,11 @@ threshold sits where no layout lands by accident.
   `revealsFrom()` reads the shorthand and the longhands, because an attribute writes one and a
   computed style the other. And `visibility` is the one a descendant can take back — removal takes
   the subtree, so a hidden box holding something declared visible again stays, and what is still
-  hidden inside it says so for itself.
+  hidden inside it says so for itself. Every child *element* can; the box's own text nodes cannot,
+  and went into the file for as long as nothing dropped them on their behalf — which is why
+  `hidingVerdict()` has a third answer, `invisible-but-kept`, and the sanitizer takes the glyphs
+  such a box holds directly. Its whitespace stays: a blank is the same hidden or shown, and taking
+  it welds the visible runs on either side into one word.
 - A `visibility:hidden` under a transition is either kind, written identically: a section a reveal
   library has not animated in, or a dropdown standing by. The box tells them apart — an overlay must
   leave the flow or it would hold space open while closed — so `absolute`/`fixed` is removed and

@@ -385,6 +385,67 @@ describe('a visibility a descendant takes back', () => {
   );
 });
 
+// The box above stays, and everything under it that is still hidden says so for
+// itself — every *element*, that is. A text node has no style, so nothing spoke
+// for it, and the kept box's own text was the one thing that walked into the file
+// having never been painted: the reader saw `seen` and the file said
+// `HIDDEN_TEXTseenALSO_HIDDEN`. `visibility` is not a maybe — it inherits, and the
+// cascade has already settled that this text is invisible — so the usual
+// counterweight buys the narrowness of the rule rather than the text.
+describe('hidden box text: what reaches the file', () => {
+  it.each([
+    ['the style attribute', 'style'],
+    ['a recorded computed style', 'data-s2md-style'],
+  ])('drops the kept box\'s own text, through %s', (_name, attribute) => {
+    const html =
+      `<div ${attribute}="visibility:hidden">HIDDEN_TEXT` +
+      `<span ${attribute}="visibility:visible">seen</span>ALSO_HIDDEN</div>`;
+    expect(toMarkdown(html).trim()).toBe('seen');
+  });
+
+  // Two boxes kept for one leaf. The inner one is invisible by inheritance and
+  // kept for the same reason as the outer, so the same question is asked of it.
+  it('drops it at every depth the same box recurs', () => {
+    const html =
+      '<div style="visibility:hidden">OUTER_BEFORE' +
+      '<div style="visibility:hidden">INNER_BEFORE' +
+      '<span style="visibility:visible">seen</span>' +
+      'INNER_AFTER</div>OUTER_AFTER</div>';
+    expect(toMarkdown(html).trim()).toBe('seen');
+  });
+
+  // An element that declares itself visible again takes its own text with it —
+  // both the text it holds directly and everything under its inline children.
+  it('keeps everything under what declared itself visible again', () => {
+    const html =
+      '<div style="visibility:hidden">X' +
+      '<span style="visibility:visible">seen and <b>bold</b></span>Y</div>';
+    expect(toMarkdown(html).trim()).toBe('seen and **bold**');
+  });
+
+  // A blank looks the same hidden or shown, and the box holds its width open, so
+  // the gap between two revealed runs was on screen. Dropping it would weld the
+  // words together, which is the loss this rule exists to avoid, not a second
+  // instance of it.
+  it('keeps the whitespace between two revealed runs', () => {
+    const html =
+      '<div style="visibility:hidden">\n  <span style="visibility:visible">one</span>' +
+      '\n  <span style="visibility:visible">two</span>\n</div>';
+    expect(toMarkdown(html).trim()).toBe('one two');
+  });
+
+  // The two guards. Nothing declares itself visible in the first, so the box goes
+  // whole and the narrower rule never runs; nothing is hidden in the second.
+  it('still takes a wholly hidden box entirely', () => {
+    expect(toMarkdown('<div style="visibility:hidden">TEXT<p>HIDDEN</p></div><p>ok</p>').trim())
+      .toBe('ok');
+  });
+
+  it('leaves an ordinary paragraph alone', () => {
+    expect(toMarkdown('<p>hello <b>world</b></p>').trim()).toBe('hello **world**');
+  });
+});
+
 describe('the style attribute itself', () => {
   it('a semicolon inside a value does not split the declaration', () => {
     expect(md('<span style="background:url(a;b);font-weight:bold">x</span> y')).toBe('**x** y');

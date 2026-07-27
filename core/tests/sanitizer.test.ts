@@ -97,6 +97,39 @@ describe('sanitizer', () => {
   });
 });
 
+// A box that is invisible and kept only because something below declared itself
+// visible again is the one element removal cannot reach, so its own text is
+// dropped where it stands. Every element under it is asked in turn and answers
+// for itself; a text node has no style, and had nobody to answer for it at all.
+describe('hidden box text: the tree the sanitizer leaves', () => {
+  it('drops the text a kept invisible box holds directly', () => {
+    const doc = makeDoc(
+      '<div style="visibility:hidden">HIDDEN_TEXT' +
+      '<span style="visibility:visible">seen</span>ALSO_HIDDEN</div>',
+    );
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('seen');
+    // The box itself stays: removing it would take the visible span with it.
+    expect(bodyHTML(doc)).toContain('visibility:hidden');
+  });
+
+  it('leaves the text of a descendant that is visible again', () => {
+    const doc = makeDoc(
+      '<div style="visibility:hidden">X' +
+      '<span style="visibility:visible">seen and <b>bold</b></span>Y</div>',
+    );
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('seen and bold');
+  });
+
+  it('still removes a box with nothing visible under it, text and all', () => {
+    const doc = makeDoc('<div style="visibility:hidden">TEXT<p>HIDDEN</p></div><p>ok</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('ok');
+    expect(bodyHTML(doc)).not.toContain('visibility');
+  });
+});
+
 // Every pass has to see the same tree, whatever shape the root is. A
 // `document.createTreeWalker` rooted at a fragment-parsed Document visits only
 // the first element child's subtree under linkedom, so everything standing

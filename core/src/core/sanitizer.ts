@@ -1,5 +1,5 @@
 import { isContentless } from './contentful.js';
-import { hiddenByStyle } from '../utils/inline-style.js';
+import { hidingVerdict, type Hiding } from '../utils/inline-style.js';
 const REMOVE_TAGS = new Set(['style', 'noscript', 'iframe', 'object', 'embed', 'template', 'svg']);
 const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
@@ -78,28 +78,56 @@ function removeByTagSet(root: SanitizeRoot, tags: Set<string>): void {
 
 // Removal takes the subtree with the element, so the walk stops at the first
 // element it decides against rather than asking the same question of everything
-// underneath — the answer there is discarded, and `hiddenByStyle` pays for a
+// underneath — the answer there is discarded, and `hidingVerdict` pays for a
 // search of the subtree to give it.
+//
+// The one box that stays while invisible is the one holding something declared
+// visible again, and it is the only place a text node needs speaking for. Every
+// element under such a box is asked in turn and says it is still hidden, because
+// `visibility` inherits; the box's own text has no style to be asked about, so
+// nothing spoke for it and it walked straight into the file. `dropOwnText` is
+// that question asked on its behalf, at every depth the same box recurs — a
+// hidden box inside a hidden box is kept for the same one visible leaf.
 function removeHidden(root: SanitizeRoot): void {
-  const toRemove: Element[] = [];
+  const toRemove: Node[] = [];
   walkElements(root, (el) => {
-    if (!isHidden(el)) return true;
-    toRemove.push(el);
-    return false;
+    const hiding = hidingOf(el);
+    if (hiding === 'removed') {
+      toRemove.push(el);
+      return false;
+    }
+    if (hiding === 'invisible-but-kept') dropOwnText(el, toRemove);
+    return true;
   });
-  for (const el of toRemove) {
-    el.parentNode?.removeChild(el);
+  for (const node of toRemove) {
+    node.parentNode?.removeChild(node);
   }
 }
 
-// Every way a page writes "this is here but nobody sees it". `hiddenByStyle`
+// Every way a page writes "this is here but nobody sees it". `hidingVerdict`
 // parses the attribute rather than matching it, which is what tells
 // `visibility: collapse` from a `-ms-visibility: collapsed` nobody implements,
-// and `opacity: 0` from `opacity: 0.9`.
-function isHidden(el: Element): boolean {
-  if (el.hasAttribute('hidden')) return true;
-  if (el.getAttribute('aria-hidden') === 'true') return true;
-  return hiddenByStyle(el);
+// and `opacity: 0` from `opacity: 0.9`. The verdict itself is never spelled a
+// second time here: these two attributes are the part that is not a style.
+function hidingOf(el: Element): Hiding {
+  if (el.hasAttribute('hidden')) return 'removed';
+  if (el.getAttribute('aria-hidden') === 'true') return 'removed';
+  return hidingVerdict(el);
+}
+
+// The text held directly by an invisible box — not the text under a descendant,
+// which is judged when the walk reaches that descendant, and never the text of a
+// child that declared itself visible again.
+//
+// Only what carries a glyph. A blank looks the same hidden or shown, and the box
+// still holds its width open, so the space between two revealed runs was on
+// screen; dropping it would weld `one two` into `onetwo`, which is the loss this
+// pass exists to avoid rather than a second instance of it. The glyphs go because
+// keeping them puts words in the file that were never on the page.
+function dropOwnText(el: Element, out: Node[]): void {
+  for (let child = el.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === 3 /* TEXT_NODE */ && /\S/.test(child.nodeValue ?? '')) out.push(child);
+  }
 }
 
 function removeEmptyWrappers(root: SanitizeRoot): void {
