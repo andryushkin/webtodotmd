@@ -98,6 +98,17 @@ threshold sits where no layout lands by accident.
   leave the flow or it would hold space open while closed — so `absolute`/`fixed` is removed and
   anything in the flow stays. Judged wrong one way the file loses a menu, the other way the article.
 
+## Maths
+
+- Display is what the *page* states, and each renderer states it in its own spelling: `<math
+  display="block">` (MathML's own attribute, and what Wikipedia sets), a `.katex-display` ancestor,
+  `<mjx-container display="true">` — MathJax reads MathML's `block` and writes its own `true`, so
+  asking one element the other's question answers about nothing — and `type="math/tex; mode=display"`.
+  Never the LaTeX: Wikipedia wraps *every* formula in `{\displaystyle …}`, inline ones included (19
+  of 31 formulas on one article are display and all 31 carry the wrapper), so reading it as display
+  cut a sentence into centred blocks, and the same test read a real display equation as inline
+  because it was asked of the wrong attribute.
+
 ## Tables
 
 - A pipe table states alignment once per column, and the page may say it in either row. The header

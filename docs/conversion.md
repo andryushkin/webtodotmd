@@ -90,6 +90,7 @@ debts, not features.
 | `<sub>` `<sup>` | Unicode: `H₂O`, `x²` | see below |
 | `<ruby>` + `<rt>` | `漢字(かんじ)` | the reading beside the word rather than welded onto it — `漢字かんじ` is the word read twice and a search for either half then fails. `<rp>` is dropped: it holds the same two characters for a browser that cannot draw ruby, and keeping both gives `((かんじ))` |
 | KaTeX, MathJax, `<math alttext>` | `$latex$` / `$$latex$$` | when `math` is on. The core reads LaTeX the page already carries — an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`, Wikipedia's `alttext` |
+| display or inline | `$$…$$` only where the page says display: `<math display="block">`, a `.katex-display` ancestor, `<mjx-container display="true">`, `type="math/tex; mode=display"` | Wikipedia's `{\displaystyle …}` wrapper is **not** evidence — it wraps its inline formulas too, and reading it as display turned a sentence carrying three of them into three centred blocks |
 | MathML carrying no LaTeX | `$latex$`, converted by `src/content/raw-mathml-rule.ts` | that rule is the extension's, not the core's. In the library `math: true` **drops such a formula**; with `math` off its text falls through as prose (`<mi>x</mi><mo>+</mo>` → `x+`) |
 
 Emphasis picks the first marker CommonMark's flanking rules allow: `_`/`**`, then

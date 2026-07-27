@@ -56,10 +56,12 @@ describe('math', () => {
     expect(result).toBe('$$\\int_0^1 x^2 dx$$\n');
   });
 
-  it('Wikipedia <math alttext="..."> с displaystyle', () => {
+  // The wrapper comes off the LaTeX; it never decided the delimiters — see
+  // «display maths: what states it» below.
+  it('Wikipedia <math alttext="..."> — снимает обёртку {\\displaystyle …}', () => {
     const html = '<math alttext="{\\displaystyle E=mc^{2}}"><mi>E</mi></math>';
     const result = toMarkdown(html, { math: true });
-    expect(result).toBe('$$E=mc^{2}$$\n');
+    expect(result).toBe('$E=mc^{2}$\n');
   });
 
   it('math: false (по умолчанию) — KaTeX не содержит $ разметки', () => {
@@ -73,6 +75,108 @@ describe('math', () => {
       '</span>';
     const result = toMarkdown(html);
     expect(result).not.toContain('$');
+  });
+});
+
+// A reader met these formulas inside a sentence, and got them back as centred
+// blocks with the prose cut into fragments between them: the verdict was read from
+// `\displaystyle` in Wikipedia's `alttext`, a wrapper its Math extension puts on
+// every formula it renders, inline ones included. Each case below is checked
+// against what its producer actually writes — KaTeX's `setAttribute("display",
+// "block")` under `isDisplayMode`, MathJax v3 translating MathML's `block` into its
+// own `display="true"` on the container, and a live Wikipedia article where 12 of
+// 31 formulas carry the wrapper without being display.
+describe('display maths: what states it', () => {
+  const md = (html: string) => toMarkdown(`<body>${html}</body>`, { math: true });
+
+  const wikipedia = (attrs: string) =>
+    `<math ${attrs}alttext="{\\displaystyle E=mc^{2}}"><mi>E</mi></math>`;
+  const katex = (attrs: string) =>
+    '<span class="katex"><span class="katex-mathml">' +
+    `<math ${attrs}><semantics><annotation encoding="application/x-tex">E=mc^{2}</annotation>` +
+    '</semantics></math></span></span>';
+
+  it('Wikipedia inline остаётся в строке', () => {
+    expect(md(`<p>Wikipedia: ${wikipedia('')} in a sentence.</p>`)).toBe(
+      'Wikipedia: $E=mc^{2}$ in a sentence.\n',
+    );
+  });
+
+  it('Wikipedia display="block" — двойные доллары', () => {
+    expect(md(`<p>${wikipedia('display="block" ')}</p>`)).toBe('$$E=mc^{2}$$\n');
+  });
+
+  // A sentence is the thing the defect broke, so one asserts on a whole sentence.
+  it('три формулы в предложении не рвут прозу на куски', () => {
+    const sentence = `<p>Since ${wikipedia('')} and ${wikipedia('')}, we get ${wikipedia('')}.</p>`;
+    expect(md(sentence)).toBe(
+      'Since $E=mc^{2}$ and $E=mc^{2}$, we get $E=mc^{2}$.\n',
+    );
+  });
+
+  // The live article ships `alttext` *and* an annotation, so the annotation branch
+  // answers and the verdict still has to come off the `<math>`. Asserted on the
+  // delimiters alone: that branch leaves `{\displaystyle …}` in the LaTeX, which is
+  // a separate defect and not this block's subject.
+  it.each([
+    ['inline', '', '$'],
+    ['display', 'display="block" ', '$$'],
+  ])('живая разметка Wikipedia (alttext + annotation): %s', (_name, attrs, fence) => {
+    const html =
+      `<math ${attrs}alttext="{\\displaystyle E=mc^{2}}"><semantics>` +
+      '<annotation encoding="application/x-tex">{\\displaystyle E=mc^{2}}</annotation>' +
+      '</semantics></math>';
+    const out = md(`<p>${html}</p>`).trim();
+    expect(out.startsWith(`${fence}{`)).toBe(true);
+    expect(out.endsWith(`}${fence}`)).toBe(true);
+  });
+
+  // `display="true"` is MathJax's spelling on its own container. On a `<math>` the
+  // attribute is MathML's, valued `block` or `inline`, so `true` states nothing —
+  // and the code used to read it here and nowhere else.
+  it('display="true" на <math> — не разметка MathML, формула остаётся строчной', () => {
+    expect(md(`<p>x ${katex('display="true" ')} y</p>`)).toBe('x $E=mc^{2}$ y\n');
+  });
+
+  // A bare annotated `<math>` — MathJax's assistive MathML, a KaTeX subtree lifted
+  // out of its span — is where the rule asked the `<math>` itself, so it is where
+  // both halves of the mix-up were reachable at once: `block` ignored, `true` obeyed.
+  it.each([
+    ['MathML говорит block', 'display="block" ', '$$E=mc^{2}$$\n'],
+    ['MathJax-овское true ничего не значит', 'display="true" ', '$E=mc^{2}$\n'],
+    ['без атрибута', '', '$E=mc^{2}$\n'],
+  ])('одиночный <math> с annotation: %s', (_name, attrs, expected) => {
+    const html =
+      `<math ${attrs}><semantics>` +
+      '<annotation encoding="application/x-tex">E=mc^{2}</annotation></semantics></math>';
+    expect(md(html)).toBe(expected);
+  });
+
+  it.each([
+    ['KaTeX inline', `<p>x ${katex('')} y</p>`, 'x $E=mc^{2}$ y\n'],
+    [
+      'KaTeX display — .katex-display',
+      `<span class="katex-display">${katex('display="block" ')}</span>`,
+      '$$E=mc^{2}$$\n',
+    ],
+    [
+      'mjx-container inline',
+      `<p>x <mjx-container>${katex('')}</mjx-container> y</p>`,
+      'x $E=mc^{2}$ y\n',
+    ],
+    [
+      'mjx-container display="true"',
+      `<mjx-container display="true">${katex('display="block" ')}</mjx-container>`,
+      '$$E=mc^{2}$$\n',
+    ],
+    ['MathJax v2 inline', '<p>x <script type="math/tex">E=mc^2</script> y</p>', 'x $E=mc^2$ y\n'],
+    [
+      'MathJax v2 display',
+      '<script type="math/tex; mode=display">E=mc^2</script>',
+      '$$E=mc^2$$\n',
+    ],
+  ])('остаётся верным: %s', (_name, html, expected) => {
+    expect(md(html)).toBe(expected);
   });
 });
 

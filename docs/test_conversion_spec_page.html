@@ -760,7 +760,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>F4.</strong> <span class="setting">Math setting.</span> Read LaTeX carried by MathJax v3 annotation, MathJax v2 script, and Wikipedia <code>alttext</code>; display forms use double dollars.</aside>
+      <aside><strong>F4.</strong> <span class="setting">Math setting.</span> Read LaTeX carried by MathJax v3 annotation, MathJax v2 script, and Wikipedia <code>alttext</code>. The first three are inline and must come back as single dollars: none of them says display, and Wikipedia's <code>{\displaystyle …}</code> wrapper does not — it wraps its inline formulas too, which is the assumption this case was written under and that a capture of this page disproved. Only the fourth, which states <code>display="block"</code>, is double dollars.</aside>
       <div class="subject">
         <p>
           MathJax v3:
@@ -778,8 +778,12 @@ path\file | a &lt; b &amp; c
           <script class="visible-math-script" type="math/tex">e^{i\pi}+1=0</script>
         </p>
         <p>
-          Wikipedia:
+          Wikipedia, inline:
           <math alttext="{\displaystyle E=mc^{2}}"><mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup></math>
+        </p>
+        <p>
+          Wikipedia, display:
+          <math display="block" alttext="{\displaystyle \int_0^\infty e^{-x}\,dx=1}"><mi>∫</mi></math>
         </p>
       </div>
     </article>
