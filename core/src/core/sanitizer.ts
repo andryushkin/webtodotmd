@@ -236,7 +236,30 @@ function removeEmptyWrappers(root: SanitizeRoot): void {
     });
     if (toRemove.length === 0) break;
     for (const el of toRemove) {
-      el.parentNode?.removeChild(el);
+      // A wrapper holding *blanks* is not an empty one. Every syntax highlighter
+      // there is puts the indentation of a code line, and the space between two
+      // tokens, in a `<span>` of its own — `<span class="w">  </span>` is how
+      // Pygments writes one — and removing those took the blank with them: an
+      // indented YAML block came out flush left with `key:value`, and
+      // `import tensorflow as tf` came out `importtensorflowastf`. Off a page
+      // that is not code the same removal welded `one<span> </span>two` into one
+      // word. The blank is content; only the tag around it is empty, so the tag
+      // goes and the text stays. Whether it survives as a blank or collapses
+      // into the neighbouring one is `collapseWhitespace`'s question, asked next
+      // and already answering it for every other text node on the page.
+      //
+      // A block wrapper is a different thing: `<div> </div>` between two
+      // paragraphs is a box the reader saw as a line break, never as a space,
+      // and unwrapping it would say the opposite.
+      const text = el.textContent ?? '';
+      const inline = el.tagName.toLowerCase() === 'span' || isInsidePreserved(el);
+      if (text === '' || !inline) {
+        el.parentNode?.removeChild(el);
+        continue;
+      }
+      const doc = el.ownerDocument;
+      if (!doc) continue;
+      el.parentNode?.replaceChild(doc.createTextNode(text), el);
     }
   }
 }

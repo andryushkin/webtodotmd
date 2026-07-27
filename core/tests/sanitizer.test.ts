@@ -391,3 +391,45 @@ describe('math carrier: what the sanitizer leaves of an invisible twin', () => {
     expect((doc.body as Element).querySelector('script')?.textContent).toBe('E=mc^2');
   });
 });
+
+// A blank inside a `<span>` is the space between two words, and it went to the
+// same place an empty wrapper did. Every syntax highlighter writes indentation
+// that way — `<span class="w">  </span>` is Pygments' spelling — so the removal
+// reached every highlighted code block on the web: an mkdocs YAML sample came
+// back flush left with `anchor_linenums:true`, and a Python one as
+// `importtensorflowastf`. Off a code block it welded plain words together.
+describe('a wrapper holding blanks is not an empty wrapper', () => {
+  const sanitized = (html: string): Document => {
+    const doc = makeDoc(html);
+    sanitize(doc.body as Element, 'full');
+    return doc;
+  };
+
+  it('keeps the indentation a highlighter put in a span', () => {
+    const doc = sanitized(
+      '<pre><code><span>a</span><span>:</span>\n<span>  </span><span>-</span><span> </span><span>b</span></code></pre>',
+    );
+    expect(bodyText(doc)).toBe('a:\n  - b');
+  });
+
+  it('keeps the blank a span holds between two words', () => {
+    const doc = sanitized('<p>one<span>  </span>two</p>');
+    expect(bodyText(doc)).toBe('one two');
+  });
+
+  it('unwraps rather than keeps: the span itself is gone', () => {
+    const doc = sanitized('<p>one<span> </span>two</p>');
+    expect(bodyHTML(doc)).not.toContain('<span');
+  });
+
+  it('still removes a wrapper holding nothing at all', () => {
+    const doc = sanitized('<p>x<span></span>y</p>');
+    expect(bodyText(doc)).toBe('xy');
+  });
+
+  it('a block wrapper of blanks stays a boundary, not a space', () => {
+    const doc = sanitized('<div><p>a</p><div> </div><p>b</p></div>');
+    expect(bodyHTML(doc)).not.toContain('<div> </div>');
+    expect(bodyText(doc)).toBe('ab');
+  });
+});
