@@ -19,6 +19,7 @@ export function sanitize(
   removeByTagSet(root, REMOVE_TAGS);
   removeScripts(root, math);
   if (mode === 'full') removeByTagSet(root, REMOVE_STRUCTURAL);
+  foldCollapsedDetails(root);
   removeHidden(root, math);
   removeEmptyWrappers(root);
   collapseWhitespace(root);
@@ -28,6 +29,41 @@ export function sanitize(
   // harmless alone, `</td>` once joined. Merging them last, after every removal
   // has created its own new neighbours, is what lets a lookahead work at all.
   root.normalize();
+}
+
+/**
+ * A `<details>` the page did not open shows its `<summary>` and nothing else.
+ *
+ * This is the one hiding no style declares. The browser draws the body away
+ * behind `::details-content`, so every element inside computes `display: block`
+ * and `visibility: visible` — a snapshot taken off live nodes agrees with the
+ * markup, and both are describing a box nobody can read. Only the missing
+ * `open` attribute says so, which is why the core answers it rather than
+ * `src/content/`: the same markup means the same thing to a library caller with
+ * no browser anywhere.
+ *
+ * Found on MDN, where the sidebar folds every CSS group into one: an article of
+ * 2,655 words came back carrying 500 more the reader never saw, most of them a
+ * bare list of property names.
+ */
+function foldCollapsedDetails(root: SanitizeRoot): void {
+  const collapsed: Element[] = [];
+  walkElements(root, (el) => {
+    if (el.tagName.toLowerCase() === 'details' && !el.hasAttribute('open')) collapsed.push(el);
+  });
+  for (const el of collapsed) {
+    // The first `<summary>` is the one the browser draws; a second is body text
+    // like any other, and goes with the rest.
+    let summary: Element | null = null;
+    for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+      if (child.tagName.toLowerCase() === 'summary') { summary = child; break; }
+    }
+    for (let child = el.firstChild; child; ) {
+      const next = child.nextSibling;
+      if (child !== summary) el.removeChild(child);
+      child = next;
+    }
+  }
 }
 
 function removeScripts(root: SanitizeRoot, preserveMath: boolean): void {

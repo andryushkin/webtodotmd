@@ -433,3 +433,38 @@ describe('a wrapper holding blanks is not an empty wrapper', () => {
     expect(bodyText(doc)).toBe('ab');
   });
 });
+
+// The one hiding no style declares: the browser draws a closed `<details>` body
+// away behind `::details-content`, so the markup and a computed style taken off
+// live nodes both describe a visible box, and only the missing `open` attribute
+// says otherwise. MDN folds its whole sidebar that way — a 2,655-word article
+// came back carrying 500 words of collapsed property lists.
+describe('a closed <details> shows its summary and nothing else', () => {
+  const sanitized = (html: string): Document => {
+    const doc = makeDoc(html);
+    sanitize(doc.body as Element, 'full');
+    return doc;
+  };
+
+  it('drops the body of a closed one', () => {
+    const doc = sanitized('<details><summary>Show more</summary><p>folded away</p></details>');
+    expect(bodyText(doc)).toBe('Show more');
+  });
+
+  it('keeps the body of an open one', () => {
+    const doc = sanitized('<details open><summary>Show more</summary><p>on screen</p></details>');
+    expect(bodyText(doc)).toContain('on screen');
+  });
+
+  it('drops everything when a closed one has no summary', () => {
+    const doc = sanitized('<details><p>folded away</p></details>');
+    expect(bodyText(doc).trim()).toBe('');
+  });
+
+  it('a nested open one goes with the closed parent that hides it', () => {
+    const doc = sanitized(
+      '<details><summary>A</summary><details open><summary>B</summary><p>x</p></details></details>',
+    );
+    expect(bodyText(doc)).toBe('A');
+  });
+});
