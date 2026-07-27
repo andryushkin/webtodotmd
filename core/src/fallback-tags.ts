@@ -14,14 +14,21 @@
 export const FALLBACK_TAGS = ['table', 'caption', 'tr', 'th', 'td', 'pre', 'code'] as const;
 
 /**
- * Inline tags the converter can emit anywhere, cell or not. `sub`, `sup` and `br`
- * have no Markdown spelling at all; `em`, `strong` and `del` are the fallback for
- * emphasis whose delimiters CommonMark's flanking rules would leave as text
- * (`core/src/utils/flanking.ts`).
+ * Inline tags the converter can emit anywhere, cell or not. `br` has no Markdown
+ * spelling in an HTML block, where the hard break's trailing backslash is only a
+ * backslash; `em`, `strong` and `del` are the fallback for emphasis whose
+ * delimiters CommonMark's flanking rules would leave as text
+ * (`core/src/utils/flanking.ts`); `a` and `code` are what the link and code-span
+ * rules write where their delimiters would not be parsed either.
+ *
+ * `sub` and `sup` were here while they wrote their own tags and are not any more:
+ * a raised or lowered run shifts into Unicode instead (`H₂O`, `x²`), so no rule
+ * emits either tag (`core/src/rules/inline.ts`). Naming a tag this library never
+ * writes is not a harmless surplus — a consumer uses this list to tell the
+ * library's output from the page's, so it would keep a `<sup>` the page itself
+ * displayed alive rather than escaping it back into the characters a reader saw.
  */
-export const FALLBACK_INLINE_TAGS = [
-  'sub', 'sup', 'br', 'em', 'strong', 'del', 'a', 'code',
-] as const;
+export const FALLBACK_INLINE_TAGS = ['br', 'em', 'strong', 'del', 'a', 'code'] as const;
 
 /** Of the above, the ones that never close. */
 export const FALLBACK_VOID_TAGS = ['br'] as const;
