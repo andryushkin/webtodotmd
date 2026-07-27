@@ -7,6 +7,12 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 
 - `rawMd: string` is the single source of truth, never `textarea.value`. Update
   through `setContent(md)`; Copy always reads `rawMd`.
+- The panel carries the heading base across presses (`headingBase`), and it is the only thing that
+  can: a capture is one conversion in the content script, and on its own each press puts whatever it
+  found at the top level. Capture a section's `<h2>`, then the `<h3>` under it, and both arrived as
+  `##` with nothing under them. The level goes out with the response (`topLevel`, before any shift),
+  the smallest is kept, and it goes back in with the next request. It belongs to the document, so it
+  resets with Clear and whenever the capture comes from another URL.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
   so injected KaTeX and metadata blocks render — literal tags in captured text
   are made inert by the core, not here. The panel had a second escaper that

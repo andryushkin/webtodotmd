@@ -337,6 +337,31 @@ describe('heading levels the extension writes', () => {
     );
   });
 
+  // A page captured in several goes: each press is its own conversion, so the
+  // second one is told where the first started. Without it, capture a section's
+  // `<h2>` and then the `<h3>` under it and both arrive as `##`.
+  test('a second press keeps its distance from the first', () => {
+    const window = new HappyWindow();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
+    const priorNode = (globalThis as { Node?: unknown }).Node;
+    (globalThis as { Node?: unknown }).Node = window.Node;
+    try {
+      const press = (id: string, headingBase?: number) =>
+        highlightsToMd([doc.getElementById(id)!], doc, { headingBase });
+
+      const first = press('a');
+      expect(first.md.trim()).toBe('## Section');
+      expect(first.topLevel).toBe(2);
+      // On its own the second press answers `## Under it`; told where the first
+      // one started, it keeps the rank the reader saw.
+      expect(press('b').md.trim()).toBe('## Under it');
+      expect(press('b', first.topLevel).md.trim()).toBe('### Under it');
+    } finally {
+      (globalThis as { Node?: unknown }).Node = priorNode;
+    }
+  });
+
   test('one base for a capture of several fragments, so ranks stay apart', () => {
     const window = new HappyWindow();
     const doc = window.document as unknown as Document;

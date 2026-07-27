@@ -198,7 +198,7 @@ and steps of its own around them:
 
 | | |
 | --- | --- |
-| `topHeadingLevel: 2` | the shallowest heading of the capture is *raised* to `##` and the rest keep their distance from it — never pushed deeper, so a capture that already starts at `<h1>` keeps its `#`: that rank is the one the page gave its own title. Not a fixed shift either: a chat interface writes a whole answer under `<h3>`, and shifting by one made a file whose first heading was `####` with nothing above it. Worked out per capture — across every fragment when there are several, so two ranks a highlighter picked out do not collapse into one |
+| `topHeadingLevel: 2` | the shallowest heading of the capture is *raised* to `##` and the rest keep their distance from it — never pushed deeper, so a capture that already starts at `<h1>` keeps its `#`: that rank is the one the page gave its own title. Not a fixed shift either: a chat interface writes a whole answer under `<h3>`, and shifting by one made a file whose first heading was `####` with nothing above it. Worked out per capture — across every fragment when there are several, so two ranks a highlighter picked out do not collapse into one — and carried across presses of the button by the panel, so a page captured in three goes is not three `##` with nothing under them |
 | `math: true` plus a rule of its own | `src/content/raw-mathml-rule.ts`, for the MathML the core does not read |
 | `baseUrl: document.baseURI` | so a relative URL resolves |
 | `complexTableFallback` | `html` or `flatten`, from Settings — never `text` or `skip` |

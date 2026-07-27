@@ -7,13 +7,17 @@ import { hasCapturableSelection } from './shadow-selection';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
-/** The capture options the user can change; see Settings.htmlTables. */
-function captureOptions(): CaptureOptions {
-  return { htmlTables: htmlTablesSetting, withHtml: htmlViewSetting };
+/**
+ * The capture options the user can change (see Settings.htmlTables), plus the
+ * heading level the panel already holds for this page — the panel is the only
+ * thing that knows, since each press of the button is its own conversion here.
+ */
+function captureOptions(headingBase?: number): CaptureOptions {
+  return { htmlTables: htmlTablesSetting, withHtml: htmlViewSetting, headingBase };
 }
 
-function captureSelectionMd(selection: Selection): Capture {
-  return selectionToCapture(selection, document, captureOptions());
+function captureSelectionMd(selection: Selection, headingBase?: number): Capture {
+  return selectionToCapture(selection, document, captureOptions(headingBase));
 }
 
 function showToast(msg: string, type: 'success' | 'error' = 'success') {
@@ -339,8 +343,8 @@ function findPageTitle(): string {
   return normalizePageTitle(raw);
 }
 
-function captureHighlightsMd(): Capture {
-  return highlightsToMd(highlights, document, captureOptions());
+function captureHighlightsMd(headingBase?: number): Capture {
+  return highlightsToMd(highlights, document, captureOptions(headingBase));
 }
 
 // ---- Message listener ----
@@ -385,13 +389,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const { md, html } = captureHighlightsMd();
+        const { md, html, topLevel } = captureHighlightsMd(msg.headingBase);
         const meta: PageMeta = {
           title: findPageTitle(),
           url: window.location.href,
           date: new Date().toISOString(),
         };
-        sendResponse({ md, meta, html } satisfies CaptureSelectionResponse);
+        sendResponse({ md, meta, html, topLevel } satisfies CaptureSelectionResponse);
       } catch {
         sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
       }
@@ -420,14 +424,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const { md, html } = captureSelectionMd(selection);
+        const { md, html, topLevel } = captureSelectionMd(selection, msg.headingBase);
         const meta: PageMeta = {
           title: findPageTitle(),
           url: window.location.href,
           date: new Date().toISOString(),
         };
         window.getSelection()?.removeAllRanges();
-        sendResponse({ md, meta, html } satisfies CaptureSelectionResponse);
+        sendResponse({ md, meta, html, topLevel } satisfies CaptureSelectionResponse);
       } catch {
         sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
       }

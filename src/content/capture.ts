@@ -8,7 +8,12 @@
  * driving a real page. What the page-facing script keeps is the part that talks
  * to the extension; what moved is the part that reads the page.
  */
-import { toMarkdown, enrichRange, headingOffsetAcross } from '../../core/src/browser.ts';
+import {
+  toMarkdown,
+  enrichRange,
+  offsetForTop,
+  topHeadingLevelAcross,
+} from '../../core/src/browser.ts';
 import type { MarkItDownOptions } from '../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
@@ -34,6 +39,16 @@ export interface CaptureOptions {
    * and nothing in the ordinary path reads it.
    */
   withHtml?: boolean;
+  /**
+   * The shallowest heading level of what the panel already holds for this page.
+   *
+   * A person captures a page in several goes, and each press is its own
+   * conversion: capture the `<h2>` of a section, then the `<h3>` under it, and
+   * both arrive at `##` because each answered the heading question alone. The
+   * panel remembers the level across presses and hands it back here, so the
+   * second capture is shifted by what the first was shifted by.
+   */
+  headingBase?: number;
 }
 
 /** What one capture produced: the file, and — on request — its input. */
@@ -41,6 +56,12 @@ export interface Capture {
   md: string;
   /** The fragment handed to the converter, exactly as the converter saw it. */
   html?: string;
+  /**
+   * The shallowest heading level in this capture, before any shift — what the
+   * panel accumulates and hands back as `headingBase` next time. Absent where
+   * the capture holds no heading at all.
+   */
+  topLevel?: number;
 }
 
 /**
@@ -67,20 +88,35 @@ function conversionOptions(doc: Document, options: CaptureOptions): MarkItDownOp
 }
 
 /**
- * The heading shift, settled across the whole capture rather than per fragment.
+ * The heading shift, settled across the whole capture rather than per fragment,
+ * and across the presses before it rather than this one alone.
  *
- * One fragment needs nothing here: `toMarkdown` reads the level off the document
- * it was given, after its own sanitize, which is the more accurate answer and
- * costs no second pass. Several fragments cannot each answer for themselves —
- * `headingOffsetAcross` says why — and there the probe is worth what it costs,
- * because a highlighter run is a handful of small fragments and not an article.
+ * Two things cannot answer for themselves. A highlighter run is many fragments,
+ * and each one asking on its own puts an `<h2>` and the `<h3>` under it at the
+ * same rank. A second press of the button is a second conversion, and the panel
+ * appends its result to the first — so the level has to come back out of here
+ * (`topLevel`) and back in next time (`headingBase`), or a page captured in
+ * three goes comes back as three `##` with nothing under them.
+ *
+ * The probe is a copy: `sanitize()` edits what it is handed, and these fragments
+ * are about to be converted for real. It is also what makes the answer the same
+ * one `toMarkdown` would reach alone — a heading hidden from the reader is gone
+ * by the time the level is read, on both paths.
  */
 function sharedHeadingOffset(
   fragments: DocumentFragment[],
   opts: MarkItDownOptions,
-): MarkItDownOptions {
-  if (fragments.length < 2) return opts;
-  return { ...opts, headingOffset: headingOffsetAcross(fragments, opts) };
+  base: number | undefined,
+): { options: MarkItDownOptions; topLevel: number | undefined } {
+  const own = topHeadingLevelAcross(fragments, opts);
+  const top = own === null ? (base ?? null) : Math.min(own, base ?? own);
+  if (opts.topHeadingLevel === undefined || top === null) {
+    return { options: opts, topLevel: own ?? undefined };
+  }
+  return {
+    options: { ...opts, headingOffset: offsetForTop(top, opts.topHeadingLevel) },
+    topLevel: own ?? undefined,
+  };
 }
 
 // Expands a Range to whitespace boundaries when start/end land mid-token
@@ -206,13 +242,14 @@ export function selectionToCapture(
         if (options.withHtml) markup.push(serialize(fragment, doc));
         return fragment;
       });
-      const shifted = sharedHeadingOffset(clones, opts);
+      const shifted = sharedHeadingOffset(clones, opts, options.headingBase);
       const fragments = clones.map((fragment) =>
-        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted)),
+        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted.options)),
       );
       return {
         md: joinFragments(fragments),
         html: options.withHtml ? markup.join('\n') : undefined,
+        topLevel: shifted.topLevel,
       };
     } finally {
       cleanup();
@@ -251,13 +288,14 @@ export function highlightsToMd(
         if (options.withHtml) markup.push(serialize(fragment, doc));
         return fragment;
       });
-      const shifted = sharedHeadingOffset(clones, opts);
+      const shifted = sharedHeadingOffset(clones, opts, options.headingBase);
       const fragments = clones.map(fragment =>
-        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted)),
+        collapseHardBreaksToParagraphs(toMarkdown(fragment, shifted.options)),
       );
       return {
         md: joinFragments(fragments),
         html: options.withHtml ? markup.join('\n') : undefined,
+        topLevel: shifted.topLevel,
       };
     } finally {
       cleanup();

@@ -6,6 +6,12 @@ export interface PageMeta {
 
 export interface CaptureSelectionRequest {
   type: 'CAPTURE_SELECTION';
+  /**
+   * The shallowest heading level the panel already holds for this page, so a
+   * second press is shifted by what the first was shifted by. Absent on the
+   * first press, and whenever the panel is empty or the page has changed.
+   */
+  headingBase?: number;
 }
 
 export interface CaptureSelectionResponse {
@@ -13,6 +19,12 @@ export interface CaptureSelectionResponse {
   meta: PageMeta;
   /** The markup the conversion was given, when Settings.showHtmlView is on. */
   html?: string;
+  /**
+   * The shallowest heading level in what was just captured, before any shift.
+   * The panel keeps the smallest it has seen and sends it back as
+   * `headingBase`; absent where the capture holds no heading.
+   */
+  topLevel?: number;
 }
 
 export interface CaptureErrorResponse {
@@ -35,6 +47,8 @@ export interface ToggleHighlighterRequest {
 
 export interface CaptureHighlightsRequest {
   type: 'CAPTURE_HIGHLIGHTS';
+  /** As `CaptureSelectionRequest.headingBase`. */
+  headingBase?: number;
 }
 
 export interface ClearHighlightsRequest {

@@ -61,6 +61,23 @@ btnEditmd.hidden = !/mac/i.test(uaPlatform ?? '');
 
 let rawMd = '';
 let lastMeta: PageMeta | null = null;
+/**
+ * The shallowest heading level seen so far in this page's captures, before any
+ * shift — the smallest across every press.
+ *
+ * Each press is its own conversion in the content script, and on its own it puts
+ * whatever it found at the top level: capture a section's `<h2>`, then the `<h3>`
+ * under it, and both arrive as `##`. The panel is the only place that outlives a
+ * press, so it carries the level from one to the next. Reset with the document,
+ * and whenever the capture comes from a different page.
+ */
+let headingBase: number | null = null;
+
+/** The shallower of two levels, either of which may be missing. */
+function smallestLevel(kept: number | null, found: number | undefined): number | null {
+  if (found === undefined) return kept;
+  return kept === null ? found : Math.min(kept, found);
+}
 const mathMap = new Map<string, { latex: string; display: boolean }>();
 let mathCounter = 0;
 const MAX_HISTORY = 50;
@@ -496,7 +513,11 @@ async function captureSelection(silent = false) {
 
   let response: CaptureResponse;
   try {
-    response = await sendMessageWithTimeout(tab.id, { type: messageType }, 3000);
+    response = await sendMessageWithTimeout(
+      tab.id,
+      { type: messageType, headingBase: headingBase ?? undefined },
+      3000,
+    );
   } catch (err) {
     if (silent) return;
     const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -530,6 +551,11 @@ async function captureSelection(silent = false) {
   previewHtml.value = rawHtml;
   const prevUrl = lastMeta?.url ?? null;
   lastMeta = meta;
+
+  // The base travels with the document: a capture of another page starts the
+  // levels again, and so does an empty panel.
+  const continues = rawMd.trim().length > 0 && prevUrl === meta.url;
+  headingBase = smallestLevel(continues ? headingBase : null, response.topLevel);
 
   if (rawMd.trim().length === 0) {
     const content = autoMetadata ? buildMetadata(meta) + '\n\n' + md : md;
@@ -742,6 +768,7 @@ btnClear.addEventListener('click', () => {
   setContent('');
   previewRendered.innerHTML = '';
   lastMeta = null;
+  headingBase = null;
 });
 
 // ---- Init ----

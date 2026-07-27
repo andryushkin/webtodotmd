@@ -621,6 +621,22 @@ export function enrichRange(range: Range): DocumentFragment {
  */
 export function headingOffsetAcross(nodes: Iterable<Node>, options: MarkItDownOptions = {}): number {
   if (options.topHeadingLevel === undefined) return 0;
+  return offsetForTop(topHeadingLevelAcross(nodes, options), options.topHeadingLevel);
+}
+
+/**
+ * The shallowest heading across several fragments, or `null` where none has one.
+ *
+ * Separate from the offset because a caller may be collecting an answer that
+ * outlives this conversion: a panel that appends one capture to another has to
+ * shift the second by what the first was shifted by, and the level is what the
+ * two of them share. The offset is then `offsetForTop` over the smaller of the
+ * two levels.
+ */
+export function topHeadingLevelAcross(
+  nodes: Iterable<Node>,
+  options: MarkItDownOptions = {},
+): number | null {
   let min: number | null = null;
   for (const node of nodes) {
     const probe = node.cloneNode(true) as Element;
@@ -628,9 +644,15 @@ export function headingOffsetAcross(nodes: Iterable<Node>, options: MarkItDownOp
     const level = minHeadingLevel(probe as unknown as ParentNode);
     if (level !== null && (min === null || level < min)) min = level;
   }
-  // Upwards only, for the reason `headingOffsetTo` gives: an `<h1>` the reader
-  // saw stays `#`.
-  return min === null ? 0 : Math.min(0, options.topHeadingLevel - min);
+  return min;
+}
+
+/**
+ * The shift that raises `top` to `topLevel`, upwards only — the same rule
+ * `headingOffsetTo` states, over a level that has already been worked out.
+ */
+export function offsetForTop(top: number | null, topLevel: number): number {
+  return top === null ? 0 : Math.min(0, topLevel - top);
 }
 
 export function selectionToMarkdown(selection: Selection, options: MarkItDownOptions = {}): string {
