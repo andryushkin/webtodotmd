@@ -140,8 +140,22 @@ beforeAll(() => {
 // list, reached by the shrinker only now that the same seeds stop failing on the
 // tilde first; both were run against the previous commit and fail there
 // identically.
+//
+// Then 84 -> 83, and this is ground won. A text node opening a line was found by
+// asking its parent alone, so `<p>…<br><span># x</span></p>` — a run wrapped the
+// way every chat interface wraps one — left the `#` unescaped at the start of a
+// line and the reader's literal `# x` came back a real H1, taking the break
+// before it along. The question walks up through inline wrappers now, stopping at
+// any that writes a delimiter of its own, because escaping inside an emphasis
+// fallback shows the backslash. `<p><span># </span></p>` and
+// `<p><span>1. </span></p>` are the two classes that went.
+//
+// One arrived: `<p><a href="javascript:alert(1)"> </a># </p>`, where the link is
+// dropped for its scheme and the `#` it left behind is at the start of a line
+// after all. Run against the previous commit, where it fails identically — the
+// shrinker reaches it only now that the two classes above stop failing first.
 const SEEDS = 200;
-const CEILING = 84;
+const CEILING = 83;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -163,6 +177,7 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
   "<p>(https://example.com/i.png)\\</p>",
   "<p>(https://example.com/i.png)_under_</p>",
+  "<p><a href=\"javascript:alert(1)\"> </a># </p>",
   "<p><code data-s2md-style=\"display:block\">``</code>&lt;/table&gt;</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
   "<p><img src=\"\" alt=\"foo bar\"></p>",
@@ -170,8 +185,6 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p><span data-s2md-style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"text-decoration-line:line-through\">~~</span></p>",
-  "<p><span># </span></p>",
-  "<p><span>1. </span></p>",
   "<p>x](https://example.com)&lt;/table&gt;</p>",
   "<p>x](https://example.com)<strong>hello world</strong></p>",
   "<p>🇺🇸<i data-s2md-style=\"font-weight:700\">x</i></p>",

@@ -35,9 +35,51 @@ export const CODE_INDENT_MARK = String.fromCharCode(0xfdd0);
 
 const CODE_INDENT_MARK_PATTERN = new RegExp(CODE_INDENT_MARK, 'g');
 
+/**
+ * A newline inside a fenced block, hidden from the collapse below for the length
+ * of `normalize()`.
+ *
+ * Every rule in that pipeline is about the space *between* blocks, and applied
+ * inside one it rewrites the sample instead: a Python snippet that separated its
+ * imports from its body with two blank lines came back with one, which is the
+ * page's own text edited. Built at runtime and taken from the same noncharacter
+ * block as `CODE_INDENT_MARK`, for the reason spelled out there — a literal
+ * reaches the bundle and Chrome refuses the manifest.
+ */
+const FENCED_NEWLINE = String.fromCharCode(0xfdd1);
+
+const FENCED_NEWLINE_PATTERN = new RegExp(FENCED_NEWLINE, 'g');
+
+// An opening or closing fence: three or more backticks or tildes, indented or
+// not. Read off the emitted Markdown rather than off the DOM, because by here
+// that is all there is. A closer has to match its opener in character and be at
+// least as long, or a sample printing ``` of its own would end the block early.
+const FENCE_LINE = /^[ \t]*(`{3,}|~{3,})/;
+
+function guardFences(raw: string): string {
+  const lines = raw.split('\n');
+  let fence: string | null = null;
+  let out = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const marker = FENCE_LINE.exec(line)?.[1];
+    if (fence === null) {
+      if (marker) fence = marker;
+    } else if (marker && marker[0] === fence[0] && marker.length >= fence.length) {
+      fence = null;
+    }
+    out += line;
+    // Decided after the line, so each fence line's own break belongs to the side
+    // it is on: the one under an opener is inside the block, the one under a
+    // closer is between blocks again.
+    if (i < lines.length - 1) out += fence === null ? '\n' : FENCED_NEWLINE;
+  }
+  return out;
+}
+
 export function normalize(raw: string): string {
   return (
-    raw
+    guardFences(raw)
       .replace(/\u00A0/g, ' ') // &nbsp; the page wrote → обычный пробел
       // After the fold, never before: the marker exists to reach this line with
       // the page's own non-breaking spaces already gone.
@@ -45,6 +87,9 @@ export function normalize(raw: string): string {
       .replace(/[ \t]+$/gm, '') // trailing spaces per line
       .replace(/\n{3,}/g, '\n\n') // 3+ newlines → 2
       .replace(/^\n+/, '') // убрать leading newlines
+      // Unconditional, and last: a block the document never closed still holds
+      // markers, and one left in the file is a character the page never had.
+      .replace(FENCED_NEWLINE_PATTERN, '\n')
       .trimEnd() + '\n' // единственный завершающий \n
   );
 }

@@ -294,6 +294,33 @@ describe('блочный сосед открывает строку', () => {
   });
 });
 
+// An inline wrapper draws no line of its own, so a text node first inside one
+// opens whatever line the wrapper stands at the start of. Only the immediate
+// parent was asked, and a chat interface writes every run of an answer as its
+// own `<span>`: the three literal lines a ChatGPT answer showed came back with
+// the middle one a real H1, taking the break before it with it.
+describe('an inline wrapper passes the line boundary through', () => {
+  it.each([
+    ['after a break', '<p>a<br><span># x</span></p>', '\\# x'],
+    ['opening a paragraph', '<p><span># x</span></p>', '\\# x'],
+    ['nested wrappers', '<p>a<br><span><span>- item</span></span></p>', '\\- item'],
+    ['numbering', '<p>a<br><span>1. one</span></p>', '1\\. one'],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toContain(expected);
+  });
+
+  it.each([
+    // A wrapper writing a delimiter of its own has already put a character on
+    // the line, and there the backslash would be visible rather than harmless:
+    // an emphasis that falls back to live tags is not unescaped by any renderer.
+    ['emphasis', '<p>a<br><em># x</em></p>', '_# x_'],
+    ['link label', '<p>a<br><a href="https://example.com"># x</a></p>', '[# x](https://example.com)'],
+    ['text before the wrapper', '<p>a <span># x</span></p>', 'a # x'],
+  ])('leaves it alone: %s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toContain(expected);
+  });
+});
+
 // Блоком делает не только тег. `convert()` пишет элемент с `display:block` между
 // пустыми строками — значит его текст открывает строку ровно как текст `<div>`, а
 // спрашивали только про тег: литеральный `# heading` со страницы становился

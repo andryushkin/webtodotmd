@@ -196,7 +196,7 @@ function inLiteral(el: Element): boolean {
  * A literal context answers no whatever it holds: the code rule takes its
  * element's *text*, so neither a tag nor a style inside one reaches the output.
  */
-function emitsEmphasis(el: Element): boolean {
+export function emitsEmphasis(el: Element): boolean {
   if ((el.textContent ?? '').trim() === '' || endsLine(el) || inLiteral(el)) return false;
   const mark = EMPHASIS_TAGS.get(el.tagName.toLowerCase());
   if (mark !== undefined && !suppressedMarks(el)[mark]) return true;

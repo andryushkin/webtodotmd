@@ -8,7 +8,7 @@ import {
   statesConversion,
   statesDisplay,
 } from '../utils/inline-style.js';
-import { emitsStrike } from '../utils/flanking.js';
+import { emitsEmphasis, emitsStrike } from '../utils/flanking.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -268,27 +268,53 @@ function writtenTail(node: Node): string | undefined {
   return undefined;
 }
 
+/**
+ * Whether this wrapper puts something of its own on the line before its content
+ * starts — a delimiter, or the tag an emphasis falls back to.
+ *
+ * The question `opensBlock` asks on the way up: a text node first inside a
+ * `<span>` is at the start of the line the span is on, while one first inside an
+ * `<em>` has a `_` in front of it and is not. Escaping there costs a visible
+ * backslash rather than a harmless one — `<strong>---</strong>a` falls back to
+ * live tags, and Markdown does not unescape inside those.
+ */
+function writesFirst(el: Element): boolean {
+  // A link writes its `[` before the label; `written` covers `~~` and a backtick.
+  return el.tagName.toLowerCase() === 'a' || written(el) !== '' || emitsEmphasis(el);
+}
+
 function opensBlock(node: Node): boolean {
-  const parent = node.parentElement;
-  // A style is the second way to be a block, and the parser has to read it here
-  // too: `<span style="display:block"># heading</span>` is written between blank
-  // lines by `convert()`, so its text starts a line, and while only the tag was
-  // asked about the page's literal `# heading` arrived as a real H1.
-  if (!parent) return false;
-  if (!BLOCK_PARENTS.has(parent.tagName.toLowerCase()) && !styledBlock(parent)) return false;
-  for (let prev = node.previousSibling; prev; prev = prev.previousSibling) {
-    // Anything that ends the line before this text leaves it opening one. Only
-    // `<br>` was asked about, so `<div>x<hr>## y</div>` and the same with a `<p>`
-    // printed the page's literal `## y` as a real heading — the block moved the
-    // text to the start of a line and nothing escaped it there.
-    if (prev.nodeType === ELEMENT_NODE) {
-      const el = prev as Element;
-      if (ENDS_THE_LINE.has(el.tagName.toLowerCase()) || styledBlock(el)) return true;
-      return false;
+  // Up through the inline wrappers, not just to the parent: an inline tag draws
+  // no line of its own, so a text node first inside one opens whatever line the
+  // wrapper opens. ChatGPT writes every run of an answer as its own `<span>`, and
+  // asking the `<span>` alone left `<p>…<br><span># решётка</span></p>` — three
+  // literal lines the reader saw — with the middle one converted to a real H1,
+  // taking the break before it along.
+  for (let current: Node = node; ; ) {
+    const parent = current.parentElement;
+    if (!parent) return false;
+    for (let prev = current.previousSibling; prev; prev = prev.previousSibling) {
+      // Anything that ends the line before this text leaves it opening one. Only
+      // `<br>` was asked about, so `<div>x<hr>## y</div>` and the same with a `<p>`
+      // printed the page's literal `## y` as a real heading — the block moved the
+      // text to the start of a line and nothing escaped it there.
+      if (prev.nodeType === ELEMENT_NODE) {
+        const el = prev as Element;
+        return ENDS_THE_LINE.has(el.tagName.toLowerCase()) || styledBlock(el);
+      }
+      if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
     }
-    if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
+    // Nothing written before it inside this parent, so the parent decides. A
+    // style is the second way to be a block, and the parser has to read it here
+    // too: `<span style="display:block"># heading</span>` is written between
+    // blank lines by `convert()`, so its text starts a line, and while only the
+    // tag was asked the page's literal `# heading` arrived as a real H1.
+    const tag = parent.tagName.toLowerCase();
+    if (BLOCK_PARENTS.has(tag) || styledBlock(parent)) return true;
+    // `<body>`/`<html>` hold a capture's top-level blanks and open nothing.
+    if (DOCUMENT_WRAPPERS.has(tag) || writesFirst(parent)) return false;
+    current = parent;
   }
-  return true;
 }
 
 // A run of whitespace and nothing else — the only text node the rule below

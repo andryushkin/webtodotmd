@@ -198,3 +198,21 @@ describe('<pre> that breaks lines with <br>', () => {
     expect(toMarkdown(html).trim()).toBe(`\`\`\`\n${expected}\n\`\`\``);
   });
 });
+
+// `normalize()` collapses runs of blank lines, which is right between blocks and
+// wrong inside one: found on a ChatGPT answer whose Python sample separated its
+// body from a trailing `print` with two blank lines and arrived with one — the
+// page's own text, rewritten.
+describe('blank lines inside a fence', () => {
+  it.each([
+    ['two blank lines', 'a\n\n\nb'],
+    ['four blank lines', 'a\n\n\n\n\nb'],
+    ['a blank line last', 'a\n\n'],
+  ])('%s', (_name, code) => {
+    expect(toMarkdown(`<pre><code>${code}</code></pre>`)).toContain(`\`\`\`\n${code}`);
+  });
+
+  it('still collapses them between blocks', () => {
+    expect(toMarkdown('<p>a</p>\n\n\n\n<p>b</p>')).toBe('a\n\nb\n');
+  });
+});
