@@ -664,7 +664,7 @@ path\file | a &lt; b &amp; c
     <p class="section-lead">The visible sentinels should survive; every named hidden payload should be absent from Source.</p>
 
     <article class="case">
-      <aside><strong>R1.</strong> Keep “visible start/end”. Remove hidden, aria-hidden, display-none, visibility-hidden, opacity-zero, clipped/offscreen, screen-reader-only, and standby-overlay payloads.</aside>
+      <aside><strong>R1.</strong> Keep “visible start/end”. Remove hidden, display-none, visibility-hidden, opacity-zero, clipped/offscreen, screen-reader-only, and standby-overlay payloads. <code>ARIA_HIDDEN_PAYLOAD</code> is <em>kept</em>, and this page is where that was caught: <code>aria-hidden</code> takes a node out of the accessibility tree and leaves it on the screen, as the paragraph below shows.</aside>
       <div class="subject">
         <p>Visible start.</p>
         <p hidden>HIDDEN_ATTRIBUTE_PAYLOAD</p>
@@ -882,7 +882,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
     <p class="section-lead">These cases test the content script around the conversion core.</p>
 
     <article class="case">
-      <aside><strong>Q1.</strong> Every extension capture uses full mode, even a selection. Selecting this entire subject keeps only <code>ARTICLE_BODY_CONTENT</code>; header, nav, aside, and footer are dropped. The core's separate <code>selectionToMarkdown()</code> behavior is not used by the extension.</aside>
+      <aside><strong>Q1.</strong> Every extension capture is a selection, so the chrome inside it survives: selecting this entire subject keeps the header, nav, aside and footer beside <code>ARTICLE_BODY_CONTENT</code>. Highlighter mode answers the same, which is what keeps the headline and byline of a highlighted <code>article</code>. Full mode — the library default, <code>mode</code> unset — is what drops them, and the extension never asks for it.</aside>
       <div class="subject">
         <header><p>ARTICLE_HEADER_CHROME</p></header>
         <nav><p>ARTICLE_NAV_CHROME</p></nav>
@@ -1034,7 +1034,7 @@ Fourth line after an empty line</span></p>
     <p class="section-lead">These cases document current specification debt; do not count their stated output as a surprise regression.</p>
 
     <article class="case">
-      <aside><strong>K1.</strong> <span class="known">Known defect:</span> figure image and caption currently run together as <code>![A](x)Caption</code>.</aside>
+      <aside><strong>K1.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>figure</code>, so the image and its caption land on one line — <code>![A](x) Caption</code>, with only the whitespace between the tags separating them, where the page showed a caption under a picture.</aside>
       <div class="subject">
         <figure>
           <img src="diagram.png" alt="Architecture diagram">
@@ -1052,9 +1052,11 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K3.</strong> <span class="known">Known debt:</span> punctuation can force emphasis to use an HTML fallback even though normal output should contain no live HTML.</aside>
+      <aside><strong>K3.</strong> <span class="known">Known debt:</span> where no delimiter renders, emphasis falls back to a tag, even though ordinary output should contain no live HTML. Two of the three lines below reach it: content that is nothing but punctuation, and a second emphasis pressed against the first, whose delimiters would otherwise merge into one run. The first line does <em>not</em> — a delimiter works there, and it is here so the fallback is not mistaken for the rule.</aside>
       <div class="subject">
         <p>a_<em>b</em>_c and a*<strong>b</strong>*c</p>
+        <p>word<i>**</i>tail</p>
+        <p>adjacent <em>one</em><em>two</em> emphasis</p>
       </div>
     </article>
 

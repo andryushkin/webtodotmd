@@ -150,7 +150,8 @@ Removed by markup rather than by style:
 
 | | |
 | --- | --- |
-| `hidden`, `aria-hidden="true"` | removed |
+| `hidden` | removed — it is `display:none` in the UA stylesheet, so nothing was on screen |
+| `aria-hidden="true"` | **kept.** It takes a node out of the accessibility tree and leaves every pixel where it was: a star rating drawn as `★★★★★`, the `→` in a "read more" link, a number beside a chart. Everything that really hides is read from the style, and this attribute only subtracted text the reader saw |
 | `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
 | `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |
 | `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode** (`mode` unset, the library default); kept in **selection mode**, because a person who selected them meant to. The extension asks for selection mode in `CONVERSION_OPTIONS`, so both of its capture paths keep them — including the `<header>` and `<footer>` *inside* a highlighted `<article>`, which is how every news site ships a headline and a byline |

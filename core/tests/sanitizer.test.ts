@@ -56,13 +56,6 @@ describe('sanitizer', () => {
     expect(bodyText(doc)).toContain('видимый');
   });
 
-  it('removes aria-hidden elements', () => {
-    const doc = makeDoc('<p aria-hidden="true">hidden</p><p>visible</p>');
-    sanitize(doc.body as Element);
-    expect(bodyText(doc)).not.toContain('hidden');
-    expect(bodyText(doc)).toContain('visible');
-  });
-
   it('removes display:none elements', () => {
     const doc = makeDoc('<p style="display:none">hidden</p><p>visible</p>');
     sanitize(doc.body as Element);
@@ -94,6 +87,68 @@ describe('sanitizer', () => {
     const doc = makeDoc('<pre><code>  spaces  \n  preserved  </code></pre>');
     sanitize(doc.body as Element);
     expect(bodyText(doc)).toContain('  spaces  ');
+  });
+});
+
+// `aria-hidden` takes a node out of the accessibility tree and moves no pixel,
+// so a converter reading it as "not on screen" deletes text the person was
+// looking at. The attribute's own purpose is the worst case: it marks what is
+// visible and voiced some other way — a star rating, an arrow in a link, a
+// number beside a chart — and all of it went. Every genuine hiding is read from
+// the style, and those cases are pinned above and in `describe('hidden box
+// text')`, which is why dropping this one costs no coverage.
+describe('aria-hidden is not hiding: text the reader saw', () => {
+  it('keeps a paragraph whose only claim to being hidden is aria-hidden', () => {
+    const doc = makeDoc('<p aria-hidden="true">ARIA_HIDDEN_PAYLOAD</p><p>visible</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toContain('ARIA_HIDDEN_PAYLOAD');
+    expect(bodyText(doc)).toContain('visible');
+  });
+
+  // The pattern the attribute exists for: a decorative run inside a sentence,
+  // drawn on the page and voiced to a screen reader by the text around it.
+  it('keeps a decorative run inside the sentence it sits in', () => {
+    const doc = makeDoc('<p>Rated <span aria-hidden="true">★★★★★</span> by readers.</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('Rated ★★★★★ by readers.');
+  });
+
+  it('keeps the arrow a "read more" link hides from the screen reader', () => {
+    const doc = makeDoc('<a href="/x">Read more <span aria-hidden="true">→</span></a>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('Read more →');
+  });
+
+  // The regression guards. The `hidden` attribute is a different thing entirely
+  // — `display:none` in the UA stylesheet, so nothing is on screen — and a style
+  // that hides still decides for itself however the page marked the a11y tree.
+  it('still removes the hidden attribute', () => {
+    const doc = makeDoc('<p hidden>HIDDEN_ATTRIBUTE_PAYLOAD</p><p>visible</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).not.toContain('HIDDEN_ATTRIBUTE_PAYLOAD');
+    expect(bodyText(doc)).toContain('visible');
+  });
+
+  it('still removes aria-hidden with display:none, because the style says so', () => {
+    const doc = makeDoc('<p aria-hidden="true" style="display:none">GONE</p><p>visible</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).not.toContain('GONE');
+    expect(bodyText(doc)).toContain('visible');
+  });
+
+  it('still removes aria-hidden inside a clipped .sr-only shape', () => {
+    const doc = makeDoc(
+      '<p aria-hidden="true" style="position:absolute;clip:rect(0,0,0,0)">GONE</p><p>visible</p>',
+    );
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).not.toContain('GONE');
+    expect(bodyText(doc)).toContain('visible');
+  });
+
+  it('never removed aria-hidden="false" and still does not', () => {
+    const doc = makeDoc('<p aria-hidden="false">KEPT</p>');
+    sanitize(doc.body as Element);
+    expect(bodyText(doc)).toBe('KEPT');
   });
 });
 

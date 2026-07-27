@@ -625,8 +625,9 @@ function normalizeFragment(fragment: DocumentFragment): DocumentFragment {
   // 4. Удалить клонированные id
   root.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
 
-  // 5. Удалить клонированные aria-hidden (они не нужны для конвертации)
-  root.querySelectorAll('[aria-hidden]').forEach((el) => el.removeAttribute('aria-hidden'));
+  // `aria-hidden` здесь больше не снимается: санитайзер его не читает вовсе.
+  // Атрибут ничего не прячет от глаза — он убирает узел из дерева доступности,
+  // а пиксели остаются на месте.
 
   return root;
 }
@@ -2366,8 +2367,10 @@ const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 ```typescript
 function isHidden(el: Element): boolean {
   return (
+    // `hidden` — это `display:none` из UA-стиля, поэтому на экране ничего нет.
+    // `aria-hidden` намеренно не спрашивается: он прячет узел от скринридера,
+    // а не от читателя, и удалять по нему значит терять видимый текст.
     el.hasAttribute('hidden') ||
-    el.getAttribute('aria-hidden') === 'true' ||
     el.getAttribute('style')?.includes('display: none') === true ||
     el.getAttribute('style')?.includes('display:none') === true ||
     el.getAttribute('style')?.includes('visibility: hidden') === true

@@ -104,16 +104,51 @@ describe('normalizeFragment: удаление атрибутов', () => {
     expect(container.querySelector('h2')?.textContent).toBe('Заголовок');
   });
 
-  it('aria-hidden атрибут удаляется', () => {
-    const container = makeContainer('<span aria-hidden="true">icon</span><p>Text</p>');
-    normalizeFragment(container);
-    expect(container.querySelector('[aria-hidden]')).toBeNull();
-  });
-
   it('несколько id → все удаляются', () => {
     const container = makeContainer('<div id="a"><p id="b">Text</p></div>');
     normalizeFragment(container);
     expect(container.querySelectorAll('[id]').length).toBe(0);
+  });
+});
+
+// One product used to give two answers about this attribute. `normalizeFragment`
+// stripped it before `sanitize()` could read it, so `selectionToMarkdown()` kept
+// the text; the extension's own capture builds its fragment itself and calls
+// `toMarkdown` directly, so the attribute arrived and the text went. The
+// sanitizer no longer reads it, which is what makes the two agree — the strip is
+// gone and the attribute now reaches the converter untouched on both paths.
+describe('aria-hidden is not hiding: the selection path', () => {
+  it('leaves the attribute where the page wrote it', () => {
+    const container = makeContainer('<span aria-hidden="true">icon</span><p>Text</p>');
+    normalizeFragment(container);
+    expect(container.querySelector('[aria-hidden]')).not.toBeNull();
+  });
+
+  it('keeps the text through normalizeFragment and sanitize together', () => {
+    const container = makeContainer('<p aria-hidden="true">ARIA_HIDDEN_PAYLOAD</p><p>Text</p>');
+    normalizeFragment(container);
+    const md = toMarkdown(container as unknown as Node, { mode: 'selection' });
+    expect(md).toContain('ARIA_HIDDEN_PAYLOAD');
+    expect(md).toContain('Text');
+  });
+
+  // The path the extension actually takes: a selection-shaped fragment handed
+  // straight to `toMarkdown`, with no `normalizeFragment` in front of it. This
+  // is where the text was being deleted.
+  it('keeps the text in a fragment converted without normalizeFragment', () => {
+    const md = toMarkdown(
+      '<div><p>Visible start.</p><p aria-hidden="true">ARIA_HIDDEN_PAYLOAD</p></div>',
+      { mode: 'selection' },
+    );
+    expect(md).toContain('ARIA_HIDDEN_PAYLOAD');
+    expect(md).toContain('Visible start.');
+  });
+
+  it('keeps a decorative run inside the sentence it sits in', () => {
+    const md = toMarkdown('<p>Rated <span aria-hidden="true">★★★★★</span> by readers.</p>', {
+      mode: 'selection',
+    });
+    expect(md.trim()).toBe('Rated ★★★★★ by readers.');
   });
 });
 

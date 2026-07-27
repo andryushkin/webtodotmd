@@ -108,10 +108,26 @@ function removeHidden(root: SanitizeRoot): void {
 // parses the attribute rather than matching it, which is what tells
 // `visibility: collapse` from a `-ms-visibility: collapsed` nobody implements,
 // and `opacity: 0` from `opacity: 0.9`. The verdict itself is never spelled a
-// second time here: these two attributes are the part that is not a style.
+// second time here: the `hidden` attribute is the part that is not a style.
+//
+// `aria-hidden` is not asked, and asking it deleted text people had read. It
+// takes a node out of the accessibility tree; the pixels stay exactly where
+// they were, which is the whole point of the attribute — a star rating drawn
+// as `★★★★★`, the `→` in a "read more" link, the number beside a chart are all
+// written that way *because* they are visible and the screen reader is told
+// about them some other way. Everything that genuinely hides is already read
+// from the style, so the attribute added no case of its own and subtracted
+// every decorative run a page put it on.
+//
+// The one thing it did buy was an icon font — `<i class="material-icons"
+// aria-hidden="true">close</i>` draws a ✕ from the ligature text, and keeping
+// the element writes the word `close`. But the same element is written the
+// same way with and without the attribute, so this was never a filter for it,
+// only a coincidence on the pages that bothered; and the price of the
+// coincidence was deleting the visible text of everything else the attribute
+// is put on.
 function hidingOf(el: Element): Hiding {
   if (el.hasAttribute('hidden')) return 'removed';
-  if (el.getAttribute('aria-hidden') === 'true') return 'removed';
   return hidingVerdict(el);
 }
 

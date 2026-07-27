@@ -9,16 +9,24 @@ const CONTENTFUL = new Set<string>(CONTENTFUL_TAGS);
  * Нормализует DocumentFragment после cloneContents():
  * удаляет пустые элементы, раскрывает лишние обёртки,
  * заменяет single-cell таблицы содержимым ячейки,
- * удаляет клонированные id и aria-hidden.
+ * удаляет клонированные id.
  */
+// `aria-hidden` used to be stripped here as well, and that strip was the reason
+// one product gave two answers about the same attribute: this path deleted it
+// before `sanitize()` could see it and kept the text, while `toMarkdown()` —
+// which is what the extension's own capture calls — handed the attribute over
+// and lost the text. Now that the sanitizer does not read it, nothing in the
+// library does: no rule filters on it and the HTML table fallback emits markup
+// it builds itself, `colspan` and `rowspan` and nothing else. So the strip
+// changed no output at all, and removing an attribute a caller's own rule may
+// want to look at is worse than leaving it where the page wrote it. The `id`
+// strip stays: those are cloned out of a live document and are duplicates of
+// ids still standing in it.
 export function normalizeFragment(root: Element): void {
   removeEmptyElements(root);
   unwrapSingleChildContainers(root);
   unwrapSingleCellTables(root);
   Array.from(root.querySelectorAll('[id]')).forEach((el) => el.removeAttribute('id'));
-  Array.from(root.querySelectorAll('[aria-hidden]')).forEach((el) =>
-    el.removeAttribute('aria-hidden'),
-  );
 }
 
 function removeEmptyElements(root: Element): void {
