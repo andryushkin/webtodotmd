@@ -2,6 +2,8 @@ import { describe, test, expect } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { toMarkdown } from '../../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from '../raw-mathml-rule.ts';
+import { Window as HappyWindow } from 'happy-dom';
+import { cloneRangeWithBr } from '../capture.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;
@@ -315,5 +317,23 @@ describe('selection mode: the extension keeps what a person selected', () => {
     expect(md).toContain('Above');
     expect(md).toContain('Pull quote');
     expect(md).toContain('Below');
+  });
+});
+
+// The bubble is an element on the page like any other, so a Cmd+A selection
+// covered it and every full-page capture ended with the words `add to .md`.
+describe('the extension does not capture itself', () => {
+  test('drops its own bubble and hover outline from the clone', () => {
+    const window = new HappyWindow();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML =
+      '<p>Page text.</p><div id="tomd-bubble">add to .md</div>' +
+      '<div id="s2md-hover">outline</div>';
+    const range = doc.createRange();
+    range.selectNodeContents(doc.body);
+    const md = toMarkdown(cloneRangeWithBr(range), { ...CONVERSION_OPTIONS });
+    expect(md).toContain('Page text.');
+    expect(md).not.toContain('add to .md');
+    expect(md).not.toContain('outline');
   });
 });

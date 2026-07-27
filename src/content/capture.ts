@@ -88,6 +88,21 @@ export function expandRangeToWords(range: Range): Range {
   return out;
 }
 
+/**
+ * What the extension itself put on the page.
+ *
+ * The bubble sits in the document like any other element, so a Cmd+A selection
+ * covers it and every full-page capture ended with the words `add to .md`. The
+ * highlighter's hover outline is the same kind of thing. They are removed from
+ * the clone rather than hidden on the page: hiding is a mutation the reader
+ * would see, and the clone is ours to edit.
+ */
+const OWN_UI = '#tomd-bubble, #s2md-hover';
+
+function dropOwnUI(fragment: DocumentFragment): void {
+  for (const el of Array.from(fragment.querySelectorAll(OWN_UI))) el.remove();
+}
+
 export function cloneRangeWithBr(range: Range): DocumentFragment {
   // Read before the clone, not after: `cloneContents()` strands the children of
   // the common ancestor at the top of the fragment, where a text node has no
@@ -98,6 +113,7 @@ export function cloneRangeWithBr(range: Range): DocumentFragment {
   // restoring that is the core's job. This path had been calling cloneContents
   // directly, so none of it reached the extension.
   const fragment = enrichRange(range);
+  dropOwnUI(fragment);
   breakPreservedNewlines(fragment, rootPreserves);
   return fragment;
 }

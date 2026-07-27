@@ -4,6 +4,12 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.6 — 2026-07-27
+
+- **The extension no longer captures itself.** A full-page capture ended with
+  the words `add to .md` — the floating bubble is an element on the page like
+  any other, and a Cmd+A selection covered it.
+
 ## 1.4.5 — 2026-07-27
 
 - **Indented code stays indented.** Every syntax highlighter puts the blank
