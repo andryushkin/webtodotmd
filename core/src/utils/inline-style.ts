@@ -44,10 +44,44 @@ export const SNAPSHOT_ATTR = 'data-s2md-style';
  */
 export const ROW_ATTR = 'data-s2md-row';
 
-/** Whether this node is such a container. */
+// A list whose items were laid along a line rather than down the page. The
+// container is ordinary — `display:block` — so no snapshot marks it, and the
+// items themselves are what the page inlined.
+const LIST_CONTAINERS = new Set(['ul', 'ol', 'menu']);
+
+/**
+ * Whether this node is such a container: marked by a snapshot, or a list the
+ * page laid out along a line.
+ *
+ * The second is the same class of loss with the mark unavailable. Stack Overflow
+ * writes its tags as `<li class="d-inline mr4">`, five of them with not one
+ * character between `</li>` and the next `<li>` — the gap on screen is a
+ * `margin`, which no snapshot records and no clone can measure. The container is
+ * a plain `<ul>`, so `blockifiesIntoRow` never sees it, and the tags arrived as
+ * `javac++performancecpu-architecture`: four words a search will never find
+ * again.
+ *
+ * An item of a list is a thing counted separately — that is what a list is — and
+ * a page that lays its items along a line still shows the reader where one ends,
+ * with a gap, a background or a border. Markdown can carry none of those, and it
+ * does not have to: what it must not do is spell two of them as one word. Paying
+ * a blank on a list that really did run its items together costs a character
+ * nobody sees; refusing it costs the words.
+ *
+ * The first item answers for the list. The inlining comes from one rule over all
+ * of them, so a mixed list is not a shape pages have, and asking every item
+ * would be a walk of the whole list per text node inside it.
+ */
 export function laysARow(node: Node | null | undefined): boolean {
-  return node?.nodeType === 1 /* ELEMENT_NODE */
-    && (node as Element).getAttribute?.(ROW_ATTR) != null;
+  if (node?.nodeType !== 1 /* ELEMENT_NODE */) return false;
+  const el = node as Element;
+  if (el.getAttribute?.(ROW_ATTR) != null) return true;
+  if (!LIST_CONTAINERS.has(tagOf(el))) return false;
+  for (let item = el.firstElementChild; item; item = item.nextElementSibling) {
+    if (tagOf(item) !== 'li') continue;
+    return statesDisplay(item) && displaysInline(item);
+  }
+  return false;
 }
 
 const NO_STYLE: StyleReader = () => undefined;

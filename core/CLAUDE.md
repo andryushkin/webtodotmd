@@ -89,6 +89,15 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   blank decides emphasis, so both neighbour walks (`lookAhead`, `writtenBefore`, `neighbour`) read
   it: pressed against a word, `**` has no spelling CommonMark renders, and 47 Stack Overflow tags
   had been falling back to a live `<strong>`.
+- A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
+  answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
+  `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,
+  rewritten as `<li class="d-inline mr4">`, came back `javac++performance`. An item of a list is
+  counted separately by definition and the page shows where it ends, with a gap, a background or a
+  border; Markdown carries none of those and does not have to, but it must not spell two items as
+  one word. The first item answers for the list — one CSS rule inlines all of them — and a
+  paragraph is *not* included, because prose running across two `display:inline` paragraphs is what
+  the page meant.
 
 ## Hiding
 

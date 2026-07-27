@@ -855,3 +855,39 @@ describe('a row of items the reader saw side by side', () => {
     expect(toMarkdown(row('<p>one</p><p>two</p>')).trim()).toBe('one\n\ntwo');
   });
 });
+
+// The same loss with no mark to spend: a list whose items the page laid along a
+// line. The container is an ordinary `<ul>`, so nothing blockifies and no
+// snapshot marks it, while `</li><li>` is written with not one character
+// between — which is how Stack Overflow writes the tags under a question.
+describe('a list the page laid along a line', () => {
+  const item = (inner: string) => `<li data-s2md-style="display:inline">${inner}</li>`;
+  const inlined = (...items: string[]) => `<ul>${items.map(item).join('')}</ul>`;
+
+  it('parts two items the markup runs together', () => {
+    expect(toMarkdown(inlined('one', 'two')).trim()).toBe('one two');
+  });
+
+  it('adds no second blank where the markup already breaks the line', () => {
+    expect(toMarkdown(`<ul>${item('one')}\n${item('two')}</ul>`).trim()).toBe('one two');
+  });
+
+  it('leaves a list the page stacked writing its markers', () => {
+    expect(toMarkdown('<ul><li>one</li><li>two</li></ul>').trim()).toBe('- one\n- two');
+  });
+
+  it('parts the items of a numbered list too', () => {
+    expect(toMarkdown(inlined('one', 'two').replace(/ul>/g, 'ol>')).trim()).toBe('one two');
+  });
+
+  // The tags of a question, as the page writes them: bold by class, so the mark
+  // comes from the snapshot, and pressed against the tag before it `**` has no
+  // CommonMark spelling that renders — which is how a tag list came back as live
+  // `<strong>` before the row blank existed.
+  it('lets a marker open where the blank precedes it', () => {
+    const tag = (name: string) =>
+      `<a href="/tagged/${name}" data-s2md-style="font-weight:700">${name}</a>`;
+    expect(toMarkdown(inlined(tag('java'), tag('c++'))).trim())
+      .toBe('[**java**](/tagged/java) [**c++**](/tagged/c++)');
+  });
+});

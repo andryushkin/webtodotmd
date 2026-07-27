@@ -247,9 +247,15 @@ describe('display', () => {
   // records the declaration for every block tag — so two `<p style="display:
   // inline">` were two paragraphs in the file and one sentence on the page. The
   // decision sits in `convert()` now, beside the one that *adds* a block.
+  //
+  // The list items are parted by a blank all the same: what an inlined `<li>`
+  // declines is the line of its own, not its separateness from the item beside
+  // it (`laysARow`). Two paragraphs are not — a page runs prose together across
+  // them on purpose, and `<p style="display:inline">Yes</p>` and its `No` are
+  // one sentence.
   it.each([
     ['paragraphs', '<p style="display:inline">a</p><p style="display:inline">b</p>', 'ab\n'],
-    ['list items', '<ul><li style="display:inline">a</li><li style="display:inline">b</li></ul>', 'ab\n'],
+    ['list items', '<ul><li style="display:inline">a</li><li style="display:inline">b</li></ul>', 'a b\n'],
     ['a heading in a sentence', '<div>x<h2 style="display:inline">a</h2>y</div>', 'xay\n'],
     ['a quote in a sentence', '<div>x<blockquote style="display:inline">a</blockquote>y</div>', 'xay\n'],
     ['from a snapshot', '<p data-s2md-style="display:inline">a</p><p>b</p>', 'a\n\nb\n'],

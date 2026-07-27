@@ -136,7 +136,7 @@ rule writes.
 | `font-style: italic` | `_text_` |
 | `text-decoration-line: line-through` | `~~text~~` |
 | `display: block` on an inline tag | its own paragraph — when the *page* states it. A `block` a flex or grid **row** derives for its items is the layout algorithm's word, not the page's: the reader saw one line, and twelve navigation links came back as twelve paragraphs. A flex column, and a grid one column wide, do stack, and there it is recorded |
-| `display: inline` on a block tag | stays in the line |
+| `display: inline` on a block tag | stays in the line — and where the tag is an `<li>`, the item is still parted from the one beside it by a blank: markup writes nothing between `</li>` and `<li>`, and a page that lays its items along a line shows the gap with a `margin` nothing here can read. Stack Overflow's tags arrived as `javac++performance` |
 | `text-align` on a column | `:--`, `:-:`, `--:` |
 | a style declining its tag's own mark | the mark is dropped |
 
