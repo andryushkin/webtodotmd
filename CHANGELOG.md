@@ -4,15 +4,43 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
-## 1.4.2 — 2026-07-27
+## 1.4.3 — 2026-07-27
 
+Everything below was found by capturing one page — a fixture written case by
+case against the conversion contract — and then by looking at that page in a
+browser beside the file it produced. 1.4.2 was never published; its entries are
+folded in here, since one release is one entry.
+
+- **A formula on Wikipedia is a formula again.** Every renderer draws a formula
+  twice: a picture for the eye, and an invisible twin that carries the meaning.
+  The twin is hidden the way a screen-reader-only note is hidden, so it was
+  deleted before it could be read — one article gave 31 pictures and not one
+  formula. A KaTeX page fared worse: the formula vanished from the sentence
+  altogether.
+- **A formula that stood in a sentence stays in it.** Wikipedia wraps every
+  formula in `{\displaystyle …}`, inline ones included, and that wrapper was read
+  as "this is a display block", so a paragraph carrying three of them came back
+  as three centred blocks. The wrapper itself no longer travels into the file,
+  where it used to follow the formula into whatever it was pasted into.
 - **A selected navigation bar, header, footer or sidebar is captured.** They were
   dropped as page furniture even when the selection was made of them — and the
   same rule ate the headline and byline of a highlighted article, because a news
   site keeps both in a `<header>` inside it.
-- **More text meant for screen readers stays out.** The commonest spelling of the
-  `.sr-only` idiom, `clip: rect(0, 0, 0, 0)` without units, was not recognised.
-  So was the text a page hides in a box it keeps open for one visible line.
+- **Text hidden only from screen readers is kept.** `aria-hidden` takes a node
+  out of the accessibility tree and leaves every pixel on the screen: a star
+  rating, the arrow in a "read more" link, a number beside a chart. All of it was
+  being deleted.
+- **More text meant for screen readers alone stays out.** The commonest spelling
+  of the `.sr-only` idiom, `clip: rect(0, 0, 0, 0)` without units, was not
+  recognised. Nor was the text a page hides in a box it keeps open for one
+  visible line.
+- **A section a page fades in on scroll is captured.** One written with a
+  transition on `visibility` was read as a dropdown standing by and dropped.
+- **Quotation marks are written where the page drew them.** A `<q>` showed
+  `“quoted”` and the file said `quoted`. The pair follows the page's language —
+  `«…»`, `„…“`, `「…」`.
+- **A ruby reading no longer welds itself to the word.** `漢字` with `かんじ` above
+  it arrived as `漢字かんじ`, one word read twice; it is now `漢字(かんじ)`.
 - **A nested list under a task item is still a list.** `- [x] ` was counted as
   part of the marker, which pushed everything under it four columns too far: the
   nested list arrived as literal text, and a second paragraph arrived in a
@@ -20,6 +48,10 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 - **An image with no address no longer becomes a broken one.** It reached the
   file pointing at the page being captured, instead of leaving the description
   the reader would have seen.
+- **Blank space no longer opens a code block.** Whitespace between two blocks is
+  drawn nowhere by a browser and was written into the file; four such gaps in a
+  row turned the paragraph after them into a listing.
+- **Two selections dragged at once are separated by one blank line, not two.**
 - **Code folded into a table cell keeps its indentation.**
 - Lists numbered `NaN.` when the page wrote a `start` no number could be read out
   of.
