@@ -4,6 +4,28 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.1 — 2026-07-27
+
+- **Bold and italic written in CSS are no longer lost.** Notion, Medium,
+  Substack, Confluence and anything built with Tailwind mark emphasis with a
+  class rather than a `<b>` or an `<em>`, and so does text pasted out of Google
+  Docs or Word. All of it used to arrive as plain text. It now converts, and a
+  heading or a table header stays as it was — the mark is written where a run is
+  heavier than the text around it, not wherever the page happens to state a
+  weight.
+- **Text meant for screen readers stays out of the file.** "Skip to main
+  content", "(opens in a new tab)" and other content hidden with `.sr-only` or
+  `.visually-hidden` was copied out as if it had been on the page. A section a
+  page is about to fade in is kept, because it is not withheld — only not shown
+  yet.
+- **Column alignment survives.** A table that aligns a column with a class kept
+  its columns but lost the alignment.
+- **Text no longer disappears next to a tilde.** A `~` standing beside struck-
+  through text formed a code fence, and everything it enclosed vanished from the
+  file. A tilde in ordinary prose — `~/src`, `~5 min` — is untouched.
+- **A page showing Markdown as text stays text.** A styled block holding
+  `# heading` or `---` turned it into a real heading or a horizontal rule.
+
 ## 1.4.0 — 2026-07-26
 
 - **Tables with merged cells now stay tables.** A table Markdown has no syntax
