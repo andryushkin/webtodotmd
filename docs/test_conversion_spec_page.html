@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text to .md — conversion specification test page</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #172033;
+    --muted: #5f6b7c;
+    --line: #d9e0ea;
+    --paper: #ffffff;
+    --wash: #f4f7fb;
+    --blue: #165dcc;
+    --green: #166534;
+    --amber: #92400e;
+    --red: #991b1b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--wash);
+    font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  body > header {
+    color: white;
+    background: #10203d;
+    padding: 2rem max(1rem, calc((100% - 980px) / 2));
+  }
+  body > header h1 { margin: 0 0 .5rem; font-size: clamp(1.8rem, 4vw, 3rem); }
+  body > header p { max-width: 72ch; margin: 0; color: #d8e4fa; }
+  nav {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: flex;
+    gap: .35rem;
+    overflow-x: auto;
+    padding: .75rem max(1rem, calc((100% - 980px) / 2));
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid var(--line);
+  }
+  nav a {
+    flex: none;
+    padding: .35rem .65rem;
+    color: var(--blue);
+    background: #edf4ff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: .82rem;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
+  main > section { scroll-margin-top: 5rem; margin-top: 2.5rem; }
+  main > section > h2 { margin-bottom: .35rem; font-size: 1.65rem; }
+  .section-lead { margin-top: 0; color: var(--muted); }
+  .case {
+    margin: 1rem 0;
+    overflow: clip;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(23, 32, 51, .04);
+  }
+  .case > aside {
+    padding: .8rem 1rem;
+    color: var(--muted);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    font-size: .9rem;
+  }
+  .case > aside strong { color: var(--ink); }
+  .case > aside code { color: var(--green); }
+  .case > aside .known { color: var(--red); font-weight: 700; }
+  .case > aside .setting { color: var(--amber); font-weight: 700; }
+  .subject { padding: 1rem 1.2rem; }
+  .subject > :first-child { margin-top: 0; }
+  .subject > :last-child { margin-bottom: 0; }
+  .subject h1, .subject h2, .subject h3, .subject h4,
+  .subject h5, .subject h6 { margin: .8rem 0 .35rem; }
+  .subject blockquote {
+    margin: .75rem 0;
+    padding: .2rem 1rem;
+    color: #334155;
+    background: #f8fafc;
+    border-left: 4px solid #94a3b8;
+  }
+  .subject code, aside code {
+    padding: .08rem .3rem;
+    background: #edf1f6;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .subject pre {
+    overflow-x: auto;
+    padding: 1rem;
+    color: #e7edf8;
+    background: #111827;
+    border-radius: 8px;
+    line-height: 1.45;
+  }
+  .subject pre code { padding: 0; color: inherit; background: none; }
+  table { width: 100%; border-collapse: collapse; margin: .75rem 0; }
+  caption { margin-bottom: .35rem; font-weight: 700; text-align: left; }
+  th, td { padding: .5rem .65rem; border: 1px solid #b8c2d0; vertical-align: top; }
+  th { background: #eef2f7; }
+  figure { margin: .75rem 0; }
+  figure img { max-width: 160px; height: auto; }
+  figcaption { color: var(--muted); font-size: .9rem; }
+  .css-bold { font-weight: 750; }
+  .css-italic { font-style: italic; }
+  .css-struck { text-decoration: line-through; }
+  .decline-bold { font-weight: 400; }
+  .inline-div { display: inline; }
+  .block-span { display: block; margin: .35rem 0; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .transitioning-in { opacity: 0; transition: opacity 30s; }
+  .transitioning-visibility { visibility: hidden; transition: visibility 30s; }
+  .standby-overlay {
+    position: absolute;
+    visibility: hidden;
+    transition: visibility 30s;
+  }
+  .visible-child-parent { visibility: hidden; }
+  .visible-child-parent span { visibility: visible; }
+  .text-node-lines { white-space: break-spaces; }
+  script[type^="math/tex"].visible-math-script {
+    display: inline;
+    font-family: "Times New Roman", serif;
+  }
+  .plain-semantics > * { margin-right: .4rem; }
+  .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+  .price { color: #b42318; font-size: 1.4rem; font-weight: 750; }
+  .rating { color: #b7791f; }
+  mark { padding: 0 .1em; background: #fff0a6; }
+  @media (max-width: 700px) {
+    .two-column { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Conversion specification test page</h1>
+  <p>
+    A manual fixture for Text to .md. Serve this file over HTTP, reload the
+    unpacked extension, and select only the white subject area of one case.
+    Compare the page, Preview, and Source/downloaded Markdown.
+  </p>
+</header>
+
+<nav aria-label="Test sections">
+  <a href="#blocks">Blocks</a>
+  <a href="#inline">Inline</a>
+  <a href="#styles">CSS</a>
+  <a href="#lists-code">Lists and code</a>
+  <a href="#tables">Tables</a>
+  <a href="#media">Links and media</a>
+  <a href="#escaping">Escaping</a>
+  <a href="#removal">Removal</a>
+  <a href="#math">Math</a>
+  <a href="#real-world">Real-world</a>
+  <a href="#modes">Modes</a>
+  <a href="#limitations">Known limits</a>
+</nav>
+
+<main>
+  <aside>
+    <p>
+      Run from the repository root:
+      <code>python3 -m http.server 8000</code>, then open
+      <code>http://localhost:8000/docs/test_conversion_spec_page.html</code>.
+      The extension cannot run on <code>file://</code> pages.
+    </p>
+    <p>
+      Each gray strip describes the assertion and is outside the subject. The
+      extension adds one heading level, so an <code>h2</code> selected here is
+      expected to become <code>###</code>. Cases marked “setting” require the
+      named option. Known limitations are collected at the end.
+    </p>
+  </aside>
+
+  <section id="blocks">
+    <h2>1. Blocks</h2>
+    <p class="section-lead">Ordinary document structure, followed by less tidy combinations.</p>
+
+    <article class="case">
+      <aside><strong>B1.</strong> Headings shift by one and clamp at level six; the permalink glyph is dropped. Paragraphs stay separated, one <code>br</code> is a hard break, two become a paragraph break, and <code>hr</code> becomes <code>---</code>.</aside>
+      <div class="subject">
+        <h1>Page title</h1>
+        <h2>Section title <a class="headerlink" href="#blocks" aria-label="Permalink">¶</a></h2>
+        <h3>Smaller heading with <code>inline()</code></h3>
+        <p>First paragraph with a visible<br>hard line break.</p>
+        <p>One paragraph drawn as two parts.<br><br>The second part must follow a blank line, not two hard-break backslashes.</p>
+        <p>Second paragraph after a real paragraph boundary.</p>
+        <hr>
+        <h6>The deepest heading clamps at level six</h6>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>B2.</strong> Every non-empty line stays quoted, including two paragraphs and the nested quote. HTML source indentation must not create empty quote lines.</aside>
+      <div class="subject">
+        <blockquote>
+          <p>A quoted paragraph with <strong>important words</strong>.</p>
+          <p>A second quoted paragraph.</p>
+          <blockquote>
+            <p>A reply nested inside the quotation.</p>
+          </blockquote>
+        </blockquote>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>B3.</strong> Definition terms and definitions become separate blocks; the nested list remains a list.</aside>
+      <div class="subject">
+        <dl>
+          <dt>Cache-Control</dt>
+          <dd>A response header that controls caching.</dd>
+          <dt>Fresh response</dt>
+          <dd><strong>Reusable</strong> without contacting the origin.</dd>
+          <dd>
+            Typical directives:
+            <ul>
+              <li><code>max-age</code></li>
+              <li><code>no-cache</code></li>
+            </ul>
+          </dd>
+        </dl>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>B4.</strong> Underline, size, dates, direction, quotes, ruby, and legacy font semantics deliberately become their visible plain text.</aside>
+      <div class="subject plain-semantics">
+        <ins>inserted</ins>
+        <u>underlined</u>
+        <small>small</small>
+        <big>big</big>
+        <abbr title="HyperText Markup Language">HTML</abbr>
+        <q>quoted</q>
+        <time datetime="2026-07-27">July 27</time>
+        <data value="42">forty-two</data>
+        <output>ready</output>
+        <bdi>مرحبا</bdi>
+        <bdo dir="rtl">visible order</bdo>
+        <ruby>漢<rt>kan</rt></ruby>
+        <tt>terminal</tt>
+        <font color="red">legacy</font>
+      </div>
+    </article>
+  </section>
+
+  <section id="inline">
+    <h2>2. Inline formatting</h2>
+    <p class="section-lead">Tags, nesting, punctuation, and whitespace at delimiter boundaries.</p>
+
+    <article class="case">
+      <aside><strong>I1.</strong> Expect bold, italic, strikethrough, code, keyboard/sample code, and their nesting. Spaces inside formatting move outside the delimiters.</aside>
+      <div class="subject">
+        <p><strong>bold</strong>, <em>italic</em>, <del>deleted</del>, <s>struck</s>, and <strike>legacy struck</strike>.</p>
+        <p><cite>citation</cite>, <dfn>defined term</dfn>, and <var>variable</var> are italic because that is how the browser displays them.</p>
+        <p>Press <kbd>Ctrl</kbd> + <kbd>C</kbd>; output is <samp>&lt;div onclick=alert(1)&gt;copied&lt;/div&gt;</samp>.</p>
+        <p><strong><em>bold italic</em></strong>, <em><code>code in emphasis</code></em>, and <strong><del>bold deletion</del></strong>.</p>
+        <p>Leading:<strong> padded </strong>:trailing and adjacent <em>one</em><em>two</em>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>I2.</strong> Inline code chooses a longer delimiter when it contains backticks; its contents stay literal and do not become Markdown.</aside>
+      <div class="subject">
+        <p>Use <code>const name = `Ada`;</code> and compare <code>**not bold** &lt;x-tag&gt; a\b</code>.</p>
+        <p>Nested tags stay code text: <code>press <strong>Save</strong> then <em>wait</em></code>.</p>
+        <p>Adjacent code spans with nothing between them merge: <code>left</code><code>right</code>.</p>
+        <p>Longer run: <code>before `` middle ` after</code>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>I3.</strong> Emphasis next to punctuation must still render as emphasis. The converter tries CommonMark-safe delimiters before its known HTML fallback.</aside>
+      <div class="subject">
+        <p>(<em>inside parentheses</em>),/<strong>after slash</strong>/—<em>beside dash</em>—and snake_case.</p>
+        <p>Mixed punctuation: a_<em>b</em>_c and x*<strong>y</strong>*z.</p>
+      </div>
+    </article>
+  </section>
+
+  <section id="styles">
+    <h2>3. The reader is the judge: CSS</h2>
+    <p class="section-lead">The result follows visible contrast, not merely the element name.</p>
+
+    <article class="case">
+      <aside><strong>S1.</strong> The three CSS-only runs gain Markdown marks. The styled words inside an already bold heading do not become double-bold.</aside>
+      <div class="subject">
+        <p>A <span class="css-bold">CSS-bold run</span>, a <span class="css-italic">CSS-italic run</span>, and a <span class="css-struck">CSS-struck run</span>.</p>
+        <h3>A bold heading with a <span class="css-bold">same-weight run</span> and <em>actual emphasis</em></h3>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S2.</strong> A style that declines its tag's meaning wins: the first two phrases are plain; the nested italic survives.</aside>
+      <div class="subject">
+        <p><strong class="decline-bold">Visually normal strong text</strong>.</p>
+        <p><b class="decline-bold">Visually normal bold tag with <em>real italic inside</em></b>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S3.</strong> A block span becomes its own paragraph; inline divs stay in one sentence.</aside>
+      <div class="subject">
+        <p>Before the styled span.<span class="block-span">This span is visibly a block.</span>After the styled span.</p>
+        <div class="inline-div">First inline div,</div>
+        <div class="inline-div"> second inline div.</div>
+      </div>
+    </article>
+  </section>
+
+  <section id="lists-code">
+    <h2>4. Lists and code</h2>
+    <p class="section-lead">Mixed marker widths, task controls, loose items, and source-code widgets.</p>
+
+    <article class="case">
+      <aside><strong>L1.</strong> Keep start value, nested indentation, loose paragraphs, task state, and inline formatting.</aside>
+      <div class="subject">
+        <ol start="7">
+          <li>Seventh item with <code>inline code</code>.</li>
+          <li>
+            Eighth item:
+            <ul>
+              <li><label><input type="checkbox" checked> shipped</label></li>
+              <li><label><input type="checkbox"> document the edge case</label></li>
+              <li>
+                Nested again
+                <ol start="3">
+                  <li>Third nested item</li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <p>A loose item with one paragraph.</p>
+            <p>And another paragraph in the same item.</p>
+          </li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C1.</strong> Detect <code>language-javascript</code>, remove visual line numbers, preserve indentation and blank lines, and use a fence longer than the three backticks inside.</aside>
+      <div class="subject">
+        <pre><code class="language-javascript"><span class="line-number">1</span>function fence(value) {
+<span class="line-number">2</span>  const sample = "```";
+
+<span class="line-number">4</span>  return `${value}
+<span class="line-number">5</span>    stays indented`;
+<span class="line-number">6</span>}</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C2.</strong> A preformatted widget using <code>br</code> still produces three lines. Whitespace inside code is literal.</aside>
+      <div class="subject">
+        <pre><code data-lang="text">first	line<br>  second line<br><br>fourth after a blank line</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C3.</strong> GitHub-like syntax highlighting splits dangerous-looking text across spans. The code block must preserve the exact visible source, not escape it.</aside>
+      <div class="subject">
+        <div class="highlight highlight-source-typescript">
+          <pre><span class="pl-k">type</span> <span class="pl-smi">Box</span><span class="pl-kos">&lt;</span><span class="pl-smi">T</span><span class="pl-kos">&gt;</span> <span class="pl-kos">=</span> <span class="pl-kos">{</span>
+  <span class="pl-c1">value</span><span class="pl-kos">:</span> <span class="pl-smi">T</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span></pre>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>C4.</strong> Recognize language hints used by different highlighters. The GitHub copy widget uses its <code>value</code>, while an unsafe info string is omitted.</aside>
+      <div class="subject">
+        <pre><code data-language="python">print("data-language")</code></pre>
+        <pre class="brush: css"><code>body { color: navy; }</code></pre>
+        <pre><code class="prettyprint lang-rust">fn main() {}</code></pre>
+        <pre><code class="language-js"></code><clipboard-copy value="const copied = true;">const copied = true;</clipboard-copy></pre>
+        <pre><code data-lang="js&#10;```">safe content, unsafe language hint</code></pre>
+      </div>
+    </article>
+  </section>
+
+  <section id="tables">
+    <h2>5. Tables</h2>
+    <p class="section-lead">Simple pipe tables and complex grids that the extension flattens by default.</p>
+
+    <article class="case">
+      <aside><strong>T1.</strong> A caption precedes a pipe table. Although <code>tfoot</code> appears before <code>tbody</code> in the source, the footer comes last. Alignment, pipe escaping, and inline formatting survive.</aside>
+      <div class="subject">
+        <table>
+          <caption>Quarterly results</caption>
+          <thead>
+            <tr>
+              <th style="text-align:left">Project</th>
+              <th style="text-align:center">Status</th>
+              <th style="text-align:right">Revenue</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr><td>Total</td><td>2 projects</td><td>$13,300</td></tr>
+          </tfoot>
+          <tbody>
+            <tr><td>Alpha | Beta</td><td><strong>shipped</strong></td><td>$12,400</td></tr>
+            <tr><td><a href="/projects/gamma">Gamma</a></td><td><code>blocked</code></td><td>$900</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T2.</strong> An empty <code>thead</code> is equivalent to none: the table's first row becomes the header. Empty cells keep position, unanimous body-cell alignment is recognized, and a wider body row widens the table instead of losing data.</aside>
+      <div class="subject">
+        <table>
+          <thead></thead>
+          <tbody>
+          <tr><td>Region</td><td>Owner</td><td>Notes</td></tr>
+          <tr><td>North</td><td style="text-align:center"></td><td>Waiting</td></tr>
+          <tr><td></td><td style="text-align:center">Sam</td><td></td><td>Overflow column survives</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T3.</strong> Merged cells are flattened into an ordinary rectangular pipe table. No value may disappear or shift into the wrong column.</aside>
+      <div class="subject">
+        <table>
+          <thead>
+            <tr><th rowspan="2">Browser</th><th colspan="2">Support</th></tr>
+            <tr><th>Desktop</th><th>Mobile</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Chromium</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>WebKit</td><td colspan="2">Partial in both</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T4.</strong> A nested table is flattened once, one nested row per line and <code>·</code> between its cells. Caption, empty middle cell, and adjacent outer text stay ordered.</aside>
+      <div class="subject">
+        <table>
+          <thead><tr><th>Package</th><th>Compatibility</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Parser</td>
+              <td>
+                Before nested grid.
+                <div>
+                  <table>
+                    <caption>Runtime matrix</caption>
+                    <tr><th>Bun</th><th>Node</th><th>Deno</th></tr>
+                    <tr><td>Yes</td><td></td><td>Yes</td></tr>
+                  </table>
+                </div>
+                After nested grid.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T5.</strong> A wrapped pre block stays one cell and flattens to one code span per source line. Preserve tabs, blank lines, backslashes, <code>&lt;</code>, <code>&amp;</code>, and the pipe exactly.</aside>
+      <div class="subject">
+        <table>
+          <thead><tr><th>Command</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>inspect</code></td>
+              <td>
+                Text before.
+                <div>
+                  <ul>
+                    <li>
+                      Log:
+                      <pre>first	line
+
+path\file | a &lt; b &amp; c
+``` literal fence</pre>
+                    </li>
+                  </ul>
+                </div>
+                Text after.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T6.</strong> Cell prose that resembles Markdown or HTML stays visible text. The formula pipe must not split the row. This combines escaping cases from table regressions.</aside>
+      <div class="subject">
+        <table>
+          <tr><th>Input</th><th>Meaning</th></tr>
+          <tr><td># heading</td><td>Literal label</td></tr>
+          <tr><td>---</td><td>Three literal dashes</td></tr>
+          <tr><td>&lt;button autofocus&gt;Pay&lt;/button&gt;</td><td>Displayed HTML tutorial text</td></tr>
+          <tr><td><span class="katex"><annotation encoding="application/x-tex">P(A|B)</annotation><span aria-hidden="true">P(A|B)</span></span></td><td>Conditional probability</td></tr>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T7.</strong> A caption-only table does not disappear; its caption is the entire output. HTML shown in the caption remains visible characters.</aside>
+      <div class="subject">
+        <table><caption>Maintenance window for &lt;table class="jobs"&gt;: Sunday 02:00 UTC</caption></table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T8.</strong> A visible line break inside a pipe cell becomes literal <code>&lt;br></code>, keeping the entire GFM row on one source line.</aside>
+      <div class="subject">
+        <table>
+          <tr><th>Address</th><th>Hours</th></tr>
+          <tr><td>42 Example Street<br>Second floor</td><td>09:00<br>17:00</td></tr>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>T9.</strong> <span class="setting">Keep complex tables as HTML.</span> With the setting off, this flattens. With it on, converter-owned HTML renders a table with bold/link semantics and image alt text, but carries no <code>onclick</code>, page style, form control, or unsafe URL.</aside>
+      <div class="subject">
+        <table onclick="alert(1)" style="position:fixed;inset:0">
+          <tr><th colspan="2">Account</th></tr>
+          <tr>
+            <td><form><input autofocus value="pay"><button>Pay now</button></form></td>
+            <td><a href="javascript:alert(1)"><strong>Unsafe target</strong></a></td>
+          </tr>
+          <tr>
+            <td><strong>Safe formatting</strong></td>
+            <td><a href="https://example.com/account">Safe link</a> and <img src="avatar.png" alt="avatar image"></td>
+          </tr>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section id="media">
+    <h2>6. Links and media</h2>
+    <p class="section-lead">URL resolution, unsafe schemes, responsive images, lazy loading, and fallbacks.</p>
+
+    <article class="case">
+      <aside><strong>M1.</strong> Resolve relative URLs and keep the extension/panel-safe schemes. A missing target or any other scheme keeps its text but loses the target.</aside>
+      <div class="subject">
+        <p><a href="https://example.com/docs?q=a&amp;b=c#top">Absolute documentation</a>.</p>
+        <p><a href="../CHANGELOG.md">Relative changelog</a> and <a href="#tables">table fragment</a>.</p>
+        <p><a href="ftp://files.example.com/archive.zip">FTP</a>, <a href="ftps://files.example.com/private.zip">FTPS</a>, and <a href="mailto:reader@example.com">email</a>.</p>
+        <p><a href="tel:+15551234">telephone</a>, <a href="callto:reader">call app</a>, <a href="sms:+15551234">SMS</a>, and <a href="cid:part1@example.com">CID</a>.</p>
+        <p><a href="xmpp:reader@example.com">XMPP</a> and <a href="matrix:u/reader:example.com">Matrix</a>.</p>
+        <p><a>Anchor without a destination</a>, <a href="javascript:alert(1)">JavaScript target</a>, and <a href="data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;">data document</a>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>M2.</strong> Keep alt and title, resolve the relative URL, use the img inside picture, and preserve a linked image.</aside>
+      <div class="subject">
+        <figure>
+          <a href="https://example.com/gallery">
+            <picture>
+              <source srcset="hero-large.webp 1200w, hero-small.webp 400w" type="image/webp">
+              <img src="images/hero.jpg" alt="Mountain lake at dawn" title="Open the gallery">
+            </picture>
+          </a>
+          <figcaption>A linked responsive photograph.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>M3.</strong> URL priority is lazy-load attribute, largest <code>srcset</code>, non-placeholder <code>src</code>, then neighboring <code>noscript</code>. Return escaped alt text when no URL exists.</aside>
+      <div class="subject">
+        <p><img src="fallback.jpg" srcset="photo-800.jpg 800w, photo-1600.jpg 1600w" data-src="https://cdn.example.com/lazy-wins.jpg" alt="Lazy photograph"></p>
+        <p><img srcset="photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w" alt="Responsive photograph"></p>
+        <p><img src="data:image/png;base64,iVBORw0KGgo=" alt="Inline data image is valid for an image source"></p>
+        <p><img alt="Fallback *alt* [text] &lt;tag&gt;"></p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>M4.</strong> The neighboring <code>noscript</code> supplies the real image URL but is not emitted itself.</aside>
+      <div class="subject">
+        <img src="data:image/gif;base64,R0lGODlh" alt="News photograph">
+        <noscript><img src="https://images.example.com/news/real.jpg" alt=""></noscript>
+      </div>
+    </article>
+  </section>
+
+  <section id="escaping">
+    <h2>7. Escaping hostile-looking prose</h2>
+    <p class="section-lead">What the page displays as characters must remain characters after Markdown is rendered again.</p>
+
+    <article class="case">
+      <aside><strong>E1.</strong> None of these lines may turn into Markdown structure. In Source, their leading characters need defensive escapes where required.</aside>
+      <div class="subject">
+        <p># not a heading</p>
+        <p>&gt; not a quotation</p>
+        <p>- not a list item</p>
+        <p>1. not an ordered item</p>
+        <p>---</p>
+        <p>*not emphasis* and _not emphasis_ and ~~not deleted~~.</p>
+        <p>[not a link](https://example.com) and ![not an image](x.png).</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>E2.</strong> Displayed HTML stays text. In Source only each opening <code>&lt;</code> needs a backslash; a lone <code>&gt;</code> opens nothing.</aside>
+      <div class="subject">
+        <p>&lt;script&gt;alert("still text")&lt;/script&gt;</p>
+        <p>&lt;form&gt;&lt;input autofocus&gt;&lt;button&gt;Pay&lt;/button&gt;&lt;/form&gt;</p>
+        <p>Use &lt;!-- a comment --&gt; here, and this clause after it must survive.</p>
+        <p>Entities as text: &amp;amp; &amp;copy; &amp;lt;div&amp;gt;.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>E3.</strong> Syntax split across DOM nodes must not assemble into active Markdown or HTML after conversion.</aside>
+      <div class="subject">
+        <p><span>&lt;</span><span>script</span><span>&gt;</span><span>alert(1)</span><span>&lt;/</span><span>script&gt;</span></p>
+        <p><span>[assembled</span><span> link]</span><span>(https://example.com)</span></p>
+        <p><span>**assembled</span><span> bold**</span></p>
+        <p><span>!</span><span>[assembled image]</span><span>(tracker.png)</span></p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>E4.</strong> After each hard break, block-like text is escaped as a new line start. Ordinary whitespace collapses, and a non-breaking space becomes an ordinary final-file space.</aside>
+      <div class="subject">
+        <p>First line<br># still text<br>- still text<br>1. still text</p>
+        <p>Many       source spaces
+          and source newlines collapse to visible spaces.</p>
+        <p>Non-breaking&nbsp;space becomes an ordinary space.</p>
+        <p>Comparisons need no backslash noise: a &lt; b, x &lt;= y, and Tom &amp; Jerry.</p>
+      </div>
+    </article>
+  </section>
+
+  <section id="removal">
+    <h2>8. Removed content</h2>
+    <p class="section-lead">The visible sentinels should survive; every named hidden payload should be absent from Source.</p>
+
+    <article class="case">
+      <aside><strong>R1.</strong> Keep “visible start/end”. Remove hidden, aria-hidden, display-none, visibility-hidden, opacity-zero, clipped/offscreen, screen-reader-only, and standby-overlay payloads.</aside>
+      <div class="subject">
+        <p>Visible start.</p>
+        <p hidden>HIDDEN_ATTRIBUTE_PAYLOAD</p>
+        <p aria-hidden="true">ARIA_HIDDEN_PAYLOAD</p>
+        <p style="display:none">DISPLAY_NONE_PAYLOAD</p>
+        <p style="visibility:hidden">VISIBILITY_HIDDEN_PAYLOAD</p>
+        <p style="opacity:0">OPACITY_ZERO_PAYLOAD</p>
+        <p class="sr-only">SCREEN_READER_ONLY_PAYLOAD</p>
+        <p style="clip-path:inset(50%); position:absolute">CLIP_PATH_PAYLOAD</p>
+        <p style="position:absolute; left:-10000px">OFFSCREEN_PAYLOAD</p>
+        <p style="text-indent:-10000px">TEXT_INDENT_PAYLOAD</p>
+        <p class="standby-overlay">STANDBY_OVERLAY_PAYLOAD</p>
+        <p>Visible end.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>R2.</strong> Opacity-zero survives only when a transition names <code>opacity</code>/<code>all</code>, or an animation exists. In-flow transitional visibility survives; an absolute overlay does not. A visible descendant survives a hidden parent.</aside>
+      <div class="subject">
+        <p class="transitioning-in">Animated reveal content must survive.</p>
+        <p style="opacity:0; transition:color 30s">WRONG_PROPERTY_TRANSITION_PAYLOAD</p>
+        <p style="opacity:0; animation:fade-in 30s">Animated opacity content must survive.</p>
+        <p class="transitioning-visibility">In-flow visibility transition must survive.</p>
+        <p class="visible-child-parent">
+          HIDDEN_PARENT_TEXT
+          <span>Visible descendant survives.</span>
+          HIDDEN_SIBLING_TEXT
+        </p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>R3.</strong> Active and embedded markup is removed outright. Only the two visible sentinel paragraphs remain.</aside>
+      <div class="subject">
+        <p>Before removed elements.</p>
+        <script>void "SCRIPT_PAYLOAD";</script>
+        <style>.STYLE_PAYLOAD { position: fixed; }</style>
+        <iframe srcdoc="<p>IFRAME_PAYLOAD</p>" title="removed frame"></iframe>
+        <object data="about:blank">OBJECT_PAYLOAD</object>
+        <embed src="about:blank">
+        <template>TEMPLATE_PAYLOAD</template>
+        <svg viewBox="0 0 10 10" aria-label="SVG_PAYLOAD"><text x="0" y="8">SVG_PAYLOAD</text></svg>
+        <p>After removed elements.</p>
+      </div>
+    </article>
+  </section>
+
+  <section id="math">
+    <h2>9. Math and raised/lowered text</h2>
+    <p class="section-lead">Math cases require math conversion to be enabled; Unicode sub/sup cases do not.</p>
+
+    <article class="case">
+      <aside><strong>F1.</strong> Subscript and superscript are Unicode, all or nothing per element: <code>H₂O</code>, <code>xⁿ⁺¹</code>, <code>a⁽ⁱ⁾</code>, then plain <code>xABC</code>, <code>x2q</code>, and escaped <code>x\*</code>.</aside>
+      <div class="subject">
+        <p>H<sub>2</sub>O; x<sup>n+1</sup>; a<sup>(i)</sup>; x<sup>ABC</sup>; x<sup>2q</sup>; x<sup>*</sup>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>F2.</strong> <span class="setting">Math setting.</span> KaTeX inline becomes <code>$E = mc^2$</code>; display math becomes a double-dollar block. The hidden visual duplicate is not repeated.</aside>
+      <div class="subject">
+        <p>
+          Energy:
+          <span class="katex">
+            <span class="katex-mathml">
+              <math><semantics><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math>
+            </span>
+            <span aria-hidden="true">E = mc²</span>
+          </span>
+        </p>
+        <span class="katex-display">
+          <span class="katex">
+            <span class="katex-mathml">
+              <math display="block"><semantics><annotation encoding="application/x-tex">\int_0^\infty e^{-x} dx</annotation></semantics></math>
+            </span>
+            <span aria-hidden="true">∫₀∞ e⁻ˣ dx</span>
+          </span>
+        </span>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text, while tag- or comment-shaped text is converted to <code>&amp;lt;</code> rather than becoming live HTML.</aside>
+      <div class="subject">
+        <p>
+          <span class="katex"><annotation encoding="application/x-tex">a &lt; b</annotation><span aria-hidden="true">a &lt; b</span></span>
+          and
+          <span class="katex"><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation><span aria-hidden="true">x custom X y</span></span>
+          and
+          <span class="katex"><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation><span aria-hidden="true">x less-than comment-shaped</span></span>
+        </p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>F4.</strong> <span class="setting">Math setting.</span> Read LaTeX carried by MathJax v3 annotation, MathJax v2 script, and Wikipedia <code>alttext</code>; display forms use double dollars.</aside>
+      <div class="subject">
+        <p>
+          MathJax v3:
+          <mjx-container>
+            <math>
+              <semantics>
+                <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn></mrow>
+                <annotation encoding="application/x-tex">x^2 + 1</annotation>
+              </semantics>
+            </math>
+          </mjx-container>
+        </p>
+        <p>
+          MathJax v2:
+          <script class="visible-math-script" type="math/tex">e^{i\pi}+1=0</script>
+        </p>
+        <p>
+          Wikipedia:
+          <math alttext="{\displaystyle E=mc^{2}}"><mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup></math>
+        </p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>F5.</strong> Raw MathML has no embedded LaTeX. The extension's own rule converts it to dollar math; calling the core alone with <code>math: true</code would drop it.</aside>
+      <div class="subject">
+        <p>
+          Inline raw MathML:
+          <math><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>&lt;</mo><mi>c</mi></math>
+        </p>
+        <math display="block">
+          <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
+        </math>
+      </div>
+    </article>
+  </section>
+
+  <section id="real-world">
+    <h2>10. Real-world composites</h2>
+    <p class="section-lead">Compact versions of patterns found on Stack Overflow, GitHub, Wikipedia, product pages, and documentation sites.</p>
+
+    <article class="case">
+      <aside><strong>W1.</strong> Stack Overflow-like answer: prose, inline code, language fence, generics displayed as code, quotation, and list all remain ordered.</aside>
+      <div class="subject">
+        <div class="answer">
+          <p>Use <code>Array.from()</code> to convert a <code>NodeList&lt;T&gt;</code>:</p>
+          <pre><code class="lang-js">const elements = document.querySelectorAll('.item');
+const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
+          <blockquote><p>This works in modern browsers and preserves the original order.</p></blockquote>
+          <p>Check these edge cases:</p>
+          <ul>
+            <li>an empty result;</li>
+            <li>a node whose text contains <code>&lt;button&gt;</code>;</li>
+            <li>a selector containing <code>[data-id="a|b"]</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W2.</strong> Wikipedia-like content: heading, relative links, footnote-like ordinary link, aligned sortable table, and prose after it.</aside>
+      <div class="subject">
+        <h2>Programming language comparison</h2>
+        <p>The table summarizes three languages.<sup><a href="#source-1">[1]</a></sup></p>
+        <table class="wikitable sortable">
+          <thead><tr><th>Language</th><th style="text-align:right">First appeared</th><th>Typing</th></tr></thead>
+          <tbody>
+            <tr><td><a href="/wiki/Python_(programming_language)">Python</a></td><td style="text-align:right">1991</td><td>Dynamic</td></tr>
+            <tr><td><a href="/wiki/Rust_(programming_language)">Rust</a></td><td style="text-align:right">2015</td><td>Static</td></tr>
+            <tr><td><a href="/wiki/TypeScript">TypeScript</a></td><td style="text-align:right">2012</td><td>Static</td></tr>
+          </tbody>
+        </table>
+        <p id="source-1">Sources differ on how typing disciplines are classified.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W3.</strong> Product cards often misuse color, size, and monospaced fonts. Preserve the text and genuine semantic marks, but do not invent Markdown for price color, rating color, or old price size.</aside>
+      <div class="subject two-column">
+        <div class="product-card">
+          <h3>Trail shoes</h3>
+          <p><span class="price">$129.00</span> <del>$159.00</del></p>
+          <p class="rating">★★★★★ <small>4.8 (214 reviews)</small></p>
+          <p><strong>In stock.</strong> Ships in 2–3 days.</p>
+        </div>
+        <div class="product-card">
+          <h3>Technical details</h3>
+          <dl>
+            <dt>Weight</dt><dd>280 g</dd>
+            <dt>SKU</dt><dd><code>RUN-42-BLU</code></dd>
+          </dl>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W4.</strong> Documentation callout: heading, warning label, nested list, hard break, link, and literal HTML tutorial text must not interfere with one another.</aside>
+      <div class="subject">
+        <div class="documentation-callout">
+          <h3>Before you migrate</h3>
+          <p><strong>Warning:</strong> back up <code>config.json</code> first.<br>Do not paste <code>&lt;script&gt;</code> tags from untrusted pages.</p>
+          <ol>
+            <li>Read the <a href="/docs/migration">migration guide</a>.</li>
+            <li>
+              Verify:
+              <ul>
+                <li>the schema version is <code>3</code>;</li>
+                <li>the value <code>a|b</code> remains one value.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section id="modes">
+    <h2>11. Extension capture pipeline</h2>
+    <p class="section-lead">These cases test the content script around the conversion core.</p>
+
+    <article class="case">
+      <aside><strong>Q1.</strong> Every extension capture uses full mode, even a selection. Selecting this entire subject keeps only <code>ARTICLE_BODY_CONTENT</code>; header, nav, aside, and footer are dropped. The core's separate <code>selectionToMarkdown()</code> behavior is not used by the extension.</aside>
+      <div class="subject">
+        <header><p>ARTICLE_HEADER_CHROME</p></header>
+        <nav><p>ARTICLE_NAV_CHROME</p></nav>
+        <article>
+          <h2>Article body</h2>
+          <p>ARTICLE_BODY_CONTENT survives extension capture.</p>
+        </article>
+        <aside><p>ARTICLE_ASIDE_CHROME</p></aside>
+        <footer><p>ARTICLE_FOOTER_CHROME</p></footer>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q2.</strong> Drag from the middle of “Grace” through the paragraph after the table. The selected rows gain the original header, and the paragraph follows the table.</aside>
+      <div class="subject">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Ada</td><td>Programmer</td></tr>
+            <tr><td>Grace</td><td>Admiral</td></tr>
+            <tr><td>Margaret</td><td>Engineer</td></tr>
+          </tbody>
+        </table>
+        <p>This paragraph is the selection endpoint after the table.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q3.</strong> Select only the middle two lines. The result remains a JavaScript fence with indentation and complete boundary lines.</aside>
+      <div class="subject">
+        <pre><code class="language-javascript">function total(items) {
+  let result = 0;
+  for (const item of items) result += item.price;
+  return result;
+}</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q4.</strong> Select from the middle of item 8 through item 9. The ordered list keeps the original numbering instead of restarting at 1.</aside>
+      <div class="subject">
+        <ol start="7">
+          <li>Seventh item is outside the intended selection.</li>
+          <li>Eighth item is where the selection begins.</li>
+          <li>Ninth item is where the selection ends.</li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q5.</strong> The two literal newlines inside this one text node become hard breaks; the empty middle line becomes a paragraph break. This preprocessing is skipped in literal/preformatted contexts.</aside>
+      <div class="subject">
+        <p><span class="text-node-lines">First caption line
+Second caption line
+
+Fourth line after an empty line</span></p>
+        <pre><code>shell-command \
+  --continuation</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q6.</strong> Shadow DOM, adapted from <code>test_tomd_page.html</code>: select the rendered component. Its heading, list, formatting, and link must be captured; the component's internal style and setup script must not appear.</aside>
+      <div class="subject">
+        <test-conversion-shadow></test-conversion-shadow>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q7.</strong> Multi-range selection, adapted from <code>test_tomd_page.html</code>: where the browser permits it, Cmd/Ctrl-drag A and C without B. Source contains A and C as separate paragraphs in range order.</aside>
+      <div class="subject">
+        <p><strong>[Range A]</strong> First disconnected paragraph.</p>
+        <p><strong>[Range B]</strong> This paragraph should remain unselected.</p>
+        <p><strong>[Range C]</strong> Third disconnected paragraph.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q8.</strong> Highlighter mode, adapted from <code>test_tomd_page.html</code>: independently toggle the paragraph, list, table, and code block. Each chosen block keeps its own Markdown structure.</aside>
+      <div class="subject">
+        <p>Highlighter target: standalone paragraph.</p>
+        <ul>
+          <li>Highlighter target: first list item.</li>
+          <li>Highlighter target: second list item.</li>
+        </ul>
+        <table>
+          <tr><th>Key</th><th>Value</th></tr>
+          <tr><td>mode</td><td>highlighter</td></tr>
+        </table>
+        <pre><code class="language-bash">echo "highlighter target"</code></pre>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q9.</strong> Word-boundary enrichment from <code>test_faithfulness_page.html</code>: drag from the middle of a word in the first paragraph to the middle of a word in the second. Boundary words are completed and both paragraphs survive.</aside>
+      <div class="subject">
+        <p>The first paragraph contains several ordinary words before the selection endpoint.</p>
+        <p>The second paragraph contains several ordinary words after the selection endpoint.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q10.</strong> Partial block enrichment from <code>test_faithfulness_page.html</code>: separately select text inside the heading, quote, and single table cell. The first remains a heading, the second a quote, and the cell becomes plain text without a table wrapper.</aside>
+      <div class="subject">
+        <h3>A heading long enough for a selection inside its text</h3>
+        <blockquote>
+          <p>A quotation long enough for a partial selection inside its text.</p>
+          <ul><li>A nested point that remains inside the quotation.</li></ul>
+        </blockquote>
+        <table>
+          <tr><th>One cell target</th><th>Neighbor</th></tr>
+          <tr><td>Select only these words</td><td>Do not include this cell</td></tr>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q11.</strong> Table enrichment from <code>test_faithfulness_page.html</code>: drag from the repeated-header body row in the first table, through the paragraph, into the second table. Both real headers appear once, and the repeated body row is not dropped.</aside>
+      <div class="subject">
+        <table>
+          <thead><tr><th>Name</th><th>Age</th></tr></thead>
+          <tbody>
+            <tr><td>Name</td><td>Age</td></tr>
+            <tr><td>Ada</td><td>36</td></tr>
+          </tbody>
+        </table>
+        <p>Text selected between two independent tables.</p>
+        <table>
+          <thead><tr><th>Editor</th><th>Keys</th></tr></thead>
+          <tbody>
+            <tr><td>vi</td><td>modal</td></tr>
+            <tr><td>Emacs</td><td>chords</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>Q12.</strong> Cleanup and output sweep from <code>test_faithfulness_page.html</code>: capture this subject, compare Preview, Source, copied text, and downloaded Markdown, then search Elements for <code>data-s2md</code>. All outputs agree and no temporary snapshot attributes remain.</aside>
+      <div class="subject">
+        <p class="css-bold">Cleanup sentinel with captured CSS formatting.</p>
+        <p>Second sentinel with literal &lt;span&gt; text.</p>
+      </div>
+    </article>
+  </section>
+
+  <section id="limitations">
+    <h2>12. Known limitations and decided work</h2>
+    <p class="section-lead">These cases document current specification debt; do not count their stated output as a surprise regression.</p>
+
+    <article class="case">
+      <aside><strong>K1.</strong> <span class="known">Known defect:</span> figure image and caption currently run together as <code>![A](x)Caption</code>.</aside>
+      <div class="subject">
+        <figure>
+          <img src="diagram.png" alt="Architecture diagram">
+          <figcaption>Services and message flow.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K2.</strong> <span class="known">Known defects:</span> details currently becomes <code>TitleBody</code>; adjacent addresses become <code>OneTwo</code>.</aside>
+      <div class="subject">
+        <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
+        <address>One</address><address>Two</address>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K3.</strong> <span class="known">Known debt:</span> punctuation can force emphasis to use an HTML fallback even though normal output should contain no live HTML.</aside>
+      <div class="subject">
+        <p>a_<em>b</em>_c and a*<strong>b</strong>*c</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K4.</strong> <span class="known">Decided, not implemented:</span> visible highlight should eventually become <code>==marked text==</code>, while literal <code>x==y</code> must stay plain.</aside>
+      <div class="subject">
+        <p>A <mark>marked phrase</mark> beside literal comparisons x==y and C==C++.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K5.</strong> Footnotes are disabled in the extension, so this remains an ordinary link rather than a footnote definition.</aside>
+      <div class="subject">
+        <p>A factual claim.<sup><a href="#note-7">[7]</a></sup></p>
+        <p id="note-7">7. Example source.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>K6.</strong> <span class="known">Known defect:</span> adjacent structural containers without block children currently run together as <code>SectionArticleFormLegendField</code>.</aside>
+      <div class="subject">
+        <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
+      </div>
+    </article>
+  </section>
+</main>
+<script>
+  class TestConversionShadow extends HTMLElement {
+    constructor() {
+      super();
+      const root = this.attachShadow({ mode: "open" });
+      root.innerHTML = `
+        <style>
+          :host { display: block; padding: 1rem; border: 2px dashed #7c3aed; border-radius: 8px; }
+          h3 { margin-top: 0; color: #5b21b6; }
+        </style>
+        <h3>Shadow component heading</h3>
+        <p>Text inside an open shadow root with <strong>bold meaning</strong>.</p>
+        <ul>
+          <li>First shadow item</li>
+          <li><a href="https://example.com/shadow">Linked shadow item</a></li>
+        </ul>`;
+    }
+  }
+  customElements.define("test-conversion-shadow", TestConversionShadow);
+</script>
+</body>
+</html>

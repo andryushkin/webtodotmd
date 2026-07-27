@@ -19,12 +19,11 @@ not be broken.
 
 ## Other contents
 
-- `test_tomd_page.html` — a kitchen-sink page (tables, math, code, nested
-  lists, Shadow DOM) for manually checking conversion output.
-- `test_faithfulness_page.html` — cases the automated suite cannot reach: mouse
-  selections that cross a block boundary, and pages that show HTML as text. Each
-  section states what to select and what should come out. Serve it over HTTP —
-  the extension cannot run on `file://`.
+- `test_conversion_spec_page.html` — a case-by-case manual fixture for the full
+  `conversion.md` contract, with simple examples, regression-derived edge cases,
+  real-world composites, partial-selection enrichment, full-mode chrome removal,
+  and known limitations clearly separated from expected passes. Serve it over
+  HTTP — the extension cannot run on `file://`.
 
 ## Not in this repository
 
