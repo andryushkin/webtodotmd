@@ -1,0 +1,19 @@
+[
+  { "id": "wikipedia-mass-energy", "url": "https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence", "note": "31 formulas, 19 display; the reference measurement" },
+  { "id": "wikipedia-normal-distribution", "url": "https://en.wikipedia.org/wiki/Normal_distribution", "note": "264 {\\textstyle} wrappers, infobox tables" },
+  { "id": "wikipedia-de-quotes", "url": "https://de.wikipedia.org/wiki/Anf%C3%BChrungszeichen", "note": "<q> and lang=de quotation marks" },
+  { "id": "arxiv-gpt4-html", "url": "https://arxiv.org/html/2303.08774v6", "note": "LaTeXML, raw MathML without annotations" },
+  { "id": "katex-supported", "url": "https://katex.org/docs/supported.html", "note": "KaTeX renders itself; .katex-mathml under sr-only" },
+  { "id": "mkdocs-material-code", "url": "https://squidfunk.github.io/mkdocs-material/reference/code-blocks/", "note": "flex nav, heading anchors, highlighted code, tabs" },
+  { "id": "docusaurus-code-blocks", "url": "https://docusaurus.io/docs/markdown-features/code-blocks", "note": "docs site, tabs, code with copy button" },
+  { "id": "python-docs-asyncio", "url": "https://docs.python.org/3/library/asyncio-task.html", "note": "Sphinx, paragraph anchors, definition lists" },
+  { "id": "mdn-css-display", "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/display", "note": "MDN: tables, notes, syntax boxes, interactive examples" },
+  { "id": "stackoverflow-11227809", "url": "https://stackoverflow.com/questions/11227809/", "note": "code, quotes, <kbd>, tables" },
+  { "id": "github-readme", "url": "https://github.com/andryushkin/webtodotmd", "note": "task lists, tables, anchors, highlighted code" },
+  { "id": "shoelace-button", "url": "https://shoelace.style/components/button", "note": "real Shadow DOM outside happy-dom" },
+  { "id": "govuk-vat-rates", "url": "https://www.gov.uk/vat-rates", "note": "sr-only, skip links, aria-hidden" },
+  { "id": "notion-help-guides", "url": "https://www.notion.so/help/guides", "note": "formatting by class only" },
+  { "id": "substack-acx", "url": "https://www.astralcodexten.com/", "note": "Substack, class-only formatting" },
+  { "id": "medium-blog", "url": "https://blog.medium.com/", "note": "Medium, class-only formatting" },
+  { "id": "hn-item", "url": "https://news.ycombinator.com/item?id=39215125", "note": "layout tables, nested comment indentation" }
+]

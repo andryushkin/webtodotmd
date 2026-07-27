@@ -109,8 +109,16 @@ export function visibleText(html: string): string {
   const doc = parseHTML(`<html><body>${html}</body></html>`).document;
   const out: string[] = [];
   if (doc.body) collectText(doc.body, out);
-  return out
-    .join('')
+  return normalizeVisible(out.join(''));
+}
+
+/**
+ * The same folding, for text that never was HTML — what a live browser hands
+ * back for a selection on a real page. Both sides of that comparison have to be
+ * folded by the same code, or the report is a report about the normalizers.
+ */
+export function normalizeVisible(text: string): string {
+  return text
     .replace(/ /g, ' ')
     .replace(/\s+/g, ' ')
     .replace(SHIFTED, (ch) => SHIFTED_BACK.get(ch) ?? ch)
