@@ -7,6 +7,19 @@ layout engine belongs in `src/content/`, not here.
 
 Each rule below has cost a bug already; the reason is what makes it stick.
 
+## Output language
+
+- The product converts HTML *into* Markdown, so live HTML in the output is unfinished work, not a
+  feature. The only tags a file should hold are escaped ones the page itself displayed — `\<div\>`
+  on a page about HTML, which the reader saw as characters and must go on seeing as characters.
+  Never a tag emitted to carry an appearance: a background becomes `**`, not a `<mark>`, and
+  `==` is not the answer either — it is neither CommonMark nor GFM, so the panel would show the
+  characters, and making it markup means escaping every `x==y` a page ever prints.
+  One place still breaks this and is a debt: the emphasis fallback for content flanked by
+  punctuation, where the alternative was losing the italics and leaving the delimiters on show.
+  `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),
+  all or nothing per element, since a half-mapped run states a different formula just as firmly.
+
 ## Escaping
 
 - Markdown characters in the page's own text are escaped, so the file renders what the reader saw.
@@ -87,15 +100,6 @@ threshold sits where no layout lands by accident.
   answers first; when it is silent the body does, but only unanimously — a table of numbers carries
   `text-align` on every `<td>` and nothing on the `<th>`, while one differing or silent cell means
   the column was never aligned at all.
-- The product converts HTML *into* Markdown, so live HTML in the output is unfinished work, not a
-  feature. The only tags a file should hold are escaped ones the page itself displayed — `\<div\>`
-  on a page about HTML, which the reader saw as characters and must go on seeing as characters.
-  Never a tag emitted to carry an appearance: a background becomes `**`, not a `<mark>`, and
-  `==` is not the answer either — it is neither CommonMark nor GFM, so the panel would show the
-  characters, and making it markup means escaping every `x==y` a page ever prints.
-  Four places still break this and are debts, each with a reason once accepted: `<sub>`/`<sup>`,
-  which Markdown cannot spell, and the emphasis fallback for content flanked by punctuation, where
-  the alternative was losing the italics and leaving the delimiters on show.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would

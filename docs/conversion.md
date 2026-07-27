@@ -19,18 +19,22 @@ the reader saw as characters and goes on seeing as characters.
 
 | HTML | Markdown |
 | --- | --- |
-| `<h1>`…`<h6>` | `#`…`######` (shifted by `headingOffset`, default 1) |
+| `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` — **0 in the library, 1 in the extension** |
 | `<p>` | paragraph, blank line either side |
 | `<blockquote>` | `> ` |
 | `<ul><li>` | `- ` |
 | `<ol><li>` | `1. ` |
-| nested list | two-space indent per level |
+| nested list | indented by the width of the parent's marker — two spaces under `-`, three under `1.` |
+| `<ol start="5">` | numbering continues from `5.` |
+| `<li>` with a checkbox | `- [x]` / `- [ ]` |
 | `<pre>` | ` ``` ` fence |
 | `<pre><code data-lang="js">` | ` ```js ` fence |
 | `<hr>` | `---` |
 | `<br>` | `\` + newline (hard break) |
-| `<figure>` + `<figcaption>` | image, then caption text |
-| `<dl>`, `<details>`, `<address>` | contents as paragraphs, wrapper dropped |
+| `<figure>` + `<figcaption>` | image, then caption — **defect: they run together, `![A](x)Caption`** |
+| `<dl>` | terms and definitions as paragraphs |
+| `<details>` + `<summary>` | **defect: `TitleBody`, no break between them** |
+| `<address>` | contents inline — **defect: two adjacent ones concatenate, `OneTwo`** |
 
 ## Tables
 
@@ -42,8 +46,13 @@ the reader saw as characters and goes on seeing as characters.
 | merged cells, nested table, cell holding `<pre>` | flattened into an ordinary pipe table |
 
 `complexTableFallback` can be set to `html`, `text` or `skip`; the default is
-`flatten`. The `html` value is the one place HTML is emitted on purpose, and only
-when a caller asks for it.
+`flatten`. The `html` value writes the converter's *own* limited table markup — it
+never passes the page's tags or attributes through; those stay text or are
+dropped. Inside such a cell emphasis, code and links emit tags too, since an HTML
+block is not parsed as Markdown.
+
+That is a caller's explicit choice. The one place HTML appears without being
+asked for is the emphasis fallback below, and it is a debt, not a feature.
 
 ## Links and media
 
@@ -53,7 +62,11 @@ when a caller asks for it.
 | `<a>` without `href` | text alone |
 | `<img>` | `![alt](src)` |
 | `<img>` without `alt` | `![](src)` |
-| `<sup><a href="#fn1">` | `[^1]` footnote reference, with a definitions section |
+| `<img title>` | `![alt](src 'title')` |
+| `<img>` with no usable URL | the alt text alone, escaped |
+| `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL |
+| a relative URL | resolved against `baseUrl` |
+| `<sup><a href="#fn1">` | `[^1]` and a definitions section — **only with `footnotes: true`, which the extension does not set**; otherwise an ordinary link, `Fact[[1]](#fn1)` |
 
 ## Inline
 
@@ -120,8 +133,17 @@ Content nobody could read is not content:
 | `visibility: hidden` under a transition, `absolute`/`fixed` | removed — a dropdown standing by |
 | a hidden box holding something declared visible again | kept, and what is still hidden inside says so |
 
-`<script>`, `<style>`, `<noscript>`, `<iframe>`, `<object>`, `<embed>` are dropped
-outright.
+Removed by markup rather than by style:
+
+| | |
+| --- | --- |
+| `hidden`, `aria-hidden="true"` | removed |
+| `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
+| `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |
+| `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode** (a whole page); **kept in selection mode**, because a person who selected them meant to |
+
+`script[type="math/tex"]` is the exception to the `<script>` rule: with `math: true`
+it holds the formula and is read, not dropped.
 
 ## Converts to plain text, deliberately
 
@@ -137,6 +159,30 @@ Not read from CSS either, and for the same reason plus a rate of false positives
 `font-family` (numbers, timestamps and prices are routinely monospaced),
 `font-size` (leads, prices, headings), `color` alone (links, brand accents, syntax
 highlighting), `text-transform` (the capitals are not in the text).
+
+## Escaping — the contract under all of the above
+
+What the page displayed as characters must reach the file as characters, and what
+the converter emits as markup must be the only markup there is.
+
+- **Markdown characters in page text are escaped** — `*`, a non-intraword `_`,
+  `` ` ``, tildes that can pair, link brackets. Block openers (`#`, `>`, bullets,
+  numbering, a line of dashes) only in the node that starts a line.
+- **HTML in page text is escaped too** (`\<`, `\&`), so a page *about* HTML keeps
+  showing its tags instead of running them.
+- **Constructs must not assemble across a node boundary.** Syntax highlighting
+  splits `<` and a tag name into separate spans; each half is harmless and the
+  pair is not, so a node whose tail is still an open construct escapes it
+  defensively.
+- **Nothing is escaped inside `pre`, `code`, `kbd`, `samp` or a math subtree** — a
+  backslash there is corruption, not protection. Their contents are preserved
+  literally, whitespace included.
+- **Whitespace collapses everywhere else**, as it does on screen.
+
+This is held by a round-trip oracle (`tests/fidelity/`), not by review: it
+compares the text a reader sees before and after conversion, over generated
+documents, and the gate records both the count of known failures and which ones
+they are.
 
 ## Decided, not yet built
 
