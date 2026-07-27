@@ -186,7 +186,7 @@ describe('content drawn on one band (theory C)', () => {
       expect(
         rowMarks(
           '<div style="display:flex" data-rects="0,100,80;0,16;20,36;40,56;60,76;80,96">' +
-            '<img src="https://e.com/a.png" alt="chart"><p>one two three four five</p></div>',
+            '<img src="https://e.com/a.png" alt="chart"><div>one two three four five</div></div>',
         ),
       ).toEqual(['1']);
     });
@@ -396,10 +396,10 @@ describe('content drawn on one band (theory C)', () => {
       expect(md).toContain('$x^2$');
     });
 
-    it('leaves a paragraph beside a picture a paragraph', () => {
+    it('leaves a run of text beside a picture a block', () => {
       const wide =
         '<div style="display:flex" data-rects="0,100,80;0,16;20,36;40,56;60,76;80,96">' +
-        '<img src="https://e.com/a.png" alt="chart"><p>one two three four five</p></div>';
+        '<img src="https://e.com/a.png" alt="chart"><div>one two three four five</div></div>';
       expect(convert(wide)).toBe(unmeasured(wide));
       expect(convert(wide)).toContain('\n\none two three four five');
     });
@@ -409,8 +409,23 @@ describe('content drawn on one band (theory C)', () => {
       // beside it is — and there one line is what the reader met.
       const caption =
         '<div style="display:flex" data-rects="0,100,80;40,56">' +
-        '<img src="https://e.com/a.png" alt="chart"><p>Fig. 1</p></div>';
+        '<img src="https://e.com/a.png" alt="chart"><div>Fig. 1</div></div>';
       expect(convert(caption)).toBe('![chart](https://e.com/a.png) Fig. 1');
+    });
+
+    it('leaves a paragraph the page wrote a paragraph', () => {
+      // The one place the set refuses evidence it has. Two `<p>` drawn side by
+      // side are one band and the reader did meet them on one line, but `<p>` is
+      // the only tag that means paragraph and nothing else — a band is a weaker
+      // claim than the author's own word, and welding two of them is the error
+      // that cannot be seen in the finished file. With no other candidate among
+      // the children the container is not even measured, so the derived mark is
+      // what it keeps.
+      const paragraphs =
+        '<div style="display:flex" data-rects="0,16;0,16"><p>Andrej Karpathy</p><p>@karpathy</p></div>';
+      expect(rowMarks(paragraphs)).toEqual(['1']);
+      expect(convert(paragraphs)).toBe('Andrej Karpathy\n\n@karpathy');
+      expect(convert(paragraphs)).toBe(unmeasured(paragraphs));
     });
   });
 

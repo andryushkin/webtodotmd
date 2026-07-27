@@ -133,7 +133,8 @@ overlap vertically by half the shorter of them, each measured against the
 intersection of the ones before it, so that a tall picture cannot fuse the five
 lines of the paragraph beside it into one. The core reads the stronger value in
 `convert()`, where blockness is decided: a generic wrapper holding no block of its
-own returns its content rather than opening a paragraph, which is what keeps a
+own — a `<div>` and its like, never a `<p>`, which is the page's own word for a
+paragraph — returns its content rather than opening one, which is what keeps a
 mention wrapped in a box of its own inside the sentence it stands in. The question
 is asked only of containers where the answer can change the file, and only of
 small ones, since `getClientRects()` is paid per fragment drawn; where it cannot

@@ -72,6 +72,15 @@ export const ONE_LINE_MARK = 'line';
  * is, no `display` can spell it, and a measurement says where the text was drawn
  * rather than what it was.
  *
+ * `<p>` is absent for a reason of its own, and it is the one place this set
+ * refuses evidence it has: the page said "paragraph" in the one tag that means
+ * only that, and a band is a weaker claim than an author's own word. The
+ * wrappers left are the ones that say nothing — a `<div>` is what an interface
+ * is built out of, and the defect this exists for is an inline thing given a
+ * `<div>` of its own. What the refusal costs is a byline written in `<p>`, which
+ * stays a paragraph each; what including it would cost is two paragraphs the
+ * page drew side by side welded into one line, and those are not the same size.
+ *
  * It lives here rather than in the parser because the *other* side reads it too:
  * the content script measures nothing it cannot spend, and a container with no
  * such child has nothing to gain from the stronger mark. Two spellings of this
@@ -79,7 +88,7 @@ export const ONE_LINE_MARK = 'line';
  * skip one it needed.
  */
 export const LINE_ITEM_TAGS: ReadonlySet<string> = new Set([
-  'div', 'p', 'section', 'article', 'main',
+  'div', 'section', 'article', 'main',
 ]);
 
 /**

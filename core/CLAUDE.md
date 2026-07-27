@@ -128,8 +128,11 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   and neither side can ask the other's: a row of cards one line tall measures as one band too, and
   what keeps those blocks apart is that each card holds blocks, which no rectangle sees. A rule that
   ignores its children — `.katex` is a `<div>` — keeps its own output, or the line would hand back
-  the empty content and delete the formula. `LINE_ITEM_TAGS` lives beside `ROW_ATTR` because the
-  snapshot reads it too: it measures nothing the core could not spend.
+  the empty content and delete the formula. `<p>` is out of the set although a band answers for it
+  as well as for a `<div>`: it is the one tag meaning paragraph and nothing else, and the author's
+  word outweighs a measurement — the cost is a byline written in `<p>` staying a paragraph each,
+  against welding two paragraphs the page drew side by side. `LINE_ITEM_TAGS` lives beside
+  `ROW_ATTR` because the snapshot reads it too: it measures nothing the core could not spend.
 - A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
   answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
   `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,
