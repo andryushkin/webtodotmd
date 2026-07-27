@@ -21,6 +21,9 @@
  *    the `**` that a naive rule puts inside a `##` cannot be written at all. It
  *    is also what makes the snapshot survive being cut out of the page: a run
  *    whose weight came from a paragraph left behind carries no claim of its own.
+ *    The parent's *layout* implies things too, and the same silence answers it:
+ *    a flex or grid container blockifies its items, so the `display:block` an
+ *    `<a>` in a row of them computes is the algorithm's word and not the page's.
  * 3. **Say it out loud where silence would let the attribute decide.** Rule 2
  *    has one exception, and it is the whole of what a snapshot can take back.
  *    The core reads the page's own `style` wherever this is silent, so a hiding
@@ -112,6 +115,17 @@ interface Context {
    * only against an ancestry that is not.
    */
   invisible: boolean;
+  /**
+   * Whether a `block` computed on this element is the layout algorithm's doing
+   * rather than the page's. A flex or grid container *blockifies* its items —
+   * every in-flow child of a `<nav style="display:flex">` computes
+   * `display:block` with nothing in the page having said so — and along a row
+   * that is the opposite of what the reader was shown: one line, not a paragraph
+   * each. It travels with the inheritance because it is a fact about the parent,
+   * and it is a fact only this side of the product can have: the core reads a
+   * detached fragment, where the container's computed style is not.
+   */
+  derivedBlock: boolean;
 }
 
 const PLAIN: Context = {
@@ -119,6 +133,7 @@ const PLAIN: Context = {
   italic: false,
   align: undefined,
   invisible: false,
+  derivedBlock: false,
 };
 
 interface Pending {
@@ -194,6 +209,69 @@ const CENTRED_TAGS = new Set(['th', 'caption']);
 
 function isCentredTag(tag: string): boolean {
   return CENTRED_TAGS.has(tag);
+}
+
+// The containers whose children CSS blockifies: a flex or grid container
+// computes `block` on every in-flow item of its own, whatever the page wrote or
+// left unwritten — "automatic box type transformations" in CSS Display 3, stated
+// again by the flexbox and grid specs for their items. Nothing else that lays
+// content out does it, and that was measured in Chrome rather than read off the
+// spec and hoped for: `table`, `table-row` and `table-cell` wrap stray inline
+// content in anonymous boxes and leave its `display` alone, `flow-root`,
+// `list-item` and `ruby` are ordinary containers, and the legacy `-webkit-box`
+// that line-clamped text still uses blockifies nothing. A suffix test, so that
+// the spellings of one box all answer alike — `flex`, `inline-flex`,
+// `-webkit-flex` and the two-value `inline flex` are the same container.
+const BLOCKIFIES = /(?:^|[\s-])(?:flex|grid)$/;
+const IS_GRID = /(?:^|[\s-])grid$/;
+
+// A grid track of no width, which `repeat(auto-fit, …)` leaves behind for every
+// column it collapsed and which nothing was laid out in.
+const EMPTY_TRACK = /^0(?:\.0+)?(?:px)?$/;
+
+/**
+ * How many columns a grid ended up with.
+ *
+ * `grid-template-columns` computes to the *used* track list once the grid has
+ * been laid out — `740px` for the single column a grid falls back to, `370px
+ * 370px` for two — and this runs on live nodes, which is the one place that
+ * value can be had. Line names are not tracks and a collapsed track is not a
+ * column. A style that says nothing counts as one, which is the answer that
+ * leaves the mark where it already was.
+ */
+function gridColumns(value: string | undefined): number {
+  if (value === undefined) return 1;
+  const tracks = value
+    .replace(/\[[^\]]*\]/g, ' ')
+    .split(/\s+/)
+    .filter((track) => track !== '' && !EMPTY_TRACK.test(track));
+  return Math.max(tracks.length, 1);
+}
+
+/**
+ * Whether a box reading like this blockifies its children *and* lays them out
+ * side by side — the two halves of the question the `display` mark rests on.
+ *
+ * Blockification alone is not the answer, because a flex column and a
+ * single-column grid stack their items, and there the derived `block` and the
+ * screen agree: each item did open a line of its own, and the mark is what keeps
+ * it. Only a row disagrees, and a row is what a chip list, a toolbar, a tag
+ * strip and a page's navigation are made of. `above` is the same answer for this
+ * box's own parent, which a `display:contents` box hands straight on: it
+ * generates no box, so the items of the container above it are its children —
+ * Chrome computes `block` on the `<a>` of a `flex > contents > a` for that
+ * reason.
+ */
+function blockifiesIntoRow(
+  display: string | undefined,
+  read: StyleReader,
+  above: boolean,
+): boolean {
+  if (display === undefined) return false;
+  if (display === 'contents') return above;
+  if (!BLOCKIFIES.test(display)) return false;
+  if (IS_GRID.test(display)) return gridColumns(read('grid-template-columns')) > 1;
+  return !(read('flex-direction') ?? 'row').startsWith('column');
 }
 
 /**
@@ -285,10 +363,13 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     seen.add(el);
     const read = computed(el);
     const tag = el.tagName.toLowerCase();
+    // Read once: the hiding check below, the mark this element writes and the
+    // question its children ask about their parent are all the same property.
+    const display = read('display');
 
     // Out of the render, and nothing below can bring it back: stop here rather
     // than mark a whole hidden menu one element at a time.
-    if (firstWord(read('display')) === 'none') {
+    if (firstWord(display) === 'none') {
       record(el, ['display:none']);
       return false;
     }
@@ -363,9 +444,25 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     // Only the two answers the core acts on. `inline-block`, `table-cell` and
     // `contents` all convert exactly as the tag alone would, so recording them
     // would be weight with no consequence.
+    //
+    // And only where `block` is the page speaking. Under a flex or grid row it
+    // is the layout algorithm instead, and the reader saw the opposite of a
+    // paragraph: the twelve `<a>` of a `<nav style="display:flex">` are one line
+    // on screen and came back as twelve paragraphs, one per link. An author's
+    // own `display:block` on such an item computes the same `block` and cannot
+    // be told apart from the derived one, so both are dropped here — what that
+    // costs is a page restating a break the container was already making, and in
+    // a row it was never a break at all. Where the page states it in the
+    // element's own `style` attribute nothing is lost either way: the core reads
+    // that attribute itself, and silence here is not a denial.
     const box = displayFrom(read);
-    if (box === 'block' && !isBlockTag(tag)) declarations.push('display:block');
-    else if (box === 'inline' && isBlockTag(tag)) declarations.push('display:inline');
+    if (box === 'block' && !isBlockTag(tag) && !context.derivedBlock) {
+      declarations.push('display:block');
+    } else if (box === 'inline' && isBlockTag(tag)) {
+      // No transformation runs the other way into this branch: what a ruby
+      // container inlinifies computes `inline-block`, which is `other` here.
+      declarations.push('display:inline');
+    }
 
     // Which edge the text lines up against, for the one thing that reads it: a
     // pipe table's separator row. It inherits, so it is measured against the
@@ -379,7 +476,13 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
       declarations.push(`text-align:${align}`);
     }
 
-    const next: Context = { weight, italic, align, invisible };
+    const next: Context = {
+      weight,
+      italic,
+      align,
+      invisible,
+      derivedBlock: blockifiesIntoRow(display, read, context.derivedBlock),
+    };
     const below: Pending[] = [];
     let seenBelow = false;
     for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
@@ -490,6 +593,13 @@ function contextOf(read: StyleReader, el: Element): Context {
     // from there and the root's own claim would go unstated — the one place
     // where deferring to the ancestry loses the verdict instead of implying it.
     invisible: false,
+    // Asked of the parent even though it is outside the capture: a selection
+    // that starts on one chip of a row is a root whose `block` the row derived,
+    // and the mark would be as wrong there as anywhere. A `display:contents`
+    // parent is answered `false` rather than walked further up — the container
+    // is then two boxes away, and a selection landing on that is worth neither
+    // the walk nor the reading.
+    derivedBlock: blockifiesIntoRow(read('display'), read, false),
   };
 }
 

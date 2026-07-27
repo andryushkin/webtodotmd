@@ -45,6 +45,11 @@ const INITIAL: Declarations = {
   'animation-name': 'none',
   'transition-duration': '0s',
   'transition-property': 'all',
+  // Every element answers these, whether or not it lays anything out — and a
+  // grid answers the second with its *used* tracks once it has been laid out,
+  // which is how many columns wide it ended up.
+  'flex-direction': 'row',
+  'grid-template-columns': 'none',
 };
 
 // The part of the UA stylesheet that touches anything read here.
@@ -277,6 +282,155 @@ describe('what the snapshot writes down', () => {
       TAILWIND,
     );
     expect(written.span).toBe('font-weight:700;font-style:italic;text-decoration-line:line-through');
+  });
+});
+
+// A row of links is one line on screen, and it used to arrive as one paragraph
+// per link. CSS *blockifies* the children of a flex or grid container — an `<a>`
+// in a `<nav style="display:flex">` computes `display:block` with nothing in the
+// page having said so — and the snapshot wrote that down as if the page had.
+//
+// The cascade below is where that is stated, and it has to be stated: every item
+// class here carries the `display:block` Chrome really computes for it, measured
+// on each container with a headless browser one element at a time. A test that
+// left the items reading `inline` would prove something about happy-dom, which
+// blockifies nothing, and nothing at all about the defect.
+describe('flex blockification: a row of items is not a paragraph each', () => {
+  const CHROME: Record<string, Declarations> = {
+    ...TAILWIND,
+    row: { display: 'flex' },
+    'row-reverse': { display: 'flex', 'flex-direction': 'row-reverse' },
+    column: { display: 'flex', 'flex-direction': 'column' },
+    'inline-row': { display: 'inline-flex' },
+    // Three columns, as the used value comes back from a grid that has been laid
+    // out: `repeat(3, 1fr)` in the stylesheet, three lengths in the computed
+    // style.
+    'grid-row': { display: 'grid', 'grid-template-columns': '246px 246px 246px' },
+    // And the single column a grid falls back to when nothing states one, which
+    // stacks its items exactly as a flex column does.
+    'grid-column': { display: 'grid', 'grid-template-columns': '740px' },
+    passthrough: { display: 'contents' },
+    // What the container derived, not what the page wrote — and there is no
+    // telling the two apart from here, which is the whole difficulty.
+    item: { display: 'block' },
+  };
+
+  it('a link in a flex row says nothing about its box', () => {
+    const html =
+      '<nav class="row"><a href="#blocks" class="item">Blocks</a>' +
+      '<a href="#inline" class="item">Inline</a></nav>';
+    expect(snapshot(html, CHROME).written).toEqual({});
+  });
+
+  it('a link in a grid row, and in an inline-flex one', () => {
+    expect(snapshot('<div class="grid-row"><a class="item">x</a></div>', CHROME).written)
+      .toEqual({});
+    expect(snapshot('<span class="inline-row"><a class="item">x</a></span>', CHROME).written)
+      .toEqual({});
+    expect(snapshot('<div class="row-reverse"><a class="item">x</a></div>', CHROME).written)
+      .toEqual({});
+  });
+
+  // The reproduction, end to end: the toolbar shape a page's furniture is made
+  // of — a chip row, a tag list, a nav — and the file it used to produce.
+  it('the row comes back as the line it was', () => {
+    const html =
+      '<div class="row"><a href="/a" class="item">Blocks</a> ' +
+      '<a href="/b" class="item">Inline</a> <a href="/c" class="item">CSS</a></div>';
+    const { after } = convert(html, CHROME);
+    expect(after).toBe('[Blocks](/a) [Inline](/b) [CSS](/c)');
+  });
+
+  // The other direction, and the shape that argues for keeping the mark: a
+  // column stacks its items, so there the blockification and the screen agree
+  // and the mark is the only thing that keeps the lines apart.
+  it('a flex column keeps the line each item was on', () => {
+    const html =
+      '<div class="column"><span class="item" data-name="one">Decision</span>' +
+      '<span class="item" data-name="two">Ship on Friday</span></div>';
+    expect(snapshot(html, CHROME).written)
+      .toEqual({ one: 'display:block', two: 'display:block' });
+    expect(convert(html, CHROME).after).toBe('Decision\n\nShip on Friday');
+  });
+
+  it('a grid one column wide stacks, and says so', () => {
+    expect(snapshot('<div class="grid-column"><span class="item">x</span></div>', CHROME).written)
+      .toEqual({ span: 'display:block' });
+    // A grid whose tracks say nothing — `none`, which is what a grid that has
+    // not been laid out answers — counts as the one column it falls back to,
+    // which is the answer that leaves the mark where it already was.
+    expect(snapshot('<div class="grid-untracked"><span class="item">x</span></div>', {
+      ...CHROME, 'grid-untracked': { display: 'grid' },
+    }).written).toEqual({ span: 'display:block' });
+  });
+
+  // A `display:contents` box generates no box at all, so the items of the row
+  // are its children rather than it — Chrome blockifies them from two levels up.
+  it('a wrapper that generates no box hands the row on', () => {
+    const html = '<div class="row"><span class="passthrough"><a class="item">x</a></span></div>';
+    expect(snapshot(html, CHROME).written).toEqual({});
+  });
+
+  // A selection that starts on one chip is a capture whose root is a row item,
+  // and the parent it has to ask about is outside the fragment the core will
+  // read. This is the only place the answer can be had.
+  it('a capture rooted on one item of a row asks the row', () => {
+    const doc = page('<div class="row"><a class="item">x</a></div>');
+    const link = doc.querySelector('a')!;
+    const restore = snapshotStyles([link], styleEngine(CHROME));
+    expect(link.hasAttribute(SNAPSHOT_ATTR)).toBe(false);
+    restore();
+  });
+
+  it('a flex container is still a line of its own, wherever it sits', () => {
+    // In ordinary flow the container states its own box, as it always did.
+    expect(snapshot('<p><span class="row">x</span></p>', CHROME).written)
+      .toEqual({ span: 'display:block' });
+    // Inside a row it is an item like any other, and the row is what the reader
+    // saw: `inline-flex` on an item computes `flex`, which is the same box.
+    const nested = '<div class="row"><span class="row" data-name="inner">x</span></div>';
+    expect(snapshot(nested, CHROME).written).toEqual({});
+  });
+
+  // Nothing else about the branch moves: a `<span>` told to be a block in
+  // ordinary flow, and a `<p>` declining the block its tag gives it.
+  it('an ordinary block and an ordinary inline still say what they are', () => {
+    expect(snapshot('<p><span class="block">x</span></p>', CHROME).written)
+      .toEqual({ span: 'display:block' });
+    expect(snapshot('<div><p class="inline">x</p></div>', CHROME).written)
+      .toEqual({ p: 'display:inline' });
+  });
+
+  // A block tag in a row was never marked and is not newly broken: its own tag
+  // is what puts it on a line, and no snapshot of a computed style can take that
+  // back without inventing an `inline` nothing computed.
+  it('a block element in a row is neither marked nor changed', () => {
+    const html = '<div class="row"><div class="item">one</div><div class="item">two</div></div>';
+    const { before, after } = convert(html, CHROME);
+    expect(snapshot(html, CHROME).written).toEqual({});
+    expect(after).toBe(before);
+    expect(after).toBe('one\n\ntwo');
+  });
+
+  // The page's own attribute is not touched by any of this: the core reads it
+  // wherever the snapshot is silent, so a break the page really states survives
+  // — which is also the whole of what dropping the derived one costs.
+  it("a break the page writes itself is still the page's", () => {
+    const html = '<div class="row"><a style="display:block">one</a><a class="item">two</a></div>';
+    expect(snapshot(html, CHROME).written).toEqual({});
+    expect(convert(html, CHROME).after).toBe('one\n\ntwo');
+  });
+
+  // Only the box is dropped. Everything else a row item says about itself is
+  // said exactly as before — the branch is one line of the walk, not the walk.
+  it('the rest of what a row item states is untouched', () => {
+    const html =
+      '<div class="row"><span class="item font-bold" data-name="chip">Sale</span>' +
+      '<span class="item sr-only" data-name="hidden">Skip</span></div>';
+    const { written } = snapshot(html, CHROME);
+    expect(written.chip).toBe('font-weight:700');
+    expect(written.hidden).toContain('clip:');
+    expect(convert(html, CHROME).after).toBe('**Sale**');
   });
 });
 
