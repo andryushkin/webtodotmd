@@ -5,6 +5,13 @@ import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
 import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
+import {
+  breakPreservedNewlines,
+  collapseHardBreaksToParagraphs,
+  elementsPreservingNewlines,
+  markPreservedNewlines,
+  rangePreservesNewlines,
+} from './hard-breaks';
 import { joinFragments } from './join-fragments';
 import {
   hasCapturableSelection,
@@ -18,9 +25,6 @@ import {
 
 // ---- Shadow DOM flattening ----
 
-// Clones a Range into a DocumentFragment and replaces literal \n in text nodes
-// with <br> elements so that sites like Instagram (which use \n in <span> text
-// nodes instead of <p>/<br>) produce correct paragraph breaks in Markdown.
 // Expands a Range to whitespace boundaries when start/end land mid-token
 // in text nodes (token = run of non-whitespace, includes letters/digits/
 // punctuation). Element-boundary selections are left untouched.
@@ -44,64 +48,17 @@ function expandRangeToWords(range: Range): Range {
 }
 
 function cloneRangeWithBr(range: Range): DocumentFragment {
+  // Read before the clone, not after: `cloneContents()` strands the children of
+  // the common ancestor at the top of the fragment, where a text node has no
+  // parent element left to carry the verdict (`hard-breaks.ts`).
+  const rootPreserves = rangePreservesNewlines(range);
   // enrichRange, not cloneContents: a partial selection loses the context around
   // it — a table's header row, a code block's language, a list's numbering — and
   // restoring that is the core's job. This path had been calling cloneContents
   // directly, so none of it reached the extension.
   const fragment = enrichRange(range);
-  const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
-  const textNodes: Text[] = [];
-  let node = walker.nextNode();
-  while (node) {
-    textNodes.push(node as Text);
-    node = walker.nextNode();
-  }
-  for (const textNode of textNodes) {
-    if (!textNode.textContent?.includes('\n')) continue;
-    let ancestor: Element | null = textNode.parentElement;
-    let skip = false;
-    while (ancestor) {
-      const tag = ancestor.tagName.toLowerCase();
-      if (['pre', 'code', 'script', 'style', 'svg', 'math', 'textarea'].includes(tag)) {
-        skip = true; break;
-      }
-      if (/white-space\s*:\s*pre/.test(ancestor.getAttribute('style') || '')) {
-        skip = true; break;
-      }
-      ancestor = ancestor.parentElement;
-    }
-    if (skip) continue;
-    const parts = textNode.textContent.split('\n');
-    if (parts.length <= 1) continue;
-    // Drop leading/trailing whitespace-only parts (HTML indentation between
-    // tags is not author-intent line break). Keep inner empty parts so that
-    // consecutive \n\n in author content (e.g. Instagram captions) stays.
-    let start = 0, end = parts.length;
-    while (start < end - 1 && /^\s*$/.test(parts[start]!)) start++;
-    while (end > start + 1 && /^\s*$/.test(parts[end - 1]!)) end--;
-    const effective = parts.slice(start, end);
-    if (effective.length <= 1) continue;
-    const frag = document.createDocumentFragment();
-    effective.forEach((part, i) => {
-      if (i > 0) frag.appendChild(document.createElement('br'));
-      frag.appendChild(document.createTextNode(part));
-    });
-    textNode.replaceWith(frag);
-  }
+  breakPreservedNewlines(fragment, rootPreserves);
   return fragment;
-}
-
-// Collapses 2+ consecutive hard line breaks (`\<NL>` from <br>) into paragraph
-// breaks. Guards fenced code blocks where backslash-newline may be legitimate
-// (e.g. shell line continuations). See plan: glimmering-strolling-stardust.md
-function collapseHardBreaksToParagraphs(md: string): string {
-  const segments = md.split(/(^```[\s\S]*?^```$)/gm);
-  return segments
-    .map((seg, i) => {
-      if (i % 2 === 1) return seg;
-      return seg.replace(/(?:\\\n[ \t]*){2,}/g, '\n\n');
-    })
-    .join('');
 }
 
 /**
@@ -112,16 +69,28 @@ function collapseHardBreaksToParagraphs(md: string): string {
  * `mirrorShadowRoots()` change the DOM. Reading first is what keeps a capture one
  * style recalculation rather than one per element.
  *
+ * Two things are read here and both of them are read before either writes: which
+ * newlines the page drew as lines (`hard-breaks.ts`) is a second question for the
+ * same live nodes, and asking it after the snapshot had written its attributes
+ * would buy the scope a style recalculation for nothing.
+ *
  * The cleanup takes every attribute back off, so it belongs in a `finally`
  * outside the conversion — the clone is taken while they are still on.
  */
 function captureStyles(scopes: Array<Element | null>): () => void {
   const roots = scopes.filter((el): el is Element => el !== null);
   if (roots.length === 0) return () => {};
+  const computed = computedStyleIn(window);
+  const preserving = elementsPreservingNewlines(roots, computed);
   // `snapshotStyles` swallows its own faults and always hands back a working
   // undo: a style the browser cannot resolve is a worse conversion, never a
   // failed capture, and never an attribute left on the page.
-  return snapshotStyles(roots, computedStyleIn(window));
+  const restoreStyles = snapshotStyles(roots, computed);
+  const unmark = markPreservedNewlines(preserving);
+  return () => {
+    unmark();
+    restoreStyles();
+  };
 }
 
 /** The one conversion option the user can change; see Settings.htmlTables. */
