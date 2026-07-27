@@ -73,3 +73,30 @@ describe('topHeadingLevel', () => {
     expect(toMarkdown('<h3>A</h3>', { topHeadingLevel: 2, headingOffset: 0 })).toBe('### A\n');
   });
 });
+
+// An interface built out of divs writes its headings with ARIA, and a reader
+// meets a heading whatever the tag said. Google's AI answers put every section
+// title this way, and the file came back with all of them as paragraphs.
+describe('role="heading"', () => {
+  it('becomes a heading at the level it states', () => {
+    expect(toMarkdown('<div role="heading" aria-level="3">Title</div>')).toBe('### Title\n');
+  });
+
+  it('a level it does not state reads as 2, which is what a browser reports', () => {
+    expect(toMarkdown('<div role="heading">Title</div>')).toBe('## Title\n');
+  });
+
+  it('a level Markdown cannot write falls back to the same default', () => {
+    expect(toMarkdown('<div role="heading" aria-level="9">Title</div>')).toBe('## Title\n');
+    expect(toMarkdown('<div role="heading" aria-level="x">Title</div>')).toBe('## Title\n');
+  });
+
+  it('counts for the normalisation, like a heading tag does', () => {
+    const html = '<div role="heading" aria-level="3">A</div><div role="heading" aria-level="4">B</div>';
+    expect(toMarkdown(html, { topHeadingLevel: 2 })).toBe('## A\n\n### B\n');
+  });
+
+  it('empty is skipped, like a heading tag is', () => {
+    expect(toMarkdown('<div role="heading" aria-level="3"></div>')).toBe('\n');
+  });
+});

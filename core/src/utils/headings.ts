@@ -10,14 +10,32 @@ import type { MarkItDownOptions } from '../types.js';
  * so the rule is not spelled a second time here.
  */
 export function minHeadingLevel(root: ParentNode): number | null {
-  const headings = Array.from(root.querySelectorAll?.('h1,h2,h3,h4,h5,h6') ?? []);
+  const headings = Array.from(root.querySelectorAll?.(HEADINGS) ?? []);
   let min: number | null = null;
   for (const el of headings) {
-    const level = Number(el.tagName[1]);
-    if (min === null || level < min) min = level;
+    const level = levelOf(el);
+    if (level !== null && (min === null || level < min)) min = level;
   }
   return min;
 }
+
+// A heading is a tag or a role — see the `aria-heading` rule for why the second
+// counts. Both are asked here, or a document whose headings are all `role`s
+// would normalize against nothing and keep the levels the rule wrote.
+const HEADINGS = 'h1,h2,h3,h4,h5,h6,[role="heading"]';
+
+function levelOf(el: Element): number | null {
+  const tag = el.tagName.toLowerCase();
+  if (/^h[1-6]$/.test(tag)) return Number(tag[1]);
+  const stated = Number(el.getAttribute('aria-level'));
+  if (Number.isInteger(stated) && stated >= 1 && stated <= 6) return stated;
+  // The same default the rule uses; spelled twice would be two answers to one
+  // question, so the rule reads this instead.
+  return ARIA_DEFAULT_LEVEL;
+}
+
+/** What a browser reports for a `role="heading"` that states no level. */
+export const ARIA_DEFAULT_LEVEL = 2;
 
 /**
  * The shift that puts the shallowest heading at `topLevel`, or 0 where the input

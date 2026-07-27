@@ -439,6 +439,12 @@ function isRenderableUrl(url: string): boolean {
   return scheme === null || RENDERABLE_SCHEME.test(scheme[1]!);
 }
 
+/** Whether anything else in this element's parent carries text of its own. */
+function accompaniedByText(el: Element): boolean {
+  const parent = el.parentElement;
+  return parent !== null && (parent.textContent ?? '').trim() !== '';
+}
+
 function htmlAttr(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -875,6 +881,18 @@ export const INLINE_RULES: Rule[] = [
       const url = extractImageUrl(el);
       const src = url ? resolveUrl(url, options.baseUrl) : '';
       const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
+      // An `alt` that is there and empty is the markup saying so: HTML defines it
+      // as "this image is not part of the content", which is how a favicon in a
+      // citation pill, a spacer and an icon beside a label are all written. A
+      // *missing* `alt` says nothing of the kind — the author forgot — and that
+      // image stays. Google's AI answers put a 2.5 KB base64 favicon in the
+      // middle of a sentence this way, and a dozen 1×1 gifs after it.
+      //
+      // Only where something else survives on the line: an image alone in its
+      // parent is all that was there, and dropping it would leave an empty link
+      // or an empty paragraph — deleting what the reader saw to save a few
+      // characters, which is the trade this project refuses everywhere else.
+      if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return '';
       // Inside an HTML block `![alt](src)` would not render, but emitting an
       // <img> would mean allowing `src` and `alt` through the preview's
       // allow-list — a real widening of what counts as the core's own markup,

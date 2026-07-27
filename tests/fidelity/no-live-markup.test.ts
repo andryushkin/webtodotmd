@@ -87,6 +87,9 @@ describe('markup shown as text never becomes markup again', () => {
     // escaper had assumed this while nothing downstream made it true.
     ['definition list', `<dl><dt>${SHOWN}</dt><dd>${SHOWN}</dd></dl>`, `${SHOWN_TEXT} ${SHOWN_TEXT}`],
     ['figcaption', `<figure><figcaption>${SHOWN}</figcaption></figure>`, SHOWN_TEXT],
+    // A heading the markup states with a role rather than a tag: same emitter,
+    // and the same line-opening `#` the page's own text must not join onto.
+    ['aria heading', `<div role="heading" aria-level="3">${SHOWN}</div>`, SHOWN_TEXT],
     // The same tag inside a `<pre>`, which is a different emitter: there it is
     // the block's caption bar, and the code rule — which ignores its children,
     // so nothing else has escaped anything — writes it above the fence itself.

@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
+import { ARIA_DEFAULT_LEVEL } from '../utils/headings.js';
 
 const ELEMENT_NODE = 1;
 const ANCHOR_CLASSES = new Set(['anchor', 'heading-link', 'headerlink']);
@@ -38,6 +39,28 @@ export const BLOCK_RULES: Rule[] = [
       const text = getHeadingText(el, options);
       if (!text) return '';
       const rawLevel = Number(el.tagName[1]);
+      const level = Math.min(Math.max(rawLevel + (options.headingOffset ?? 0), 1), 6);
+      return `\n\n${'#'.repeat(level)} ${text}\n\n`;
+    },
+  },
+  // A heading with no heading tag, which is what an interface built out of divs
+  // writes: `<div role="heading" aria-level="3">`. That is ARIA's own spelling
+  // and the one a screen reader announces, so the reader met a heading whatever
+  // the tag said — Google's AI answers put every one of theirs this way, and the
+  // file came back with the sections as plain paragraphs.
+  //
+  // The level comes from `aria-level`, which the role requires; a missing or
+  // unreadable one is read as 2, the level a browser reports for a heading that
+  // does not say. Anything outside 1…6 is not a level Markdown can write.
+  {
+    name: 'aria-heading',
+    filter: (el) => el.getAttribute('role') === 'heading',
+    replacement(el, _childContent, options) {
+      const text = getHeadingText(el, options);
+      if (!text) return '';
+      const stated = Number(el.getAttribute('aria-level'));
+      const rawLevel =
+        Number.isInteger(stated) && stated >= 1 && stated <= 6 ? stated : ARIA_DEFAULT_LEVEL;
       const level = Math.min(Math.max(rawLevel + (options.headingOffset ?? 0), 1), 6);
       return `\n\n${'#'.repeat(level)} ${text}\n\n`;
     },

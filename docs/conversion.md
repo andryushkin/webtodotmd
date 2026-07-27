@@ -21,6 +21,7 @@ backslash: a `>` on its own opens nothing.
 | HTML | Markdown |
 | --- | --- |
 | `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` or by `topHeadingLevel` — **neither in the library, `topHeadingLevel: 2` in the extension** — and clamped to 1…6 |
+| `role="heading"` with `aria-level` | the same, at the level stated — an interface built out of divs writes its headings this way, and a missing or unwritable level reads as 2, which is what a browser reports. Counts for `topHeadingLevel` like a heading tag |
 | a heading's own anchor link | dropped, when its class is `anchor`, `heading-link` or `headerlink` — the `¶` a docs generator hangs off every heading |
 | `<p>` | paragraph, blank line either side |
 | `<div>` | paragraph, blank line either side |
@@ -73,7 +74,8 @@ debts, not features.
 | `<a href>` | `[text](href)` — scheme checked against `http(s)`, `ftp(s)`, `mailto`, `tel`, `callto`, `sms`, `cid`, `xmpp`, `matrix`, which is DOMPurify's set and so the panel's; anything else keeps its text and loses its target |
 | `<a>` without `href` | text alone |
 | `<img>` | `![alt](src)` |
-| `<img>` without `alt` | `![](src)` |
+| `<img>` without `alt` | `![](src)` — the author left it out, so nothing is claimed about the picture and it stays |
+| `<img alt="">` | dropped, when anything else in its parent carries text — an empty `alt` is HTML's own way of saying the image is not content, which is how a favicon in a citation pill, a spacer gif and an icon beside a label are written. Alone in its parent it is kept: it was all that was there |
 | `<img title>` | `![alt](src 'title')` |
 | `<img>` with no usable URL | the alt text alone, escaped |
 | `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL — `data-src` and its spellings first, then the largest `srcset` candidate, then `src` unless it is a placeholder, then the URL rescued from a neighbouring `<noscript>` |

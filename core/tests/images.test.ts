@@ -242,3 +242,35 @@ describe('image without a url: falls back to alt whatever the base says', () => 
     expect(toMarkdown('<p><a href="">text</a></p>')).toBe('[text]()\n');
   });
 });
+
+// `alt=""` is not a missing alt: HTML defines the empty one as "this image is
+// not part of the content", and that is how every icon beside a label is
+// written. Google's AI answers put a 2.5 KB base64 favicon inside a sentence
+// and a dozen 1×1 gifs after it, all of them declared decorative.
+describe('an image the markup calls decorative', () => {
+  const icon = 'data:image/png;base64,iVBORw0KGgo=';
+
+  it('goes when something else on the line survives', () => {
+    expect(toMarkdown(`<p>text. <img alt="" src="${icon}"> Smashing Magazine</p>`)).not.toContain(
+      'base64',
+    );
+  });
+
+  it('goes from a link that keeps its label', () => {
+    const html = `<p><a href="https://example.com"><img alt="" src="${icon}"><span>CommonMark</span></a></p>`;
+    expect(toMarkdown(html)).toBe('[CommonMark](https://example.com)\n');
+  });
+
+  it('stays when it is all there was, or the block would come back empty', () => {
+    expect(toMarkdown(`<p><img alt="" src="${icon}"></p>`)).toBe(`![](${icon})\n`);
+    expect(toMarkdown(`<a href="https://example.com"><img alt="" src="${icon}"></a>`)).toContain(
+      'base64',
+    );
+  });
+
+  it('a missing alt says nothing of the kind and is kept', () => {
+    expect(toMarkdown('<p>text <img src="https://example.com/photo.jpg"></p>')).toBe(
+      'text ![](https://example.com/photo.jpg)\n',
+    );
+  });
+});
