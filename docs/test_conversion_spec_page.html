@@ -872,7 +872,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>F5.</strong> Raw MathML has no embedded LaTeX. The extension's own rule converts it to dollar math; calling the core alone with <code>math: true</code would drop it.</aside>
+      <aside><strong>F5.</strong> Raw MathML has no embedded LaTeX. The extension's own rule converts it to dollar math; calling the core alone with <code>math: true</code> would drop it.</aside>
       <div class="subject">
         <p>
           Inline raw MathML:
@@ -1149,7 +1149,7 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K2.</strong> <span class="known">Known defects:</span> details currently becomes <code>TitleBody</code>; adjacent addresses become <code>OneTwo</code>.</aside>
+      <aside><strong>K2.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>&lt;summary&gt;</code> or an <code>&lt;address&gt;</code>, so a summary followed by inline content runs together as <code>TitleBody</code>, and two addresses run together as one line. The addresses also arrive emphasised, and correctly: every UA stylesheet sets <code>address { font-style: italic }</code>, so the reader saw them slanted — the second falls back to a tag because two emphasis runs meeting would merge into one.</aside>
       <div class="subject">
         <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
         <address>One</address><address>Two</address>
