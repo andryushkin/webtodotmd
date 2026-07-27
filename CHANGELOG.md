@@ -4,6 +4,26 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.2 — 2026-07-27
+
+- **A selected navigation bar, header, footer or sidebar is captured.** They were
+  dropped as page furniture even when the selection was made of them — and the
+  same rule ate the headline and byline of a highlighted article, because a news
+  site keeps both in a `<header>` inside it.
+- **More text meant for screen readers stays out.** The commonest spelling of the
+  `.sr-only` idiom, `clip: rect(0, 0, 0, 0)` without units, was not recognised.
+  So was the text a page hides in a box it keeps open for one visible line.
+- **A nested list under a task item is still a list.** `- [x] ` was counted as
+  part of the marker, which pushed everything under it four columns too far: the
+  nested list arrived as literal text, and a second paragraph arrived in a
+  monospace box.
+- **An image with no address no longer becomes a broken one.** It reached the
+  file pointing at the page being captured, instead of leaving the description
+  the reader would have seen.
+- **Code folded into a table cell keeps its indentation.**
+- Lists numbered `NaN.` when the page wrote a `start` no number could be read out
+  of.
+
 ## 1.4.1 — 2026-07-27
 
 - **Bold and italic written in CSS are no longer lost.** Notion, Medium,
