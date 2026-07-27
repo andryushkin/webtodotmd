@@ -87,6 +87,10 @@
      Nothing here changes what the converter reads — `position` still computes to
      `fixed`, which is what the hiding rules ask about. */
   .subject { padding: 1rem 1.2rem; contain: layout; }
+  /* A subject whose whole content is taken out of the flow contributes no height,
+     and `.case` clips what overflows — so a `position:fixed` table showed one row
+     and hid the rest. The case has to be readable to be checkable. */
+  .subject.holds-fixed { min-height: 8.5rem; }
   .subject > :first-child { margin-top: 0; }
   .subject > :last-child { margin-bottom: 0; }
   .subject h1, .subject h2, .subject h3, .subject h4,
@@ -255,20 +259,18 @@
     </article>
 
     <article class="case">
-      <aside><strong>B4.</strong> Underline, size, dates, direction, quotes, ruby, and legacy font semantics deliberately become their visible plain text.</aside>
+      <aside><strong>B4.</strong> Underline, size, dates, direction and legacy font semantics deliberately become their visible plain text: Markdown has no way to say them, and inventing one would state something the page did not. <code>&lt;bdo&gt;</code> is the one with a price worth naming — the reader sees <em>redro elbisiv</em>, and the file keeps the order the characters are stored in, because the reversed string can be neither searched nor quoted. Quotation marks and ruby are <em>not</em> in this list any more; they have cases of their own (I4, I5).</aside>
       <div class="subject plain-semantics">
         <ins>inserted</ins>
         <u>underlined</u>
         <small>small</small>
         <big>big</big>
         <abbr title="HyperText Markup Language">HTML</abbr>
-        <q>quoted</q>
         <time datetime="2026-07-27">July 27</time>
         <data value="42">forty-two</data>
         <output>ready</output>
         <bdi>مرحبا</bdi>
         <bdo dir="rtl">visible order</bdo>
-        <ruby>漢<rt>kan</rt></ruby>
         <tt>terminal</tt>
         <font color="red">legacy</font>
       </div>
@@ -305,6 +307,29 @@
       <div class="subject">
         <p>(<em>inside parentheses</em>),/<strong>after slash</strong>/—<em>beside dash</em>—and snake_case.</p>
         <p>Mixed punctuation: a_<em>b</em>_c and x*<strong>y</strong>*z.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>I4.</strong> A <code>&lt;q&gt;</code> writes the marks the stylesheet draws, in the pair the content language uses — the reader saw them, and they were being dropped. The pair comes from the nearest <code>lang</code>, so the second line is Russian and the third German whatever the document says; a nested quotation takes the second pair, and an empty one writes no marks at all.</aside>
+      <div class="subject">
+        <p>He said <q>the file must match the screen</q> and left.</p>
+        <p lang="ru">Он сказал <q>файл должен совпадать с экраном</q> и ушёл.</p>
+        <p lang="de">Er sagte <q>die Datei muss dem Bildschirm entsprechen</q>.</p>
+        <p lang="ja">彼は<q>画面と一致するべきだ</q>と言った。</p>
+        <p>Nested: <q>she quoted <q>a source</q> at me</q>.</p>
+        <p>Empty: <q></q> and a mark right against the close: <q>ends in *</q>.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>I5.</strong> A ruby reading goes in parentheses beside the word, not welded onto it — <code>漢字かんじ</code> is one word read twice, and a search for either half then fails. Per-character annotation keeps each reading beside its own character; <code>&lt;rp&gt;</code> is dropped, since it holds the same parentheses for a browser that cannot draw ruby; an empty <code>&lt;rt&gt;</code> writes nothing.</aside>
+      <div class="subject">
+        <p>Furigana: <ruby>漢字<rt>かんじ</rt></ruby> in a sentence.</p>
+        <p>Per character: <ruby>漢<rt>かん</rt>字<rt>じ</rt></ruby>.</p>
+        <p>With the older base tag: <ruby><rb>東京</rb><rt>とうきょう</rt></ruby>.</p>
+        <p>With fallback parentheses: <ruby>京都<rp>(</rp><rt>きょうと</rt><rp>)</rp></ruby>.</p>
+        <p>Empty annotation: <ruby>大阪<rt></rt></ruby>. Marked-up annotation: <ruby>奈良<rt><em>なら</em></rt></ruby>.</p>
       </div>
     </article>
   </section>
@@ -366,6 +391,29 @@
             <p>And another paragraph in the same item.</p>
           </li>
         </ol>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>L2.</strong> What a <code>start</code> is allowed to be, and what a marker's width does to everything under it. <code>0</code> and a negative start are legal and kept; a start no number can be read out of numbers from 1, as a browser renders it. A marker that widens at <code>10.</code> indents its own item by one more column, and a task marker is content rather than marker — four more columns would make the nested list an indented code block and the second paragraph a listing.</aside>
+      <div class="subject">
+        <ol start="0"><li>Counts from zero</li><li>Then one</li></ol>
+        <ol start="-2"><li>Counts from minus two</li><li>Then minus one</li></ol>
+        <ol start="x"><li>Unreadable start counts from one</li><li>Then two</li></ol>
+        <ol start="9">
+          <li>Ninth, marker three wide</li>
+          <li>Tenth, marker four wide
+            <ul><li>nested under the wider marker</li></ul>
+          </li>
+        </ol>
+        <ul>
+          <li><label><input type="checkbox" checked> Task with a nested list</label>
+            <ul><li>still a list, not a code block</li></ul>
+          </li>
+          <li><label><input type="checkbox"> Task with a second paragraph</label>
+            <p>still a paragraph, not a listing</p>
+          </li>
+        </ul>
       </div>
     </article>
 
@@ -554,8 +602,11 @@ path\file | a &lt; b &amp; c
 
     <article class="case">
       <aside><strong>T9.</strong> <span class="setting">Keep complex tables as HTML.</span> With the setting off, this flattens. With it on, converter-owned HTML renders a table with bold/link semantics and image alt text, but carries no <code>onclick</code>, page style, form control, or unsafe URL.</aside>
-      <div class="subject">
-        <table onclick="alert(1)" style="position:fixed;inset:0">
+      <div class="subject holds-fixed">
+        <!-- The handler is inert on purpose. What this case asserts is that an
+             `onclick` never reaches the file; a dialog would only block the
+             reviewer, and a click anywhere on a `inset:0` table hits it. -->
+        <table onclick="this.dataset.clicked = '1'" style="position:fixed;inset:0">
           <tr><th colspan="2">Account</th></tr>
           <tr>
             <td><form><input autofocus value="pay"><button>Pay now</button></form></td>
@@ -587,17 +638,14 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>M2.</strong> Keep alt and title, resolve the relative URL, use the img inside picture, and preserve a linked image.</aside>
+      <aside><strong>M2.</strong> Keep alt and title, resolve the relative URL, use the img inside picture, and preserve a linked image. No <code>&lt;figure&gt;</code> here on purpose: the image/caption boundary is broken and is K1's business, and a case that carries a known defect cannot say whether the thing it is named for passed.</aside>
       <div class="subject">
-        <figure>
-          <a href="https://example.com/gallery">
-            <picture>
-              <source srcset="hero-large.webp 1200w, hero-small.webp 400w" type="image/webp">
-              <img src="images/hero.jpg" alt="Mountain lake at dawn" title="Open the gallery">
-            </picture>
-          </a>
-          <figcaption>A linked responsive photograph.</figcaption>
-        </figure>
+        <a href="https://example.com/gallery">
+          <picture>
+            <source srcset="hero-large.webp 1200w, hero-small.webp 400w" type="image/webp">
+            <img src="images/hero.jpg" alt="Mountain lake at dawn" title="Open the gallery">
+          </picture>
+        </a>
       </div>
     </article>
 
@@ -616,6 +664,17 @@ path\file | a &lt; b &amp; c
       <div class="subject">
         <img src="data:image/gif;base64,R0lGODlh" alt="News photograph">
         <noscript><img src="https://images.example.com/news/real.jpg" alt=""></noscript>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>M5.</strong> An empty address is not a relative one. An <code>&lt;a href=""&gt;</code> really does mean “this page” — that is what the reader clicked — so it resolves; an image with nothing to point at must not be resolved into a picture of the page being captured, and comes back as its escaped alt text instead. A lazy-load attribute holding only a space is absent, not an address, and must not shadow the <code>src</code> beside it.</aside>
+      <div class="subject">
+        <p><a href="">A link to this very page</a> and <a href=" ">the same with a space</a>.</p>
+        <p><img alt="No source at all, with *marks* and [brackets]"></p>
+        <p><img src="" alt="Empty source"></p>
+        <p><img src=" " alt="Whitespace source"></p>
+        <p><img data-src=" " src="images/hero.jpg" alt="Lazy attribute is blank, the real src wins"></p>
       </div>
     </article>
   </section>
@@ -665,6 +724,20 @@ path\file | a &lt; b &amp; c
           and source newlines collapse to visible spaces.</p>
         <p>Non-breaking&nbsp;space becomes an ordinary space.</p>
         <p>Comparisons need no backslash noise: a &lt; b, x &lt;= y, and Tom &amp; Jerry.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>E5.</strong> Whitespace collapses the way it does on screen, which at a line's edge means to nothing. The indentation between two blocks is drawn nowhere and must be written nowhere — four such gaps in a row, which is what comments between blocks leave behind, would otherwise indent the paragraph after them into a code block. Between two inline runs the space is one the reader saw and stays exactly one, however many sources meet there.</aside>
+      <div class="subject">
+        <p>A block, then indentation before the next one.</p>
+        <!-- ad slot --> <!-- template marker --> <!-- analytics --> <!-- consent -->
+        <div style="display:inline">This must be a paragraph, not a listing.</div>
+        <p><span>Two inline runs</span> <span>with one space between them.</span></p>
+        <p><span>Indentation and a leading space</span>
+          <span> must still make one space.</span></p>
+        <p><span>Neither side offers one</span><span>and they stay welded.</span></p>
+        <p>A non-breaking&nbsp; space beside an ordinary one keeps both characters.</p>
       </div>
     </article>
   </section>
@@ -808,6 +881,24 @@ path\file | a &lt; b &amp; c
         <math display="block">
           <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
         </math>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>F6.</strong> <span class="setting">Math setting.</span> A rendered formula is drawn twice: a picture for the eye and an invisible twin holding the LaTeX. Every renderer hides the twin the way a screen-reader note is hidden, so it must survive the hiding rules or the meaning is deleted and only the picture is left. Wikipedia's wrapper emits one formula and neither its fallback image nor the link around it. The last one is a formula the page really hid — the drawing is hidden with it, and the whole thing goes.</aside>
+      <div class="subject">
+        <p>
+          KaTeX, twin clipped:
+          <span class="katex"><span class="katex-mathml" style="clip:rect(1px,1px,1px,1px);position:absolute;width:1px;height:1px;overflow:hidden"><math><semantics><annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">E=mc²</span></span>
+        </p>
+        <p>
+          Wikipedia, twin hidden beside a picture:
+          <span class="mwe-math-element"><span class="mwe-math-mathml-inline mwe-math-mathml-a11y" style="display:none"><math alttext="{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}"><semantics><annotation encoding="application/x-tex">{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}</annotation></semantics></math></span><img class="mwe-math-fallback-image-inline" src="images/gamma.svg" alt="{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}"></span>
+        </p>
+        <p style="display:none">
+          A formula the page hid outright:
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">HIDDEN_FORMULA_PAYLOAD</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">hidden</span></span>
+        </p>
       </div>
     </article>
   </section>
@@ -1048,7 +1139,7 @@ Fourth line after an empty line</span></p>
     <p class="section-lead">These cases document current specification debt; do not count their stated output as a surprise regression.</p>
 
     <article class="case">
-      <aside><strong>K1.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>figure</code>, so the image and its caption land on one line — <code>![A](x) Caption</code>, with only the whitespace between the tags separating them, where the page showed a caption under a picture.</aside>
+      <aside><strong>K1.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>figure</code>, so the image and its caption run together as <code>![A](x)Caption</code> — not even a space, since the whitespace between the two tags stands at a line's edge and is drawn nowhere. The page showed a caption under a picture.</aside>
       <div class="subject">
         <figure>
           <img src="diagram.png" alt="Architecture diagram">
