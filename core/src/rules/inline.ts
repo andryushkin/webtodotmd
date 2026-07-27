@@ -102,6 +102,53 @@ const COMMENT_NODE = 8;
 
 const CODE_TAGS = new Set(['code', 'kbd', 'samp']);
 
+// What Unicode has for a raised or a lowered run. Digits and the operators are
+// complete in both; letters are a scattering, and the gaps are why `shifted()`
+// refuses a partial mapping rather than filling in what it can.
+const SUPERSCRIPT = new Map(
+  Object.entries({
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸',
+    '9': '⁹', '+': '⁺', '-': '⁻', '−': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', 'n': 'ⁿ', 'i': 'ⁱ',
+    'a': 'ᵃ', 'b': 'ᵇ', 'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ', 'f': 'ᶠ', 'g': 'ᵍ', 'h': 'ʰ', 'j': 'ʲ',
+    'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'o': 'ᵒ', 'p': 'ᵖ', 'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ',
+    'v': 'ᵛ', 'w': 'ʷ', 'x': 'ˣ', 'y': 'ʸ', 'z': 'ᶻ', ' ': ' ',
+  }),
+);
+
+const SUBSCRIPT = new Map(
+  Object.entries({
+    '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈',
+    '9': '₉', '+': '₊', '-': '₋', '−': '₋', '=': '₌', '(': '₍', ')': '₎', 'a': 'ₐ', 'e': 'ₑ',
+    'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ', 'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ', 'p': 'ₚ',
+    'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ', 'v': 'ᵥ', 'x': 'ₓ', ' ': ' ',
+  }),
+);
+
+/**
+ * The run in shifted characters, or unchanged when Unicode cannot spell all of
+ * it.
+ *
+ * All or nothing per element: `x` with `ab2` above it, half-mapped, would read
+ * `xᵃᵇ2` — a different expression, stated confidently. Losing the raising is a
+ * smaller error than stating the wrong thing.
+ *
+ * Anything already escaped is refused too. A backslash means the text carried a
+ * Markdown character the escaper had to defuse, and there is no shifted spelling
+ * of a defused character.
+ */
+function shifted(content: string, table: Map<string, string>): string {
+  if (content === '' || content.includes('\\')) return content;
+  let out = '';
+  for (const ch of content) {
+    // Matched exactly, never case-folded: Unicode has almost no capital shifted
+    // letters, and answering `ABC` with `ᵃᵇᶜ` changes what the page said.
+    const mapped = table.get(ch);
+    if (mapped === undefined) return content;
+    out += mapped;
+  }
+  return out;
+}
+
 /**
  * Whether this element becomes a code span — the inline-code rule's own filter,
  * named because the merge below has to ask it about the neighbours too.
@@ -160,7 +207,12 @@ function literalText(el: Element): string {
 // makes it complete: an element writes only what its rule writes, and a tag no
 // rule matches falls to the default, which returns its children. A new rule that
 // can write for an element holding no text belongs here too.
-const WRITES_WITHOUT_TEXT = new Set(['br', 'hr', 'img', 'sub', 'sup', 'pre', 'math', 'script']);
+// `sub` and `sup` are deliberately absent: they used to write their tags around
+// whatever they held, so an empty one still put characters between its
+// neighbours and parted them. Shifting to Unicode made them write nothing at all
+// when empty, and while this set still claimed otherwise two code spans with an
+// empty `<sub>` between them stopped merging and ran their backticks together.
+const WRITES_WITHOUT_TEXT = new Set(['br', 'hr', 'img', 'pre', 'math', 'script']);
 
 /**
  * Whether this node puts nothing whatever into the output.
@@ -452,15 +504,30 @@ export const INLINE_RULES: Rule[] = [
         ? childContent
         : emphasis(el, childContent, ['~~'], 'del', options),
   },
+  // A raised or lowered run is written with the characters Unicode has for it,
+  // never with a tag: the product converts HTML into Markdown, so a `<sup>` in
+  // the result is work not finished. `H₂O` and `x²` are plain text — they need no
+  // parser to render, survive being copied out of the file, and are what the
+  // reader saw.
+  //
+  // Markdown has no syntax of its own here. Pandoc's `H~2~O` is worse than
+  // absent: GFM reads a single `~` as strikethrough, so it renders `H̶2̶O`, which
+  // corrupts the meaning rather than losing it. `x^2^` renders as its own
+  // characters.
+  //
+  // Unicode covers digits and the common operators; letters only in patches
+  // (`ᵃᵇᶜⁿ`, `ₐₑₒₓ`). Where a character is missing the run stays plain, because a
+  // half-mapped `x₂ab` reads as a different formula, not as an approximation of
+  // one — all or nothing, per element.
   {
     name: 'subscript',
     filter: 'sub',
-    replacement: (_el, childContent) => `<sub>${childContent}</sub>`,
+    replacement: (_el, childContent) => shifted(childContent, SUBSCRIPT),
   },
   {
     name: 'superscript',
     filter: 'sup',
-    replacement: (_el, childContent) => `<sup>${childContent}</sup>`,
+    replacement: (_el, childContent) => shifted(childContent, SUPERSCRIPT),
   },
   {
     name: 'inline-code',

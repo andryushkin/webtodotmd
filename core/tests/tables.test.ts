@@ -601,8 +601,10 @@ describe('HTML fallback — своя разметка, а не разметка 
   it('теги, которые выпускает сам конвертер, не экранируются', () => {
     const html = '<table><tr><td colspan="2">x<sub>1</sub><sup>2</sup><br>y</td></tr></table>';
     const result = toHtmlTable(html);
-    expect(result).toContain('<sub>1</sub>');
-    expect(result).toContain('<sup>2</sup>');
+    // Shifted runs are Unicode everywhere, the HTML cell included: a character
+    // needs no parser and the cell is not a place to reintroduce a tag.
+    expect(result).toContain('₁');
+    expect(result).toContain('²');
     expect(result).toContain('<br>');
   });
 
@@ -646,12 +648,15 @@ describe('HTML fallback — своя разметка, а не разметка 
     expect(reparsed.querySelectorAll('table table td')[0]?.textContent).toBe('a & b');
   });
 
-  it('прозаический </sub> внутри inline-кода не закрывает настоящий <sub>', () => {
+  // A shifted run holding a code span cannot be spelled in Unicode, so it stays
+  // plain — and the page's own `</sub>` stays text inside the code span rather
+  // than becoming a tag that closes anything.
+  it('прозаический </sub> внутри inline-кода остаётся текстом', () => {
     const html = '<table><tr><td colspan="2"><sub>real <code>&lt;/sub&gt;</code> tail</sub></td></tr></table>';
     const reparsed = parseHTML(toHtmlTable(html)).document;
-    expect(reparsed.querySelectorAll('sub')).toHaveLength(1);
-    expect(reparsed.querySelector('sub')?.textContent).toBe('real </sub> tail');
+    expect(reparsed.querySelectorAll('sub')).toHaveLength(0);
     expect(reparsed.querySelector('code')?.textContent).toBe('</sub>');
+    expect(reparsed.querySelector('td')?.textContent).toContain('real </sub> tail');
   });
 
   it('амперсанд и литеральная сущность проходят round-trip', () => {

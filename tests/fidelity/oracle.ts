@@ -102,8 +102,35 @@ export function visibleText(html: string): string {
     .join('')
     .replace(/ /g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(SHIFTED, (ch) => SHIFTED_BACK.get(ch) ?? ch)
     .trim();
 }
+
+// A raised or lowered run converts to the Unicode character for it, so `<sub>2`
+// leaves the page as `2` and comes back from the file as `₂`. To a reader those
+// are one character drawn small and low, but `textContent` reads the plain digit
+// going in and the shifted one coming back, and every formula would be reported
+// as a defect. Folded on both sides, so a page that itself prints `₂` still
+// round-trips as itself.
+const SHIFTED_BACK = new Map(
+  Object.entries({
+    '\u2070': '0', '\u00b9': '1', '\u00b2': '2', '\u00b3': '3', '\u2074': '4', '\u2075': '5',
+    '\u2076': '6', '\u2077': '7', '\u2078': '8', '\u2079': '9', '\u207a': '+', '\u207b': '-',
+    '\u207c': '=', '\u207d': '(', '\u207e': ')', '\u207f': 'n', '\u2071': 'i', '\u1d43': 'a',
+    '\u1d47': 'b', '\u1d9c': 'c', '\u1d48': 'd', '\u1d49': 'e', '\u1da0': 'f', '\u1d4d': 'g',
+    '\u02b0': 'h', '\u02b2': 'j', '\u1d4f': 'k', '\u02e1': 'l', '\u1d50': 'm', '\u1d52': 'o',
+    '\u1d56': 'p', '\u02b3': 'r', '\u02e2': 's', '\u1d57': 't', '\u1d58': 'u', '\u1d5b': 'v',
+    '\u02b7': 'w', '\u02e3': 'x', '\u02b8': 'y', '\u1dbb': 'z',
+    '\u2080': '0', '\u2081': '1', '\u2082': '2', '\u2083': '3', '\u2084': '4', '\u2085': '5',
+    '\u2086': '6', '\u2087': '7', '\u2088': '8', '\u2089': '9', '\u208a': '+', '\u208b': '-',
+    '\u208c': '=', '\u208d': '(', '\u208e': ')', '\u2090': 'a', '\u2091': 'e', '\u2095': 'h',
+    '\u1d62': 'i', '\u2c7c': 'j', '\u2096': 'k', '\u2097': 'l', '\u2098': 'm', '\u2099': 'n',
+    '\u2092': 'o', '\u209a': 'p', '\u1d63': 'r', '\u209b': 's', '\u209c': 't', '\u1d64': 'u',
+    '\u1d65': 'v', '\u2093': 'x',
+  }),
+);
+
+const SHIFTED = new RegExp(`[${[...SHIFTED_BACK.keys()].join('')}]`, 'g');
 
 export function render(md: string): string {
   return marked.parse(md, MARKED_OPTIONS) as string;

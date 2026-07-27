@@ -148,8 +148,13 @@ const EMPHASIS_TAGS = new Map<string, keyof StyleMarks>([
   ['del', 'strike'],
   ['s', 'strike'],
 ]);
-// Wrappers with no Markdown spelling at all: their rule always emits the tag.
-const TAG_ONLY = new Set(['sub', 'sup']);
+// Wrappers whose rule emits a tag rather than text, so a neighbour meets `<` or
+// `>` where it would otherwise meet a letter. Empty now that `<sub>`/`<sup>`
+// shifted to Unicode: they write characters like any other run, and a neighbour
+// deciding its marker against a `<` that no longer arrives chose `_` where the
+// letter after it forbids one — `<i>x</i><sub>x</sub>` came out `_x_ₓ`, which
+// renders as its own underscores.
+const TAG_ONLY = new Set<string>();
 
 // Where the content is characters rather than markup, so nothing inside spells a
 // delimiter at all. The same sets `parser.ts` names, written out a second time

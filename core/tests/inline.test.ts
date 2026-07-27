@@ -64,19 +64,19 @@ describe('strikethrough', () => {
 
 describe('sub / sup', () => {
   it('sub — HTML passthrough', () => {
-    expect(toMarkdown('<sub>2</sub>')).toBe('<sub>2</sub>\n');
+    expect(toMarkdown('<sub>2</sub>')).toBe('₂\n');
   });
 
   it('sup — HTML passthrough', () => {
-    expect(toMarkdown('<sup>2</sup>')).toBe('<sup>2</sup>\n');
+    expect(toMarkdown('<sup>2</sup>')).toBe('²\n');
   });
 
   it('sub внутри параграфа', () => {
-    expect(toMarkdown('<p>H<sub>2</sub>O</p>')).toBe('H<sub>2</sub>O\n');
+    expect(toMarkdown('<p>H<sub>2</sub>O</p>')).toBe('H₂O\n');
   });
 
   it('sup внутри параграфа', () => {
-    expect(toMarkdown('<p>x<sup>2</sup></p>')).toBe('x<sup>2</sup>\n');
+    expect(toMarkdown('<p>x<sup>2</sup></p>')).toBe('x²\n');
   });
 });
 
@@ -272,7 +272,9 @@ describe('соседние выделения', () => {
     // span is read for its text rather than its backtick: emphasis is resolved
     // after code spans, and renderers disagree about what is left at that seam.
     ['a code span next door', '<p><em>a</em><code>b</code></p>', '*a*`b`'],
-    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '_a_<sub>b</sub>'],
+        // A shifted run is letters now, not a tag, so the neighbour picks the marker
+    // a letter after it allows: `_a_b` would render as its own underscores.
+    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '*a*b'],
 
     // Flanking is decided per code point. Indexing UTF-16 handed the test half a
     // surrogate pair, which is in no category at all: an emoji is symbol
@@ -395,8 +397,10 @@ describe('пустой сосед не сливает спаны', () => {
       '<p><code>a</code><picture><img src="https://e.com/i.png" alt="P"></picture><code>b</code></p>',
       '`a`![P](https://e.com/i.png)`b`',
     ],
-    // A `<sub>` writes its tags whatever it holds, and an `<hr>` its rule.
-    ['a sub between them', '<p><code>a</code><sub></sub><code>b</code></p>', '`a`<sub></sub>`b`'],
+    // An empty `<sub>` writes nothing now that it shifts to Unicode, so it parts
+    // nothing either and the two spans merge — which is what any other empty
+    // wrapper between them already did. An `<hr>` still writes its rule.
+    ['an empty sub no longer parts them', '<p><code>a</code><sub></sub><code>b</code></p>', '`ab`'],
     ['a rule between them', '<div><code>a</code><hr><code>b</code></div>', '`a`\n\n---\n\n`b`'],
     ['every span keeps its own delimiters', '<p><code>a`b</code><br><code>c</code></p>', '`` a`b ``\\\n`c`'],
     ['a run of them', '<p><code>a</code><br><code>b</code><br><code>c</code></p>', '`a`\\\n`b`\\\n`c`'],
@@ -639,5 +643,31 @@ describe('значения атрибутов в синтаксисе markdown',
   ])('data-lang with %s', (_name, lang, expected) => {
     const attr = lang.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
     expect(toMarkdown(`<pre><code data-lang="${attr}">safe</code></pre>`).trim()).toBe(expected);
+  });
+});
+
+// A raised or lowered run is written with the characters Unicode has for it. A
+// tag would be HTML in a file whose whole point is being Markdown, and Markdown
+// has no syntax: Pandoc's `H~2~O` renders as strikethrough under GFM, which
+// corrupts the meaning rather than losing it.
+describe('надстрочный и подстрочный', () => {
+  it.each([
+    ['формула', '<p>H<sub>2</sub>O</p>', 'H₂O'],
+    ['степень', '<p>x<sup>2</sup></p>', 'x²'],
+    ['оба сразу', '<p>x<sup>2</sup>y<sub>1</sub></p>', 'x²y₁'],
+    ['оператор', '<p>x<sup>n+1</sup></p>', 'xⁿ⁺¹'],
+    ['скобки', '<p>a<sup>(i)</sup></p>', 'a⁽ⁱ⁾'],
+  ])('%s', (_n, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // All or nothing per element: a half-mapped run states a different formula
+  // with the same confidence, and losing the raising is the smaller error.
+  it.each([
+    ['заглавные — регистр не подменяем', '<p>x<sup>ABC</sup></p>', 'xABC'],
+    ['кириллица', '<p>x<sup>Примечание</sup></p>', 'xПримечание'],
+    ['частично отображается', '<p>x<sup>2q</sup></p>', 'x2q'],
+  ])('%s', (_n, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
   });
 });

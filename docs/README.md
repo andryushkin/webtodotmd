@@ -9,6 +9,7 @@ not be broken.
 
 | File | Domain |
 | --- | --- |
+| [conversion.md](conversion.md) | What converts into what: the complete HTML → Markdown map, and what deliberately converts to nothing |
 | [architecture.md](architecture.md) | Extension surfaces, the capture pipeline, messaging, storage, i18n |
 | [features.md](features.md) | What the extension does, from a user's point of view — capture modes, side panel, settings |
 | [localization.md](localization.md) | Localization spec: brand voice, per-locale rules, what must never be translated |
