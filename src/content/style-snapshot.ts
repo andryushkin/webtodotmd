@@ -280,7 +280,10 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     }
 
     const visibility = read('visibility') ?? 'visible';
-    const invisible = visibility === 'hidden' || visibility === 'collapse';
+    // Asked of the core, not spelled again here: a `visibility:hidden` sitting in
+    // the flow under a transition is a section on its way in, and the two sides
+    // have to agree about that or the snapshot would mark what the core keeps.
+    const invisible = invisibleFrom(read);
     // What the `style` attribute says on its own, which is what the core falls
     // back on wherever the snapshot is silent.
     const claimsInvisible = invisibleFrom(inlineStyle(el));

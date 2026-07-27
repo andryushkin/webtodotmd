@@ -146,11 +146,14 @@ export function elementStyle(el: Element): StyleReader {
 }
 
 /**
- * Whether either attribute is present at all. Not a gate for anything here —
- * `statesConversion()` below is, because presence says nothing about whether the
- * work it guards can change the output.
+ * Whether either attribute is present at all — the cheapest question there is,
+ * and the right one only for a walk that has to visit every ancestor anyway.
+ *
+ * Not exported, and not a gate for a rule: presence says nothing about whether
+ * the work it guards can change a character of the output, and `color` is most
+ * of what a page writes inline. `statesConversion()` below is that gate.
  */
-export function hasStyle(el: Element): boolean {
+function hasStyle(el: Element): boolean {
   return el.getAttribute?.('style') != null || el.getAttribute?.(SNAPSHOT_ATTR) != null;
 }
 
@@ -263,6 +266,10 @@ const BLOCK_DISPLAYS = new Set(['block', 'flow-root', 'flex', 'grid', 'table', '
  */
 export const REVEAL_PROPERTIES: readonly string[] = [
   'animation-name', 'transition-duration', 'transition-property',
+  // `position` is not evidence of a reveal but of where the box sits, which is
+  // what tells a section on its way in from an overlay standing by — see
+  // `revealsInFlow`. It travels with the rest so the core can ask both halves.
+  'position',
 ];
 
 // A CSS time, the only token in a `transition` a duration can be.
@@ -356,7 +363,27 @@ export function removedFrom(read: StyleReader): boolean {
  */
 export function invisibleFrom(read: StyleReader): boolean {
   const visibility = read('visibility');
-  return visibility === 'hidden' || visibility === 'collapse';
+  if (visibility !== 'hidden' && visibility !== 'collapse') return false;
+  return !revealsInFlow(read);
+}
+
+/**
+ * Whether a `visibility:hidden` under a transition is a section on its way in
+ * rather than an overlay standing by.
+ *
+ * Both are written the same way, so the transition alone cannot tell them apart —
+ * a dropdown, a tooltip and a modal all fade the same property. What separates
+ * them is the box: an overlay has to be out of the flow, or it would hold space
+ * open while it is closed. A section a reveal library has not animated in yet
+ * stays where it will be read.
+ *
+ * The narrow half is the safe one. Judged wrong here, an overlay costs the file a
+ * navigation menu; the other way costs it the article.
+ */
+function revealsInFlow(read: StyleReader): boolean {
+  if (!revealsFrom(read)) return false;
+  const position = read('position');
+  return position !== 'absolute' && position !== 'fixed';
 }
 
 /**

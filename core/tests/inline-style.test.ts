@@ -542,3 +542,19 @@ describe('a style on other elements', () => {
     expect(toMarkdown('<blockquote style="font-style:italic">a</blockquote>')).toBe('> _a_\n');
   });
 });
+
+// A `visibility:hidden` under a transition is written the same way by a reveal
+// library and by every dropdown on the web. What separates them is the box: an
+// overlay has to leave the flow, or it would hold space open while closed.
+describe('скрытое с переходом: раскрытие или оверлей', () => {
+  it.each([
+    ['секция в потоке', 'visibility:hidden;transition:.6s', 'aSECTIONb\n'],
+    ['секция relative', 'visibility:hidden;transition:.6s;position:relative', 'aSECTIONb\n'],
+    ['оверлей absolute', 'visibility:hidden;transition:.2s;position:absolute', 'ab\n'],
+    ['оверлей fixed', 'visibility:hidden;transition:.2s;position:fixed', 'ab\n'],
+    ['скрыто без перехода', 'visibility:hidden', 'ab\n'],
+  ])('%s', (_name, style, expected) => {
+    expect(toMarkdown(`<div>a<section style="${style}">SECTION</section>b</div>`)).toBe(expected);
+    expect(toMarkdown(`<div>a<section data-s2md-style="${style}">SECTION</section>b</div>`)).toBe(expected);
+  });
+});

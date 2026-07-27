@@ -95,6 +95,14 @@ Each of these has cost a bug already; the reason is what makes it stick.
   computed style the other. And `visibility` is the one a descendant can take back — removal takes
   the subtree, so a hidden box holding something declared visible again stays, and what is still
   hidden inside it says so for itself.
+- A `visibility:hidden` under a transition is either kind, written identically: a section a reveal
+  library has not animated in, or a dropdown standing by. The box tells them apart — an overlay must
+  leave the flow or it would hold space open while closed — so `absolute`/`fixed` is removed and
+  anything in the flow stays. Judged wrong one way the file loses a menu, the other way the article.
+- A pipe table states alignment once per column, and the page may say it in either row. The header
+  answers first; when it is silent the body does, but only unanimously — a table of numbers carries
+  `text-align` on every `<td>` and nothing on the `<th>`, while one differing or silent cell means
+  the column was never aligned at all.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would

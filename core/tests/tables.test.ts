@@ -1265,3 +1265,21 @@ describe('пустые ячейки вложенной таблицы', () => {
     expect(toMarkdown(outer('<table><tr><td></td><td>x</td></tr></table>'))).not.toContain('\\');
   });
 });
+
+// A table of numbers is usually written with the alignment on every `<td>` and
+// the header left alone, so a column says it in whichever row the page chose.
+describe('выравнивание колонки из ячеек данных', () => {
+  const R = 'style="text-align:right"';
+  const sep = (md: string) => md.split('\n')[1];
+
+  it.each([
+    ['все ячейки согласны', `<table><tr><th>S</th></tr><tr><td ${R}>42</td></tr><tr><td ${R}>7</td></tr></table>`, '| --: |'],
+    ['через снапшот', '<table><tr><th>S</th></tr><tr><td data-s2md-style="text-align:right">42</td></tr></table>', '| --: |'],
+    ['одна молчит', `<table><tr><th>S</th></tr><tr><td ${R}>42</td></tr><tr><td>7</td></tr></table>`, '| --- |'],
+    ['ячейки спорят', `<table><tr><th>S</th></tr><tr><td ${R}>42</td></tr><tr><td style="text-align:left">7</td></tr></table>`, '| --- |'],
+    ['заголовок главнее', `<table><tr><th style="text-align:left">S</th></tr><tr><td ${R}>42</td></tr></table>`, '| :-- |'],
+    ['никто не сказал', '<table><tr><th>S</th></tr><tr><td>42</td></tr></table>', '| --- |'],
+  ])('%s', (_name, html, expected) => {
+    expect(sep(toMarkdown(html))).toBe(expected);
+  });
+});

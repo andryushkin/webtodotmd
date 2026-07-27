@@ -391,6 +391,33 @@ function getAlignment(cell: Element): string {
   return align === undefined ? 'none' : `:${align}:`;
 }
 
+/**
+ * A pipe table states alignment once per column, and a page may say it in either
+ * row. The header is asked first, since that is where a column's intent belongs.
+ *
+ * When it is silent the body is asked, because aligning only the data is how a
+ * table of numbers is usually written — the header keeps the default and every
+ * `<td>` carries `text-align: right`. One cell would not speak for a column, so
+ * the whole column has to agree: a single differing or silent cell and the
+ * separator stays plain. That is what keeps a column of mixed content from being
+ * aligned on the strength of its first row.
+ */
+function columnAlignment(header: Element | null, body: (Element | null)[]): string {
+  if (header) {
+    const stated = getAlignment(header);
+    if (stated !== 'none') return stated;
+  }
+  let agreed: string | undefined;
+  for (const cell of body) {
+    if (!cell) return 'none';
+    const align = getAlignment(cell);
+    if (align === 'none') return 'none';
+    if (agreed === undefined) agreed = align;
+    else if (agreed !== align) return 'none';
+  }
+  return agreed ?? 'none';
+}
+
 function buildSeparator(width: number, alignment: string): string {
   const w = Math.max(width, 3);
   if (alignment === ':center:') return ':' + '-'.repeat(Math.max(w - 2, 1)) + ':';
@@ -888,7 +915,10 @@ export const TABLE_RULES: Rule[] = [
 
       const headerCells = positionsOf(headerRow);
       const headers = Array.from(headerCells, contentOf);
-      const alignments = headerCells.map((c) => (c ? getAlignment(c) : 'none'));
+      const bodyCellRows = bodyRowEls.map(positionsOf);
+      const alignments = headerCells.map((c, column) =>
+        columnAlignment(c, bodyCellRows.map((row) => row[column] ?? null)),
+      );
 
       const bodyData = bodyRowEls.map((row) => Array.from(positionsOf(row), contentOf));
 
