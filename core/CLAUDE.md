@@ -118,6 +118,18 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   blank decides emphasis, so both neighbour walks (`lookAhead`, `writtenBefore`, `neighbour`) read
   it: pressed against a word, `**` has no spelling CommonMark renders, and 47 Stack Overflow tags
   had been falling back to a live `<strong>`.
+- That mark has a stronger value, and it is the only thing here resting on a *measurement* rather
+  than a declaration: `ROW_ATTR="line"` (`ONE_LINE_MARK`) says the content script counted the bands
+  the container's content was drawn on and found one. `inlinedByLine()` spends it in `convert()`,
+  where every other blockness decision is made — an item in `LINE_ITEM_TAGS` holding no block of its
+  own returns its content instead of running its rule. An inline thing given a wrapper inside a flex
+  row is ordinary React, and `<span>Wow even</span><div><a>@karpathy</a></div><span>admits …</span>`
+  had been arriving as three paragraphs, the last opening on a stray space. Both halves are needed
+  and neither side can ask the other's: a row of cards one line tall measures as one band too, and
+  what keeps those blocks apart is that each card holds blocks, which no rectangle sees. A rule that
+  ignores its children — `.katex` is a `<div>` — keeps its own output, or the line would hand back
+  the empty content and delete the formula. `LINE_ITEM_TAGS` lives beside `ROW_ATTR` because the
+  snapshot reads it too: it measures nothing the core could not spend.
 - A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
   answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
   `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,
@@ -241,4 +253,6 @@ threshold sits where no layout lands by accident.
 extension only, so the version in `package.json` currently numbers nothing. Four `data-s2md-*`
 attribute names are baked into its public surface (`SNAPSHOT_ATTR` and `ROW_ATTR` here,
 `ORIGIN_ATTR` and `ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library
-means making those a parameter first.
+means making those a parameter first. A new observation buys a *value* of an existing name where it
+can — `ONE_LINE_MARK` is why `ROW_ATTR` has two — since a fifth name is a fifth thing to parametrise
+and `laysARow` answers the same for both.

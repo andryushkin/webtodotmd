@@ -121,6 +121,21 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   `<a>c#</a><a>python</a>` is what a tag list is. The container — not the item — gets
   `data-s2md-row`, once, and the core turns it into the one blank the reader saw. Recording it per
   item would be the paragraph-per-link defect again by another name.
+- `flex-direction` is wrong twice — about a row the window was too narrow for, and about a *column
+  holding one item*, which stacks nothing: the item and the container are in the same place, and
+  where that place is was settled higher up. So the lines are counted. A `Range` over the container's
+  contents gives one rectangle per fragment drawn, and one band means `data-s2md-row="line"` rather
+  than `"1"` — which is what repairs a mention in a flex row arriving as three paragraphs. Two
+  rectangles share a band when they overlap by half the shorter of them (never an equal `top`, which
+  two sizes on one baseline do not have), each asked against the *intersection* of the ones before
+  it, so a tall picture cannot fuse the five lines of the paragraph beside it. Zero area is dropped
+  first, or a box painted nothing in parts a sentence.
+- Asked only where the answer can change the file — of a container that does not already read as a
+  row, and of one that does only when an item is in `LINE_ITEM_TAGS` — and only under 256 nodes, a
+  page shell being a flex box as often as a byline is. That refused two thirds to nine tenths of the
+  flex boxes on four real pages; the rest cost 0.4–9.7 ms over the whole `<body>`. No measurement is
+  the ordinary case: linkedom, a server and a detached tree answer nothing, and there the capture is
+  exactly what it was.
 - The verdicts themselves live in `core/` and are asked of it, never spelled
   again here: the two sides disagreeing is how a snapshot marks what the core
   keeps.

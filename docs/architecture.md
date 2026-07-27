@@ -122,6 +122,24 @@ drops the text the box holds itself, which it can only do if it is told both
 halves — one mark alone would have it delete the box and the visible text with
 it.
 
+One thing the snapshot writes down is not a style at all. `flex-direction` says a
+container lays a row, and it is wrong twice — about a row the window was too
+narrow for, which really is several lines, and about a column holding one item,
+which stacks nothing. So the lines are counted rather than derived: a `Range` over
+the container's contents hands back one rectangle per fragment the layout drew,
+and a container whose whole content came back on one band carries
+`data-s2md-row="line"` instead of `"1"`. Two rectangles share a band when they
+overlap vertically by half the shorter of them, each measured against the
+intersection of the ones before it, so that a tall picture cannot fuse the five
+lines of the paragraph beside it into one. The core reads the stronger value in
+`convert()`, where blockness is decided: a generic wrapper holding no block of its
+own returns its content rather than opening a paragraph, which is what keeps a
+mention wrapped in a box of its own inside the sentence it stands in. The question
+is asked only of containers where the answer can change the file, and only of
+small ones, since `getClientRects()` is paid per fragment drawn; where it cannot
+be asked at all — a library caller, a server, a detached tree — the derived answer
+is what the capture had before.
+
 Several places read the same declarations for their own questions: `isHidden()`
 in the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and
 `opacity:0` before anything is converted; `endsLine()` in the flanking module,
@@ -164,7 +182,8 @@ standing whenever a visible sibling happened to follow it.
    a PING, and an on-demand `scripting.executeScript()` if nothing answers.
    The manifest also auto-injects on `*://*/*`; the ping path covers tabs that
    loaded before the extension did.
-2. The content script records the computed style of the selection's scope
+2. The content script records the computed style of the selection's scope and
+   how many lines its flex and grid containers were drawn on
    (`snapshotStyles()`), then mirrors shadow roots (`mirrorShadowRoots()`),
    injecting their contents as temporary `<s2md-shadow>` elements so web
    components convert like ordinary markup. That order is the point: the

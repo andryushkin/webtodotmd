@@ -44,6 +44,58 @@ export const SNAPSHOT_ATTR = 'data-s2md-style';
  */
 export const ROW_ATTR = 'data-s2md-row';
 
+/**
+ * The value `ROW_ATTR` carries when the row was not derived but *measured*.
+ *
+ * `flex-direction: row` is the algorithm's word: it is true of a strip of cards
+ * three paragraphs tall as much as of a sentence with a mention in the middle of
+ * it, and it is wrong about a row the window was too narrow for. What the reader
+ * met is the number of lines the container's content was drawn on, and only the
+ * side holding live nodes can count those — `snapshotStyles()` writes this value
+ * where it counted one. Anything else keeps the plain mark, so a capture with no
+ * layout engine behind it reads exactly as it did before.
+ *
+ * A value rather than a fifth attribute: the names are baked into this package's
+ * public surface (see the note at the end of `core/CLAUDE.md`), and `laysARow`
+ * answers the same for both spellings — one line is still a row.
+ */
+export const ONE_LINE_MARK = 'line';
+
+/**
+ * What a container measured as one line may take back into that line.
+ *
+ * Only the wrappers whose whole conversion is their content: a `<li>`, a `<td>`,
+ * a `<dt>` and a `<blockquote>` each carry something their own rule spells — a
+ * bullet, a column, a term, a `>` — and a line has nowhere to put it, so a `<ul>`
+ * laid along one line stays a list. A heading is absent for the reason
+ * `declinesBlock` gives in `core/src/core/parser.ts`: the level is what a heading
+ * is, no `display` can spell it, and a measurement says where the text was drawn
+ * rather than what it was.
+ *
+ * It lives here rather than in the parser because the *other* side reads it too:
+ * the content script measures nothing it cannot spend, and a container with no
+ * such child has nothing to gain from the stronger mark. Two spellings of this
+ * set would have the snapshot pay for a question the core throws away, or worse,
+ * skip one it needed.
+ */
+export const LINE_ITEM_TAGS: ReadonlySet<string> = new Set([
+  'div', 'p', 'section', 'article', 'main',
+]);
+
+/**
+ * Whether the reader met this container's whole content on a single line.
+ *
+ * Stronger than `laysARow` and used for the opposite purpose: that one says the
+ * items stood apart and need a blank between them, this one says nothing inside
+ * opened a line of its own, so an item that would otherwise be written as a block
+ * may stay in the sentence. `parser.ts` is the only caller — blockness is decided
+ * there and nowhere else.
+ */
+export function drawnOnOneLine(node: Node | null | undefined): boolean {
+  if (node?.nodeType !== 1 /* ELEMENT_NODE */) return false;
+  return (node as Element).getAttribute?.(ROW_ATTR) === ONE_LINE_MARK;
+}
+
 // A list whose items were laid along a line rather than down the page. The
 // container is ordinary — `display:block` — so no snapshot marks it, and the
 // items themselves are what the page inlined.

@@ -54,7 +54,9 @@ import {
   BOLD_WEIGHT,
   CLIPPED_PROPERTIES,
   HIDING_PROPERTIES,
+  LINE_ITEM_TAGS,
   NORMAL_WEIGHT,
+  ONE_LINE_MARK,
   REVEAL_PROPERTIES,
   SNAPSHOT_ATTR,
   alignFrom,
@@ -85,6 +87,17 @@ import {
  * the core spends it in `convertChildren`.
  */
 const ROW_ATTR = 'data-s2md-row';
+
+/**
+ * What that mark says when the row is only derived: a flex row, a grid more than
+ * one column wide. It is the algorithm's word and it is right about the gap and
+ * silent about everything else — a strip of cards three paragraphs tall reads the
+ * same way, and a row the window was too narrow for reads that way and is wrong.
+ * `ONE_LINE_MARK` is the same mark with a measurement behind it; the value the
+ * core reads for that lives beside `ROW_ATTR` in the core, so the two sides
+ * cannot spell it differently.
+ */
+const ROW_MARK = '1';
 
 /**
  * What the walk read, written down beside what it decided — the HTML view's
@@ -152,6 +165,150 @@ export function computedStyleIn(view: {
       return value === '' ? undefined : value.toLowerCase();
     };
   };
+}
+
+/**
+ * One fragment of a line, as the layout drew it — a line box of text, or the box
+ * of something replaced. Only the vertical span and whether anything was painted
+ * are read, so a `DOMRect` satisfies this and a test can state one in four
+ * numbers.
+ */
+export interface DrawnRect {
+  readonly top: number;
+  readonly bottom: number;
+  readonly width: number;
+}
+
+/** How the walk asks where an element's content was drawn. */
+export type ContentRectsOf = (el: Element) => Iterable<DrawnRect>;
+
+/** No layout engine behind the caller: every container answers "nothing seen". */
+export const NOTHING_MEASURED: ContentRectsOf = () => [];
+
+/**
+ * `Range.getClientRects()` behind the walk's line count.
+ *
+ * A range over an element's contents hands back one rectangle per fragment the
+ * layout actually drew — one per line box of text, one per replaced box — which
+ * is the reader's own answer to "how many lines is this", asked without deriving
+ * it from `flex-direction` or from anything else CSS was thinking. `document` is
+ * a parameter for the same reason the window is on `computedStyleIn`: a test has
+ * no browser, and the only other way to write it is a global.
+ *
+ * One `Range`, reused. The walk mutates nothing while it reads, so the range
+ * cannot go stale between calls, and a live range per container would be a live
+ * range per container for the rest of the capture.
+ */
+export function contentRectsIn(doc: Document): ContentRectsOf {
+  let range: Range | undefined;
+  return (el) => {
+    range ??= doc.createRange();
+    range.selectNodeContents(el);
+    return range.getClientRects();
+  };
+}
+
+/**
+ * How much of the shorter fragment two rectangles must share vertically to count
+ * as the same line.
+ *
+ * Not an equal `top`: text at two sizes on one baseline has two tops and two
+ * heights, and a superscript has neither of the ones beside it. What such
+ * fragments do have is most of the shorter one in common — a 12px run beside a
+ * 30px one, baseline-aligned or centred, overlaps by the whole 12 — while two
+ * consecutive lines of the same text overlap by nothing at all, since a line box
+ * is at most its line height. Half is clear of both by a wide margin, which is
+ * what a threshold on a page's own numbers has to be.
+ */
+const SAME_BAND = 0.5;
+
+/**
+ * Whether every fragment given was drawn on one band — one line, to the reader.
+ *
+ * Each rectangle is asked to overlap the *intersection* of the ones before it,
+ * never merely the one before it. That is the whole of the difference between
+ * this and a chain: a 200px picture beside five lines of text overlaps each of
+ * the five, and a chain would fuse the five into one band on its account. Against
+ * the running intersection the second line is asked about the first, finds no
+ * overlap, and the answer is what the reader saw — several lines.
+ *
+ * `undefined` where nothing was drawn: an empty container, and every caller with
+ * no layout engine at all. Zero-area rectangles are dropped first, or a box the
+ * page laid out and painted nothing in would part two halves of a sentence.
+ *
+ * The intersection shrinks as it goes, so a different order of the same
+ * rectangles can answer `false` where this answers `true`. That is the direction
+ * the error is allowed to run in: `false` is the derived answer, which is what
+ * the capture had before any of this.
+ */
+function drewOneBand(rects: Iterable<DrawnRect>): boolean | undefined {
+  let top = 0;
+  let bottom = 0;
+  let started = false;
+  for (const rect of rects) {
+    const height = rect.bottom - rect.top;
+    if (height <= 0 || rect.width <= 0) continue;
+    if (!started) {
+      top = rect.top;
+      bottom = rect.bottom;
+      started = true;
+      continue;
+    }
+    const shared = Math.min(bottom, rect.bottom) - Math.max(top, rect.top);
+    if (shared < SAME_BAND * Math.min(height, bottom - top)) return false;
+    top = Math.max(top, rect.top);
+    bottom = Math.min(bottom, rect.bottom);
+  }
+  return started ? true : undefined;
+}
+
+/**
+ * The most nodes a container may hold before the question is not worth asking.
+ *
+ * `getClientRects()` over a range is paid per fragment it draws, and a page shell
+ * is a flex container as often as a byline is — asking it would collect every
+ * line box on the page, once for every flex box on the way down. Past this budget
+ * a container is not one line, and the derived answer is the one it already had.
+ * Counted with an early exit, so what a container costs is the budget and not its
+ * subtree.
+ *
+ * Set well above the shape being repaired rather than at it: a tweet is a run of
+ * `<span>`s and a sentence with a mention in it is thirty or forty nodes, while a
+ * page shell is thousands. Anything between those is a cheap measurement of a box
+ * that turns out to have more than one line in it.
+ */
+const MEASURE_BUDGET = 256;
+
+/**
+ * Whether any item of this container is one the core could take into a line.
+ *
+ * The second half of the budget, and the sharper one: a row already derived from
+ * `flex-direction` has the mark it needs for the gap, so measuring it buys
+ * something only where an item would otherwise be written as a block — which is
+ * to say only where it has a child in `LINE_ITEM_TAGS`. A navigation strip of
+ * `<a>`, a toolbar of `<button>`, a row of `<img>`: nothing to spend the answer
+ * on, so nothing is asked. Measured over four pages this refused between a
+ * quarter and four fifths of the containers that pass the size budget.
+ */
+function holdsALineItem(el: Element): boolean {
+  for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+    if (LINE_ITEM_TAGS.has(child.tagName.toLowerCase())) return true;
+  }
+  return false;
+}
+
+function withinBudget(el: Element): boolean {
+  let budget = MEASURE_BUDGET;
+  const stack: Node[] = [el];
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (budget <= 0) return false;
+      budget -= 1;
+      stack.push(child);
+    }
+  }
+  return true;
 }
 
 /** What an element inherits from the box it sits in. */
@@ -324,11 +481,25 @@ function blockifiesIntoRow(
   read: StyleReader,
   above: boolean,
 ): boolean {
+  if (!blockifies(display, above)) return false;
+  if (display === 'contents') return true;
+  if (IS_GRID.test(display!)) return gridColumns(read('grid-template-columns')) > 1;
+  return !(read('flex-direction') ?? 'row').startsWith('column');
+}
+
+/**
+ * The first half on its own: whether this box blockifies its children at all,
+ * whichever way it then lays them out.
+ *
+ * That is the set of boxes where the line count is worth measuring, and it is
+ * exactly the set where the derived answer can be wrong in either direction — a
+ * row that wrapped, a column holding one item. Nothing else derives a `block`, so
+ * nothing else has anything for a measurement to take back.
+ */
+function blockifies(display: string | undefined, above: boolean): boolean {
   if (display === undefined) return false;
   if (display === 'contents') return above;
-  if (!BLOCKIFIES.test(display)) return false;
-  if (IS_GRID.test(display)) return gridColumns(read('grid-template-columns')) > 1;
-  return !(read('flex-direction') ?? 'row').startsWith('column');
+  return BLOCKIFIES.test(display);
 }
 
 /**
@@ -389,11 +560,36 @@ export function snapshotStyles(
   roots: Iterable<Element>,
   computed: ComputedStyleOf,
   diagnostics = false,
+  contentRects: ContentRectsOf = NOTHING_MEASURED,
 ): () => void {
   const pending: Pending[] = [];
-  const rows: Element[] = [];
+  const rows: Array<{ el: Element; mark: string }> = [];
   const diagnosed: Array<{ el: Element; text: string }> = [];
   const seen = new WeakSet<Element>();
+
+  /**
+   * How many lines this container's content was drawn on, as one question: was
+   * it one? `undefined` where the answer was not had — no layout engine, nothing
+   * drawn, or a container too large to be one line and so not worth measuring.
+   *
+   * The measurement is the only thing in this walk that reaches outside a
+   * computed style, and it is still a read. It costs one forced layout — the
+   * walk writes nothing until it has read everything, so that layout is computed
+   * once and every container after the first is only the fragments it draws.
+   * Measured over the whole `<body>` of four pages, the fragments came to
+   * 0.4–9.7 ms and the whole snapshot pass went from 5.9–53.5 ms to 6.1–58.6 ms;
+   * a capture walks a selection's scope rather than a document.
+   */
+  const oneLine = (el: Element): boolean | undefined => {
+    if (!withinBudget(el)) return undefined;
+    try {
+      return drewOneBand(contentRects(el));
+    } catch {
+      // A caller's measurement that faults is a capture with no measurement, not
+      // a failed capture — the same bargain the walk itself is written under.
+      return undefined;
+    }
+  };
 
   const record = (
     el: Element,
@@ -546,8 +742,26 @@ export function snapshotStyles(
     // what turned a navigation row into one paragraph per link. Markup writes
     // nothing between them, so without this mark `<a>c#</a><a>python</a>` is
     // `c#python` in the file and two words apart on the page.
-    const laysARow = blockifiesIntoRow(display, read, context.derivedBlock);
-    if (laysARow) rows.push(el);
+    //
+    // Measured first where it can be measured, derived where it cannot. A
+    // container drawn on one band is a row whatever `flex-direction` says: the
+    // column holding a single mention draws on the same band as the words either
+    // side of it, and there is nothing left to reason about — the `block` its
+    // item derives is a line the reader never met. It travels as a stronger value
+    // of the same mark, because the core has a second use for it that the derived
+    // answer cannot carry: a wrapper written as a block breaks a sentence, and
+    // only a measurement can say the sentence was one line.
+    //
+    // Asked only where the answer can change the file: of a container that does
+    // not read as a row, where it can make one, and of one that does, only where
+    // an item of it is something a line could take back.
+    const derivedRow = blockifiesIntoRow(display, read, context.derivedBlock);
+    const measured =
+      blockifies(display, context.derivedBlock) && (!derivedRow || holdsALineItem(el))
+        ? oneLine(el)
+        : undefined;
+    const laysARow = measured === true || derivedRow;
+    if (laysARow) rows.push({ el, mark: measured === true ? ONE_LINE_MARK : ROW_MARK });
 
     const next: Context = {
       weight,
@@ -629,7 +843,7 @@ export function snapshotStyles(
   try {
     for (const root of roots) {
       const parent = root.parentElement;
-      walk(root, parent === null ? PLAIN : contextOf(computed(parent), parent), []);
+      walk(root, parent === null ? PLAIN : contextOf(computed(parent), parent, oneLine), []);
     }
   } catch {
     /* whatever was collected before the fault is still worth writing */
@@ -668,7 +882,7 @@ export function snapshotStyles(
   }
 
   try {
-    for (const el of rows) {
+    for (const { el, mark } of rows) {
       // The page may own this attribute the way it may own the style one, so the
       // undo restores its value rather than removing what it finds.
       const previous = el.getAttribute(ROW_ATTR);
@@ -677,7 +891,7 @@ export function snapshotStyles(
           ? () => el.removeAttribute(ROW_ATTR)
           : () => el.setAttribute(ROW_ATTR, previous),
       );
-      el.setAttribute(ROW_ATTR, '1');
+      el.setAttribute(ROW_ATTR, mark);
     }
   } catch {
     /* same: every attribute already written is in `undo` */
@@ -696,8 +910,13 @@ function everythingRead(read: StyleReader): string {
   return out.join(';');
 }
 
-function contextOf(read: StyleReader, el: Element): Context {
+function contextOf(
+  read: StyleReader,
+  el: Element,
+  oneLine: (el: Element) => boolean | undefined,
+): Context {
   const tag = el.tagName.toLowerCase();
+  const display = read('display');
   return {
     weight: weightFrom(read, NORMAL_WEIGHT) ?? (isBoldTag(tag) ? BOLD_WEIGHT : NORMAL_WEIGHT),
     italic: italicFrom(read) ?? isItalicTag(tag),
@@ -713,7 +932,13 @@ function contextOf(read: StyleReader, el: Element): Context {
     // parent is answered `false` rather than walked further up — the container
     // is then two boxes away, and a selection landing on that is worth neither
     // the walk nor the reading.
-    derivedBlock: blockifiesIntoRow(read('display'), read, false),
+    // Measured on the same terms as any other container, since a selection that
+    // starts on the mention of the defect has exactly this parent. The derived
+    // answer is asked first and settles it where it says yes, which is also what
+    // keeps the measurement off every root whose parent is an ordinary row.
+    derivedBlock:
+      blockifiesIntoRow(display, read, false) ||
+      (blockifies(display, false) && oneLine(el) === true),
   };
 }
 

@@ -4,6 +4,8 @@ import { applyStyleEmphasis, emitsCodeSpan } from '../rules/inline.js';
 import {
   displaysAsBlock,
   displaysInline,
+  drawnOnOneLine,
+  LINE_ITEM_TAGS,
   laysARow,
   statesConversion,
   statesDisplay,
@@ -66,6 +68,49 @@ const ENDS_THE_LINE = new Set([
 // writes a break and no content, a `<table>` writes a grid and a `<pre>` a fence,
 // and for those the tag's own output is still the closest the file can come.
 const INLINEABLE_BLOCKS = new Set([...BLOCK_PARENTS, ...HEADING_TAGS]);
+
+/**
+ * Whether this element stood inside a line the reader saw whole, and holds
+ * nothing that drew a line of its own.
+ *
+ * The defect it answers: a mention, a tag or a badge given a wrapper of its own
+ * inside a flex row — `<span>Wow even</span><div><a>@karpathy</a></div><span>
+ * admits …</span>`, which is ordinary React and is one sentence on screen. The
+ * wrapper is a `<div>`, so it was written between blank lines, and a sentence
+ * came back as three paragraphs with the remainder opening on a stray space.
+ *
+ * `data-s2md-row="line"` is the evidence and it is an observation, not a
+ * conclusion: the content script asked a `Range` how many bands the container's
+ * content was drawn on and counted one. The second half of the question is asked
+ * here, because only the markup can answer it — a row of cards one line tall
+ * measures as one band too, and what keeps those apart is that each card holds
+ * blocks of its own. Cheapest and most discriminating first: the tag, then the
+ * parent's mark — which no capture without a layout engine behind it ever carries,
+ * so every library caller stops there — and only then the rest.
+ *
+ * `role="heading"` is refused for the same reason a heading tag is: an interface
+ * built out of divs writes its headings that way, the `##` is what the reader was
+ * shown, and handing the content back would take the level with it. The other
+ * rule that writes something of its own — one that reads a formula out of a
+ * wrapper and ignores what is inside it — is refused in `convert()`, where the
+ * rule is already in hand; there the content is deliberately empty, so returning
+ * it deletes the formula rather than inlining it.
+ */
+function inlinedByLine(el: Element, tag: string): boolean {
+  if (!LINE_ITEM_TAGS.has(tag)) return false;
+  if (!drawnOnOneLine(el.parentNode)) return false;
+  if (el.getAttribute?.('role') === 'heading') return false;
+  return !holdsABlock(el);
+}
+
+/** Whether anything under this element leaves the line it stands on. */
+function holdsABlock(el: Element): boolean {
+  for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+    if (ENDS_THE_LINE.has(child.tagName.toLowerCase()) || styledBlock(child)) return true;
+    if (holdsABlock(child)) return true;
+  }
+  return false;
+}
 
 /**
  * Whether this element's style puts its content on a line of its own, which the
@@ -353,8 +398,12 @@ function inlinedBlock(el: Element): boolean {
  * take the blank between them and weld `Yes No` into `YesNo`.
  */
 function endsTheLine(el: Element): boolean {
-  if (styledBlock(el)) return true;
   const tag = el.tagName.toLowerCase();
+  // Asked before the style, because a measured line is the later word about the
+  // same thing: an item of such a container is written as its content, so it
+  // leaves no more of a boundary behind it than a `<span>` does.
+  if (inlinedByLine(el, tag)) return false;
+  if (styledBlock(el)) return true;
   if (declinesBlock(el, tag)) return false;
   return ENDS_THE_LINE.has(tag);
 }
@@ -616,6 +665,11 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const tag = el.tagName.toLowerCase();
     const rule = findRule(el, options);
     const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
+    // A rule that never converted its children has nothing for a line to take
+    // back: `.katex` and `.mwe-math-element` are ordinary `<div>`s holding a
+    // formula their rule reads off the element, and handing back the empty
+    // content would delete it. The rule writes what it writes, block and all.
+    const inLine = !rule.ignoresChildContent && inlinedByLine(el, tag);
     // The two things a style says that no rule can read off a tag: that this run
     // is emphasised, and which line its content stands on. The marks go inside
     // whatever the rule writes and the line is decided outside it, so a styled
@@ -627,14 +681,19 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // the output, and asking for presence charged every one of them the ancestor
     // walk below plus a parse of its declarations.
     const styled = statesConversion(el) && !inLiteral(el);
-    if (!styled) return rule.replacement(el, childContent, options);
+    if (!styled) {
+      // The one blockness question a wrapper with no style of its own can have:
+      // the container around it was measured as one line, and a block here would
+      // break a sentence the reader read in one.
+      return inLine ? childContent : rule.replacement(el, childContent, options);
+    }
     const content = applyStyleEmphasis(el, childContent, options);
     // Declining the block the tag implies, which is the mirror of adding one. It
     // is decided here rather than in each rule because every block tag has the
     // question and only `<div>` was answering it, while the snapshot records the
     // declaration for all of them: two `<p style="display:inline">` were two
     // paragraphs in the file and one sentence on the page.
-    if (declinesBlock(el, tag)) return content;
+    if (declinesBlock(el, tag) || inLine) return content;
     const out = rule.replacement(el, content, options);
     if (!displaysAsBlock(el)) return out;
     const trimmed = out.trim();

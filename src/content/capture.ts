@@ -16,7 +16,7 @@ import {
 } from '../../core/src/browser.ts';
 import type { MarkItDownOptions } from '../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from './raw-mathml-rule';
-import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
+import { computedStyleIn, contentRectsIn, snapshotScope, snapshotStyles } from './style-snapshot';
 import {
   breakPreservedNewlines,
   collapseHardBreaksToParagraphs,
@@ -199,7 +199,12 @@ export function captureStyles(
   // `snapshotStyles` swallows its own faults and always hands back a working
   // undo: a style the browser cannot resolve is a worse conversion, never a
   // failed capture, and never an attribute left on the page.
-  const restoreStyles = snapshotStyles(roots, computed, diagnostics);
+  // The second reading of the same live nodes, and the only one that is not a
+  // style: how many lines a container's content was drawn on. It goes in beside
+  // the computed style rather than after it for the reason the whole of this
+  // function exists — both are answered from state the first DOM change throws
+  // away, and both are read before anything writes.
+  const restoreStyles = snapshotStyles(roots, computed, diagnostics, contentRectsIn(doc));
   const unmark = markPreservedNewlines(preserving);
   return () => {
     unmark();
