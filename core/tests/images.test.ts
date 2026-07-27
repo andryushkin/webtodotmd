@@ -333,3 +333,30 @@ describe('an embedded player', () => {
       .toBe('[\\<img src=x onerror=alert(1)>](https://e.com/v)\n');
   });
 });
+
+// `//host/path` is an address only inside a document that already has a scheme,
+// and a `.md` file has none: the reader's editor reads it as a path on their own
+// disk. The base is the missing half.
+describe('a protocol-relative address', () => {
+  const base = { baseUrl: 'https://www.notion.com/help/create-your-first-page' };
+
+  it('takes the scheme of the page it was captured from', () => {
+    expect(toMarkdown('<p><img src="//cdn.example.com/a.png" alt="a"></p>', base)).toBe(
+      '![a](https://cdn.example.com/a.png)\n',
+    );
+    expect(toMarkdown('<video src="//v.example.com/clip.mp4"></video>', base)).toBe(
+      '[clip.mp4](https://v.example.com/clip.mp4)\n',
+    );
+    expect(toMarkdown('<p><a href="//example.com/x">x</a></p>', base)).toBe(
+      '[x](https://example.com/x)\n',
+    );
+  });
+
+  // With no base there is nothing to complete it with, and inventing `https:`
+  // would state a scheme the page never used.
+  it('is left alone where the caller brought no base', () => {
+    expect(toMarkdown('<p><img src="//cdn.example.com/a.png" alt="a"></p>')).toBe(
+      '![a](//cdn.example.com/a.png)\n',
+    );
+  });
+});

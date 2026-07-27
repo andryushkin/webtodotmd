@@ -549,8 +549,19 @@ function markdownTitle(title: string): string {
   return title.replace(/\s+/g, ' ').trim().replace(/[\\']/g, '\\$&');
 }
 
+/**
+ * An address as a file will have to carry it: absolute, because the file is read
+ * where the page is not.
+ *
+ * A protocol-relative `//host/path` used to be handed back untouched, and it is
+ * an address only inside a document that already has a scheme. In a `.md` file
+ * there is none, so `//videos.ctfassets.net/…` opens nothing — a Notion page's
+ * videos and every image a CDN serves this way pointed at a path on the reader's
+ * own disk. The base supplies exactly the missing half, which is what `new URL`
+ * does with it and why nothing else is needed here.
+ */
 function resolveUrl(url: string, baseUrl?: string): string {
-  if (!baseUrl || url.startsWith('http') || url.startsWith('//') || url.startsWith('data:')) {
+  if (!baseUrl || url.startsWith('http') || url.startsWith('data:')) {
     return url;
   }
   try {
