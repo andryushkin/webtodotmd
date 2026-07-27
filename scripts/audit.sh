@@ -148,10 +148,18 @@ fi
 # 7. Keep startup guides compact.
 claude_lines=$(wc -l < CLAUDE.md)
 agent_lines=$(wc -l < AGENTS.md)
-if [ "$claude_lines" -le 195 ] && [ "$agent_lines" -le 45 ]; then
-    pass "guide-budget (CLAUDE<=195 AGENTS<=45)"
+# Path-scoped guides are counted too: moving a section into one is how the root
+# budget would otherwise be met without saying anything less.
+scoped_over=""
+for guide in core/CLAUDE.md src/*/CLAUDE.md; do
+    [ -f "$guide" ] || continue
+    lines=$(wc -l < "$guide")
+    [ "$lines" -gt 120 ] && scoped_over="$scoped_over $guide=$lines"
+done
+if [ "$claude_lines" -le 195 ] && [ "$agent_lines" -le 45 ] && [ -z "$scoped_over" ]; then
+    pass "guide-budget (CLAUDE<=195 AGENTS<=45 scoped<=120)"
 else
-    fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines"
+    fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines$scoped_over"
 fi
 
 # 8. No generated junk is tracked.
