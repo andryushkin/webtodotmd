@@ -12,7 +12,11 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   found at the top level. Capture a section's `<h2>`, then the `<h3>` under it, and both arrived as
   `##` with nothing under them. The level goes out with the response (`topLevel`, before any shift),
   the smallest is kept, and it goes back in with the next request. It belongs to the document, so it
-  resets with Clear and whenever the capture comes from another URL.
+  resets with Clear and whenever the capture comes from another URL. What is already in the panel is
+  never re-shifted: capture something deep and then an `<h1>`, and the first stays where it was
+  written while the `<h1>` arrives as `#` — the ranks come closer together, in the right order.
+  Rewriting the text above would mean rewriting lines the reader may have edited by hand, and the
+  panel's own text is the one thing it must not lose. Decided with the user, 2026-07-27.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
   so injected KaTeX and metadata blocks render — literal tags in captured text
   are made inert by the core, not here. The panel had a second escaper that
