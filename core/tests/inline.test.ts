@@ -282,14 +282,15 @@ describe('nested inline', () => {
 });
 
 describe('flanking whitespace', () => {
-  it('ведущий пробел выносится наружу bold (double space — text node + extracted)', () => {
-    // text node has trailing space, plus extracted leading space from strong → double space
-    expect(toMarkdown('<p>text <strong> bold</strong></p>')).toBe('text  **bold**\n');
+  it('ведущий пробел выносится наружу bold (one space at the seam)', () => {
+    // The space still comes out from between the delimiters; what it meets is
+    // the text node's own trailing space, and two collapsible runs that meet
+    // are one space on screen, so one of them reaches the file.
+    expect(toMarkdown('<p>text <strong> bold</strong></p>')).toBe('text **bold**\n');
   });
 
-  it('trailing пробел выносится наружу italic (double space — extracted + text node)', () => {
-    // extracted trailing space from em, plus text node leading space → double space
-    expect(toMarkdown('<p><em>italic </em> text</p>')).toBe('_italic_  text\n');
+  it('trailing пробел выносится наружу italic (one space at the seam)', () => {
+    expect(toMarkdown('<p><em>italic </em> text</p>')).toBe('_italic_ text\n');
   });
 
   it('оба пробела выносятся наружу del', () => {

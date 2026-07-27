@@ -100,14 +100,13 @@ describe('whitespace between blocks: a blank at a line edge draws nothing', () =
       '<body><p>Before…</p>\n' +
       '<div style="display:inline">First inline div,</div>\n' +
       '<div style="display:inline"> second inline div.</div></body>';
-    // The pair of spaces in the middle stays, and stays on purpose. Both `<div>`s
-    // declare themselves inline, so that blank stands between two inline runs and
-    // is the one thing keeping two words apart; the second run happens to bring a
-    // space of its own, and a browser folds the two into one. Folding them here
-    // would mean knowing what the neighbours render rather than where the line
-    // ends — and two spaces mid-line render as one, while taking the wrong one of
-    // them welds `div,second` together.
-    expect(toMarkdown(html)).toBe('Before…\n\nFirst inline div,  second inline div.\n');
+    // One space in the middle, not two. Both `<div>`s declare themselves inline,
+    // so the blank between them stands between two inline runs and is the one
+    // thing keeping two words apart; the second run brings a space of its own,
+    // and a browser folds the pair into one. This assertion used to pin both of
+    // them, which is the defect written down — `foldedIntoSeam()` is what takes
+    // the second, and the first is exactly what stops `div,second` welding.
+    expect(toMarkdown(html)).toBe('Before…\n\nFirst inline div, second inline div.\n');
   });
 
   it('a run of comments between blocks does not indent the prose after them', () => {
@@ -178,6 +177,98 @@ describe('whitespace between blocks: a blank between two runs is a space', () =>
     expect(
       toMarkdown('<table><tr><th>a</th><th>b</th></tr><tr><td> </td><td>c</td></tr></table>'),
     ).toBe('| a   | b   |\n| --- | --- |\n|     | c   |\n');
+  });
+});
+
+// Two collapsible runs that meet across an element boundary are one space on
+// screen, and used to arrive as two: the newline and the indentation between the
+// tags collapse to one, the run the next element opens with is another, and both
+// survived. Nothing renders differently for it, which is how it went unseen —
+// two spaces render as one — but the Source pane is the half of the product a
+// person edits by hand, and it was wrong there.
+describe('whitespace seam: two runs that meet arrive as one space', () => {
+  const inlineDiv = (content: string): string => `<div style="display:inline">${content}</div>`;
+
+  it.each([
+    // Case S3 of the conversion spec page, which is where this was reported.
+    [
+      'indentation between the elements and a space inside the second',
+      `<body>${inlineDiv('First inline div,')}\n${inlineDiv(' second inline div.')}</body>`,
+      'First inline div, second inline div.\n',
+    ],
+    [
+      'indentation on both sides of the boundary',
+      `<body>${inlineDiv('First,\n')}\n${inlineDiv('second.')}</body>`,
+      'First, second.\n',
+    ],
+    [
+      'a space between the elements and a leading one inside the second',
+      `<body>${inlineDiv('First,')} ${inlineDiv(' second.')}</body>`,
+      'First, second.\n',
+    ],
+    [
+      'a trailing space in the first element meeting a leading one in the second',
+      '<p><span>a </span><span> b</span></p>',
+      'a b\n',
+    ],
+    // The blank between the elements has one on either side of it, so the fold
+    // happens twice and three runs still leave one space.
+    ['three runs at the same seam', '<p><span>a </span> <span> b</span></p>', 'a b\n'],
+    // The blank is a sibling of the wrapper rather than of the text, so the walk
+    // has to leave every container that does not bound the line to find it.
+    [
+      'a leading space inside a nested wrapper',
+      `<body>${inlineDiv('First,')}\n${inlineDiv('<span> second.</span>')}</body>`,
+      'First, second.\n',
+    ],
+  ])('folds %s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+});
+
+describe('whitespace seam: what the fold must not take', () => {
+  it.each([
+    // Neither side offers a blank, so there is none to fold — and none to
+    // invent. The page drew one word and the file holds one.
+    ['neither side offers whitespace', '<p><span>a</span><span>b</span></p>', 'ab\n'],
+    // The expensive direction, in every shape the boundary comes in. One space
+    // is the only thing keeping two words apart, and it counts the same
+    // whichever side of the boundary the page wrote it on.
+    ['a lone space inside the second element', '<p><span>a</span><span> b</span></p>', 'a b\n'],
+    [
+      'a lone space before an image',
+      '<p>word <img alt="pic" src="p.png"></p>',
+      'word ![pic](p.png)\n',
+    ],
+    [
+      'a lone space after an image',
+      '<p><img alt="pic" src="p.png"> word</p>',
+      '![pic](p.png) word\n',
+    ],
+    ['a lone space before a code span', '<p>word <code>x</code></p>', 'word `x`\n'],
+    ['a lone space after a code span', '<p><code>x</code> word</p>', '`x` word\n'],
+  ])('keeps %s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
+  it('a non-breaking space beside an ordinary one, both characters', () => {
+    // Not collapsible: the page chose the character and a browser draws one
+    // wherever it stands, so the pair is two blanks on screen and two in the
+    // file. `normalize()` is what turns the first into an ordinary space, at the
+    // very end and never by folding it into its neighbour.
+    const md = toMarkdown('<p><span>a&nbsp;</span><span> b</span></p>');
+    expect(md).toBe('a  b\n');
+    expect(md).not.toContain('\u00A0');
+  });
+
+  it("a pipe table's column padding", () => {
+    // `buildGFMTable` pads its cells with runs of spaces to line the columns up.
+    // Those are the converter's characters rather than the page's, and the fold
+    // never meets them: it is asked of a text node, long before a rule assembles
+    // a grid out of what the cells converted to.
+    expect(
+      toMarkdown('<table><tr><th>name</th><th>n</th></tr><tr><td>a</td><td>1234</td></tr></table>'),
+    ).toBe('| name | n    |\n| ---- | ---- |\n| a    | 1234 |\n');
   });
 });
 

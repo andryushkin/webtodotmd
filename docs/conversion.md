@@ -224,8 +224,10 @@ the converter emits as markup must be the only markup there is.
   or in front of the next block is drawn nowhere by a browser and is written
   nowhere here; four of them in a row, which is what comments between blocks
   leave behind, would otherwise open an indented code block. A run between two
-  inline runs is a space the reader saw and stays one. A `&nbsp;` survives the
-  collapse and then becomes an ordinary space in the finished file.
+  inline runs is a space the reader saw and stays one — one, however many meet
+  there, since the indentation between two elements and a leading space inside
+  the second are a single blank on screen. A `&nbsp;` survives the collapse and
+  then becomes an ordinary space in the finished file.
 
 This is held by a round-trip oracle (`tests/fidelity/`), not by review: it
 compares the text a reader sees before and after conversion, over generated

@@ -367,6 +367,116 @@ function drawsNothing(node: Node, text: string): boolean {
   return atLineEdge(node, 'previousSibling') || atLineEdge(node, 'nextSibling');
 }
 
+// The blank a seam can fold away, spelled from the same class as `BLANK_RUN` and
+// for the same reason: U+00A0 is a character the page chose rather than layout,
+// and a browser draws one wherever it stands. It becomes an ordinary space in
+// `normalize()`, at the end, and never by being folded into a neighbour.
+const LEADING_BLANK = /^[\t\n\v\f\r ]+/;
+
+/** What the line holds where a node ends: a blank another blank folds into,
+ * something that is not one, or no character at all — which is what lets the
+ * walk below step over a node and go on looking. */
+type Trailing = 'blank' | 'other' | 'nothing';
+
+/**
+ * The wrappers a blank can be read *out of* — the ones whose whole output is
+ * their content, so a blank the content ends in is still the last character on
+ * the line once the element is written.
+ *
+ * Emphasis belongs here because its delimiters go *inside* the whitespace it
+ * lifts out: `<b>a </b>` is `**a** `, and `<em>`, `<del>` and a style saying the
+ * same thing all emit through the one function that does it. The rest are the
+ * plain inline wrappers no rule claims, `<span>` being the whole of the case in
+ * practice.
+ *
+ * An allowlist, and that is the point: everything absent answers `other`, which
+ * loses a collapse and can never weld. A code span rewrites the text it holds —
+ * it takes the spans behind it, folds newlines and pads against backticks — an
+ * image has no content at all and a `<sup>` shifts every character it has, so a
+ * blank read out of one of those is a character that may not be where it stood.
+ */
+const HANDS_CONTENT_BACK = new Set([
+  'span', 'font', 'mark', 'ins', 'u', 'small', 'big', 'abbr', 'cite', 'time', 'label', 'bdi', 'bdo',
+  'strong', 'b', 'em', 'i', 'del', 's',
+]);
+
+/** What this node leaves at its end, as the file really receives it. */
+function trailingWritten(node: Node): Trailing {
+  if (node.nodeType === TEXT_NODE) {
+    const text = node.textContent ?? '';
+    // A node that writes no character is one the seam cannot see: an empty one,
+    // and a blank at a line's edge, which `drawsNothing()` has already dropped.
+    if (text === '' || drawsNothing(node, text)) return 'nothing';
+    return BLANK_RUN.test(text.slice(-1)) ? 'blank' : 'other';
+  }
+  if (node.nodeType !== ELEMENT_NODE) return 'nothing';
+  const el = node as Element;
+  // The line ends here, so what follows opens one and has no neighbour to fold
+  // into: a blank there is `drawsNothing()`'s question rather than this one.
+  if (endsTheLine(el)) return 'other';
+  const tag = el.tagName.toLowerCase();
+  // A block that declined the block its tag implies returns its content and
+  // writes nothing else; `endsTheLine()` has answered for the ones that kept it.
+  if (!INLINEABLE_BLOCKS.has(tag) && !HANDS_CONTENT_BACK.has(tag)) return 'other';
+  for (let child = el.lastChild; child; child = child.previousSibling) {
+    const trailing = trailingWritten(child);
+    if (trailing !== 'nothing') return trailing;
+  }
+  return 'nothing';
+}
+
+/**
+ * Whether the line has already written a collapsible blank where this node
+ * begins.
+ *
+ * The walk is `atLineEdge()`'s, not `writtenBefore()`'s, and the difference is
+ * the whole of this defect. `writtenBefore()` is the escaper's instrument: it
+ * reads the boundary off the tag, so it stops dead at a
+ * `<div style="display:inline">` — the very element the seam crosses — and it
+ * reports a node's raw text, so a blank `drawsNothing()` has thrown away still
+ * reads as a written space. Over-reading a boundary costs a backslash there; it
+ * would cost a word here. So the boundary is `endsTheLine()`, which reads the
+ * display the page declared, and each node is asked what it really writes.
+ */
+function blankBefore(node: Node): boolean {
+  for (let current: Node | null = node; current; current = current.parentNode) {
+    for (let prev = current.previousSibling; prev; prev = prev.previousSibling) {
+      const trailing = trailingWritten(prev);
+      if (trailing !== 'nothing') return trailing === 'blank';
+    }
+    const parent = current.parentNode;
+    if (!parent || parent.nodeType !== ELEMENT_NODE) return false;
+    if (boundsTheLine(parent as Element)) return false;
+  }
+  return false;
+}
+
+/**
+ * This text node's own text, with a leading blank taken off where the line has
+ * already written one.
+ *
+ * Two collapsible runs that meet across an element boundary are one space on
+ * screen: the newline and the indentation between `</div>` and the next tag
+ * collapse to one, the run the next element opens with is another, and a browser
+ * folds the pair. Both reached the file, and the Source pane is where a person
+ * sees them — the rendered half hides it, since two spaces render as one.
+ *
+ * Only the second run goes. Dropping the seam altogether would weld
+ * `<p style="display:inline">Yes</p> <p style="display:inline">No</p>` into
+ * `YesNo`, which is why the repair at a line's *edge* stopped short of this one;
+ * one space must survive, and one does. That also keeps the flanking tests
+ * honest, because they ask whether there is whitespace beside a run and there
+ * still is.
+ *
+ * Asked of the page's own text and nowhere else. The same fold applied to the
+ * finished document would eat a pipe table's column padding and the indentation
+ * `preInCell` writes, which are the converter's characters, not the page's.
+ */
+function foldedIntoSeam(node: Node, text: string): string {
+  if (!LEADING_BLANK.test(text)) return text;
+  return blankBefore(node) ? text.replace(LEADING_BLANK, '') : text;
+}
+
 /** True while writing into an HTML block, where Markdown is not parsed. */
 export function isHtmlContext(options: MarkItDownOptions): boolean {
   return options.outputContext === 'html' || options.escapeSyntax === false;
@@ -424,10 +534,15 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     const wantsTilde = prose && text.includes('~');
     const ahead = lookAhead(node, prose && mayOpenLink(text), wantsTilde);
     if (literal === 'math') return escapeMathTags(text, ahead.continues);
+    // Whitespace collapses across an element boundary as it does inside one, so
+    // a run meeting the blank the line already ends in adds nothing. Below the
+    // literal returns above, because inside a fence, a code span or a formula
+    // every character is content.
+    const own = foldedIntoSeam(node, text);
     const seam = { behind: wantsTilde ? writtenBefore(node) : '', ahead: ahead.text };
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
-    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(text, seam), ahead.continues);
+    const escaped = escapeHtmlSyntax(escapeInlineMarkdown(own, seam), ahead.continues);
     return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
   }
   if (node.nodeType === ELEMENT_NODE) {
