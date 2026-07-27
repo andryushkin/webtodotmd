@@ -199,6 +199,43 @@ describe('<pre> that breaks lines with <br>', () => {
   });
 });
 
+// A block's own furniture, drawn inside the `<pre>`: Perplexity writes the
+// language and the copy button into a `<figcaption>` there, and with the `<code>`
+// nested below a `<figure>` the rule read the whole `<pre>` — so the file's code
+// block opened with `pythondef hello(name):`.
+describe('the caption bar and the controls inside a <pre>', () => {
+  const fig = (caption: string, code: string) =>
+    `<pre><figure><figcaption>${caption}</figcaption><code>${code}</code></figure></pre>`;
+
+  it('a caption naming the language becomes the info string', () => {
+    expect(toMarkdown(fig('python', 'x = 1'))).toBe('```python\nx = 1\n```\n');
+  });
+
+  it('a caption that is not a language stays, as the line it was drawn as', () => {
+    expect(toMarkdown(fig('Listing 1', 'x = 1'))).toBe('Listing 1\n\n```\nx = 1\n```\n');
+  });
+
+  it('and is escaped like any other text the page wrote', () => {
+    expect(toMarkdown(fig('a *b* c', 'x = 1'))).toContain('a \\*b\\* c\n\n```');
+  });
+
+  it('a class still outranks the caption', () => {
+    const html = '<pre><figure><figcaption>sample</figcaption>' +
+      '<code class="language-js">x = 1</code></figure></pre>';
+    expect(toMarkdown(html)).toBe('sample\n\n```js\nx = 1\n```\n');
+  });
+
+  it('a button is a control, not a line of code', () => {
+    expect(toMarkdown('<pre><button>Copy</button><code>x = 1</code></pre>')).toBe(
+      '```\nx = 1\n```\n',
+    );
+  });
+
+  it('text outside the <code> is still kept', () => {
+    expect(toMarkdown('<pre>lost<br><code>kept</code></pre>')).toBe('```\nlost\nkept\n```\n');
+  });
+});
+
 // `normalize()` collapses runs of blank lines, which is right between blocks and
 // wrong inside one: found on a ChatGPT answer whose Python sample separated its
 // body from a trailing `print` with two blank lines and arrived with one — the

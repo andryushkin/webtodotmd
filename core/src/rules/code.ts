@@ -1,4 +1,5 @@
 import type { Rule } from '../types.js';
+import { escapeBlockStarts, escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
 
 // Языковые паттерны §6.3
 const LANG_PATTERNS = [
@@ -13,6 +14,15 @@ const LANG_PATTERNS = [
 
 // Классы нумерации строк §6.4
 const LINE_NUMBER_CLASSES = new Set(['line-numbers-rows', 'linenumber', 'line-number', 'hljs-ln']);
+
+// The block's furniture, drawn inside the `<pre>` rather than around it: the bar
+// naming the language, and the buttons that copy or download the sample.
+// Perplexity writes `<pre><figure><figcaption>python …copy button…</figcaption>`,
+// so reading the `<pre>` — which is what a `<code>` nested that deep forces —
+// opened the file's code block with `pythondef hello(name):`. Neither is code:
+// a caption labels the sample and a button is a control, and the caption is
+// usually the language, which the fence has a place for.
+const CHROME_TAGS = new Set(['figcaption', 'button']);
 
 /**
  * What may follow the opening fence.
@@ -43,7 +53,15 @@ function readLang(codeEl: Element | null, preEl: Element): string {
       if (m?.[1]) return m[1];
     }
   }
-  return '';
+  // The caption last, because it is the page's word rather than the
+  // highlighter's: a `<figcaption>` reading `python` is the label above the
+  // block, and `LANG_TOKEN` is what tells that from a sentence about the sample.
+  return captionOf(preEl);
+}
+
+/** The text of the block's own caption bar, if it has one. */
+function captionOf(preEl: Element): string {
+  return (preEl.querySelector('figcaption')?.textContent ?? '').trim();
 }
 
 // One gate for every source. The class patterns above already capture `\w+` and
@@ -54,21 +72,21 @@ function detectLang(codeEl: Element | null, preEl: Element): string {
   return LANG_TOKEN.test(lang) ? lang : '';
 }
 
-// On a clone: a <pre> with no <code> was never mutated before this rule started
-// reading it directly, and tables.ts clones for exactly this reason — the page's
-// own DOM has to come back the way it was found.
-function withoutLineNumbers(el: Element): Element {
-  const clone = el.cloneNode(true) as Element;
-  removeLineNumbers(clone);
-  return clone;
-}
-
+// Everything below runs on a clone the rule makes once — tables.ts clones for
+// exactly this reason: the page's own DOM has to come back the way it was found.
 function removeLineNumbers(el: Element): void {
   for (const child of Array.from(el.children)) {
     const cls = child.getAttribute('class') ?? '';
     if (cls.split(/\s+/).some((c) => LINE_NUMBER_CLASSES.has(c))) {
       child.remove();
     }
+  }
+}
+
+/** Takes the caption bar and the controls out of a clone, at any depth. */
+function removeChrome(el: Element): void {
+  for (const child of Array.from(el.querySelectorAll('figcaption, button'))) {
+    if (CHROME_TAGS.has(child.tagName.toLowerCase())) child.remove();
   }
 }
 
@@ -137,26 +155,43 @@ export const CODE_RULES: Rule[] = [
       if (clip) {
         text = clip.getAttribute('value') ?? '';
       } else {
+        // One clone for the whole read, so neither the chrome nor the gutter is
+        // taken off the page along with it.
+        const pre = el.cloneNode(true) as Element;
+        removeChrome(pre);
+        const code = pre.querySelector('code');
         // The whole <pre> whenever it holds more than the one <code>; the <code>
         // alone otherwise, which is what lets its gutter be stripped. Either way
         // the gutter goes: it can sit in either element, and text the reader
         // never saw as code belongs in neither.
-        const source = codeEl && holdsNothingBut(el, codeEl) ? codeEl : el;
-        // A clone, so stripping the gutter does not take it off the page too.
-        const stripped = withoutLineNumbers(source);
-        if (codeEl && codeEl !== source) {
-          for (const nested of Array.from(stripped.querySelectorAll('code'))) {
+        const source = code && holdsNothingBut(pre, code) ? code : pre;
+        removeLineNumbers(source);
+        if (code && code !== source) {
+          for (const nested of Array.from(source.querySelectorAll('code'))) {
             removeLineNumbers(nested);
           }
         }
-        text = textWithLineBreaks(stripped);
+        text = textWithLineBreaks(source);
       }
 
       text = text.replace(/\n$/, '');
 
       const lang = detectLang(codeEl, el);
+      // What the caption said, where the fence had no room for it. A bar reading
+      // `python` is the language and is now the info string; one reading anything
+      // else is the page's own words about the sample, and it was on the screen —
+      // so it stays, as the line it was drawn as rather than as a first line of
+      // code. Escaped like any other text the page wrote: this rule ignores its
+      // children, so nothing else here has escaped it.
+      // The HTML pass after the Markdown one and the block pass last, which is
+      // the order `convert()` uses on every other text node and the reason it
+      // gives: run the other way round and the `\<` gains a backslash of its own.
+      const caption = captionOf(el);
+      const label = caption && caption !== lang
+        ? `${escapeBlockStarts(escapeHtmlSyntax(escapeInlineMarkdown(caption)))}\n\n`
+        : '';
       const fence = fenceChar(text);
-      return `\n\n${fence}${lang}\n${text}\n${fence}\n\n`;
+      return `\n\n${label}${fence}${lang}\n${text}\n${fence}\n\n`;
     },
   },
 ];

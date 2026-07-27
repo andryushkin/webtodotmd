@@ -32,6 +32,7 @@ backslash: a `>` on its own opens nothing.
 | `<li>` with a checkbox | `- [x]` / `- [ ]` |
 | `<pre>` | ` ``` ` fence, whitespace and `<br>` lines kept, the fence long enough to outrun any backtick run inside |
 | a highlighter's line-number gutter | dropped (`line-numbers-rows`, `linenumber`, `line-number`, `hljs-ln`) |
+| a `<figcaption>` or `<button>` inside the `<pre>` | not code. The button goes — it is a control, not text the reader read as part of the sample. The caption becomes the info string when it names a language (Perplexity draws `python` there), and otherwise stays as a paragraph above the fence, escaped like any other page text. Read from the `<pre>` for the same reason the whole `<pre>` is read when the `<code>` is not alone in it: the caption sits between them |
 | `<clipboard-copy value>` inside a `<pre>` | the attribute is the code — that is GitHub's copy button, and it holds the text without the gutter |
 | `<pre><code data-lang="js">` | ` ```js ` fence — also from `data-language` and from a highlighter class (`language-js`, `lang-js`, `highlight-source-js`, `brush: js`, `sourceCode js`, `shj-lang-js`, `prettyprint lang-js`); anything that is not a bare language token is dropped rather than written into the info string |
 | `<hr>` | `---` |
