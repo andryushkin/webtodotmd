@@ -125,6 +125,19 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   again here: the two sides disagreeing is how a snapshot marks what the core
   keeps.
 
+## Highlighter
+
+- A mark is written twice: the class, and the same three declarations inline. An application that
+  re-renders owns `className` — React writes the attribute out again on every update, and on X the
+  outline vanished the moment a tweet re-rendered, while the extension still counted the element as
+  highlighted. The inline copy survives that; nothing on those pages writes `style` on the elements
+  a person marks.
+- It restores rather than removes: the page may own `outline`, `outline-offset` or
+  `background-color`, and clearing them would edit what the reader sees once the highlighter is off.
+- The marks come off for the length of a capture and go back on in a `finally`. They are the
+  extension's own paint, so leaving them on would put them in the style snapshot and in the HTML
+  view as if the page had written them — the same rule that drops the bubble from the clone.
+
 ## Bubble
 
 - Bubble visibility is `style.display` only. `element.hidden` does nothing —

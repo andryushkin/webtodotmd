@@ -205,6 +205,7 @@ let highlighterStyleEl: HTMLStyleElement | null = null;
 
 
 function injectHighlighterStyles(color: string) {
+  highlightColor = color;
   if (highlighterStyleEl) return;
   highlighterStyleEl = document.createElement('style');
   highlighterStyleEl.textContent = `
@@ -215,6 +216,47 @@ function injectHighlighterStyles(color: string) {
     }
   `;
   document.head.appendChild(highlighterStyleEl);
+}
+
+/** The colour the marks are drawn in, kept for the inline copy below. */
+let highlightColor = '#2563eb';
+
+// What the mark is written in, twice over.
+//
+// The class is the ordinary half. The inline copy exists because an application
+// that re-renders owns `className`: React writes the attribute out again on every
+// update, and on X a mark vanished the moment the tweet re-rendered — the element
+// stayed highlighted as far as the extension was concerned, and the reader saw no
+// outline at all. An inline declaration survives that, since nothing on the page
+// is writing `style` on these elements.
+//
+// Restored, not removed: the page may own these properties, and a mark that
+// cleared them would edit what the reader sees after the highlighter is off.
+const MARK_PROPERTIES = ['outline', 'outline-offset', 'background-color'] as const;
+const priorInline = new WeakMap<Element, Array<[string, string, string]>>();
+
+function paintHighlight(el: Element): void {
+  const style = (el as HTMLElement).style;
+  if (!style) return;
+  priorInline.set(
+    el,
+    MARK_PROPERTIES.map((name) => [name, style.getPropertyValue(name), style.getPropertyPriority(name)]),
+  );
+  style.setProperty('outline', `2px solid ${highlightColor}`, 'important');
+  style.setProperty('outline-offset', '1px', 'important');
+  style.setProperty('background-color', `${highlightColor}14`, 'important');
+  el.classList.add('s2md-highlighted');
+}
+
+function unpaintHighlight(el: Element): void {
+  el.classList.remove('s2md-highlighted');
+  const style = (el as HTMLElement).style;
+  if (!style) return;
+  for (const [name, value, priority] of priorInline.get(el) ?? []) {
+    if (value === '') style.removeProperty(name);
+    else style.setProperty(name, value, priority);
+  }
+  priorInline.delete(el);
 }
 
 function removeHighlighterStyles() {
@@ -262,14 +304,14 @@ function onHighlighterClick(e: MouseEvent) {
 
   if (highlights.has(target)) {
     highlights.delete(target);
-    target.classList.remove('s2md-highlighted');
+    unpaintHighlight(target);
   } else {
     // Drop any ancestor that is already highlighted
     let ancestor: Element | null = target.parentElement;
     while (ancestor && ancestor !== document.body) {
       if (highlights.has(ancestor)) {
         highlights.delete(ancestor);
-        ancestor.classList.remove('s2md-highlighted');
+        unpaintHighlight(ancestor);
       }
       ancestor = ancestor.parentElement;
     }
@@ -278,12 +320,12 @@ function onHighlighterClick(e: MouseEvent) {
     for (const el of [...highlights]) {
       if (target.contains(el)) {
         highlights.delete(el);
-        el.classList.remove('s2md-highlighted');
+        unpaintHighlight(el);
       }
     }
 
     highlights.add(target);
-    target.classList.add('s2md-highlighted');
+    paintHighlight(target);
   }
 
   sendHighlightCount();
@@ -314,7 +356,7 @@ function disableHighlighter() {
 }
 
 function clearHighlights() {
-  highlights.forEach(el => el.classList.remove('s2md-highlighted'));
+  highlights.forEach(unpaintHighlight);
   highlights.clear();
   removeHighlighterStyles();
   highlighterStyleEl = null;
@@ -344,7 +386,17 @@ function findPageTitle(): string {
 }
 
 function captureHighlightsMd(headingBase?: number): Capture {
-  return highlightsToMd(highlights, document, captureOptions(headingBase));
+  // The marks come off for the length of the capture, the same reason the bubble
+  // is dropped from the clone: the outline and the wash are the extension's, not
+  // the page's, and the inline copy of them would otherwise reach the snapshot
+  // and the HTML view as if the page had written them.
+  const painted = [...highlights];
+  for (const el of painted) unpaintHighlight(el);
+  try {
+    return highlightsToMd(highlights, document, captureOptions(headingBase));
+  } finally {
+    for (const el of painted) paintHighlight(el);
+  }
 }
 
 // ---- Message listener ----
