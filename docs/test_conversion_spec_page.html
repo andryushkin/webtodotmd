@@ -76,7 +76,17 @@
   .case > aside code { color: var(--green); }
   .case > aside .known { color: var(--red); font-weight: 700; }
   .case > aside .setting { color: var(--amber); font-weight: 700; }
-  .subject { padding: 1rem 1.2rem; }
+  /* A subject may carry hostile markup — T9 ships `position:fixed;inset:0`,
+     which is the shape a captured page uses to cover the reader's screen. Layout
+     containment makes each case the containing block for its own positioned
+     descendants, so that table fills its own box instead of the viewport. Without
+     it the fixture is unusable: the overlay sits over every other case, follows
+     the scroll, and a selection made anywhere on the page can catch it.
+     Containment is layout only, never `paint`: clipping would hide the overflow
+     of a wide table, and a case whose content cannot be seen cannot be checked.
+     Nothing here changes what the converter reads — `position` still computes to
+     `fixed`, which is what the hiding rules ask about. */
+  .subject { padding: 1rem 1.2rem; contain: layout; }
   .subject > :first-child { margin-top: 0; }
   .subject > :last-child { margin-bottom: 0; }
   .subject h1, .subject h2, .subject h3, .subject h4,
