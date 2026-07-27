@@ -1,126 +1,19 @@
-import { toMarkdown, enrichRange } from '../../core/src/browser.ts';
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
-import { CONVERSION_OPTIONS } from './raw-mathml-rule';
+import { highlightsToMd, selectionToMd } from './capture';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
-import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
-import {
-  breakPreservedNewlines,
-  collapseHardBreaksToParagraphs,
-  elementsPreservingNewlines,
-  markPreservedNewlines,
-  rangePreservesNewlines,
-} from './hard-breaks';
-import { joinFragments } from './join-fragments';
-import {
-  hasCapturableSelection,
-  mirrorShadowRoots,
-  openShadowRoots,
-  selectionRanges,
-  styleScopeOf,
-} from './shadow-selection';
+import { hasCapturableSelection } from './shadow-selection';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
-// ---- Shadow DOM flattening ----
-
-// Expands a Range to whitespace boundaries when start/end land mid-token
-// in text nodes (token = run of non-whitespace, includes letters/digits/
-// punctuation). Element-boundary selections are left untouched.
-const WORD_CHAR_RE = /\S/u;
-function expandRangeToWords(range: Range): Range {
-  const out = range.cloneRange();
-  const { startContainer, startOffset, endContainer, endOffset } = out;
-  if (startContainer.nodeType === Node.TEXT_NODE) {
-    const text = startContainer.textContent ?? '';
-    let i = startOffset;
-    while (i > 0 && WORD_CHAR_RE.test(text[i - 1]!)) i--;
-    if (i !== startOffset) out.setStart(startContainer, i);
-  }
-  if (endContainer.nodeType === Node.TEXT_NODE) {
-    const text = endContainer.textContent ?? '';
-    let i = endOffset;
-    while (i < text.length && WORD_CHAR_RE.test(text[i]!)) i++;
-    if (i !== endOffset) out.setEnd(endContainer, i);
-  }
-  return out;
+/** The capture options the user can change; see Settings.htmlTables. */
+function captureOptions(): { htmlTables: boolean } {
+  return { htmlTables: htmlTablesSetting };
 }
 
-function cloneRangeWithBr(range: Range): DocumentFragment {
-  // Read before the clone, not after: `cloneContents()` strands the children of
-  // the common ancestor at the top of the fragment, where a text node has no
-  // parent element left to carry the verdict (`hard-breaks.ts`).
-  const rootPreserves = rangePreservesNewlines(range);
-  // enrichRange, not cloneContents: a partial selection loses the context around
-  // it — a table's header row, a code block's language, a list's numbering — and
-  // restoring that is the core's job. This path had been calling cloneContents
-  // directly, so none of it reached the extension.
-  const fragment = enrichRange(range);
-  breakPreservedNewlines(fragment, rootPreserves);
-  return fragment;
-}
-
-/**
- * Records what the page's stylesheets say, for the length of one capture.
- *
- * Before anything else: `getComputedStyle` is answered from a cache Chrome throws
- * away on the next DOM change, and both `snapshotStyles()` and
- * `mirrorShadowRoots()` change the DOM. Reading first is what keeps a capture one
- * style recalculation rather than one per element.
- *
- * Two things are read here and both of them are read before either writes: which
- * newlines the page drew as lines (`hard-breaks.ts`) is a second question for the
- * same live nodes, and asking it after the snapshot had written its attributes
- * would buy the scope a style recalculation for nothing.
- *
- * The cleanup takes every attribute back off, so it belongs in a `finally`
- * outside the conversion — the clone is taken while they are still on.
- */
-function captureStyles(scopes: Array<Element | null>): () => void {
-  const roots = scopes.filter((el): el is Element => el !== null);
-  if (roots.length === 0) return () => {};
-  const computed = computedStyleIn(window);
-  const preserving = elementsPreservingNewlines(roots, computed);
-  // `snapshotStyles` swallows its own faults and always hands back a working
-  // undo: a style the browser cannot resolve is a worse conversion, never a
-  // failed capture, and never an attribute left on the page.
-  const restoreStyles = snapshotStyles(roots, computed);
-  const unmark = markPreservedNewlines(preserving);
-  return () => {
-    unmark();
-    restoreStyles();
-  };
-}
-
-/** The one conversion option the user can change; see Settings.htmlTables. */
-function tableOptions(): { complexTableFallback: 'flatten' | 'html' } {
-  return { complexTableFallback: htmlTablesSetting ? 'html' : 'flatten' };
-}
-
-function selectionToMd(selection: Selection): string {
-  // Collected once and spent twice: the composed range has to be told which
-  // shadow roots it may answer inside, and the copies below are made from the
-  // same list — two walks would be two answers to the same question.
-  const shadowRoots = openShadowRoots(document);
-  const ranges = selectionRanges(selection, shadowRoots, document);
-  const restoreStyles = captureStyles(
-    ranges.map((range) => styleScopeOf(range, snapshotScope(range))),
-  );
-  try {
-    const cleanup = mirrorShadowRoots(shadowRoots);
-    try {
-      const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
-      const fragments = ranges.map((range) =>
-        collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(range)), opts)),
-      );
-      return joinFragments(fragments);
-    } finally {
-      cleanup();
-    }
-  } finally {
-    restoreStyles();
-  }
+function captureSelectionMd(selection: Selection): string {
+  return selectionToMd(selection, document, captureOptions());
 }
 
 function showToast(msg: string, type: 'success' | 'error' = 'success') {
@@ -444,28 +337,7 @@ function findPageTitle(): string {
 }
 
 function captureHighlightsMd(): string {
-  const sorted = [...highlights].sort((a, b) => {
-    const pos = a.compareDocumentPosition(b);
-    return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-  });
-
-  const restoreStyles = captureStyles(sorted.map(el => el.closest('table') ?? el));
-  try {
-    const cleanup = mirrorShadowRoots(openShadowRoots(document));
-    try {
-      const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
-      const fragments = sorted.map(el => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
-      });
-      return joinFragments(fragments);
-    } finally {
-      cleanup();
-    }
-  } finally {
-    restoreStyles();
-  }
+  return highlightsToMd(highlights, document, captureOptions());
 }
 
 // ---- Message listener ----
@@ -545,7 +417,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const md = selectionToMd(selection);
+        const md = captureSelectionMd(selection);
         const meta: PageMeta = {
           title: findPageTitle(),
           url: window.location.href,
@@ -572,7 +444,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const md = selectionToMd(selection);
+        const md = captureSelectionMd(selection);
         await navigator.clipboard.writeText(md);
         showToast(i18n('toastCopied', 'Copied!'));
       } catch {
