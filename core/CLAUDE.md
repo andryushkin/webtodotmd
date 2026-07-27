@@ -183,6 +183,20 @@ threshold sits where no layout lands by accident.
   children — because the wrapper is the only element that knows the two are one formula. A rule that
   merely refused the `<img>` would have to be taught every further fallback the renderer adds.
 
+## Code
+
+- The language is read from the class in the highlighters' spellings first (`language-x`, `lang-x`,
+  and the rest), then from the class that *is* the name — `<code class="java">`, which is what
+  highlight.js writes when the page hands it the language, and what Habr's editor produces; ten
+  blocks of one article arrived as fences with no language at all. The bare name is answered from a
+  list of real languages, never from the shape of the word: `snippet`, `code` and `highlight` all
+  pass for a token, and ```snippet claims something the page never said.
+- What a `<pre>` holds besides its `<code>` is read too — `lost<br><code>kept</code>` is a real
+  shape and losing the first half is silent — but a *control* in that space is furniture, not code.
+  A `<figcaption>`, a `<button>`, and any link or `role="button"` outside the `<code>`: Habr ends
+  every block with `<div class="code-explainer"><a>Объяснить с<img></a></div>`, so every sample
+  closed with `}Объяснить с`. Inside the `<code>` a link is part of the sample and stays.
+
 ## Tables
 
 - A pipe table states alignment once per column, and the page may say it in either row. The header

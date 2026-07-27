@@ -66,6 +66,43 @@ describe('language detection', () => {
   it('нет класса — без суффикса', () => {
     expect(toMarkdown('<pre><code>plain</code></pre>')).toBe('```\nplain\n```\n');
   });
+
+  // The bare name, which is what highlight.js writes when the page hands it the
+  // language outright — Habr's editor among others. Ten blocks of one article
+  // came back as fences with no language at all.
+  it('класс — просто имя языка', () => {
+    expect(toMarkdown('<pre><code class="java">int x = 1;</code></pre>')).toBe(
+      '```java\nint x = 1;\n```\n',
+    );
+    expect(toMarkdown('<pre><code class="hljs python">x = 1</code></pre>')).toBe(
+      '```python\nx = 1\n```\n',
+    );
+  });
+
+  // Habr closes every block with `<div class="code-explainer"><a>Объяснить
+  // с<img></a></div>`, inside the `<pre>` — a button in all but its tag name, so
+  // every sample in the article ended with `}Объяснить с`.
+  it('контрол вне <code> не попадает в код', () => {
+    const html =
+      '<pre><code class="java">int x = 1;</code>' +
+      '<div class="explainer"><a href="https://example.com/">Explain<img src="https://e/x.svg"></a></div></pre>';
+    expect(toMarkdown(html)).toBe('```java\nint x = 1;\n```\n');
+  });
+
+  // Inside the sample it is the sample: API documentation links from its code.
+  it('ссылка внутри <code> остаётся текстом кода', () => {
+    const html = '<pre><code>see <a href="https://example.com/">docs</a> first</code></pre>';
+    expect(toMarkdown(html)).toBe('```\nsee docs first\n```\n');
+  });
+
+  // A class that merely looks like a token is not a language: opening a fence
+  // with ```snippet claims something the page never said, and a wrong name costs
+  // more than a missing one.
+  it('класс, не являющийся языком, языком не становится', () => {
+    for (const cls of ['snippet', 'code-block', 'hljs', 'highlight', 'notranslate']) {
+      expect(toMarkdown(`<pre><code class="${cls}">x</code></pre>`)).toBe('```\nx\n```\n');
+    }
+  });
 });
 
 describe('line numbers removal', () => {

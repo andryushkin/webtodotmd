@@ -40,6 +40,48 @@ const CHROME_TAGS = new Set(['figcaption', 'button']);
  */
 const LANG_TOKEN = /^[a-zA-Z0-9][a-zA-Z0-9+#._-]{0,31}$/;
 
+/**
+ * A class that is the language's bare name — `<code class="java">`.
+ *
+ * highlight.js writes it that way whenever the page tells it the language
+ * outright, and so does every editor that stores the name and prints it as a
+ * class: Habr's does, and ten code blocks of a Spring Boot article arrived as
+ * fences with no language at all, the colour gone from every one of them.
+ *
+ * Answered from a list rather than from the shape of the word, because at this
+ * point every other reading has already failed and what is left is an ordinary
+ * class name. `snippet`, `code` and `highlight` all pass for a token, and a fence
+ * opened with ```snippet claims something the page never said. The list is the
+ * languages a highlighter actually ships with; a name outside it costs colour,
+ * a wrong one costs the claim.
+ */
+const LANGUAGE_CLASSES = new Set([
+  'bash', 'sh', 'shell', 'zsh', 'console', 'powershell', 'ps1', 'batch', 'cmd', 'awk', 'sed',
+  'c', 'cpp', 'c++', 'objectivec', 'objective-c', 'csharp', 'c#', 'cs', 'swift', 'kotlin',
+  'java', 'scala', 'groovy', 'dart', 'go', 'golang', 'rust', 'zig', 'nim', 'crystal',
+  'javascript', 'js', 'jsx', 'typescript', 'ts', 'tsx', 'coffeescript', 'vue', 'svelte',
+  'python', 'py', 'ruby', 'rb', 'perl', 'php', 'lua', 'r', 'julia', 'matlab', 'octave',
+  'elixir', 'erlang', 'clojure', 'haskell', 'ocaml', 'fsharp', 'f#', 'lisp', 'scheme',
+  'prolog', 'fortran', 'cobol', 'pascal', 'delphi', 'ada', 'basic', 'vba', 'vbnet',
+  'html', 'xml', 'svg', 'css', 'scss', 'sass', 'less', 'stylus',
+  'sql', 'plsql', 'tsql', 'mysql', 'postgresql', 'pgsql', 'graphql', 'sparql', 'cypher',
+  'json', 'json5', 'yaml', 'yml', 'toml', 'ini', 'properties', 'csv', 'tsv',
+  'markdown', 'md', 'latex', 'tex', 'rst', 'asciidoc', 'org',
+  'dockerfile', 'docker', 'makefile', 'cmake', 'gradle', 'nginx', 'apache',
+  'terraform', 'hcl', 'puppet', 'ansible', 'kubernetes', 'k8s',
+  'diff', 'patch', 'protobuf', 'thrift', 'graphviz', 'dot', 'mermaid',
+  'asm', 'x86asm', 'wasm', 'verilog', 'vhdl', 'solidity', 'vim', 'http', 'regex',
+  'plaintext', 'text', 'txt',
+]);
+
+function namedLanguage(el: Element | null): string {
+  if (!el) return '';
+  for (const name of (el.getAttribute('class') ?? '').split(/\s+/)) {
+    if (LANGUAGE_CLASSES.has(name.toLowerCase())) return name;
+  }
+  return '';
+}
+
 function readLang(codeEl: Element | null, preEl: Element): string {
   if (codeEl) {
     const dl = codeEl.getAttribute('data-lang') ?? codeEl.getAttribute('data-language');
@@ -52,6 +94,10 @@ function readLang(codeEl: Element | null, preEl: Element): string {
       const m = re.exec(cls);
       if (m?.[1]) return m[1];
     }
+  }
+  for (const target of [codeEl, preEl]) {
+    const named = namedLanguage(target);
+    if (named) return named;
   }
   // The caption last, because it is the page's word rather than the
   // highlighter's: a `<figcaption>` reading `python` is the label above the
@@ -97,6 +143,28 @@ function removeLineNumbers(el: Element): void {
 function removeChrome(el: Element): void {
   for (const child of Array.from(el.querySelectorAll('figcaption, button'))) {
     if (CHROME_TAGS.has(child.tagName.toLowerCase())) child.remove();
+  }
+  removeControlsOutsideCode(el);
+}
+
+/**
+ * A control the site draws inside the `<pre>` and outside the `<code>`.
+ *
+ * The same furniture as above wearing a different tag: Habr ends every code
+ * block with `<div class="code-explainer"><a href="…">Объяснить с<img></a></div>`,
+ * a button in everything but its tag name, and every sample in the article
+ * closed with `}Объяснить с` — text pasted into the reader's code.
+ *
+ * Only outside the `<code>`, and only where there is one to be outside of. A
+ * link *within* a sample is part of it — API documentation writes them — and a
+ * `<pre>` with no `<code>` has nothing to draw the line from, so there the whole
+ * of it is read as before.
+ */
+function removeControlsOutsideCode(el: Element): void {
+  const code = el.querySelector('code');
+  if (!code) return;
+  for (const control of Array.from(el.querySelectorAll('a[href], [role="button"]'))) {
+    if (!code.contains(control)) control.remove();
   }
 }
 
