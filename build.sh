@@ -28,4 +28,24 @@ mkdir -p dist/licenses
 cp LICENSE THIRD_PARTY_NOTICES.md dist/
 cp vendor/licenses/* dist/licenses/
 
+# A content script Chrome will actually read. Chrome validates these files with a
+# UTF-8 check that rejects noncharacters and lone surrogates, and it rejects the
+# whole manifest when one fails — "encoding other than UTF-8", nothing loads. No
+# test can see this: the bundle is valid UTF-8 by every other measure, and the
+# character arrives from a source file that spelled it as an ASCII escape, which
+# the transpiler expands. Only the content script is scanned; the panel has
+# carried a U+FFFF out of `vendor/` through every shipped version.
+python3 - <<'PY' || exit 1
+import sys
+path = 'dist/src/content/content-script.js'
+text = open(path, encoding='utf-8').read()
+bad = [(i, hex(ord(c))) for i, c in enumerate(text)
+       if 0xfdd0 <= ord(c) <= 0xfdef or (ord(c) & 0xfffe) == 0xfffe or 0xd800 <= ord(c) <= 0xdfff]
+if bad:
+    print(f'{path}: Chrome will refuse this content script', file=sys.stderr)
+    for offset, code in bad[:5]:
+        print(f'  {code} at offset {offset}: {text[max(0, offset - 40):offset + 40]!r}', file=sys.stderr)
+    sys.exit(1)
+PY
+
 echo "Build OK → dist/"

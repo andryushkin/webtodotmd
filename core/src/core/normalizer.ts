@@ -22,8 +22,16 @@
  * `rules/tables.ts` imports it rather than spelling it again — a second spelling
  * desynchronises silently, and a marker nobody expands is a stray character in
  * the file, which is the very thing the fold exists to prevent.
+ *
+ * Built at runtime rather than written as a literal. The escape is ASCII in this
+ * file, but the transpiler re-emits a string literal as the character it stands
+ * for, so the bundle carried the noncharacter's own bytes \u2014 and Chrome validates
+ * a content script with a UTF-8 check that rejects noncharacters, refusing the
+ * whole manifest with "encoding other than UTF-8". The extension would not load
+ * at all. `build.sh` scans the bundle for it now, because the failure is
+ * invisible to every test that does not go through Chrome.
  */
-export const CODE_INDENT_MARK = '\uFDD0';
+export const CODE_INDENT_MARK = String.fromCharCode(0xfdd0);
 
 const CODE_INDENT_MARK_PATTERN = new RegExp(CODE_INDENT_MARK, 'g');
 
