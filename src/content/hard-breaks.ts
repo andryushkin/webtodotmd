@@ -226,6 +226,34 @@ function textNodesOf(root: Node, out: Text[]): void {
  * `collapseHardBreaksToParagraphs()` turns into the paragraph break the reader
  * saw.
  */
+// The wrappers a run of text is written in, which a line runs straight through.
+// Anything else — a `<div>`, a `<p>`, a list item — ends the line whatever its
+// style says here, and a newline against its edge is the markup's indentation.
+const INLINE_WRAPPERS = new Set([
+  'span', 'a', 'em', 'strong', 'b', 'i', 'u', 's', 'del', 'ins', 'mark', 'small',
+  'sub', 'sup', 'abbr', 'cite', 'q', 'time', 'label', 'bdi', 'bdo', 'font', 'font-face',
+]);
+
+/**
+ * Whether anything is drawn on that side of this node, within the run of text it
+ * belongs to.
+ *
+ * Walks the siblings on that side and then out through inline wrappers only, so
+ * the question stops at the first thing that would have ended the line anyway.
+ */
+function drawsBeside(node: Node, side: 'previousSibling' | 'nextSibling'): boolean {
+  for (let current: Node | null = node; current; current = current.parentNode) {
+    for (let sibling = current[side]; sibling; sibling = sibling[side]) {
+      if ((sibling.textContent ?? '').trim() !== '') return true;
+      if (sibling.nodeType === ELEMENT_NODE && tagOf(sibling as Element) === 'br') return true;
+    }
+    const parent = current.parentNode;
+    if (parent === null || parent.nodeType !== ELEMENT_NODE) return false;
+    if (!INLINE_WRAPPERS.has(tagOf(parent as Element))) return false;
+  }
+  return false;
+}
+
 export function breakPreservedNewlines(fragment: DocumentFragment, rootPreserves: boolean): void {
   const doc = fragment.ownerDocument;
   if (doc === null) return;
@@ -244,15 +272,25 @@ export function breakPreservedNewlines(fragment: DocumentFragment, rootPreserves
     if (!preserves) continue;
 
     const parts = text.split('\n');
-    // Whitespace-only parts at the two ends are the break between the tag and
-    // the text it holds. The reader did see them where the white-space preserves
-    // them, but they fall at the edge of a block, where Markdown has nothing to
-    // attach a hard break to and writes a bare backslash for it. Inner empty
-    // parts stay: those are the blank line in a caption.
+    // Whitespace-only parts at the two ends are usually the break between the tag
+    // and the text it holds. The reader did see them where the white-space
+    // preserves them, but they fall at the edge of a block, where Markdown has
+    // nothing to attach a hard break to and writes a bare backslash for it. Inner
+    // empty parts stay: those are the blank line in a caption.
+    //
+    // Unless something is drawn on that side, which is the shape X writes a tweet
+    // in: the paragraph break sits at the *end* of one `<span>` and the next
+    // paragraph starts in the `<span>` beside it. Trimmed there, a 9,000-word
+    // thread came back as a single paragraph — the edge of a node is not the edge
+    // of a line.
     let start = 0;
     let end = parts.length;
-    while (start < end - 1 && /^\s*$/.test(parts[start]!)) start += 1;
-    while (end > start + 1 && /^\s*$/.test(parts[end - 1]!)) end -= 1;
+    if (!drawsBeside(textNode, 'previousSibling')) {
+      while (start < end - 1 && /^\s*$/.test(parts[start]!)) start += 1;
+    }
+    if (!drawsBeside(textNode, 'nextSibling')) {
+      while (end > start + 1 && /^\s*$/.test(parts[end - 1]!)) end -= 1;
+    }
     const effective = parts.slice(start, end);
     if (effective.length <= 1) continue;
 

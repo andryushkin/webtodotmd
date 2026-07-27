@@ -65,6 +65,13 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   the capture is free to disagree, and then the break is drawn twice. The mark is
   stripped from the fragment before conversion and restored on the page in a
   `finally`.
+- A newline at the edge of a *node* is not one at the edge of a line. Trimming a whitespace-only
+  part off either end is right when the edge is a block's — that break is the markup's indentation
+  between a tag and its text — and wrong when a run of text continues beside it. X writes a tweet as
+  spans under one `white-space: pre-wrap` box and puts the paragraph break at the end of a span, so
+  the trim cost a 9,000-word thread every paragraph it had: it arrived as one. The question walks the
+  siblings and then out through inline wrappers only, stopping at anything that would have ended the
+  line anyway.
 - A clone is not enough on its own: `cloneContents()` strands the common
   ancestor's children at the top of the fragment, where a text node has no parent
   element to carry a mark — which is exactly the ordinary selection. The live

@@ -229,6 +229,40 @@ describe('hard breaks: white-space the page preserves', () => {
   });
 });
 
+// X writes a tweet as a run of spans under one `white-space: pre-wrap` box, and
+// puts the paragraph break at the *end* of a span — the next paragraph starts in
+// the span beside it. Trimming a newline against a node's edge, which is right
+// when the edge is a block's, cost a 9,000-word thread every one of its
+// paragraphs: it arrived as one.
+describe('hard breaks: a newline at the edge of a node, not of a line', () => {
+  it('a break ending a span is kept when a span follows it', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>first\n\n</span>' +
+        '<span>second</span></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('first\n\nsecond');
+  });
+
+  it('and when the text beside it is in the same span', () => {
+    const doc = page('<div style="white-space: pre-wrap"><span>first\n\nsecond</span></div>');
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('first\n\nsecond');
+  });
+
+  // The case the trimming exists for: nothing is drawn on that side, so the
+  // newline is the markup's own indentation between the tag and its text.
+  it('a break against the edge of a block still goes', () => {
+    const doc = page('<div style="white-space: pre-wrap">\n  first line\n</div>');
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('first line');
+  });
+
+  it('a block beside it does not count as text on the line', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><div>first\n</div><div>second</div></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('first\n\nsecond');
+  });
+});
+
 describe('hard breaks: what the rewrite must not touch', () => {
   it('a code block keeps its own newlines and gains no break', () => {
     const doc = page('<pre><code>const a = 1;\nconst b = 2;\n</code></pre>');
