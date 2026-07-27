@@ -164,7 +164,10 @@ the text.
 - **Math** — inline `$…$` and display `$$…$$` render through KaTeX; MathML on
   the page is converted to LaTeX first. If rendering fails, the LaTeX source is
   shown.
-- **Shadow DOM** — content inside web components is included in the capture.
+- **Shadow DOM** — content inside web components is included in the capture,
+  whether the selection covers the component or was made inside it. The second
+  used to come back empty: a browser hides a component's nodes from an
+  ordinary selection, moving both ends of the range onto the component itself.
 
 ## Settings
 

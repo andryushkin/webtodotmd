@@ -6,6 +6,13 @@ import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
 import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
 import { joinFragments } from './join-fragments';
+import {
+  hasCapturableSelection,
+  mirrorShadowRoots,
+  openShadowRoots,
+  selectionRanges,
+  styleScopeOf,
+} from './shadow-selection';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
@@ -102,7 +109,7 @@ function collapseHardBreaksToParagraphs(md: string): string {
  *
  * Before anything else: `getComputedStyle` is answered from a cache Chrome throws
  * away on the next DOM change, and both `snapshotStyles()` and
- * `expandShadowRoots()` change the DOM. Reading first is what keeps a capture one
+ * `mirrorShadowRoots()` change the DOM. Reading first is what keeps a capture one
  * style recalculation rather than one per element.
  *
  * The cleanup takes every attribute back off, so it belongs in a `finally`
@@ -117,30 +124,22 @@ function captureStyles(scopes: Array<Element | null>): () => void {
   return snapshotStyles(roots, computedStyleIn(window));
 }
 
-function expandShadowRoots(): () => void {
-  const cleanups: (() => void)[] = [];
-  document.querySelectorAll('*').forEach(el => {
-    if (el.shadowRoot) {
-      const wrapper = document.createElement('s2md-shadow');
-      wrapper.innerHTML = el.shadowRoot.innerHTML;
-      el.prepend(wrapper);
-      cleanups.push(() => wrapper.remove());
-    }
-  });
-  return () => cleanups.forEach(fn => fn());
-}
-
 /** The one conversion option the user can change; see Settings.htmlTables. */
 function tableOptions(): { complexTableFallback: 'flatten' | 'html' } {
   return { complexTableFallback: htmlTablesSetting ? 'html' : 'flatten' };
 }
 
 function selectionToMd(selection: Selection): string {
-  const ranges: Range[] = [];
-  for (let i = 0; i < selection.rangeCount; i++) ranges.push(selection.getRangeAt(i));
-  const restoreStyles = captureStyles(ranges.map(snapshotScope));
+  // Collected once and spent twice: the composed range has to be told which
+  // shadow roots it may answer inside, and the copies below are made from the
+  // same list — two walks would be two answers to the same question.
+  const shadowRoots = openShadowRoots(document);
+  const ranges = selectionRanges(selection, shadowRoots, document);
+  const restoreStyles = captureStyles(
+    ranges.map((range) => styleScopeOf(range, snapshotScope(range))),
+  );
   try {
-    const cleanup = expandShadowRoots();
+    const cleanup = mirrorShadowRoots(shadowRoots);
     try {
       const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
       const fragments = ranges.map((range) =>
@@ -262,7 +261,9 @@ function onSelectionChange() {
   if (!isContextValid()) { selfDestruct(); return; }
   if (highlighterActive || !showBubbleSetting || bubbleClicked || mouseDownHiding) return;
   const sel = window.getSelection();
-  if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+  // `rangeCount` as well as the text, because the bubble is placed off a range
+  // and a browser with none to give cannot be shown one.
+  if (sel && sel.rangeCount > 0 && hasCapturableSelection(sel)) {
     showBubble(sel);
   } else {
     hideBubble();
@@ -481,7 +482,7 @@ function captureHighlightsMd(): string {
 
   const restoreStyles = captureStyles(sorted.map(el => el.closest('table') ?? el));
   try {
-    const cleanup = expandShadowRoots();
+    const cleanup = mirrorShadowRoots(openShadowRoots(document));
     try {
       const opts = { baseUrl: document.baseURI, ...CONVERSION_OPTIONS, ...tableOptions() };
       const fragments = sorted.map(el => {
@@ -567,7 +568,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === 'CAPTURE_SELECTION') {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    if (!hasCapturableSelection(selection)) {
       sendResponse({ error: 'NO_SELECTION' } satisfies CaptureErrorResponse);
       return true;
     }
@@ -593,7 +594,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === 'CAPTURE_AND_COPY') {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    if (!hasCapturableSelection(selection)) {
       showToast(i18n('toastNoSelection', 'Nothing selected'), 'error');
       sendResponse({});
       return true;

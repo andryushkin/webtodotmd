@@ -103,7 +103,7 @@ above restated against a stylesheet. The walk collects everything before it
 writes anything — setting an attribute invalidates the style the browser has
 cached, so a walk that wrote as it went would recalculate once per element — it
 stops at `display:none` instead of marking a hidden menu one node at a time, and
-it descends into `shadowRoot`, since `expandShadowRoots()` flattens a component
+it descends into `shadowRoot`, since `mirrorShadowRoots()` flattens a component
 by copying `innerHTML` and attributes are the only thing that copy carries.
 
 Silence has two exceptions. The first is the only way the snapshot can take
@@ -165,7 +165,7 @@ standing whenever a visible sibling happened to follow it.
    The manifest also auto-injects on `*://*/*`; the ping path covers tabs that
    loaded before the extension did.
 2. The content script records the computed style of the selection's scope
-   (`snapshotStyles()`), then expands shadow roots (`expandShadowRoots()`),
+   (`snapshotStyles()`), then mirrors shadow roots (`mirrorShadowRoots()`),
    injecting their contents as temporary `<s2md-shadow>` elements so web
    components convert like ordinary markup. That order is the point: the
    snapshot has to be read before anything mutates the DOM, and its attributes

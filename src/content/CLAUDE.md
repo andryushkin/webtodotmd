@@ -25,7 +25,16 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   originals: mark before cloning, unmark in a `finally`, and detect the header by
   that mark — comparing `textContent` promoted a body row that repeated it. The
   page may own the attribute, so restore its value in the `finally`, not remove.
-- Wrap `expandShadowRoots()` in try/finally so its cleanup always runs.
+- Wrap `mirrorShadowRoots()` in try/finally so its cleanup always runs, and take
+  the undo it hands back even when a copy faults half way through planting them.
+- A selection made *inside* an open shadow root is invisible to `getRangeAt()`:
+  the browser moves both endpoints onto the host, so the range arrives collapsed
+  in front of it and the capture was empty. `shadow-selection.ts` asks
+  `getComposedRanges()` instead, naming every open root — Chrome 137, well above
+  the extension's floor, so the document-tree answer stays as the fallback. A
+  live `Range` cannot hold two trees, so a selection that crosses out of a
+  component lifts its deeper end to the host: over-capturing the component to its
+  end costs a sentence, losing the range costs the capture.
 
 ## Style snapshot
 
@@ -35,9 +44,12 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   it went would pay for a recalculation per element. It records only what the tag
   and the parent do not already imply, which is both what keeps the markup small
   and what lets a run cut out of its bold paragraph stay plain. It walks
-  `shadowRoot` too: `expandShadowRoots()` copies `innerHTML`, which carries
+  `shadowRoot` too: `mirrorShadowRoots()` copies `innerHTML`, which carries
   attributes and nothing else, so a component not snapshotted first arrives
-  unstyled for good. Marks come off in a `finally`, restoring the page's value.
+  unstyled for good. `snapshotScope()` cannot answer for a shadow root — a
+  `DocumentFragment` is not an element — so a selection whose common ancestor is
+  one hands over the host instead, or the whole component arrives unstyled. Marks
+  come off in a `finally`, restoring the page's value.
 - That silence has two exceptions, both about `visibility`. The first is the only
   way the snapshot can *take something back*: where the page's own `style` hides
   an element and the cascade overruled it, the computed value has to be written
