@@ -952,6 +952,70 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
       
 </div>
 
+<div class="case" data-case="W5">
+
+        <div class="mw-heading" style="font-weight:700">
+          <h2 style="display:inline;font-weight:400">Definitions</h2>
+          <span class="mw-editsection" style="font-weight:400"><a href="/w/index.php?action=edit&section=1">edit</a></span>
+        </div>
+        <p>A heading inlined by its skin is still a heading.</p>
+        <div class="mw-heading" style="font-weight:700">
+          <h3 style="display:inline">Standard case</h3>
+          <span class="mw-editsection" style="font-weight:400"><a href="/w/index.php?action=edit&section=2">edit</a></span>
+        </div>
+        <p>And the level below it keeps its distance.</p>
+        <div>A heading truly inside a sentence is the other case: x<h2 style="display:inline">not a heading</h2>y stays one line. A parser closes a <code>p</code> before an <code>h2</code>, so this one is a <code>div</code>.</div>
+      
+</div>
+
+<div class="case" data-case="W6">
+
+        <details open>
+          <summary style="font-weight:700">
+            <div style="font-weight:400">
+              <a href="/user/example" style="font-weight:700">ExampleUser</a>
+              <span style="font-weight:600">MODERATOR</span>
+              <span>• 2 months ago</span>
+            </div>
+          </summary>
+          <p>The body of the comment is ordinary text.</p>
+        </details>
+        <div style="font-weight:bold">
+          <p>First bolded paragraph.</p>
+          <p>Second bolded paragraph.</p>
+          <h3>A heading inside is bold already</h3>
+        </div>
+      
+</div>
+
+<div class="case" data-case="W7">
+
+        <table class="infobox">
+          <tbody>
+            <tr><th colspan="4">Normal distribution</th></tr>
+            <tr><th scope="row">Notation</th><td colspan="3">N(μ, σ²)</td></tr>
+            <tr><th scope="row">Support</th><td colspan="3">x ∈ ℝ</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <tbody>
+            <tr><td>p</td><td>z</td><td></td><td>p</td><td>z</td></tr>
+            <tr><td>0.80</td><td>1.28</td><td></td><td>0.999</td><td>3.29</td></tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="W8">
+
+        <pre><code class="java">@Entity
+public class Seat {
+    private Long id;
+}</code><div class="code-explainer"><a href="https://example.com/explain" class="tm-button">Explain with<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="60" height="12"></a></div></pre>
+        <pre><code>see <a href="https://example.com/docs">the docs</a> for the flags</code></pre>
+      
+</div>
+
 <div class="case" data-case="Q1">
 
         <header><p>ARTICLE_HEADER_CHROME</p></header>
@@ -1139,6 +1203,12 @@ Fourth line after an empty line</span></p>
 <div class="case" data-case="K8">
 
         <p>It also includes a conformance test suite.<span class="drawn-gap"></span><a href="https://commonmark.org/">commonmark</a></p>
+      
+</div>
+
+<div class="case" data-case="K9">
+
+        <div style="font-weight:700"><span style="font-weight:400">not bold on screen</span> and this part is</div>
       
 </div>
 </main>

@@ -226,12 +226,15 @@
     </p>
     <p>
       Each gray strip describes the assertion and is outside the subject. The
-      extension puts the <em>shallowest</em> heading of a capture at <code>##</code>
-      and moves the rest by the same amount, so what a heading becomes depends on
-      what else the selection caught: take B1 whole and its <code>h1</code> is
-      <code>##</code>, take B5 alone and its <code>aria-level="3"</code> is
-      <code>##</code> as well. Cases marked “setting” require the named option.
-      Known limitations are collected at the end.
+      extension <em>raises</em> the shallowest heading of a capture to
+      <code>##</code> and moves the rest by the same amount, never pushing one
+      deeper — so what a heading becomes depends on what else the selection
+      caught: take B5 alone and its <code>aria-level="3"</code> is
+      <code>##</code>, while B1 keeps its <code>h1</code> as <code>#</code>,
+      the rank the page itself gave it. The base carries across presses of the
+      button, so capturing this page in several goes keeps the ranks apart.
+      Cases marked “setting” require the named option. Known limitations are
+      collected at the end.
     </p>
   </aside>
 
@@ -1067,6 +1070,74 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
         </div>
       </div>
     </article>
+
+    <article class="case">
+      <aside><strong>W5.</strong> Wikipedia's Vector 2022 skin: the heading is inlined so its <code>[edit]</code> link lands beside the title, and the wrapper around them carries the weight. The heading keeps its level — the reader saw a line of large type — and the link follows it as its own paragraph. Read as the style states it, the section titles of a whole article arrive as prose. The second wrapper's <code>[edit]</code> comes out bold, which is K9.</aside>
+      <div class="subject">
+        <div class="mw-heading" style="font-weight:700">
+          <h2 style="display:inline;font-weight:400">Definitions</h2>
+          <span class="mw-editsection" style="font-weight:400"><a href="/w/index.php?action=edit&amp;section=1">edit</a></span>
+        </div>
+        <p>A heading inlined by its skin is still a heading.</p>
+        <div class="mw-heading" style="font-weight:700">
+          <h3 style="display:inline">Standard case</h3>
+          <span class="mw-editsection" style="font-weight:400"><a href="/w/index.php?action=edit&amp;section=2">edit</a></span>
+        </div>
+        <p>And the level below it keeps its distance.</p>
+        <div>A heading truly inside a sentence is the other case: x<h2 style="display:inline">not a heading</h2>y stays one line. A parser closes a <code>p</code> before an <code>h2</code>, so this one is a <code>div</code>.</div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W6.</strong> Reddit's comment header: the <code>summary</code> states a weight that every child takes back, and the author's name declares it again for itself. Only the name is bold on screen, so only the name is bold in the file — no <code>**</code> around the line, and no <code>****</code> anywhere. The bolded block below states the other half: a mark goes round each block, never across the blank between two of them.</aside>
+      <div class="subject">
+        <details open>
+          <summary style="font-weight:700">
+            <div style="font-weight:400">
+              <a href="/user/example" style="font-weight:700">ExampleUser</a>
+              <span style="font-weight:600">MODERATOR</span>
+              <span>• 2 months ago</span>
+            </div>
+          </summary>
+          <p>The body of the comment is ordinary text.</p>
+        </details>
+        <div style="font-weight:bold">
+          <p>First bolded paragraph.</p>
+          <p>Second bolded paragraph.</p>
+          <h3>A heading inside is bold already</h3>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W7.</strong> A Wikipedia infobox is built out of merges: the title spans all four columns, and each row below is a label plus a value spanning the other three. Nothing begins in the last two columns, so the browser draws them at no width and the file has two columns, not four. The table after it keeps its empty column — those cells exist.</aside>
+      <div class="subject">
+        <table class="infobox">
+          <tbody>
+            <tr><th colspan="4">Normal distribution</th></tr>
+            <tr><th scope="row">Notation</th><td colspan="3">N(μ, σ²)</td></tr>
+            <tr><th scope="row">Support</th><td colspan="3">x ∈ ℝ</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <tbody>
+            <tr><td>p</td><td>z</td><td></td><td>p</td><td>z</td></tr>
+            <tr><td>0.80</td><td>1.28</td><td></td><td>0.999</td><td>3.29</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>W8.</strong> Habr's code block: the language is the bare class name, and the site draws its “explain this” link inside the <code>pre</code> and outside the <code>code</code>. The fence opens with <code>java</code> and the sample ends at its closing brace. A link <em>inside</em> the sample is part of it and stays.</aside>
+      <div class="subject">
+        <pre><code class="java">@Entity
+public class Seat {
+    private Long id;
+}</code><div class="code-explainer"><a href="https://example.com/explain" class="tm-button">Explain with<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="60" height="12"></a></div></pre>
+        <pre><code>see <a href="https://example.com/docs">the docs</a> for the flags</code></pre>
+      </div>
+    </article>
   </section>
 
   <section id="modes">
@@ -1287,6 +1358,13 @@ Fourth line after an empty line</span></p>
         <p>It also includes a conformance test suite.<span class="drawn-gap"></span><a href="https://commonmark.org/">commonmark</a></p>
       </div>
     </article>
+    <article class="case">
+      <aside><strong>K9.</strong> <span class="known">Known defect:</span> a style mark is written round everything its element converted to, so a part of it that declared the mark away is bolded anyway. The wrapper below is bold, the first span takes the weight back, and both come out inside the same <code>**</code>. What already works is the whole of it: a weight <em>every</em> child declines writes nothing at all (W6), and each block takes the mark separately rather than one pair spanning the blank between them. What is left is a run inside a block, which needs the mark handed to the children rather than written round their result.</aside>
+      <div class="subject">
+        <div style="font-weight:700"><span style="font-weight:400">not bold on screen</span> and this part is</div>
+      </div>
+    </article>
+
   </section>
 </main>
 <script>
