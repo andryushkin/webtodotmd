@@ -87,11 +87,15 @@ threshold sits where no layout lands by accident.
   answers first; when it is silent the body does, but only unanimously — a table of numbers carries
   `text-align` on every `<td>` and nothing on the `<th>`, while one differing or silent cell means
   the column was never aligned at all.
-- HTML reaches the output only where Markdown cannot express the content structurally — never to
-  carry an appearance. Emphasis falling back to a tag because flanking forbids a delimiter, `<sub>`
-  and `<sup>`, a merged-cell table: Markdown has no spelling for any of them. A highlight does have
-  one that is close enough — `**` — so a background becomes that, not a `<mark>`. The file is the
-  product; a reader opening it should find Markdown, not markup with tags sprinkled through it.
+- The product converts HTML *into* Markdown, so live HTML in the output is unfinished work, not a
+  feature. The only tags a file should hold are escaped ones the page itself displayed — `\<div\>`
+  on a page about HTML, which the reader saw as characters and must go on seeing as characters.
+  Never a tag emitted to carry an appearance: a background becomes `**`, not a `<mark>`, and
+  `==` is not the answer either — it is neither CommonMark nor GFM, so the panel would show the
+  characters, and making it markup means escaping every `x==y` a page ever prints.
+  Four places still break this and are debts, each with a reason once accepted: `<sub>`/`<sup>`,
+  which Markdown cannot spell, and the emphasis fallback for content flanked by punctuation, where
+  the alternative was losing the italics and leaving the delimiters on show.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would
