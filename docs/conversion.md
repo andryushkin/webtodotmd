@@ -88,6 +88,7 @@ debts, not features.
 | `<del>` `<s>` `<strike>` | `~~text~~` | `strike` via the browser's own line-through |
 | `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped, and only the text: a `<strong>` inside writes no `**`. Two spans with nothing between them merge into one, since two backtick runs meeting cannot be told apart |
 | `<sub>` `<sup>` | Unicode: `H₂O`, `x²` | see below |
+| `<ruby>` + `<rt>` | `漢字(かんじ)` | the reading beside the word rather than welded onto it — `漢字かんじ` is the word read twice and a search for either half then fails. `<rp>` is dropped: it holds the same two characters for a browser that cannot draw ruby, and keeping both gives `((かんじ))` |
 | KaTeX, MathJax, `<math alttext>` | `$latex$` / `$$latex$$` | when `math` is on. The core reads LaTeX the page already carries — an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`, Wikipedia's `alttext` |
 | MathML carrying no LaTeX | `$latex$`, converted by `src/content/raw-mathml-rule.ts` | that rule is the extension's, not the core's. In the library `math: true` **drops such a formula**; with `math` off its text falls through as prose (`<mi>x</mi><mo>+</mo>` → `x+`) |
 
@@ -167,7 +168,11 @@ page did not:
 `<ins>` `<u>` (no underline syntax) · `<small>` `<big>` (no size syntax) ·
 `<abbr>` (the title is not shown) · `<q>` (its quotes exist only as generated
 content, which no DOM walk can reach) · `<time>` `<data>` `<output>` `<bdi>`
-`<bdo>` `<ruby>` `<tt>` `<font>`
+`<tt>` `<font>`
+
+`<bdo>` is in that list with a caveat worth stating: the reader saw its
+characters *reversed*, and the file gets them in the order the DOM holds them.
+Writing what was on screen would hand back a string nobody can search or quote.
 
 Not read from CSS either, and for the same reason plus a rate of false positives:
 `font-family` (numbers, timestamps and prices are routinely monospaced),

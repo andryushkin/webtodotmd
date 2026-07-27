@@ -540,6 +540,70 @@ export const INLINE_RULES: Rule[] = [
     filter: 'sup',
     replacement: (_el, childContent) => shifted(childContent, SUPERSCRIPT),
   },
+  // A ruby annotation is the reading of the word it stands over: furigana above
+  // Japanese, pinyin above Chinese, bopomofo beside it. No rule claimed `<rt>`,
+  // so the default one handed back its text and the reading was welded onto the
+  // word — `<ruby>漢字<rt>かんじ</rt></ruby>` arrived as `漢字かんじ`. Nothing in
+  // that string says where the word ends and its reading begins, and a search
+  // for either one now fails on the joined form. That is a corruption on the
+  // pages ruby is actually used for, not a blemish.
+  //
+  // Parentheses are how plain text has always carried a reading, and they keep
+  // both strings whole and separable. Markdown has no ruby syntax of its own,
+  // and inventing one would state something the page did not; parentheses state
+  // exactly what the page did.
+  //
+  // Per element, so the commonest real shape falls out on its own: a per-
+  // character `<ruby>漢<rt>かん</rt>字<rt>じ</rt></ruby>` writes `漢(かん)字(じ)`,
+  // each reading beside the character it belongs to, which is where the reader
+  // saw it. `<rb>` — the base, in the older spelling — needs no rule at all: the
+  // default one hands back its children, and its children are the word. `<rtc>`
+  // is the same when it wraps `<rt>` elements, which is how it is written.
+  {
+    name: 'ruby-annotation',
+    filter: 'rt',
+    replacement: (el, childContent, options) => {
+      // An annotation of nothing is nothing. `()` around a whitespace-only or
+      // empty `<rt>` is two characters the page never showed, and the reader saw
+      // no reading above the word. The flanking whitespace goes with it: it
+      // belonged to the line above the word, never to the base line, so keeping
+      // it would open a gap in a word the reader saw closed.
+      //
+      // The content is the converted children, not their text, so an annotation
+      // with markup of its own keeps it: an `<em>` inside an `<rt>` is emphasis
+      // like any other, and the parentheses go outside it.
+      const { trimmed } = extractFlankingWhitespace(childContent);
+      if (trimmed === '') return '';
+      // The text escaper cannot see a parenthesis this rule invents. It judges a
+      // `]` by the page's own text ahead of it and finds no `(` there, so a base
+      // ending in one assembled `[x](y)`: a working link whose target is the
+      // reading, whose brackets left the page, and whose label is the word. One
+      // backslash puts all three back, and CommonMark renders `\(` as `(`, so the
+      // reader sees the character either way. Not inside an HTML block, where a
+      // backslash is a backslash and no link is being parsed.
+      const open = !isHtmlContext(options) && charBefore(el) === ']' ? '\\(' : '(';
+      return `${open}${trimmed})`;
+    },
+  },
+  // `<rp>` holds the parentheses a browser *without* ruby support would show,
+  // and every browser that has ruby hides it — `rp { display: none }` is in the
+  // HTML standard's own UA stylesheet. So a page that writes `<rp>(</rp>` is
+  // already carrying the characters the rule above adds, and emitting both gives
+  // `漢字((かんじ))`. It is dropped, and that answers for the reader whose browser
+  // showed them too: those parentheses and these are the same two characters in
+  // the same place, so either reader ends up with the string they saw.
+  //
+  // Dropped here rather than left to the hiding pass, because that pass cannot
+  // reach it everywhere. In the extension the content script's snapshot records
+  // the UA `display:none` and the sanitizer takes the element; a library caller
+  // brings no snapshot, sees nothing hidden, and kept the page's own parentheses
+  // — so the two paths answered differently about the same document until this
+  // rule made them agree.
+  {
+    name: 'ruby-parenthesis',
+    filter: 'rp',
+    replacement: () => '',
+  },
   {
     name: 'inline-code',
     // `kbd` and `samp` belong here too. They are in the parser's literal set, so

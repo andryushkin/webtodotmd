@@ -80,6 +80,94 @@ describe('sub / sup', () => {
   });
 });
 
+// A reading welded onto its word is a corruption, not a blemish: `漢字かんじ`
+// says nothing about where the word stops and the reading starts, and a search
+// for either fails on the joined form. Parentheses are how plain text has always
+// written a reading, and they keep the two strings separable.
+describe('ruby annotation: the reading goes in parentheses', () => {
+  it('furigana above a Japanese word', () => {
+    expect(toMarkdown('<body><ruby>漢字<rt>かんじ</rt></ruby></body>')).toBe('漢字(かんじ)\n');
+  });
+
+  it('pinyin above a Chinese word', () => {
+    expect(toMarkdown('<body><ruby>中文<rt>zhōngwén</rt></ruby></body>')).toBe('中文(zhōngwén)\n');
+  });
+
+  // Per character, which is the commonest real shape: each reading stays beside
+  // the character it belongs to, where the reader saw it.
+  it('one annotation per character', () => {
+    expect(toMarkdown('<body><ruby>漢<rt>かん</rt>字<rt>じ</rt></ruby></body>')).toBe(
+      '漢(かん)字(じ)\n',
+    );
+  });
+
+  it('inside a sentence, with the words on either side left where they were', () => {
+    expect(
+      toMarkdown('<body><p>The word <ruby>漢字<rt>かんじ</rt></ruby> means characters.</p></body>'),
+    ).toBe('The word 漢字(かんじ) means characters.\n');
+  });
+
+  // `<rb>` is the base in the older spelling and needs no rule of its own: the
+  // default one hands back its children, and its children are the word.
+  it('rb, the older spelling of the base', () => {
+    expect(toMarkdown('<body><ruby><rb>漢字</rb><rt>かんじ</rt></ruby></body>')).toBe(
+      '漢字(かんじ)\n',
+    );
+  });
+
+  // The annotation is content like any other, so markup inside it converts.
+  it('an annotation with markup of its own', () => {
+    expect(toMarkdown('<body><ruby>漢字<rt><em>かんじ</em></rt></ruby></body>')).toBe(
+      '漢字(*かんじ*)\n',
+    );
+  });
+
+  // `<rp>` carries the parentheses a browser without ruby support would show, and
+  // every browser that has ruby hides it. Keeping the page's pair as well as this
+  // rule's would give `漢字((かんじ))`; dropping it leaves both readers — the one
+  // who saw the parentheses and the one who did not — with the same two
+  // characters in the same place.
+  it('rp does not double the parentheses', () => {
+    expect(
+      toMarkdown('<body><ruby>漢字<rp>(</rp><rt>かんじ</rt><rp>)</rp></ruby></body>'),
+    ).toBe('漢字(かんじ)\n');
+  });
+
+  // The same document as the extension sees it. The content script's snapshot
+  // records the UA `display:none` on `<rp>`, so the sanitizer takes the element
+  // before any rule runs — and until `<rp>` was dropped by rule, that path and a
+  // library caller with no snapshot answered differently about the same page.
+  it('rp hidden by the style snapshot gives the same answer', () => {
+    const hidden = 'data-s2md-style="display:none"';
+    expect(
+      toMarkdown(
+        `<body><ruby>漢字<rp ${hidden}>(</rp><rt>かんじ</rt><rp ${hidden}>)</rp></ruby></body>`,
+      ),
+    ).toBe('漢字(かんじ)\n');
+  });
+
+  // Parentheses around nothing are two characters the page never showed.
+  it('an empty annotation writes nothing', () => {
+    expect(toMarkdown('<body><ruby>漢字<rt></rt></ruby></body>')).toBe('漢字\n');
+  });
+
+  it('a whitespace-only annotation writes nothing', () => {
+    expect(toMarkdown('<body><ruby>漢字<rt>  </rt></ruby></body>')).toBe('漢字\n');
+  });
+
+  it('a ruby with no annotation at all is its base', () => {
+    expect(toMarkdown('<body><ruby>漢字</ruby></body>')).toBe('漢字\n');
+  });
+
+  // The text escaper judges a `]` by the page's own text ahead of it and cannot
+  // see a parenthesis this rule invents, so a base ending in one assembled
+  // `[x](y)`: a link whose target was the reading and whose brackets left the
+  // page. `\(` renders as `(`, so the reader sees the same characters.
+  it('a base ending in a bracket does not assemble a link', () => {
+    expect(toMarkdown('<body><p><ruby>[x]<rt>y</rt></ruby></p></body>')).toBe('[x]\\(y)\n');
+  });
+});
+
 describe('inline code', () => {
   it('code не внутри pre', () => {
     expect(toMarkdown('<code>foo()</code>')).toBe('`foo()`\n');
