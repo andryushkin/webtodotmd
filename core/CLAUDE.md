@@ -1,0 +1,107 @@
+# Conversion core — invariants
+
+`htmltodotmd`: HTML → Markdown, developed here and published from here. Isomorphic
+by contract — it runs against a live DOM in the extension, against linkedom in its
+own tests, and against whatever a library caller brings. Anything that needs a
+layout engine belongs in `src/content/`, not here.
+
+Each rule below has cost a bug already; the reason is what makes it stick.
+
+## Escaping
+
+- Markdown characters in the page's own text are escaped, so the file renders what the reader saw.
+  Inline marks (`*`, a non-intraword `_`, `` ` ``, tildes, link brackets, the last two against a
+  bounded lookahead) are escaped per text node; `#`, `>`, bullets, numbering and a line of dashes only
+  in the node that opens a block — a text node is not a line, and the parser splits text at every
+  element boundary. Never escape inside `pre`, `code`, `kbd`, `samp` or a math subtree: a backslash
+  there is corruption, and in a math subtree only a tag start (`<` before a letter or slash) is
+  neutralized, because that is what can close a fallback cell.
+- A `~` is escaped when a partner can reach it, never for standing at an edge. One tilde renders as
+  itself, so the question is whether a second can pair with it: another in this node that flanking
+  lets close what it opens (`1~5 and 7~9` pays, `~/src and ~/usr` does not — both open, neither
+  closes), or one the line writes beside it, which is the `~~` of a `<del>`. `~` before a struck `x`
+  made `~~~x~~`, a tilde code fence, and `x` left the page — the only defect the survey has found
+  that costs content rather than characters. Both halves of a pair pay or neither does: a backslash
+  does not stop marked closing a `<del>` on the escaped one. `~/src`, `~5 min`, a `<td>~</td>` and a
+  `## ~/home` pay nothing.
+- HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves must not assemble across
+  a node boundary: `sanitize()` calls `normalize()` last, and a node whose tail is still an open
+  construct escapes it defensively, since it cannot see what the next node adds.
+
+## Emphasis and style
+
+- Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`, then `*`/`__`,
+  then an HTML tag (`src/utils/flanking.ts`). Content starting or ending in punctuation, pressed
+  against a word, has no marker that works — emitting one lost the italics and left the characters.
+- A style mark is what is *heavier than its context*, never a large `font-weight`
+  (`src/utils/inline-style.ts`): a heading, a `<th>` and a `<strong>` are already bold and are
+  routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
+  both ways — a style declining its tag's mark drops it — and emits through `emphasis()` like every
+  other mark.
+- `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
+  wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
+  running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask
+  about it too — while only the tag was asked, `<span style="display:block"># heading</span>` put a
+  real H1 in the file. Only tags whose whole output is content between blank lines can decline one:
+  a `<br>` carries `display:inline` in every computed style there is, and a `<table>` writes a grid.
+
+## Reading a style
+
+- The core reads attributes, never `getComputedStyle`, because it is isomorphic: `style`, and beside
+  it `data-s2md-style`, a computed style the content script recorded while it still had live nodes.
+  `elementStyle()` joins them — the snapshot is the later word, silence in it is not a denial — and
+  one parser and one set of property readers answer both, so neither side can invent a spelling the
+  other has to be taught. Every question about a style goes through it: `getAlignment` had a regex of
+  its own and a column aligned by a class lost its `---:`. No snapshot is the ordinary case:
+  `server.ts` and every library caller convert without one, and behavior must survive its absence.
+  Gate on what a style *says*, not that there is one — `color` and `margin` are most of what a page
+  writes inline and change no character of the output, so `statesConversion()`/`statesDisplay()` come
+  before any parse or ancestor walk.
+- Any lookup keyed by a tag name or a CSS value is a `Map`, never an object literal: the page picks
+  the key, and `EMPHASIS_TAGS['constructor']` answered with `Object` — truthy, so an unknown
+  `<constructor>` element read as an emphasis wrapper and the `<em>` beside it gave up its `*`.
+
+## Hiding
+
+The expensive mistake here is deleting text a person saw, not keeping text they did not. Every
+threshold sits where no layout lands by accident.
+
+- `hiddenByStyle()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
+  inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
+  `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
+  reader alone.
+- Which is why two of those hold back. An `opacity: 0` under a transition or an animation is a
+  section on its way in, not one withheld, and reveal-on-scroll libraries put it on half an article;
+  `revealsFrom()` reads the shorthand and the longhands, because an attribute writes one and a
+  computed style the other. And `visibility` is the one a descendant can take back — removal takes
+  the subtree, so a hidden box holding something declared visible again stays, and what is still
+  hidden inside it says so for itself.
+- A `visibility:hidden` under a transition is either kind, written identically: a section a reveal
+  library has not animated in, or a dropdown standing by. The box tells them apart — an overlay must
+  leave the flow or it would hold space open while closed — so `absolute`/`fixed` is removed and
+  anything in the flow stays. Judged wrong one way the file loses a menu, the other way the article.
+
+## Tables
+
+- A pipe table states alignment once per column, and the page may say it in either row. The header
+  answers first; when it is silent the body does, but only unanimously — a table of numbers carries
+  `text-align` on every `<td>` and nothing on the `<th>`, while one differing or silent cell means
+  the column was never aligned at all.
+- HTML reaches the output only where Markdown cannot express the content structurally — never to
+  carry an appearance. Emphasis falling back to a tag because flanking forbids a delimiter, `<sub>`
+  and `<sup>`, a merged-cell table: Markdown has no spelling for any of them. A highlight does have
+  one that is close enough — `**` — so a background becomes that, not a `<mark>`. The file is the
+  product; a reader opening it should find Markdown, not markup with tags sprinkled through it.
+- The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
+  Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
+  emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would
+  widen it for a case that already rendered nothing. A link's scheme is checked.
+
+## Package
+
+`core/` is an npm package (`htmltodotmd`) with its own `tsup` build, its own version, and its own
+`exports`. It has never been published — there is no npm release and `docs/releasing.md` covers the
+extension only, so the version in `package.json` currently numbers nothing. Three `data-s2md-*`
+attribute names are baked into its public surface (`SNAPSHOT_ATTR` here, `ORIGIN_ATTR` and
+`ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library means making those a
+parameter first.

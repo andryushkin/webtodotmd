@@ -3,4 +3,6 @@ dist/
 .DS_Store
 *.zip
 .claude/
-CLAUDE.md
+# CLAUDE.md is tracked: it holds the core invariants, and Claude Code loads it
+# when work happens in this directory. It was ignored here because this package
+# used to be its own repository, where the file was personal.
