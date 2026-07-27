@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text to .md — conversion spec, compact</title>
+<style>
+
+  :root {
+    color-scheme: light;
+    --ink: #172033;
+    --muted: #5f6b7c;
+    --line: #d9e0ea;
+    --paper: #ffffff;
+    --wash: #f4f7fb;
+    --blue: #165dcc;
+    --green: #166534;
+    --amber: #92400e;
+    --red: #991b1b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--wash);
+    font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  body > header {
+    color: white;
+    background: #10203d;
+    padding: 2rem max(1rem, calc((100% - 980px) / 2));
+  }
+  body > header h1 { margin: 0 0 .5rem; font-size: clamp(1.8rem, 4vw, 3rem); }
+  body > header p { max-width: 72ch; margin: 0; color: #d8e4fa; }
+  nav {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: flex;
+    gap: .35rem;
+    overflow-x: auto;
+    padding: .75rem max(1rem, calc((100% - 980px) / 2));
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid var(--line);
+  }
+  nav a {
+    flex: none;
+    padding: .35rem .65rem;
+    color: var(--blue);
+    background: #edf4ff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: .82rem;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
+  main > section { scroll-margin-top: 5rem; margin-top: 2.5rem; }
+  main > section > h2 { margin-bottom: .35rem; font-size: 1.65rem; }
+  .section-lead { margin-top: 0; color: var(--muted); }
+  .case {
+    margin: 1rem 0;
+    overflow: clip;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(23, 32, 51, .04);
+  }
+  .case > aside {
+    padding: .8rem 1rem;
+    color: var(--muted);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    font-size: .9rem;
+  }
+  .case > aside strong { color: var(--ink); }
+  .case > aside code { color: var(--green); }
+  .case > aside .known { color: var(--red); font-weight: 700; }
+  .case > aside .setting { color: var(--amber); font-weight: 700; }
+  /* A subject may carry hostile markup — T9 ships `position:fixed;inset:0`,
+     which is the shape a captured page uses to cover the reader's screen. Layout
+     containment makes each case the containing block for its own positioned
+     descendants, so that table fills its own box instead of the viewport. Without
+     it the fixture is unusable: the overlay sits over every other case, follows
+     the scroll, and a selection made anywhere on the page can catch it.
+     Containment is layout only, never `paint`: clipping would hide the overflow
+     of a wide table, and a case whose content cannot be seen cannot be checked.
+     Nothing here changes what the converter reads — `position` still computes to
+     `fixed`, which is what the hiding rules ask about. */
+  .case { padding: 1rem 1.2rem; contain: layout; }
+  /* A subject whose whole content is taken out of the flow contributes no height,
+     and `.case` clips what overflows — so a `position:fixed` table showed one row
+     and hid the rest. The case has to be readable to be checkable. */
+  .case.holds-fixed { min-height: 8.5rem; }
+  .case > :first-child { margin-top: 0; }
+  .case > :last-child { margin-bottom: 0; }
+  .case h1, .case h2, .case h3, .case h4,
+  .case h5, .case h6 { margin: .8rem 0 .35rem; }
+  .case blockquote {
+    margin: .75rem 0;
+    padding: .2rem 1rem;
+    color: #334155;
+    background: #f8fafc;
+    border-left: 4px solid #94a3b8;
+  }
+  .case code, aside code {
+    padding: .08rem .3rem;
+    background: #edf1f6;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .case pre {
+    overflow-x: auto;
+    padding: 1rem;
+    color: #e7edf8;
+    background: #111827;
+    border-radius: 8px;
+    line-height: 1.45;
+  }
+  .case pre code { padding: 0; color: inherit; background: none; }
+  table { width: 100%; border-collapse: collapse; margin: .75rem 0; }
+  caption { margin-bottom: .35rem; font-weight: 700; text-align: left; }
+  th, td { padding: .5rem .65rem; border: 1px solid #b8c2d0; vertical-align: top; }
+  th { background: #eef2f7; }
+  figure { margin: .75rem 0; }
+  figure img { max-width: 160px; height: auto; }
+  figcaption { color: var(--muted); font-size: .9rem; }
+  .css-bold { font-weight: 750; }
+  .css-italic { font-style: italic; }
+  .css-struck { text-decoration: line-through; }
+  .decline-bold { font-weight: 400; }
+  .inline-div { display: inline; }
+  .block-span { display: block; margin: .35rem 0; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .transitioning-in { opacity: 0; transition: opacity 30s; }
+  .transitioning-visibility { visibility: hidden; transition: visibility 30s; }
+  .standby-overlay {
+    position: absolute;
+    visibility: hidden;
+    transition: visibility 30s;
+  }
+  .visible-child-parent { visibility: hidden; }
+  .visible-child-parent span { visibility: visible; }
+  .text-node-lines { white-space: break-spaces; }
+  script[type^="math/tex"].visible-math-script {
+    display: inline;
+    font-family: "Times New Roman", serif;
+  }
+  .plain-semantics > * { margin-right: .4rem; }
+  .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+  .price { color: #b42318; font-size: 1.4rem; font-weight: 750; }
+  .rating { color: #b7791f; }
+  mark { padding: 0 .1em; background: #fff0a6; }
+  @media (max-width: 700px) {
+    .two-column { grid-template-columns: 1fr; }
+  }
+
+
+  /* Everything below replaces the spec page's chrome. No headings, no prose:
+     the point of this page is that a screenshot of it and a capture of it hold
+     the same things in the same order. */
+  body { background: var(--paper); }
+  main { max-width: 980px; margin: 0 auto; padding: 1rem 1rem 4rem; }
+  .case {
+    position: relative;
+    contain: layout;
+    margin: 0 0 .75rem;
+    padding: .5rem .75rem .5rem 3.25rem;
+    border-top: 1px solid var(--line);
+  }
+  /* Generated content: on the screen, in the screenshot, in no DOM node — so it
+     cannot reach the capture, and if it ever does, that is the defect this page
+     would be the first to show. */
+  .case::before {
+    content: attr(data-case);
+    position: absolute;
+    left: .5rem;
+    top: .5rem;
+    width: 2.5rem;
+    color: var(--muted);
+    font: 700 .75rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .case.holds-fixed { min-height: 8.5rem; }
+  .case > :first-child { margin-top: 0; }
+  .case > :last-child { margin-bottom: 0; }
+  .case blockquote, .case code, .case pre { /* inherit the spec page's rules */ }
+</style>
+</head>
+<body>
+<main>
+<div class="case" data-case="B1">
+
+        <h1>Page title</h1>
+        <h2>Section title <a class="headerlink" href="#blocks" aria-label="Permalink">¶</a></h2>
+        <h3>Smaller heading with <code>inline()</code></h3>
+        <p>First paragraph with a visible<br>hard line break.</p>
+        <p>One paragraph drawn as two parts.<br><br>The second part must follow a blank line, not two hard-break backslashes.</p>
+        <p>Second paragraph after a real paragraph boundary.</p>
+        <hr>
+        <h6>The deepest heading clamps at level six</h6>
+      
+</div>
+
+<div class="case" data-case="B2">
+
+        <blockquote>
+          <p>A quoted paragraph with <strong>important words</strong>.</p>
+          <p>A second quoted paragraph.</p>
+          <blockquote>
+            <p>A reply nested inside the quotation.</p>
+          </blockquote>
+        </blockquote>
+      
+</div>
+
+<div class="case" data-case="B3">
+
+        <dl>
+          <dt>Cache-Control</dt>
+          <dd>A response header that controls caching.</dd>
+          <dt>Fresh response</dt>
+          <dd><strong>Reusable</strong> without contacting the origin.</dd>
+          <dd>
+            Typical directives:
+            <ul>
+              <li><code>max-age</code></li>
+              <li><code>no-cache</code></li>
+            </ul>
+          </dd>
+        </dl>
+      
+</div>
+
+<div class="case plain-semantics" data-case="B4">
+
+        <ins>inserted</ins>
+        <u>underlined</u>
+        <small>small</small>
+        <big>big</big>
+        <abbr title="HyperText Markup Language">HTML</abbr>
+        <time datetime="2026-07-27">July 27</time>
+        <data value="42">forty-two</data>
+        <output>ready</output>
+        <bdi>مرحبا</bdi>
+        <bdo dir="rtl">visible order</bdo>
+        <tt>terminal</tt>
+        <font color="red">legacy</font>
+      
+</div>
+
+<div class="case" data-case="I1">
+
+        <p><strong>bold</strong>, <em>italic</em>, <del>deleted</del>, <s>struck</s>, and <strike>legacy struck</strike>.</p>
+        <p><cite>citation</cite>, <dfn>defined term</dfn>, and <var>variable</var> are italic because that is how the browser displays them.</p>
+        <p>Press <kbd>Ctrl</kbd> + <kbd>C</kbd>; output is <samp>&lt;div onclick=alert(1)&gt;copied&lt;/div&gt;</samp>.</p>
+        <p><strong><em>bold italic</em></strong>, <em><code>code in emphasis</code></em>, and <strong><del>bold deletion</del></strong>.</p>
+        <p>Leading:<strong> padded </strong>:trailing and adjacent <em>one</em><em>two</em>.</p>
+      
+</div>
+
+<div class="case" data-case="I2">
+
+        <p>Use <code>const name = `Ada`;</code> and compare <code>**not bold** &lt;x-tag&gt; a\b</code>.</p>
+        <p>Nested tags stay code text: <code>press <strong>Save</strong> then <em>wait</em></code>.</p>
+        <p>Adjacent code spans with nothing between them merge: <code>left</code><code>right</code>.</p>
+        <p>Longer run: <code>before `` middle ` after</code>.</p>
+      
+</div>
+
+<div class="case" data-case="I3">
+
+        <p>(<em>inside parentheses</em>),/<strong>after slash</strong>/—<em>beside dash</em>—and snake_case.</p>
+        <p>Mixed punctuation: a_<em>b</em>_c and x*<strong>y</strong>*z.</p>
+      
+</div>
+
+<div class="case" data-case="I4">
+
+        <p>He said <q>the file must match the screen</q> and left.</p>
+        <p lang="ru">Он сказал <q>файл должен совпадать с экраном</q> и ушёл.</p>
+        <p lang="de">Er sagte <q>die Datei muss dem Bildschirm entsprechen</q>.</p>
+        <p lang="ja">彼は<q>画面と一致するべきだ</q>と言った。</p>
+        <p>Nested: <q>she quoted <q>a source</q> at me</q>.</p>
+        <p>Empty: <q></q> and a mark right against the close: <q>ends in *</q>.</p>
+      
+</div>
+
+<div class="case" data-case="I5">
+
+        <p>Furigana: <ruby>漢字<rt>かんじ</rt></ruby> in a sentence.</p>
+        <p>Per character: <ruby>漢<rt>かん</rt>字<rt>じ</rt></ruby>.</p>
+        <p>With the older base tag: <ruby><rb>東京</rb><rt>とうきょう</rt></ruby>.</p>
+        <p>With fallback parentheses: <ruby>京都<rp>(</rp><rt>きょうと</rt><rp>)</rp></ruby>.</p>
+        <p>Empty annotation: <ruby>大阪<rt></rt></ruby>. Marked-up annotation: <ruby>奈良<rt><em>なら</em></rt></ruby>.</p>
+      
+</div>
+
+<div class="case" data-case="S1">
+
+        <p>A <span class="css-bold">CSS-bold run</span>, a <span class="css-italic">CSS-italic run</span>, and a <span class="css-struck">CSS-struck run</span>.</p>
+        <h3>A bold heading with a <span class="css-bold">same-weight run</span> and <em>actual emphasis</em></h3>
+      
+</div>
+
+<div class="case" data-case="S2">
+
+        <p><strong class="decline-bold">Visually normal strong text</strong>.</p>
+        <p><b class="decline-bold">Visually normal bold tag with <em>real italic inside</em></b>.</p>
+      
+</div>
+
+<div class="case" data-case="S3">
+
+        <p>Before the styled span.<span class="block-span">This span is visibly a block.</span>After the styled span.</p>
+        <div class="inline-div">First inline div,</div>
+        <div class="inline-div"> second inline div.</div>
+      
+</div>
+
+<div class="case" data-case="L1">
+
+        <ol start="7">
+          <li>Seventh item with <code>inline code</code>.</li>
+          <li>
+            Eighth item:
+            <ul>
+              <li><label><input type="checkbox" checked> shipped</label></li>
+              <li><label><input type="checkbox"> document the edge case</label></li>
+              <li>
+                Nested again
+                <ol start="3">
+                  <li>Third nested item</li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <p>A loose item with one paragraph.</p>
+            <p>And another paragraph in the same item.</p>
+          </li>
+        </ol>
+      
+</div>
+
+<div class="case" data-case="L2">
+
+        <ol start="0"><li>Counts from zero</li><li>Then one</li></ol>
+        <ol start="-2"><li>Counts from minus two</li><li>Then minus one</li></ol>
+        <ol start="x"><li>Unreadable start counts from one</li><li>Then two</li></ol>
+        <ol start="9">
+          <li>Ninth, marker three wide</li>
+          <li>Tenth, marker four wide
+            <ul><li>nested under the wider marker</li></ul>
+          </li>
+        </ol>
+        <ul>
+          <li><label><input type="checkbox" checked> Task with a nested list</label>
+            <ul><li>still a list, not a code block</li></ul>
+          </li>
+          <li><label><input type="checkbox"> Task with a second paragraph</label>
+            <p>still a paragraph, not a listing</p>
+          </li>
+        </ul>
+      
+</div>
+
+<div class="case" data-case="C1">
+
+        <pre><code class="language-javascript"><span class="line-number">1</span>function fence(value) {
+<span class="line-number">2</span>  const sample = "```";
+
+<span class="line-number">4</span>  return `${value}
+<span class="line-number">5</span>    stays indented`;
+<span class="line-number">6</span>}</code></pre>
+      
+</div>
+
+<div class="case" data-case="C2">
+
+        <pre><code data-lang="text">first	line<br>  second line<br><br>fourth after a blank line</code></pre>
+      
+</div>
+
+<div class="case" data-case="C3">
+
+        <div class="highlight highlight-source-typescript">
+          <pre><span class="pl-k">type</span> <span class="pl-smi">Box</span><span class="pl-kos">&lt;</span><span class="pl-smi">T</span><span class="pl-kos">&gt;</span> <span class="pl-kos">=</span> <span class="pl-kos">{</span>
+  <span class="pl-c1">value</span><span class="pl-kos">:</span> <span class="pl-smi">T</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span></pre>
+        </div>
+      
+</div>
+
+<div class="case" data-case="C4">
+
+        <pre><code data-language="python">print("data-language")</code></pre>
+        <pre class="brush: css"><code>body { color: navy; }</code></pre>
+        <pre><code class="prettyprint lang-rust">fn main() {}</code></pre>
+        <pre><code class="language-js"></code><clipboard-copy value="const copied = true;">const copied = true;</clipboard-copy></pre>
+        <pre><code data-lang="js
+```">safe content, unsafe language hint</code></pre>
+      
+</div>
+
+<div class="case" data-case="T1">
+
+        <table>
+          <caption>Quarterly results</caption>
+          <thead>
+            <tr>
+              <th style="text-align:left">Project</th>
+              <th style="text-align:center">Status</th>
+              <th style="text-align:right">Revenue</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr><td>Total</td><td>2 projects</td><td>$13,300</td></tr>
+          </tfoot>
+          <tbody>
+            <tr><td>Alpha | Beta</td><td><strong>shipped</strong></td><td>$12,400</td></tr>
+            <tr><td><a href="/projects/gamma">Gamma</a></td><td><code>blocked</code></td><td>$900</td></tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T2">
+
+        <table>
+          <thead></thead>
+          <tbody>
+          <tr><td>Region</td><td>Owner</td><td>Notes</td></tr>
+          <tr><td>North</td><td style="text-align:center"></td><td>Waiting</td></tr>
+          <tr><td></td><td style="text-align:center">Sam</td><td></td><td>Overflow column survives</td></tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T3">
+
+        <table>
+          <thead>
+            <tr><th rowspan="2">Browser</th><th colspan="2">Support</th></tr>
+            <tr><th>Desktop</th><th>Mobile</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Chromium</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>WebKit</td><td colspan="2">Partial in both</td></tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T4">
+
+        <table>
+          <thead><tr><th>Package</th><th>Compatibility</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Parser</td>
+              <td>
+                Before nested grid.
+                <div>
+                  <table>
+                    <caption>Runtime matrix</caption>
+                    <tr><th>Bun</th><th>Node</th><th>Deno</th></tr>
+                    <tr><td>Yes</td><td></td><td>Yes</td></tr>
+                  </table>
+                </div>
+                After nested grid.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T5">
+
+        <table>
+          <thead><tr><th>Command</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>inspect</code></td>
+              <td>
+                Text before.
+                <div>
+                  <ul>
+                    <li>
+                      Log:
+                      <pre>first	line
+
+path\file | a &lt; b &amp; c
+``` literal fence</pre>
+                    </li>
+                  </ul>
+                </div>
+                Text after.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T6">
+
+        <table>
+          <tr><th>Input</th><th>Meaning</th></tr>
+          <tr><td># heading</td><td>Literal label</td></tr>
+          <tr><td>---</td><td>Three literal dashes</td></tr>
+          <tr><td>&lt;button autofocus&gt;Pay&lt;/button&gt;</td><td>Displayed HTML tutorial text</td></tr>
+          <tr><td><span class="katex"><annotation encoding="application/x-tex">P(A|B)</annotation><span aria-hidden="true">P(A|B)</span></span></td><td>Conditional probability</td></tr>
+        </table>
+      
+</div>
+
+<div class="case" data-case="T7">
+
+        <table><caption>Maintenance window for &lt;table class="jobs"&gt;: Sunday 02:00 UTC</caption></table>
+      
+</div>
+
+<div class="case" data-case="T8">
+
+        <table>
+          <tr><th>Address</th><th>Hours</th></tr>
+          <tr><td>42 Example Street<br>Second floor</td><td>09:00<br>17:00</td></tr>
+        </table>
+      
+</div>
+
+<div class="case holds-fixed" data-case="T9">
+
+        <!-- The handler is inert on purpose. What this case asserts is that an
+             `onclick` never reaches the file; a dialog would only block the
+             reviewer, and a click anywhere on a `inset:0` table hits it. -->
+        <table onclick="this.dataset.clicked = '1'" style="position:fixed;inset:0">
+          <tr><th colspan="2">Account</th></tr>
+          <tr>
+            <td><form><input autofocus value="pay"><button>Pay now</button></form></td>
+            <td><a href="javascript:alert(1)"><strong>Unsafe target</strong></a></td>
+          </tr>
+          <tr>
+            <td><strong>Safe formatting</strong></td>
+            <td><a href="https://example.com/account">Safe link</a> and <img src="avatar.png" alt="avatar image"></td>
+          </tr>
+        </table>
+      
+</div>
+
+<div class="case" data-case="M1">
+
+        <p><a href="https://example.com/docs?q=a&b=c#top">Absolute documentation</a>.</p>
+        <p><a href="../CHANGELOG.md">Relative changelog</a> and <a href="#tables">table fragment</a>.</p>
+        <p><a href="ftp://files.example.com/archive.zip">FTP</a>, <a href="ftps://files.example.com/private.zip">FTPS</a>, and <a href="mailto:reader@example.com">email</a>.</p>
+        <p><a href="tel:+15551234">telephone</a>, <a href="callto:reader">call app</a>, <a href="sms:+15551234">SMS</a>, and <a href="cid:part1@example.com">CID</a>.</p>
+        <p><a href="xmpp:reader@example.com">XMPP</a> and <a href="matrix:u/reader:example.com">Matrix</a>.</p>
+        <p><a>Anchor without a destination</a>, <a href="javascript:alert(1)">JavaScript target</a>, and <a href="data:text/html,<script>alert(1)</script>">data document</a>.</p>
+      
+</div>
+
+<div class="case" data-case="M2">
+
+        <a href="https://example.com/gallery">
+          <picture>
+            <source srcset="hero-large.webp 1200w, hero-small.webp 400w" type="image/webp">
+            <img src="images/hero.jpg" alt="Mountain lake at dawn" title="Open the gallery">
+          </picture>
+        </a>
+      
+</div>
+
+<div class="case" data-case="M3">
+
+        <p><img src="fallback.jpg" srcset="photo-800.jpg 800w, photo-1600.jpg 1600w" data-src="https://cdn.example.com/lazy-wins.jpg" alt="Lazy photograph"></p>
+        <p><img srcset="photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w" alt="Responsive photograph"></p>
+        <p><img src="data:image/png;base64,iVBORw0KGgo=" alt="Inline data image is valid for an image source"></p>
+        <p><img alt="Fallback *alt* [text] <tag>"></p>
+      
+</div>
+
+<div class="case" data-case="M4">
+
+        <img src="data:image/gif;base64,R0lGODlh" alt="News photograph">
+        <noscript><img src="https://images.example.com/news/real.jpg" alt=""></noscript>
+      
+</div>
+
+<div class="case" data-case="M5">
+
+        <p><a href="">A link to this very page</a> and <a href=" ">the same with a space</a>.</p>
+        <p><img alt="No source at all, with *marks* and [brackets]"></p>
+        <p><img src="" alt="Empty source"></p>
+        <p><img src=" " alt="Whitespace source"></p>
+        <p><img data-src=" " src="images/hero.jpg" alt="Lazy attribute is blank, the real src wins"></p>
+      
+</div>
+
+<div class="case" data-case="E1">
+
+        <p># not a heading</p>
+        <p>&gt; not a quotation</p>
+        <p>- not a list item</p>
+        <p>1. not an ordered item</p>
+        <p>---</p>
+        <p>*not emphasis* and _not emphasis_ and ~~not deleted~~.</p>
+        <p>[not a link](https://example.com) and ![not an image](x.png).</p>
+      
+</div>
+
+<div class="case" data-case="E2">
+
+        <p>&lt;script&gt;alert("still text")&lt;/script&gt;</p>
+        <p>&lt;form&gt;&lt;input autofocus&gt;&lt;button&gt;Pay&lt;/button&gt;&lt;/form&gt;</p>
+        <p>Use &lt;!-- a comment --&gt; here, and this clause after it must survive.</p>
+        <p>Entities as text: &amp;amp; &amp;copy; &amp;lt;div&amp;gt;.</p>
+      
+</div>
+
+<div class="case" data-case="E3">
+
+        <p><span>&lt;</span><span>script</span><span>&gt;</span><span>alert(1)</span><span>&lt;/</span><span>script&gt;</span></p>
+        <p><span>[assembled</span><span> link]</span><span>(https://example.com)</span></p>
+        <p><span>**assembled</span><span> bold**</span></p>
+        <p><span>!</span><span>[assembled image]</span><span>(tracker.png)</span></p>
+      
+</div>
+
+<div class="case" data-case="E4">
+
+        <p>First line<br># still text<br>- still text<br>1. still text</p>
+        <p>Many       source spaces
+          and source newlines collapse to visible spaces.</p>
+        <p>Non-breaking&#160;space becomes an ordinary space.</p>
+        <p>Comparisons need no backslash noise: a &lt; b, x &lt;= y, and Tom &amp; Jerry.</p>
+      
+</div>
+
+<div class="case" data-case="E5">
+
+        <p>A block, then indentation before the next one.</p>
+        <!-- ad slot --> <!-- template marker --> <!-- analytics --> <!-- consent -->
+        <div style="display:inline">This must be a paragraph, not a listing.</div>
+        <p><span>Two inline runs</span> <span>with one space between them.</span></p>
+        <p><span>Indentation and a leading space</span>
+          <span> must still make one space.</span></p>
+        <p><span>Neither side offers one</span><span>and they stay welded.</span></p>
+        <p>A non-breaking&#160; space beside an ordinary one keeps both characters.</p>
+      
+</div>
+
+<div class="case" data-case="R1">
+
+        <p>Visible start.</p>
+        <p hidden>HIDDEN_ATTRIBUTE_PAYLOAD</p>
+        <p aria-hidden="true">ARIA_HIDDEN_PAYLOAD</p>
+        <p style="display:none">DISPLAY_NONE_PAYLOAD</p>
+        <p style="visibility:hidden">VISIBILITY_HIDDEN_PAYLOAD</p>
+        <p style="opacity:0">OPACITY_ZERO_PAYLOAD</p>
+        <p class="sr-only">SCREEN_READER_ONLY_PAYLOAD</p>
+        <p style="clip-path:inset(50%); position:absolute">CLIP_PATH_PAYLOAD</p>
+        <p style="position:absolute; left:-10000px">OFFSCREEN_PAYLOAD</p>
+        <p style="text-indent:-10000px">TEXT_INDENT_PAYLOAD</p>
+        <p class="standby-overlay">STANDBY_OVERLAY_PAYLOAD</p>
+        <p>Visible end.</p>
+      
+</div>
+
+<div class="case" data-case="R2">
+
+        <p class="transitioning-in">Animated reveal content must survive.</p>
+        <p style="opacity:0; transition:color 30s">WRONG_PROPERTY_TRANSITION_PAYLOAD</p>
+        <p style="opacity:0; animation:fade-in 30s">Animated opacity content must survive.</p>
+        <p class="transitioning-visibility">In-flow visibility transition must survive.</p>
+        <p class="visible-child-parent">
+          HIDDEN_PARENT_TEXT
+          <span>Visible descendant survives.</span>
+          HIDDEN_SIBLING_TEXT
+        </p>
+      
+</div>
+
+<div class="case" data-case="R3">
+
+        <p>Before removed elements.</p>
+        <script>void "SCRIPT_PAYLOAD";</script>
+        <style>.STYLE_PAYLOAD { position: fixed; }</style>
+        <iframe srcdoc="<p>IFRAME_PAYLOAD</p>" title="removed frame"></iframe>
+        <object data="about:blank">OBJECT_PAYLOAD</object>
+        <embed src="about:blank">
+        <template>TEMPLATE_PAYLOAD</template>
+        <svg viewBox="0 0 10 10" aria-label="SVG_PAYLOAD"><text x="0" y="8">SVG_PAYLOAD</text></svg>
+        <p>After removed elements.</p>
+      
+</div>
+
+<div class="case" data-case="F1">
+
+        <p>H<sub>2</sub>O; x<sup>n+1</sup>; a<sup>(i)</sup>; x<sup>ABC</sup>; x<sup>2q</sup>; x<sup>*</sup>.</p>
+      
+</div>
+
+<div class="case" data-case="F2">
+
+        <p>
+          Energy:
+          <span class="katex">
+            <span class="katex-mathml">
+              <math><semantics><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math>
+            </span>
+            <span aria-hidden="true">E = mc²</span>
+          </span>
+        </p>
+        <span class="katex-display">
+          <span class="katex">
+            <span class="katex-mathml">
+              <math display="block"><semantics><annotation encoding="application/x-tex">\int_0^\infty e^{-x} dx</annotation></semantics></math>
+            </span>
+            <span aria-hidden="true">∫₀∞ e⁻ˣ dx</span>
+          </span>
+        </span>
+      
+</div>
+
+<div class="case" data-case="F3">
+
+        <p>
+          <span class="katex"><annotation encoding="application/x-tex">a &lt; b</annotation><span aria-hidden="true">a &lt; b</span></span>
+          and
+          <span class="katex"><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation><span aria-hidden="true">x custom X y</span></span>
+          and
+          <span class="katex"><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation><span aria-hidden="true">x less-than comment-shaped</span></span>
+        </p>
+      
+</div>
+
+<div class="case" data-case="F4">
+
+        <p>
+          MathJax v3:
+          <mjx-container>
+            <math>
+              <semantics>
+                <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn></mrow>
+                <annotation encoding="application/x-tex">x^2 + 1</annotation>
+              </semantics>
+            </math>
+          </mjx-container>
+        </p>
+        <p>
+          MathJax v2:
+          <script class="visible-math-script" type="math/tex">e^{i\pi}+1=0</script>
+        </p>
+        <p>
+          Wikipedia, inline:
+          <math alttext="{\displaystyle E=mc^{2}}"><mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup></math>
+        </p>
+        <p>
+          Wikipedia, display:
+          <math display="block" alttext="{\displaystyle \int_0^\infty e^{-x}\,dx=1}"><mi>∫</mi></math>
+        </p>
+      
+</div>
+
+<div class="case" data-case="F5">
+
+        <p>
+          Inline raw MathML:
+          <math><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>&lt;</mo><mi>c</mi></math>
+        </p>
+        <math display="block">
+          <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
+        </math>
+      
+</div>
+
+<div class="case" data-case="F6">
+
+        <p>
+          KaTeX, twin clipped:
+          <span class="katex"><span class="katex-mathml" style="clip:rect(1px,1px,1px,1px);position:absolute;width:1px;height:1px;overflow:hidden"><math><semantics><annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">E=mc²</span></span>
+        </p>
+        <p>
+          Wikipedia, twin hidden beside a picture:
+          <span class="mwe-math-element"><span class="mwe-math-mathml-inline mwe-math-mathml-a11y" style="display:none"><math alttext="{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}"><semantics><annotation encoding="application/x-tex">{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}</annotation></semantics></math></span><img class="mwe-math-fallback-image-inline" src="images/gamma.svg" alt="{\displaystyle \gamma =1/{\sqrt {1-v^{2}/c^{2}}}}"></span>
+        </p>
+        <p style="display:none">
+          A formula the page hid outright:
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">HIDDEN_FORMULA_PAYLOAD</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">hidden</span></span>
+        </p>
+      
+</div>
+
+<div class="case" data-case="W1">
+
+        <div class="answer">
+          <p>Use <code>Array.from()</code> to convert a <code>NodeList&lt;T&gt;</code>:</p>
+          <pre><code class="lang-js">const elements = document.querySelectorAll('.item');
+const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
+          <blockquote><p>This works in modern browsers and preserves the original order.</p></blockquote>
+          <p>Check these edge cases:</p>
+          <ul>
+            <li>an empty result;</li>
+            <li>a node whose text contains <code>&lt;button&gt;</code>;</li>
+            <li>a selector containing <code>[data-id="a|b"]</code>.</li>
+          </ul>
+        </div>
+      
+</div>
+
+<div class="case" data-case="W2">
+
+        <h2>Programming language comparison</h2>
+        <p>The table summarizes three languages.<sup><a href="#source-1">[1]</a></sup></p>
+        <table class="wikitable sortable">
+          <thead><tr><th>Language</th><th style="text-align:right">First appeared</th><th>Typing</th></tr></thead>
+          <tbody>
+            <tr><td><a href="/wiki/Python_(programming_language)">Python</a></td><td style="text-align:right">1991</td><td>Dynamic</td></tr>
+            <tr><td><a href="/wiki/Rust_(programming_language)">Rust</a></td><td style="text-align:right">2015</td><td>Static</td></tr>
+            <tr><td><a href="/wiki/TypeScript">TypeScript</a></td><td style="text-align:right">2012</td><td>Static</td></tr>
+          </tbody>
+        </table>
+        <p id="source-1">Sources differ on how typing disciplines are classified.</p>
+      
+</div>
+
+<div class="case" data-case="W3">
+
+        <div class="product-card">
+          <h3>Trail shoes</h3>
+          <p><span class="price">$129.00</span> <del>$159.00</del></p>
+          <p class="rating">★★★★★ <small>4.8 (214 reviews)</small></p>
+          <p><strong>In stock.</strong> Ships in 2–3 days.</p>
+        </div>
+        <div class="product-card">
+          <h3>Technical details</h3>
+          <dl>
+            <dt>Weight</dt><dd>280 g</dd>
+            <dt>SKU</dt><dd><code>RUN-42-BLU</code></dd>
+          </dl>
+        </div>
+      
+</div>
+
+<div class="case" data-case="W4">
+
+        <div class="documentation-callout">
+          <h3>Before you migrate</h3>
+          <p><strong>Warning:</strong> back up <code>config.json</code> first.<br>Do not paste <code>&lt;script&gt;</code> tags from untrusted pages.</p>
+          <ol>
+            <li>Read the <a href="/docs/migration">migration guide</a>.</li>
+            <li>
+              Verify:
+              <ul>
+                <li>the schema version is <code>3</code>;</li>
+                <li>the value <code>a|b</code> remains one value.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      
+</div>
+
+<div class="case" data-case="Q1">
+
+        <header><p>ARTICLE_HEADER_CHROME</p></header>
+        <nav><p>ARTICLE_NAV_CHROME</p></nav>
+        <article>
+          <h2>Article body</h2>
+          <p>ARTICLE_BODY_CONTENT survives extension capture.</p>
+        </article>
+        <aside><p>ARTICLE_ASIDE_CHROME</p></aside>
+        <footer><p>ARTICLE_FOOTER_CHROME</p></footer>
+      
+</div>
+
+<div class="case" data-case="Q2">
+
+        <table>
+          <thead><tr><th>Name</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Ada</td><td>Programmer</td></tr>
+            <tr><td>Grace</td><td>Admiral</td></tr>
+            <tr><td>Margaret</td><td>Engineer</td></tr>
+          </tbody>
+        </table>
+        <p>This paragraph is the selection endpoint after the table.</p>
+      
+</div>
+
+<div class="case" data-case="Q3">
+
+        <pre><code class="language-javascript">function total(items) {
+  let result = 0;
+  for (const item of items) result += item.price;
+  return result;
+}</code></pre>
+      
+</div>
+
+<div class="case" data-case="Q4">
+
+        <ol start="7">
+          <li>Seventh item is outside the intended selection.</li>
+          <li>Eighth item is where the selection begins.</li>
+          <li>Ninth item is where the selection ends.</li>
+        </ol>
+      
+</div>
+
+<div class="case" data-case="Q5">
+
+        <p><span class="text-node-lines">First caption line
+Second caption line
+
+Fourth line after an empty line</span></p>
+        <pre><code>shell-command \
+  --continuation</code></pre>
+      
+</div>
+
+<div class="case" data-case="Q6">
+
+        <test-conversion-shadow></test-conversion-shadow>
+      
+</div>
+
+<div class="case" data-case="Q7">
+
+        <p><strong>[Range A]</strong> First disconnected paragraph.</p>
+        <p><strong>[Range B]</strong> This paragraph should remain unselected.</p>
+        <p><strong>[Range C]</strong> Third disconnected paragraph.</p>
+      
+</div>
+
+<div class="case" data-case="Q8">
+
+        <p>Highlighter target: standalone paragraph.</p>
+        <ul>
+          <li>Highlighter target: first list item.</li>
+          <li>Highlighter target: second list item.</li>
+        </ul>
+        <table>
+          <tr><th>Key</th><th>Value</th></tr>
+          <tr><td>mode</td><td>highlighter</td></tr>
+        </table>
+        <pre><code class="language-bash">echo "highlighter target"</code></pre>
+      
+</div>
+
+<div class="case" data-case="Q9">
+
+        <p>The first paragraph contains several ordinary words before the selection endpoint.</p>
+        <p>The second paragraph contains several ordinary words after the selection endpoint.</p>
+      
+</div>
+
+<div class="case" data-case="Q10">
+
+        <h3>A heading long enough for a selection inside its text</h3>
+        <blockquote>
+          <p>A quotation long enough for a partial selection inside its text.</p>
+          <ul><li>A nested point that remains inside the quotation.</li></ul>
+        </blockquote>
+        <table>
+          <tr><th>One cell target</th><th>Neighbor</th></tr>
+          <tr><td>Select only these words</td><td>Do not include this cell</td></tr>
+        </table>
+      
+</div>
+
+<div class="case" data-case="Q11">
+
+        <table>
+          <thead><tr><th>Name</th><th>Age</th></tr></thead>
+          <tbody>
+            <tr><td>Name</td><td>Age</td></tr>
+            <tr><td>Ada</td><td>36</td></tr>
+          </tbody>
+        </table>
+        <p>Text selected between two independent tables.</p>
+        <table>
+          <thead><tr><th>Editor</th><th>Keys</th></tr></thead>
+          <tbody>
+            <tr><td>vi</td><td>modal</td></tr>
+            <tr><td>Emacs</td><td>chords</td></tr>
+          </tbody>
+        </table>
+      
+</div>
+
+<div class="case" data-case="Q12">
+
+        <p class="css-bold">Cleanup sentinel with captured CSS formatting.</p>
+        <p>Second sentinel with literal &lt;span&gt; text.</p>
+      
+</div>
+
+<div class="case" data-case="K1">
+
+        <figure>
+          <img src="diagram.png" alt="Architecture diagram">
+          <figcaption>Services and message flow.</figcaption>
+        </figure>
+      
+</div>
+
+<div class="case" data-case="K2">
+
+        <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
+        <address>One</address><address>Two</address>
+      
+</div>
+
+<div class="case" data-case="K3">
+
+        <p>a_<em>b</em>_c and a*<strong>b</strong>*c</p>
+        <p>word<i>**</i>tail</p>
+        <p>adjacent <em>one</em><em>two</em> emphasis</p>
+      
+</div>
+
+<div class="case" data-case="K4">
+
+        <p>A <mark>marked phrase</mark> beside literal comparisons x==y and C==C++.</p>
+      
+</div>
+
+<div class="case" data-case="K5">
+
+        <p>A factual claim.<sup><a href="#note-7">[7]</a></sup></p>
+        <p id="note-7">7. Example source.</p>
+      
+</div>
+
+<div class="case" data-case="K6">
+
+        <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
+      
+</div>
+</main>
+<script>void "SCRIPT_PAYLOAD";</script>
+<script>e^{i\pi}+1=0</script>
+<script>
+  class TestConversionShadow extends HTMLElement {
+    constructor() {
+      super();
+      const root = this.attachShadow({ mode: "open" });
+      root.innerHTML = `
+        <style>
+          :host { display: block; padding: 1rem; border: 2px dashed #7c3aed; border-radius: 8px; }
+          h3 { margin-top: 0; color: #5b21b6; }
+        </style>
+        <h3>Shadow component heading</h3>
+        <p>Text inside an open shadow root with <strong>bold meaning</strong>.</p>
+        <ul>
+          <li>First shadow item</li>
+          <li><a href="https://example.com/shadow">Linked shadow item</a></li>
+        </ul>`;
+    }
+  }
+  customElements.define("test-conversion-shadow", TestConversionShadow);
+</script>
+</body>
+</html>
