@@ -34,5 +34,11 @@ export const rawMathmlRule = {
 export const CONVERSION_OPTIONS: MarkItDownOptions = {
   headingOffset: 1,
   math: true,
+  // Neither capture path is ever handed a page: one converts what a drag
+  // selected, the other what a click highlighted, and both are a person pointing
+  // at something. `'full'` — the library default, and what these paths silently
+  // got — deleted a selected `<nav>`, `<header>`, `<footer>` or `<aside>` whole,
+  // along with any the drag crossed on its way down the article.
+  mode: 'selection',
   rules: [rawMathmlRule],
 };

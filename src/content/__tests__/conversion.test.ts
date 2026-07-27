@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { toMarkdown } from '../../../core/src/browser.ts';
+import { CONVERSION_OPTIONS } from '../raw-mathml-rule.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;
@@ -281,5 +282,38 @@ describe('edge cases', () => {
 
   test('plain text', () => {
     expect(convert('<p>hello world</p>')).toBe('hello world');
+  });
+});
+
+// ---- What the extension actually converts with ----
+
+// The content script builds its own fragment and calls toMarkdown(), so it gets
+// the library default — a whole page — unless CONVERSION_OPTIONS says otherwise.
+// It said nothing, and a selected `<nav>` was deleted on the way to the panel.
+// Wrapped in <body> so the sanitizer walks one root; a multi-root fragment
+// string is read differently by linkedom, which is beside the point here.
+describe('selection mode: the extension keeps what a person selected', () => {
+  const withExtensionOptions = (html: string): string =>
+    toMarkdown(`<body>${html}</body>`, { domAdapter, ...CONVERSION_OPTIONS }).trim();
+
+  const furniture: Array<[string, string, string]> = [
+    ['nav', '<nav><a href="/docs">Docs</a></nav>', 'Docs'],
+    ['header', '<header><p>Masthead</p></header>', 'Masthead'],
+    ['footer', '<footer><p>Copyright</p></footer>', 'Copyright'],
+    ['aside', '<aside><p>Sidebar note</p></aside>', 'Sidebar note'],
+  ];
+
+  for (const [tag, html, text] of furniture) {
+    test(`a selected <${tag}> survives, while the library default drops it`, () => {
+      expect(withExtensionOptions(html)).toContain(text);
+      expect(convert(`<body>${html}</body>`)).not.toContain(text);
+    });
+  }
+
+  test('an <aside> a drag crossed comes along with the prose around it', () => {
+    const md = withExtensionOptions('<p>Above</p><aside><p>Pull quote</p></aside><p>Below</p>');
+    expect(md).toContain('Above');
+    expect(md).toContain('Pull quote');
+    expect(md).toContain('Below');
   });
 });

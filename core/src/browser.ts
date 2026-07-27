@@ -19,7 +19,7 @@ export function toMarkdown(input: string | Node, options: MarkItDownOptions = {}
 
   const footnoteDefs = options.footnotes ? collectFootnoteDefs(root, options) : undefined;
 
-  sanitize(root, 'full', options.math);
+  sanitize(root, options.mode ?? 'full', options.math);
   const raw = convertChildren(root as Element, options);
   let result = normalize(raw);
 
@@ -619,6 +619,8 @@ export function selectionToMarkdown(selection: Selection, options: MarkItDownOpt
   }
 
   normalizeFragment(container);
+  // Not `options.mode`: this function only ever gets a selection, so the answer
+  // is not the caller's to give.
   sanitize(container, 'selection', options.math);
   const raw = convertChildren(container, options);
   return normalize(raw);

@@ -18,7 +18,7 @@ export function toMarkdown(input: string | Node, options: MarkItDownOptions = {}
 
   const footnoteDefs = options.footnotes ? collectFootnoteDefs(root, options) : undefined;
 
-  sanitize(root, 'full', options.math);
+  sanitize(root, options.mode ?? 'full', options.math);
   const raw = convertChildren(root as Element, options);
   let result = normalize(raw);
 

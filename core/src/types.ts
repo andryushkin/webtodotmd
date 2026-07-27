@@ -45,6 +45,23 @@ export interface MarkItDownOptions {
    * stops being Markdown, and renderers that strip HTML show nothing at all.
    */
   complexTableFallback?: 'flatten' | 'html' | 'text' | 'skip';
+  /**
+   * Whether the input is a whole page or a piece of one a person picked out.
+   * Spelled the way `sanitize()` spells it, so there is one vocabulary for the
+   * distinction rather than two that can drift.
+   *
+   * `'full'` (the default) treats the input as a document that arrived unasked —
+   * a fetched page, a whole `<body>` — so `<nav>`, `<header>`, `<footer>` and
+   * `<aside>` go, with their contents: furniture nobody wanted in a note.
+   *
+   * `'selection'` keeps them, because they were pointed at. Someone who dragged
+   * across a navigation block meant to take it, and a selection that ran through
+   * an `<aside>` on its way down the article saw that text as part of what it
+   * was taking. Removing it there deletes a paragraph the reader cannot see is
+   * missing — the expensive direction. The cost of keeping is the other way and
+   * it is cheap: hand a whole page to `'selection'` and the menus come along.
+   */
+  mode?: 'full' | 'selection';
   rules?: Rule[];
   domAdapter?: DOMAdapterFn;
   headingOffset?: number; // Phase 8: сдвиг уровней заголовков для selectionToMarkdown

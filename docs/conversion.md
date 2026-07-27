@@ -153,7 +153,7 @@ Removed by markup rather than by style:
 | `hidden`, `aria-hidden="true"` | removed |
 | `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
 | `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |
-| `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode**; kept in **selection mode**, because a person who selected them meant to. Only `selectionToMarkdown()` asks for selection mode, and the extension does not call it — every capture it makes goes through `toMarkdown()`, which is full mode, so a selected `<nav>` is dropped there |
+| `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode** (`mode` unset, the library default); kept in **selection mode**, because a person who selected them meant to. The extension asks for selection mode in `CONVERSION_OPTIONS`, so both of its capture paths keep them — including the `<header>` and `<footer>` *inside* a highlighted `<article>`, which is how every news site ships a headline and a byline |
 
 `script[type="math/tex"]` is the exception to the `<script>` rule: with `math: true`
 it holds the formula and is read, not dropped.
@@ -185,7 +185,7 @@ and steps of its own around them:
 | `baseUrl: document.baseURI` | so a relative URL resolves |
 | `complexTableFallback` | `html` or `flatten`, from Settings — never `text` or `skip` |
 | `footnotes` | never set |
-| `toMarkdown()` for every capture | which is full mode, selection or not |
+| `mode: 'selection'` | every capture it makes is a selection or a highlight, so page furniture inside it is kept |
 | a partial selection is enriched first | `enrichRange()` gives back the table header row, the list's numbering, the code block's language and the block the range was cut out of |
 | `\n` inside a text node → `<br>` | how Instagram and anything else that breaks lines inside one `<span>` gets its paragraphs; skipped inside `pre`, `code`, `script`, `style`, `svg`, `math`, `textarea` and under `white-space: pre` |
 | two or more hard breaks in a row → a blank line | what the page drew with `<br><br>` is a paragraph break; a fenced block is left alone, where `\` at the end of a line is a shell continuation |
