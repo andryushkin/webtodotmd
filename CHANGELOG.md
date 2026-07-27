@@ -4,6 +4,20 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.4 — 2026-07-27
+
+- **A paragraph is a paragraph again.** Every line of an ordinary indented page
+  was arriving with a hard break after it: the newlines HTML source is written
+  with were read as line breaks the author drew. They are now read the way a
+  browser reads them — as spaces — while a caption that really does break its
+  lines inside one element keeps them.
+- **A row of links is a row.** A navigation bar, a chip row, a toolbar: CSS puts
+  their items on one line, and each one was coming back as its own paragraph.
+- **A selection made inside a web component is captured.** It used to come back
+  empty — a browser hides a component's own nodes from an ordinary selection.
+- **Two spaces where the page drew one.** Between two inline elements the
+  indentation of the markup and a space inside the second one were both kept.
+
 ## 1.4.3 — 2026-07-27
 
 Everything below was found by capturing one page — a fixture written case by
