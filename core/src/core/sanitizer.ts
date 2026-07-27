@@ -5,8 +5,13 @@ const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
 const PRESERVE_WS = new Set(['pre', 'code', 'textarea', 'kbd', 'samp']);
 
+// Every root shape the library is handed: a Document from `server.ts`, a
+// Document from the extension's parser, the container the selection path fills,
+// and the DocumentFragment `enrichRange` builds.
+type SanitizeRoot = Element | Document | DocumentFragment;
+
 export function sanitize(
-  root: Element | Document,
+  root: SanitizeRoot,
   mode: 'full' | 'selection' = 'full',
   math = false,
 ): void {
@@ -25,23 +30,21 @@ export function sanitize(
   root.normalize();
 }
 
-function removeScripts(root: Element | Document, preserveMath: boolean): void {
+function removeScripts(root: SanitizeRoot, preserveMath: boolean): void {
   const toRemove: Element[] = [];
-  const walker = createWalker(root);
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    const el = node as Element;
-    if (el.tagName.toLowerCase() !== 'script') continue;
-    if (preserveMath && (el.getAttribute('type') ?? '').startsWith('math/tex')) continue;
+  walkElements(root, (el) => {
+    if (el.tagName.toLowerCase() !== 'script') return;
+    if (preserveMath && (el.getAttribute('type') ?? '').startsWith('math/tex')) return;
     toRemove.push(el);
-  }
+  });
   for (const el of toRemove) el.parentNode?.removeChild(el);
 }
 
 // Перед удалением <noscript>: если рядом с placeholder-img есть <noscript> с реальным src,
 // копируем этот src в data-noscript-src на img, чтобы extractImageUrl мог его использовать.
-// TreeWalker может не обходить <noscript> (linkedom), поэтому используем querySelectorAll.
-function hoistNoscriptImageSrc(root: Element | Document): void {
+// A walk down the tree is not guaranteed to enter <noscript>, so this asks
+// querySelectorAll instead of `walkElements`.
+function hoistNoscriptImageSrc(root: SanitizeRoot): void {
   const noscripts = Array.from(
     (root as Element).querySelectorAll ? (root as Element).querySelectorAll('noscript') : [],
   );
@@ -60,17 +63,14 @@ function hoistNoscriptImageSrc(root: Element | Document): void {
   }
 }
 
-function removeByTagSet(root: Element | Document, tags: Set<string>): void {
+function removeByTagSet(root: SanitizeRoot, tags: Set<string>): void {
   // Собираем все элементы заранее, чтобы не мутировать во время итерации
   const toRemove: Element[] = [];
-  const walker = createWalker(root);
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    const el = node as Element;
+  walkElements(root, (el) => {
     if (tags.has(el.tagName.toLowerCase())) {
       toRemove.push(el);
     }
-  }
+  });
   for (const el of toRemove) {
     el.parentNode?.removeChild(el);
   }
@@ -80,16 +80,13 @@ function removeByTagSet(root: Element | Document, tags: Set<string>): void {
 // element it decides against rather than asking the same question of everything
 // underneath — the answer there is discarded, and `hiddenByStyle` pays for a
 // search of the subtree to give it.
-function removeHidden(root: Element | Document): void {
+function removeHidden(root: SanitizeRoot): void {
   const toRemove: Element[] = [];
-  const visit = (el: Element): void => {
-    if (isHidden(el)) {
-      toRemove.push(el);
-      return;
-    }
-    for (let child = el.firstElementChild; child; child = child.nextElementSibling) visit(child);
-  };
-  for (let child = root.firstElementChild; child; child = child.nextElementSibling) visit(child);
+  walkElements(root, (el) => {
+    if (!isHidden(el)) return true;
+    toRemove.push(el);
+    return false;
+  });
   for (const el of toRemove) {
     el.parentNode?.removeChild(el);
   }
@@ -105,18 +102,15 @@ function isHidden(el: Element): boolean {
   return hiddenByStyle(el);
 }
 
-function removeEmptyWrappers(root: Element | Document): void {
+function removeEmptyWrappers(root: SanitizeRoot): void {
   // Повторяем несколько раз, чтобы убрать вложенные пустые обёртки
   for (let pass = 0; pass < 5; pass++) {
     const toRemove: Element[] = [];
-    const walker = createWalker(root);
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      const el = node as Element;
+    walkElements(root, (el) => {
       if (UNWRAP_IF_EMPTY.has(el.tagName.toLowerCase()) && isContentless(el)) {
         toRemove.push(el);
       }
-    }
+    });
     if (toRemove.length === 0) break;
     for (const el of toRemove) {
       el.parentNode?.removeChild(el);
@@ -125,16 +119,13 @@ function removeEmptyWrappers(root: Element | Document): void {
 }
 
 
-function collapseWhitespace(root: Element | Document): void {
-  const walker = document_createTreeWalker(root, 0x4 /* NodeFilter.SHOW_TEXT */);
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    const textNode = node as Text;
-    if (isInsidePreserved(textNode)) continue;
+function collapseWhitespace(root: SanitizeRoot): void {
+  walkTextNodes(root, (textNode) => {
+    if (isInsidePreserved(textNode)) return;
     const original = textNode.nodeValue ?? '';
     // НЕ используем \s+ — это сломает \u00A0 (&nbsp;)
     textNode.nodeValue = original.replace(/[\t\n\v\f\r ]+/g, ' ');
-  }
+  });
 }
 
 function isInsidePreserved(node: Node): boolean {
@@ -149,13 +140,39 @@ function isInsidePreserved(node: Node): boolean {
   return false;
 }
 
-function createWalker(root: Element | Document): TreeWalker {
-  return document_createTreeWalker(root, 0x1 /* NodeFilter.SHOW_ELEMENT */);
+// Every pass above walks through here, so they cannot disagree about which
+// nodes exist. `document.createTreeWalker` could not be that walk: under
+// linkedom a Document parsed from a *fragment* string keeps several element
+// children, and the walker rooted at it visits only the first one's subtree.
+// Every top-level element after the first therefore skipped removal, script
+// stripping and whitespace collapse — a `<header>` survived a `full`-mode
+// sanitize, and a `<script>` after the first element kept its source. The
+// browser never showed it because `DOMParser` always builds `html > head +
+// body`, so the walk had a single root child; `server.ts` and any library
+// caller bringing the same adapter got the under-sanitized tree.
+//
+// Recursion over `firstElementChild`/`nextElementSibling` is what `removeHidden`
+// always did, and it reads the same on a Document with one element child, a
+// Document with several, a DocumentFragment and an Element. Returning `false`
+// stops the descent, for a pass whose removal takes the subtree with it.
+function walkElements(root: SanitizeRoot, visit: (el: Element) => boolean | void): void {
+  const step = (el: Element): void => {
+    if (visit(el) === false) return;
+    for (let child = el.firstElementChild; child; child = child.nextElementSibling) step(child);
+  };
+  for (let child = root.firstElementChild; child; child = child.nextElementSibling) step(child);
 }
 
-// Вспомогательная функция для совместимости с различными DOM-окружениями
-function document_createTreeWalker(root: Element | Document, whatToShow: number): TreeWalker {
-  const doc =
-    root.nodeType === 9 /* DOCUMENT_NODE */ ? (root as Document) : (root as Element).ownerDocument!;
-  return doc.createTreeWalker(root, whatToShow);
+// The same walk for text. A text node has no `firstElementChild` chain to arrive
+// on, so this descends every child node instead — which is also what a
+// SHOW_TEXT TreeWalker does, since the filter selects what it returns, not where
+// it goes. Rewriting `nodeValue` is safe during the walk: it moves no node.
+function walkTextNodes(root: SanitizeRoot, visit: (node: Text) => void): void {
+  const step = (node: Node): void => {
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 3 /* TEXT_NODE */) visit(child as Text);
+      else step(child);
+    }
+  };
+  step(root as Node);
 }
