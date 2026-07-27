@@ -793,6 +793,31 @@ function expandSpans(rows: Element[], table: Element): (Element | null)[][] {
   return grid;
 }
 
+/**
+ * The grid without the columns no cell begins in.
+ *
+ * A column exists on screen because something starts there. One that holds only
+ * the continuation of merges beside it is drawn at zero width — a browser gives
+ * a track no width of its own when every cell covering it starts elsewhere — so
+ * writing it costs the file a column of pipes the reader never saw.
+ *
+ * Wikipedia's infoboxes are built this way throughout: the title spans
+ * `colspan="4"`, every row below it is a `<th>` label and a `<td colspan="3">`,
+ * and the article's parameter box arrived four columns wide with the last two
+ * empty in all 22 rows. A column of genuinely empty cells is a different thing
+ * and stays — a `<td></td>` is a position a cell begins in, which is why this
+ * asks about the element and not about its text.
+ */
+function withoutSpanOnlyColumns(grid: (Element | null)[][]): (Element | null)[][] {
+  const width = Math.max(0, ...grid.map((row) => row.length));
+  const kept: number[] = [];
+  for (let column = 0; column < width; column += 1) {
+    if (grid.some((row) => row[column])) kept.push(column);
+  }
+  if (kept.length === width) return grid;
+  return grid.map((row) => kept.map((column) => row[column] ?? null));
+}
+
 function cellSpans(cell: Element, row: Element | null, table: Element): string {
   const rowspan = row ? resolvedRowspan(cell, row, table) : spanAttribute(cell, 'rowspan');
   return `${spanAttribute(cell, 'colspan')}${rowspan}`;
@@ -912,7 +937,7 @@ export const TABLE_RULES: Rule[] = [
       // From the grid, not from the row's own cells: a merged cell occupies
       // positions its row does not list, and reading the cells directly put the
       // columns out of step with each other.
-      const grid = expandSpans(allRows, el);
+      const grid = withoutSpanOnlyColumns(expandSpans(allRows, el));
       const rowIndex = new Map(allRows.map((row, index) => [row, index]));
       const positionsOf = (row: Element): (Element | null)[] =>
         grid[rowIndex.get(row) ?? -1] ?? [];

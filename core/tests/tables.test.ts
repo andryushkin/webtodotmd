@@ -177,6 +177,27 @@ describe('строки, колонки и подпись в pipe-таблице'
     }
   });
 
+  // Wikipedia's infobox: a title across four columns, then a label and a value
+  // spanning the other three. Nothing ever begins in the last two, so a browser
+  // draws them at no width — and the parameter box of one article arrived four
+  // columns wide with the last two empty in all 22 rows.
+  it('колонка, в которой ничего не начинается, не пишется', () => {
+    const html =
+      '<table><tr><th colspan="4">T</th></tr><tr><th>k</th><td colspan="3">v</td></tr></table>';
+    const lines = toMarkdown(html).trim().split('\n');
+    expect(lines[0]).toBe('| T   |     |');
+    expect(lines[2]).toBe('| k   | v   |');
+  });
+
+  // The other kind of empty: a cell that is there and holds nothing. The reader
+  // saw the column — a wiki table parts two halves of a list with one — so the
+  // question is asked about the cell, never about its text.
+  it('колонка из пустых ячеек остаётся', () => {
+    const html =
+      '<table><tr><td>a</td><td></td><td>b</td></tr><tr><td>c</td><td></td><td>d</td></tr></table>';
+    expect(toMarkdown(html).trim().split('\n')[0]).toBe('| a   |     | b   |');
+  });
+
   it('<tfoot> перед <tbody> всё равно идёт после данных', () => {
     const html =
       '<table><thead><tr><th>Q</th></tr></thead><tfoot><tr><td>Total</td></tr></tfoot><tbody><tr><td>Q1</td></tr></tbody></table>';

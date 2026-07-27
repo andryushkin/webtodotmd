@@ -54,6 +54,7 @@ backslash: a `>` on its own opens nothing.
 | a `\|` in a cell | escaped, everywhere, formulas included — GFM splits a row into columns before anything reads maths, so a `\|` inside `$…$` would take the row apart |
 | a line break in a cell | `<br>`: a GFM row is one line, and this is the only break a pipe cell can carry |
 | merged cells, nested table, cell holding `<pre>` | flattened into an ordinary pipe table — a merge leaves the positions it covered empty, a nested table becomes its rows one per line with `·` between cells, preformatted text one code span per line, its indentation held in non-breaking spaces because a renderer collapses ordinary ones inside an inline `<code>` |
+| a column no cell begins in | dropped: a track every merge merely crosses is drawn at no width, so it is not a column the reader saw. Wikipedia's infoboxes span `colspan="4"` over a label and a value, and one arrived four columns wide with the last two empty in every row. A column of empty *cells* is a column and stays |
 
 `complexTableFallback` can be set to `html`, `text` or `skip`; the default is
 `flatten`. The `html` value writes the converter's *own* limited table markup — it

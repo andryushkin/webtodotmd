@@ -183,6 +183,11 @@ threshold sits where no layout lands by accident.
   answers first; when it is silent the body does, but only unanimously — a table of numbers carries
   `text-align` on every `<td>` and nothing on the `<th>`, while one differing or silent cell means
   the column was never aligned at all.
+- A column is a place a cell *begins*. One that only ever holds the continuation of a merge beside
+  it is drawn at no width, so writing it costs the file pipes nobody saw: Wikipedia's infoboxes span
+  `colspan="4"` over a `<th>` label and a `<td colspan="3">` value, and one arrived four columns wide
+  with the last two empty in all 22 rows. Asked of the grid position and never of its text — a
+  `<td></td>` is a column the page drew, and a wiki table parts two halves of a list with one.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would
