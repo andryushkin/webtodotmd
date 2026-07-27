@@ -52,8 +52,10 @@ describe('topHeadingLevel', () => {
     expect(toMarkdown('<h3>A</h3><h4>B</h4>', { topHeadingLevel: 2 })).toBe('## A\n\n### B\n');
   });
 
-  it('keeps the distance between levels rather than the levels', () => {
-    expect(toMarkdown('<h1>A</h1><h2>B</h2>', { topHeadingLevel: 2 })).toBe('## A\n\n### B\n');
+  // Upwards only: an `<h1>` is the rank the page gave its title, and pushing it
+  // to `##` to keep `#` free spends the reader's structure on the note's own.
+  it('leaves a document that already starts at h1 alone', () => {
+    expect(toMarkdown('<h1>A</h1><h2>B</h2>', { topHeadingLevel: 2 })).toBe('# A\n\n## B\n');
   });
 
   it('lifts a lone deep heading', () => {

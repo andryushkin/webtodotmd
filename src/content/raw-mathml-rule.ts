@@ -36,7 +36,9 @@ export const CONVERSION_OPTIONS: MarkItDownOptions = {
   // start is the page's business. Claude writes an answer under `<h3>`, so
   // `headingOffset: 1` — what this used to be — produced a file whose first
   // heading was `####` with nothing above it, while the reader had seen the
-  // topmost heading there is. `#` stays free for the note's own title.
+  // topmost heading there is. The lift only ever goes up: an article's `<h1>`
+  // is the rank the page gave its title, and moving it to `##` to keep `#` free
+  // spends the reader's hierarchy on the note's own formatting.
   topHeadingLevel: 2,
   math: true,
   // Neither capture path is ever handed a page: one converts what a drag

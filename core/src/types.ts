@@ -72,8 +72,10 @@ export interface MarkItDownOptions {
    */
   headingOffset?: number;
   /**
-   * Put the shallowest heading of the input at this level, moving the rest by
-   * the same amount.
+   * Raise the shallowest heading of the input to this level, moving the rest by
+   * the same amount. Never deeper: input that already starts at `<h1>` is left
+   * where it is, since the rank came from the page and `#` is the reader's, not
+   * the note's.
    *
    * A page is not a document: an article's own title is an `<h1>` the capture
    * usually did not include, and a chat interface writes its whole answer under

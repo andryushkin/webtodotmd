@@ -38,13 +38,19 @@ function levelOf(el: Element): number | null {
 export const ARIA_DEFAULT_LEVEL = 2;
 
 /**
- * The shift that puts the shallowest heading at `topLevel`, or 0 where the input
- * has no heading at all — a shift of nothing is what a document without headings
- * asks for, in either direction.
+ * The shift that raises the shallowest heading to `topLevel`, or 0 where the
+ * input has no heading at all — a shift of nothing is what a document without
+ * headings asks for, in either direction.
+ *
+ * Only upwards. A capture whose top heading is already `<h1>` keeps it: an H1 is
+ * the rank the page gave its title, and pushing it to `##` to keep `#` free
+ * spends the reader's structure on the note's own formatting. Deeper input is
+ * still pulled up, which is what the shift is for — a chat answer written under
+ * `<h3>` becomes `##` and not `####`.
  */
 export function headingOffsetTo(root: ParentNode, topLevel: number): number {
   const min = minHeadingLevel(root);
-  return min === null ? 0 : topLevel - min;
+  return min === null ? 0 : Math.min(0, topLevel - min);
 }
 
 /** Fills in `headingOffset` from `topHeadingLevel`, once the root is sanitized. */

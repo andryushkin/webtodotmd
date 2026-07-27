@@ -331,9 +331,9 @@ describe('heading levels the extension writes', () => {
     expect(withExtensionOptions('<h3>Answer</h3><h4>Detail</h4>')).toBe('## Answer\n\n### Detail');
   });
 
-  test('a page that starts at h1 still leaves # for the note title', () => {
+  test('a page that starts at h1 keeps it', () => {
     expect(withExtensionOptions('<h1>Article</h1><h2>Section</h2>')).toBe(
-      '## Article\n\n### Section',
+      '# Article\n\n## Section',
     );
   });
 

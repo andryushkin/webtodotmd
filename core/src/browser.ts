@@ -628,7 +628,9 @@ export function headingOffsetAcross(nodes: Iterable<Node>, options: MarkItDownOp
     const level = minHeadingLevel(probe as unknown as ParentNode);
     if (level !== null && (min === null || level < min)) min = level;
   }
-  return min === null ? 0 : options.topHeadingLevel - min;
+  // Upwards only, for the reason `headingOffsetTo` gives: an `<h1>` the reader
+  // saw stays `#`.
+  return min === null ? 0 : Math.min(0, options.topHeadingLevel - min);
 }
 
 export function selectionToMarkdown(selection: Selection, options: MarkItDownOptions = {}): string {
