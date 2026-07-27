@@ -33,15 +33,16 @@ backslash: a `>` on its own opens nothing.
 | `<li>` with a checkbox | `- [x]` / `- [ ]` |
 | `<pre>` | ` ``` ` fence, whitespace and `<br>` lines kept, the fence long enough to outrun any backtick run inside |
 | a highlighter's line-number gutter | dropped (`line-numbers-rows`, `linenumber`, `line-number`, `hljs-ln`) |
-| a `<figcaption>` or `<button>` inside the `<pre>` | not code. The button goes — it is a control, not text the reader read as part of the sample. The caption becomes the info string when it names a language (Perplexity draws `python` there), and otherwise stays as a paragraph above the fence, escaped like any other page text. Read from the `<pre>` for the same reason the whole `<pre>` is read when the `<code>` is not alone in it: the caption sits between them |
+| a `<figcaption>` or `<button>` inside the `<pre>` | not code. The button goes — it is a control, not text the reader read as part of the sample. The caption becomes the info string when it names a language (Perplexity draws `python` there), and otherwise stays as a paragraph above the fence, escaped like any other page text. A caption that names a language is never written as that paragraph, whichever language the fence ends up with: it is the same claim the info string carries, and the two disagree oftener than a comparison catches — a bar reading `Python` beside a `language-python` class, a bar the site never updated. Read from the `<pre>` for the same reason the whole `<pre>` is read when the `<code>` is not alone in it: the caption sits between them |
+| a language bar drawn *beside* the `<pre>` | moved into it as the `<figcaption>` the page could have written, so the language becomes the info string and the control goes with the rest of the furniture. `<div class="code-block"><div><span>python</span><button>Копировать</button></div><pre>…` is ChatGPT, Habr and half the documentation sites, and it arrived as a paragraph reading `pythonКопировать` above a fence with no language at all. Narrow on purpose: only where the wrapper holds the bar and one `<pre>` and nothing else, only where what is left of the bar once its controls are gone is a language a highlighter really ships, and never a heading — an `<h3>` above a sample is the author's |
 | `<clipboard-copy value>` inside a `<pre>` | the attribute is the code — that is GitHub's copy button, and it holds the text without the gutter |
 | `<pre><code data-lang="js">` | ` ```js ` fence — also from `data-language`, from a highlighter class (`language-js`, `lang-js`, `highlight-source-js`, `brush: js`, `sourceCode js`, `shj-lang-js`, `prettyprint lang-js`) and from a class that is the bare name of a language (`<code class="java">`, what highlight.js writes when the page states the language and what Habr's editor produces — matched against a list of real languages, so a `snippet` or a `highlight` class opens no fence with it); anything that is not a bare language token is dropped rather than written into the info string |
 | a control inside the `<pre>` and outside the `<code>` | dropped: a `<figcaption>`, a `<button>`, a link or a `role="button"` there is the block's furniture. Habr closes every code block with an «Объяснить с» link, and every sample in the file ended with it. A link inside the `<code>` is part of the sample and stays |
 | `<hr>` | `---` |
 | `<br>` | `\` + newline (hard break) — unless there is nothing left to break: one a block ends on, or one between two blocks, becomes the blank line it was drawing. Hacker News puts a `<br>` after every layout table, and a captured page carried 133 lines holding a lone backslash |
-| `<figure>` + `<figcaption>` | image, then caption — **defect: they run together, `![A](x)Caption`** |
+| `<figure>` + `<figcaption>` | image, then caption, a blank line between them |
 | `<dl>` | terms and definitions as paragraphs |
-| `<section>` `<article>` `<main>` `<figure>` `<figcaption>` `<details>` `<summary>` `<address>` `<form>` `<fieldset>` `<legend>` | contents inline — **defect: no rule writes a block for them, so two adjacent ones concatenate (`OneTwo`, `TitleBody`)**. A block *inside* still supplies the break, which is why `<details><summary>T</summary><p>B</p>` comes out as two paragraphs and `<summary>T</summary>B` as one word |
+| `<section>` `<article>` `<aside>` `<nav>` `<header>` `<footer>` `<hgroup>` `<main>` `<figure>` `<figcaption>` `<address>` `<details>` `<summary>` `<fieldset>` `<legend>` `<form>` | contents between blank lines, like a `<div>`: each draws a line of its own and Markdown has no other spelling for it. They used to fall to the default rule, which hands its children back unchanged, so two adjacent ones concatenated — `SectionArticleFormLegendField`, `Deployment notesRestart the worker`. `core/src/utils/blocks.ts` is the set, and the parser reads the same one: the escaper already counted a `<figure>` and a `<form>` as the end of a line while nothing wrote a boundary there, which is the two halves of one claim made separately |
 
 ## Tables
 
@@ -137,7 +138,7 @@ rule writes.
 
 | CSS | Markdown |
 | --- | --- |
-| `font-weight` heavier than context | `**text**` |
+| `font-weight` heavier than context | `**text**` — round the run that wears it, not round everything the element converted to. `<div style="font-weight:700"><span style="font-weight:400">not bold</span> and this is</div>` is what a card component and an editor's paste write, and the whole sentence used to arrive bold. The split is over the element's own children; a child that declines the mark deeper down than that still takes the older answer, because two runs wearing different subsets of the marks meet with no character between them and `**a****_b_**` is one emphasis around four asterisks |
 | `font-style: italic` | `_text_` |
 | `text-decoration-line: line-through` | `~~text~~` |
 | `display: block` on an inline tag | its own paragraph — when the *page* states it. A `block` a flex or grid **row** derives for its items is the layout algorithm's word, not the page's: the reader saw one line, and twelve navigation links came back as twelve paragraphs. A flex column, and a grid one column wide, do stack, and there it is recorded — unless the whole of the container's content was drawn on one line, see below |
@@ -171,6 +172,7 @@ Removed by markup rather than by style:
 | `aria-hidden="true"` | **kept.** It takes a node out of the accessibility tree and leaves every pixel where it was: a star rating drawn as `★★★★★`, the `→` in a "read more" link, a number beside a chart. Everything that really hides is read from the style, and this attribute only subtracted text the reader saw |
 | `<script>`, `<style>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
 | `<iframe>`, `<video>`, `<audio>` | **kept as a link to what they play.** An embed is content, and deleting it left the reader a blank place where a player had been — a Notion help page with three videos wrote nothing three times, and every YouTube embed on every blog went the same way. The address comes from `src` or the first `<source>`; the label from `title`, then `aria-label`, then the tail of the address, which is a file name often enough — never a word this converter invented, since the library has no locale to pick one in. The children go: they are the fallback for a browser that cannot play it, and the one the capture came from can |
+| `<iframe srcdoc>` | **nothing** — and this is an accepted boundary, not an oversight. The frame carries its document in an attribute, so there is no address to link to and the text inside really was on the screen. Parsing it would make the answer depend on which kind of frame a page happened to write: a selection cannot cross into a frame at all, and every frame that is not `srcdoc` is a separate document the capture can never read, so the one inline kind would be the only embed whose contents ever arrived |
 | `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |
 | `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode** (`mode` unset, the library default); kept in **selection mode**, because a person who selected them meant to. The extension asks for selection mode in `CONVERSION_OPTIONS`, so both of its capture paths keep them — including the `<header>` and `<footer>` *inside* a highlighted `<article>`, which is how every news site ships a headline and a byline |
 
@@ -222,6 +224,15 @@ the converter emits as markup must be the only markup there is.
   numbering, a line of dashes) only in the node that starts a line.
 - **HTML in page text is escaped too** (`\<`, `\&`), so a page *about* HTML keeps
   showing its tags instead of running them.
+- **A line starts where nothing has been written yet**, which is not the same as
+  where no element stands. An element that puts no character on the line — a link
+  dropped for its scheme, a spacer image, one marked decorative, an empty wrapper,
+  a comment — leaves the text after it at the head of the line, and the block
+  openers above have to be escaped there. Reading the tag alone let
+  `<a href="javascript:…"> </a># ` reach the file as `#` at the start of a line,
+  which renders as an empty heading: the character the page showed was gone. The
+  question is asked only of a node that begins with one of those markers, so the
+  walk behind it costs nothing on ordinary words.
 - **Constructs must not assemble across a node boundary.** Syntax highlighting
   splits `<` and a tag name into separate spans; each half is harmless and the
   pair is not, so a node whose tail is still an open construct escapes it

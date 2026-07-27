@@ -3,11 +3,19 @@ import {
   charAfter,
   charBefore,
   extractFlankingWhitespace,
+  firstCodePoint,
   followsEmphasis,
+  lastCodePoint,
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext, lookAhead } from '../core/parser.js';
-import { addedMarks, elementStyle, suppressedMarks } from '../utils/inline-style.js';
+import {
+  addedMarks,
+  elementStyle,
+  marksPerChild,
+  suppressedMarks,
+  type StyleMarks,
+} from '../utils/inline-style.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -26,12 +34,25 @@ import {
  * still Markdown; emitting delimiters that do nothing is a silent loss of
  * formatting plus stray characters the reader never saw.
  */
+/**
+ * What a run of the output sits between, where that is not what the element sits
+ * between: a style mark that goes round part of an element's content has the
+ * neighbouring parts on one or both sides, not the element's siblings.
+ */
+interface Edges {
+  before: string | undefined;
+  after: string | undefined;
+  /** Whether an emphasis wrapper ends exactly where this run begins. */
+  follows: boolean;
+}
+
 function emphasis(
   el: Element,
   content: string,
   markers: string[],
   tag: string,
   options: MarkItDownOptions,
+  edges?: Edges,
 ): string {
   const { leading, trimmed, trailing } = extractFlankingWhitespace(content);
   if (!trimmed) return content;
@@ -50,10 +71,11 @@ function emphasis(
   // *follows* gives way: one break is enough to part the pair, and the one in
   // front keeps the lighter spelling. Whitespace of its own already parts them,
   // which is why `leading` excuses the test.
-  if (!isHtmlContext(options) && (leading !== '' || !followsEmphasis(el))) {
+  const follows = edges ? edges.follows : followsEmphasis(el);
+  if (!isHtmlContext(options) && (leading !== '' || !follows)) {
     // Whitespace pulled outside the delimiters is what the marker sits against.
-    const before = leading ? ' ' : charBefore(el);
-    const after = trailing ? ' ' : charAfter(el);
+    const before = leading ? ' ' : (edges ? edges.before : charBefore(el));
+    const after = trailing ? ' ' : (edges ? edges.after : charAfter(el));
 
     for (const marker of markers) {
       if (markerWorks(marker, trimmed, before, after)) {
@@ -87,17 +109,106 @@ export function applyStyleEmphasis(
   el: Element,
   content: string,
   options: MarkItDownOptions,
+  pieces?: Pieces,
 ): string {
   const marks = addedMarks(el);
   if (!marks.italic && !marks.strike && !marks.bold) return content;
+  const runs = pieces && wornRuns(el, marks, pieces, options);
+  if (!runs) return markRun(el, content, marks, options);
+  return runs.map((run) => run.text).join('');
+}
+
+/**
+ * The element's converted children, kept beside the nodes that produced them.
+ *
+ * `convert()` has both in hand anyway; handing them over is what lets a mark go
+ * round the part of a line that wears it instead of round the string the parts
+ * were already joined into. The joiner travels with them because a row spends a
+ * blank between its items and the marks must not be written on either side of
+ * the one it adds.
+ */
+export interface Pieces {
+  nodes: Node[];
+  parts: string[];
+  join: (parts: string[]) => string;
+}
+
+interface Run {
+  text: string;
+  marked: boolean;
+}
+
+/**
+ * The content split where the marks stop, or `undefined` when there is nothing to
+ * split — which is the ordinary case and costs one walk of the children.
+ *
+ * Every child either wears all of the element's marks or none of them, or this
+ * gives up and lets the caller mark the whole line. That is not a limit of the
+ * split but of what can be written down: two runs wearing different subsets sit
+ * against each other with no character between them, and `**a****_b_**` is a
+ * single emphasis around four asterisks. A page that declines two marks in two
+ * places is a shape nobody writes; a page that declines one is what every card
+ * component and every editor produces.
+ *
+ * The nesting inside a run is `marked`'s, so a run of the line reads exactly as
+ * an element wearing the same marks would.
+ */
+function wornRuns(
+  el: Element,
+  marks: StyleMarks,
+  pieces: Pieces,
+  options: MarkItDownOptions,
+): Run[] | undefined {
+  const worn = marksPerChild(el, marks);
+  const wears = worn.map((child) => sameMarks(child, marks));
+  // Nothing takes a mark back: the line wears it whole, as it always did.
+  if (wears.every((full) => full)) return undefined;
+  // A child wearing some marks and not others has no spelling; see above.
+  if (worn.some((child, i) => !wears[i] && anyMark(child))) return undefined;
+
+  const runs: Run[] = [];
+  pieces.parts.forEach((part, i) => {
+    const last = runs[runs.length - 1];
+    if (last !== undefined && last.marked === wears[i]) last.text = pieces.join([last.text, part]);
+    else runs.push({ text: part, marked: wears[i]! });
+  });
+
+  return runs.map((run, i) => {
+    if (!run.marked) return run;
+    // Marked and unmarked runs alternate by construction, so what stands beside
+    // this one is the neighbouring run's own text — no delimiter of its own to
+    // collide with, and its plain characters are what the flanking tests need.
+    const before = i === 0 ? charBefore(el) : lastCodePoint(runs[i - 1]!.text);
+    const after = i === runs.length - 1 ? charAfter(el) : firstCodePoint(runs[i + 1]!.text);
+    const edges: Edges = { before, after, follows: i === 0 && followsEmphasis(el) };
+    return { ...run, text: markRun(el, run.text, marks, options, edges) };
+  });
+}
+
+function sameMarks(a: StyleMarks, b: StyleMarks): boolean {
+  return a.bold === b.bold && a.italic === b.italic && a.strike === b.strike;
+}
+
+function anyMark(marks: StyleMarks): boolean {
+  return marks.bold || marks.italic || marks.strike;
+}
+
+/** One run of the line, which is the whole of it unless a mark stopped early. */
+function markRun(
+  el: Element,
+  content: string,
+  marks: StyleMarks,
+  options: MarkItDownOptions,
+  edges?: Edges,
+): string {
   // A run of text takes the marks whole. Blocks take them one at a time, because
   // a delimiter does not reach across the blank between two of them: a bolded
   // `<div>` holding two paragraphs came out `**a\n\nb**`, which renders as the
   // asterisks themselves at both ends and no bold anywhere.
-  if (!BLOCK_BREAK.test(content)) return marked(el, content, marks, options);
+  if (!BLOCK_BREAK.test(content)) return marked(el, content, marks, options, edges);
   return content
     .split(BLOCK_SPLIT)
-    .map((part) => (carriesMarkup(part) ? part : marked(el, part, marks, options)))
+    .map((part) => (carriesMarkup(part) ? part : marked(el, part, marks, options, edges)))
     .join('');
 }
 
@@ -127,13 +238,14 @@ const BLOCK_MARKUP = /^\s*(?:#{1,6} |[-*+] |\d+[.)] |> |\||```|~~~|<|-{3,}$|\*{3
 function marked(
   el: Element,
   content: string,
-  marks: { italic: boolean; strike: boolean; bold: boolean },
+  marks: StyleMarks,
   options: MarkItDownOptions,
+  edges?: Edges,
 ): string {
   let out = content;
-  if (marks.italic) out = emphasis(el, out, ['_', '*'], 'em', options);
-  if (marks.strike) out = emphasis(el, out, ['~~'], 'del', options);
-  if (marks.bold) out = emphasis(el, out, ['**', '__'], 'strong', options);
+  if (marks.italic) out = emphasis(el, out, ['_', '*'], 'em', options, edges);
+  if (marks.strike) out = emphasis(el, out, ['~~'], 'del', options, edges);
+  if (marks.bold) out = emphasis(el, out, ['**', '__'], 'strong', options, edges);
   return out;
 }
 
@@ -514,6 +626,30 @@ function statedPixels(el: Element, axis: 'width' | 'height'): number {
 function accompaniedByText(el: Element): boolean {
   const parent = el.parentElement;
   return parent !== null && (parent.textContent ?? '').trim() !== '';
+}
+
+/**
+ * Whether this element writes something although it holds no text of its own.
+ *
+ * The parser asks it about what stands in front of a line's first characters:
+ * anything written there means the text is mid-line and its `#` or `-` is
+ * ordinary punctuation. Text is the usual answer and the parser can see that for
+ * itself; a picture and a player are what it cannot, since both write a whole
+ * construct out of attributes.
+ *
+ * Each of the two has its own way of coming to nothing — an image the page drew
+ * no pixels of, one marked decorative beside text, one with neither address nor
+ * alt; a player with no address to point at — and the rules below are the
+ * authority for all of them, so this asks them rather than restating them.
+ */
+export function emitsWithoutText(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (EMBEDS_MEDIA.has(tag)) return mediaUrl(el) !== '';
+  if (tag !== 'img') return false;
+  const alt = (el.getAttribute('alt') ?? '').trim();
+  if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return false;
+  if (!extractImageUrl(el)) return alt !== '';
+  return !drawsNothing(el);
 }
 
 function htmlAttr(value: string): string {

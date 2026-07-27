@@ -678,8 +678,8 @@ describe('a style on other elements', () => {
 // overlay has to leave the flow, or it would hold space open while closed.
 describe('скрытое с переходом: раскрытие или оверлей', () => {
   it.each([
-    ['секция в потоке', 'visibility:hidden;transition:.6s', 'aSECTIONb\n'],
-    ['секция relative', 'visibility:hidden;transition:.6s;position:relative', 'aSECTIONb\n'],
+    ['секция в потоке', 'visibility:hidden;transition:.6s', 'a\n\nSECTION\n\nb\n'],
+    ['секция relative', 'visibility:hidden;transition:.6s;position:relative', 'a\n\nSECTION\n\nb\n'],
     ['оверлей absolute', 'visibility:hidden;transition:.2s;position:absolute', 'ab\n'],
     ['оверлей fixed', 'visibility:hidden;transition:.2s;position:fixed', 'ab\n'],
     ['скрыто без перехода', 'visibility:hidden', 'ab\n'],
@@ -689,7 +689,9 @@ describe('скрытое с переходом: раскрытие или ове
   });
 });
 
-const SHOWN = 'aSECTIONb\n';
+// A `<section>` is a block, so a kept one stands between blank lines: what these
+// measure is whether the text survives at all, not how the line was laid out.
+const SHOWN = 'a\n\nSECTION\n\nb\n';
 const GONE = 'ab\n';
 
 const section = (style: string, expected: string): void => {
@@ -777,11 +779,62 @@ describe('a mark nothing wears', () => {
     expect(toMarkdown('<div data-s2md-style="font-weight:700">heavy</div>').trim()).toBe('**heavy**');
   });
 
-  // One branch is enough: the mark is written where the page could still show it.
-  it('one child that inherits it is enough', () => {
+  // One branch is enough for the mark to be written — and it is written round
+  // that branch alone. This read `**ab**` while the reader saw the bold begin at
+  // `b`: knowing the mark reaches text is not knowing how much of the line wears
+  // it, and the two questions had one answer.
+  it('one child that inherits it takes the mark, and the other does not', () => {
     const html =
       '<div data-s2md-style="font-weight:700"><span data-s2md-style="font-weight:400">a</span><span>b</span></div>';
-    expect(toMarkdown(html).trim()).toBe('**ab**');
+    expect(toMarkdown(html).trim()).toBe('a**b**');
+  });
+
+  // Where a container states a mark and part of its content takes it back, the
+  // delimiters go round the part that kept it. Both spellings, because both reach
+  // the converter — the page's own attribute and the content script's snapshot.
+  it.each([
+    [
+      'a declining run before the marked one',
+      '<div STYLE="font-weight:700"><span STYLE="font-weight:400">not bold</span> and this is</div>',
+      'not bold **and this is**',
+    ],
+    [
+      'a declining run after it',
+      '<div STYLE="font-weight:700">bold <span STYLE="font-weight:400">and this is not</span></div>',
+      '**bold** and this is not',
+    ],
+    [
+      'a declining run between two marked ones',
+      '<div STYLE="font-weight:700">a <span STYLE="font-weight:400">b</span> c</div>',
+      '**a** b **c**',
+    ],
+    [
+      'italics, the same shape',
+      '<div STYLE="font-style:italic">a <span STYLE="font-style:normal">b</span></div>',
+      '_a_ b',
+    ],
+    [
+      'strikethrough, the same shape',
+      '<div STYLE="text-decoration-line:line-through">a <span STYLE="text-decoration-line:none">b</span></div>',
+      '~~a~~ b',
+    ],
+    [
+      'a run that declines it deeper down keeps its own',
+      '<div STYLE="font-weight:700"><span STYLE="font-weight:400">a <b>b</b></span> c</div>',
+      'a **b** **c**',
+    ],
+  ])('%s', (_name, html, expected) => {
+    for (const attribute of ['style', 'data-s2md-style']) {
+      expect(toMarkdown(html.replaceAll('STYLE', attribute)).trim()).toBe(expected);
+    }
+  });
+
+  // The mark is not moved onto something that cannot wear it: a picture is not
+  // text, and `**![alt](src)**` claims a bold the reader was never shown.
+  it('an image beside a marked run is left alone', () => {
+    const html =
+      '<div data-s2md-style="font-weight:700"><img src="a.png" alt="a"> and this is</div>';
+    expect(toMarkdown(html).trim()).toBe('![a](a.png) **and this is**');
   });
 
   it('the same holds for italics', () => {

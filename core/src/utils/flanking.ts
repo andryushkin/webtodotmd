@@ -1,4 +1,5 @@
 import { addedMarks, displaysAsBlock, laysARow, suppressedMarks, type StyleMarks } from './inline-style.js';
+import { SEMANTIC_BLOCKS } from './blocks.js';
 
 export function extractFlankingWhitespace(content: string): {
   leading: string;
@@ -41,13 +42,13 @@ function isWordChar(ch: string | undefined): boolean {
 // so pressed against a letter neither `*` nor `_` can open there and the tag is
 // the only spelling that works.
 
-function firstCodePoint(text: string): string | undefined {
+export function firstCodePoint(text: string): string | undefined {
   if (text.length === 0) return undefined;
   const point = text.codePointAt(0);
   return point === undefined ? undefined : String.fromCodePoint(point);
 }
 
-function lastCodePoint(text: string): string | undefined {
+export function lastCodePoint(text: string): string | undefined {
   if (text.length === 0) return undefined;
   // Step back over a trailing low surrogate, but only when a high surrogate is
   // really in front of it — a lone one is its own (invalid) character.
@@ -105,10 +106,11 @@ export function markerWorks(
 // Where a line ends, and with it the chance of anything joining onto it. The same
 // tags the parser calls `LINE_ENDS`, written out a second time because that set is
 // unexported and importing it would tie this file to the parser — the precedent is
-// `preformattedLines` in the table rules.
+// `preformattedLines` in the table rules. The semantic containers come from the
+// set both of those read, so at least that half cannot drift.
 const BLOCK_BOUNDARY = new Set([
-  'p', 'div', 'li', 'td', 'th', 'blockquote', 'section', 'article', 'main', 'dd',
-  'dt', 'figcaption', 'caption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre',
+  'p', 'div', 'li', 'td', 'th', 'blockquote', 'dd', 'dt', 'caption',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', ...SEMANTIC_BLOCKS,
 ]);
 
 const ELEMENT_NODE = 1;

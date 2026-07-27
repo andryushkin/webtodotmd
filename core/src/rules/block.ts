@@ -1,5 +1,6 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
+import { SEMANTIC_BLOCKS } from '../utils/blocks.js';
 import { ARIA_DEFAULT_LEVEL } from '../utils/headings.js';
 
 const ELEMENT_NODE = 1;
@@ -102,6 +103,21 @@ export const BLOCK_RULES: Rule[] = [
   {
     name: 'div',
     filter: ['div'],
+    replacement(_el, childContent) {
+      const text = childContent.trim();
+      if (!text) return '';
+      return `\n\n${text}\n\n`;
+    },
+  },
+  // The rest of the semantic containers, which had no rule at all and so fell to
+  // the default one — and the default one returns its children unchanged. Every
+  // boundary the page drew between them was lost: a `<figure>` welded its picture
+  // to its caption, a `<summary>` to the body it opens, and five sectioning
+  // elements in a row arrived as one word. `SEMANTIC_BLOCKS` says which and why,
+  // and the parser reads the same set, which is the half that had drifted.
+  {
+    name: 'semantic-block',
+    filter: (el) => SEMANTIC_BLOCKS.has(el.tagName.toLowerCase()),
     replacement(_el, childContent) {
       const text = childContent.trim();
       if (!text) return '';

@@ -40,6 +40,13 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 - HTML in page text is escaped too (`\<`, `\&`), just as narrowly. Two halves must not assemble across
   a node boundary: `sanitize()` calls `normalize()` last, and a node whose tail is still an open
   construct escapes it defensively, since it cannot see what the next node adds.
+- A line starts where nothing has been *written*, not where no element stands. `opensBlock` read the
+  previous sibling's tag and called every element ink, so a link dropped for its scheme, a spacer
+  image, one marked decorative or an empty wrapper left the text after it unescaped: `<p><a
+  href="javascript:alert(1)"> </a># </p>` reached the file as a `#` opening a line, which renders as
+  an empty heading — the one defect of this class that costs a character instead of adding one.
+  `writesSomething` asks what the rules really write; wrong the other way it costs a backslash that
+  renders as nothing, the text being mid-line after all. Gated on a node that begins with a marker.
 
 ## Emphasis and style
 
@@ -62,6 +69,15 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   both ends and no bold anywhere. Blocks take the mark one at a time, and a block that opens with
   syntax of its own takes none: `**` before a `##`, a `|` row or a fence is either printed or eaten
   by the construct, and a heading is bold already, which is the same reason a `<th>` is refused.
+- And round the run that *wears* it, not round everything the element converted to. That a mark
+  reaches text (`addedMarks`) is not how much of the line carries it, and one answer served both:
+  `<div style="font-weight:700"><span style="font-weight:400">not bold</span> and this is</div>` —
+  a card, an editor's paste — came back bold throughout. `marksPerChild` splits it over the
+  element's own children, and `convert()` hands the parts over beside the string they were joined
+  into, since only the parts say where a mark stopped. Every child wears all the marks or none, or
+  the line takes them whole as before: two runs wearing different subsets meet with no character
+  between them, and `**a****_b_**` is one emphasis around four asterisks. A decline deeper than a
+  direct child is that case.
 - `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
   wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
   running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask
@@ -209,6 +225,18 @@ threshold sits where no layout lands by accident.
   children — because the wrapper is the only element that knows the two are one formula. A rule that
   merely refused the `<img>` would have to be taught every further fallback the renderer adds.
 
+## Blocks
+
+- The semantic containers are one set, `src/utils/blocks.ts`, read by the parser and by the rule
+  that writes them. Two lists made separately disagreed: the escaper counted a `<figure>` and a
+  `<form>` as the end of a line while nothing wrote a boundary there, so the reading model ended the
+  line and the writing model welded it to the next — a picture ran into its caption, a `<summary>`
+  into the body it opens, five sectioning elements into `SectionArticleFormLegendField`. What
+  qualifies is what a `<div>` qualifies on: the element draws a line of its own and Markdown has no
+  other spelling, so its content between blank lines is the closest the file comes. A `<table>`, a
+  `<pre>` and a `<li>` are out for the opposite reason — each writes syntax returning the content
+  would throw away.
+
 ## Code
 
 - The language is read from the class in the highlighters' spellings first (`language-x`, `lang-x`,
@@ -217,6 +245,14 @@ threshold sits where no layout lands by accident.
   blocks of one article arrived as fences with no language at all. The bare name is answered from a
   list of real languages, never from the shape of the word: `snippet`, `code` and `highlight` all
   pass for a token, and ```snippet claims something the page never said.
+- A language bar drawn *beside* the `<pre>` is moved into it as the `<figcaption>` the page could
+  have written: one shape, one answer, since the rule already knows what a caption naming a language
+  means. `<div><span>python</span><button>Копировать</button></div><pre>…` is ChatGPT, Habr and half
+  the documentation sites, and it arrived as a paragraph reading `pythonКопировать` above a fence
+  with no info string. Every condition refuses a guess: the wrapper holds the bar and one `<pre>` and
+  nothing else, what survives the bar's controls is a language a highlighter really ships, and a
+  heading is never taken. Nor is such a caption ever printed as a label line, whichever language the
+  fence ends up with — `Python` beside a `language-python` class is no disagreement.
 - What a `<pre>` holds besides its `<code>` is read too — `lost<br><code>kept</code>` is a real
   shape and losing the first half is silent — but a *control* in that space is furniture, not code.
   A `<figcaption>`, a `<button>`, and any link or `role="button"` outside the `<code>`: Habr ends

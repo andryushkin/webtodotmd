@@ -836,6 +836,53 @@ export function addedMarks(el: Element): StyleMarks {
 }
 
 /**
+ * The same marks, asked child by child: which of them each of this element's own
+ * children still wears.
+ *
+ * `addedMarks` answers whether the mark reaches *any* text, because that is what
+ * decides whether it is worth writing at all. Where it is, something still has to
+ * decide *how much* of the line wears it, and the two questions had one answer:
+ * the mark went round the whole of the assembled content. A container states a
+ * weight and one run inside it takes the weight back — `<div style="font-weight:
+ * 700"><span style="font-weight:400">not bold</span> and this part is</div>` is
+ * what every editor and every card component writes — and the file bolded the
+ * sentence the reader saw half of in bold.
+ *
+ * One walk for all of the children, because the weight the mark has to beat is
+ * the element's own and working it out costs an ancestor walk. `NO_MARKS` for a
+ * child that wears nothing, whether it declined the mark itself or holds no text
+ * to wear it: a `**` round an image or a blank is a claim about nothing.
+ */
+export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
+  const read = elementStyle(el);
+  const context = inheritedFace(el);
+  const weight =
+    weightFrom(read, context.weight) ?? (BOLD_TAGS.has(tagOf(el)) ? BOLD_WEIGHT : context.weight);
+  const declinesBold = (child: Element): boolean =>
+    (weightFrom(elementStyle(child), weight) ?? weight) < BOLD_THRESHOLD;
+  const declinesItalic = (child: Element): boolean => italicFrom(elementStyle(child)) === false;
+  const declinesStrike = (child: Element): boolean => struckFrom(elementStyle(child)) === false;
+
+  return Array.from(el.childNodes).map((node) => {
+    if (node.nodeType === TEXT_NODE) {
+      return (node.textContent ?? '').trim() === '' ? NO_MARKS : marks;
+    }
+    if (node.nodeType !== ELEMENT_NODE) return NO_MARKS;
+    const child = node as Element;
+    return {
+      bold: marks.bold && wears(child, declinesBold),
+      italic: marks.italic && wears(child, declinesItalic),
+      strike: marks.strike && wears(child, declinesStrike),
+    };
+  });
+}
+
+/** Whether this child keeps the mark and any of its text still carries it. */
+function wears(child: Element, declines: (el: Element) => boolean): boolean {
+  return !declines(child) && reachesText(child, declines);
+}
+
+/**
  * Whether any of this element's text is still wearing the mark by the time it is
  * drawn — that is, whether a run reaches a text node without a descendant taking
  * the mark back on the way.
@@ -853,7 +900,7 @@ export function addedMarks(el: Element): StyleMarks {
  * a `<span style="font-weight:700">word</span>` answers on its first child.
  */
 function reachesText(el: Element, declines: (child: Element) => boolean): boolean {
-  for (const node of el.childNodes) {
+  for (const node of Array.from(el.childNodes)) {
     if (node.nodeType === TEXT_NODE) {
       if ((node.textContent ?? '').trim() !== '') return true;
       continue;

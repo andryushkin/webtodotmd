@@ -321,6 +321,51 @@ describe('an inline wrapper passes the line boundary through', () => {
   });
 });
 
+// An element that writes nothing leaves the text after it where it found it. The
+// question was answered off the tag — an element sibling meant something stood on
+// the line — and the rules have several ways of writing no character at all: a
+// link dropped for its scheme, a spacer image, an image marked decorative, a
+// wrapper that never held anything. `<a href="javascript:…"> </a># ` reached the
+// file as `#` at the head of a line, which renders as an empty H1: the only shape
+// of this defect that costs a character rather than adding one.
+describe('an element that writes nothing does not open a line', () => {
+  const empties = [
+    ['unsafe link', '<a href="javascript:alert(1)"> </a>'],
+    ['empty link', '<a href="https://example.com"></a>'],
+    ['empty wrapper', '<span></span>'],
+    ['spacer image', '<img src="s.gif" width="1" height="80">'],
+    ['decorative image beside text', '<img src="icon.png" alt="">'],
+    ['image with neither source nor alt', '<img src="">'],
+    ['comment', '<!-- note -->'],
+  ] as const;
+
+  const markers = [
+    ['heading', '# x', '\\# x'],
+    ['quotation', '&gt; x', '\\> x'],
+    ['bullet', '- x', '\\- x'],
+    ['numbering', '1. x', '1\\. x'],
+    ['thematic break', '---', '\\---'],
+  ] as const;
+
+  for (const [what, prefix] of empties) {
+    it.each(markers)(`${what}, then %s`, (_name, text, expected) => {
+      expect(toMarkdown(`<p>${prefix}${text}</p>`)).toContain(expected);
+    });
+  }
+
+  // The other half, and the one that keeps the backslashes off ordinary pages:
+  // an element that really did write something leaves the text mid-line, where
+  // none of these is markup.
+  it.each([
+    ['link', '<a href="https://example.com">a</a># x', '# x'],
+    ['image', '<img src="photo.jpg" alt="a"># x', '# x'],
+    ['player', '<video src="clip.mp4"></video># x', '# x'],
+    ['wrapper holding text', '<span>a</span># x', '# x'],
+  ])('leaves it alone after %s', (_name, html, expected) => {
+    expect(toMarkdown(`<p>${html}</p>`)).toContain(expected);
+  });
+});
+
 // Блоком делает не только тег. `convert()` пишет элемент с `display:block` между
 // пустыми строками — значит его текст открывает строку ровно как текст `<div>`, а
 // спрашивали только про тег: литеральный `# heading` со страницы становился

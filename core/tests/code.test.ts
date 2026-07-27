@@ -303,3 +303,63 @@ describe('a caption bar with a button in it', () => {
     expect(toMarkdown(html)).toBe('```python\nx = 1\n```\n');
   });
 });
+
+// The same furniture, drawn beside the `<pre>` rather than inside it — which is
+// how ChatGPT, Habr and half the documentation sites on the web write it. The
+// bar arrived as a paragraph reading `pythonКопировать`, a control's caption
+// pasted into the reader's document, and the fence under it opened with no
+// language although the page had just named one.
+describe('a language bar drawn beside the <pre>', () => {
+  const block = (head: string, code = 'print("x")'): string =>
+    `<div class="code-block">${head}<pre><code>${code}</code></pre></div>`;
+
+  it('names the fence and takes the control away', () => {
+    const head = '<div class="code-head"><span>python</span><button type="button">Копировать</button></div>';
+    expect(toMarkdown(block(head))).toBe('```python\nprint("x")\n```\n');
+  });
+
+  it.each([
+    ['a link acting as the button', '<div>rust<a href="#copy">Copy</a></div>'],
+    ['a role instead of a tag', '<div>rust<span role="button">Copy</span></div>'],
+    ['an icon with no text at all', '<div><svg></svg>rust</div>'],
+    ['the label alone', '<div>rust</div>'],
+  ])('%s', (_name, head) => {
+    expect(toMarkdown(block(head, 'fn main() {}'))).toBe('```rust\nfn main() {}\n```\n');
+  });
+
+  // Every refusal below is a page that meant what it wrote, and the cost of
+  // guessing wrong is text the reader saw disappearing from the file.
+  it.each([
+    [
+      'a heading is the author\'s, not the widget\'s',
+      '<div class="w"><h3>python</h3><pre><code>x</code></pre></div>',
+      '### python\n\n```\nx\n```\n',
+    ],
+    [
+      'a label that is not a language stays as text',
+      '<div class="w"><div>Listing 3</div><pre><code>x</code></pre></div>',
+      'Listing 3\n\n```\nx\n```\n',
+    ],
+    [
+      'a bar with anything else beside it is not this block\'s',
+      '<div class="w"><div>python</div><p>prose</p><pre><code>x</code></pre></div>',
+      'python\n\nprose\n\n```\nx\n```\n',
+    ],
+    [
+      'a bar the block does not open with is not a bar',
+      '<div class="w"><pre><code>x</code></pre><div>python</div></div>',
+      '```\nx\n```\n\npython\n',
+    ],
+  ])('%s', (_name, html, expected) => {
+    expect(toMarkdown(html)).toBe(expected);
+  });
+
+  // The page's own class still wins: it is the highlighter's word, and the bar
+  // is a label that may be stale or translated. The bar is not printed either
+  // way — a language name is the fence's business, not a line of prose.
+  it('a stated class outranks the bar', () => {
+    const head = '<div>python</div>';
+    const html = `<div class="w">${head}<pre><code class="language-js">x</code></pre></div>`;
+    expect(toMarkdown(html)).toBe('```js\nx\n```\n');
+  });
+});

@@ -561,7 +561,7 @@ print(tf.__version__)</code></pre>
     </article>
 
     <article class="case">
-      <aside><strong>C7.</strong> <em>Known limitation.</em> The same bar drawn <em>beside</em> the <code>pre</code> rather than inside it — Google's AI answers, Grok and the chat interfaces all do this. The language and the button text arrive welded into one paragraph above the fence — <code>pythonКопировать</code> — and the fence itself has no info string.</aside>
+      <aside><strong>C7.</strong> The same bar drawn <em>beside</em> the <code>pre</code> rather than inside it — Google's AI answers, Grok and the chat interfaces all do this. It is moved into the <code>pre</code> as the <code>figcaption</code> the page could have written, so the language becomes the info string and the button goes with the rest of the furniture. Narrow on purpose: only where the wrapper holds the bar and one <code>pre</code> and nothing else, only where what is left of the bar once its controls are gone is a language a highlighter really ships, and never a heading — a <code>h3</code> above a sample is the author's.</aside>
       <div class="subject">
         <div class="code-block">
           <div class="code-head"><span>python</span><button type="button">Копировать</button></div>
@@ -750,7 +750,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>M2.</strong> Keep alt and title, resolve the relative URL, use the img inside picture, and preserve a linked image. No <code>&lt;figure&gt;</code> here on purpose: the image/caption boundary is broken and is K1's business, and a case that carries a known defect cannot say whether the thing it is named for passed.</aside>
+      <aside><strong>M2.</strong> Keep alt and title, resolve the relative URL, use the img inside picture, and preserve a linked image. No <code>&lt;figure&gt;</code> here on purpose: the image/caption boundary is K1's business, and a case that carries a second question cannot say whether the thing it is named for passed.</aside>
       <div class="subject">
         <a href="https://example.com/gallery">
           <picture>
@@ -911,7 +911,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>R3.</strong> Active and embedded markup is removed outright. Only the two visible sentinel paragraphs remain.</aside>
+      <aside><strong>R3.</strong> Active and embedded markup is removed outright. Only the two visible sentinel paragraphs remain. The <code>srcdoc</code> frame is the one line here a reader can argue with: <code>IFRAME_PAYLOAD</code> was on the screen and is not in the file. It is an accepted boundary rather than an oversight — a frame is a document of its own, a selection cannot cross into one, and every other frame on the web is cross-origin and unreadable, so parsing the one kind that happens to be inline would make the product's answer depend on which frame a page chose.</aside>
       <div class="subject">
         <p>Before removed elements.</p>
         <script>void "SCRIPT_PAYLOAD";</script>
@@ -1338,7 +1338,7 @@ Fourth line after an empty line</span></p>
     <p class="section-lead">These cases document current specification debt; do not count their stated output as a surprise regression.</p>
 
     <article class="case">
-      <aside><strong>K1.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>figure</code>, so the image and its caption run together as <code>![A](x)Caption</code> — not even a space, since the whitespace between the two tags stands at a line's edge and is drawn nowhere. The page showed a caption under a picture.</aside>
+      <aside><strong>K1.</strong> A <code>figure</code> and its <code>figcaption</code> are blocks, so the caption stands under the picture as the page drew it. They used to run together as <code>![A](x)Caption</code> — not even a space, since the whitespace between the two tags stands at a line's edge and is drawn nowhere.</aside>
       <div class="subject">
         <figure>
           <img src="diagram.png" alt="Architecture diagram">
@@ -1348,7 +1348,7 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K2.</strong> <span class="known">Known defect:</span> nothing writes a block for a <code>&lt;summary&gt;</code> or an <code>&lt;address&gt;</code>, so a summary followed by inline content runs together as <code>TitleBody</code>, and two addresses run together as one line. The addresses also arrive emphasised, and correctly: every UA stylesheet sets <code>address { font-style: italic }</code>, so the reader saw them slanted — the second falls back to a tag because two emphasis runs meeting would merge into one.</aside>
+      <aside><strong>K2.</strong> A <code>&lt;summary&gt;</code> and an <code>&lt;address&gt;</code> each draw a line of their own and each now writes one: a summary parts from the body it opens, and two addresses are two lines. They used to arrive as <code>TitleBody</code> and as one line. The addresses also arrive emphasised, and correctly: every UA stylesheet sets <code>address { font-style: italic }</code>, so the reader saw them slanted — the second falls back to a tag because two emphasis runs meeting would merge into one.</aside>
       <div class="subject">
         <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
         <address>One</address><address>Two</address>
@@ -1380,7 +1380,7 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K6.</strong> <span class="known">Known defect:</span> adjacent structural containers without block children currently run together as <code>SectionArticleFormLegendField</code>.</aside>
+      <aside><strong>K6.</strong> Adjacent structural containers with no block children each write their own block. They used to run together as <code>SectionArticleFormLegendField</code> — the escaper already read every one of these as the end of a line while nothing wrote a boundary there.</aside>
       <div class="subject">
         <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
       </div>
@@ -1400,7 +1400,7 @@ Fourth line after an empty line</span></p>
       </div>
     </article>
     <article class="case">
-      <aside><strong>K9.</strong> <span class="known">Known defect:</span> a style mark is written round everything its element converted to, so a part of it that declared the mark away is bolded anyway. The wrapper below is bold, the first span takes the weight back, and both come out inside the same <code>**</code>. What already works is the whole of it: a weight <em>every</em> child declines writes nothing at all (W6), and each block takes the mark separately rather than one pair spanning the blank between them. What is left is a run inside a block, which needs the mark handed to the children rather than written round their result.</aside>
+      <aside><strong>K9.</strong> A style mark goes round the run that wears it. The wrapper below is bold and the first span takes the weight back, so the <code>**</code> opens where the reader saw the bold open; it used to enclose both. The mark is split over the element's own children, which is the shape a page writes — a weight <em>every</em> child declines still writes nothing at all (W6), and each block still takes the mark separately rather than one pair spanning the blank between them. A child declining it deeper down than that keeps the older answer: two runs wearing different subsets of the marks stand against each other with no character between them, and <code>**a****_b_**</code> is one emphasis around four asterisks.</aside>
       <div class="subject">
         <div style="font-weight:700"><span style="font-weight:400">not bold on screen</span> and this part is</div>
       </div>

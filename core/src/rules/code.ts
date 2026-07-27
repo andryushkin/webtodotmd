@@ -74,6 +74,52 @@ const LANGUAGE_CLASSES = new Set([
   'plaintext', 'text', 'txt',
 ]);
 
+/**
+ * The bar a site draws above its code block, outside the `<pre>` instead of
+ * inside it.
+ *
+ * `removeChrome` already knows this furniture — a label naming the language and a
+ * button that copies the sample — but only where it sits within the `<pre>`, and
+ * half the web writes it as a sibling: `<div class="code-block"><div class="code-
+ * head"><span>python</span><button>Копировать</button></div><pre><code>…`. That
+ * arrived as a paragraph reading `pythonКопировать`, a control's caption pasted
+ * into the reader's document, and the fence below it opened with no language at
+ * all although the page had just named one.
+ *
+ * The bar is *moved* rather than read: dropped into the `<pre>` as the
+ * `<figcaption>` the page could have written, which is a shape this file already
+ * has an answer for — `captionOf` reads it, `removeChrome` keeps it out of the
+ * code, and `readLang` makes it the info string. One shape, one answer.
+ *
+ * Every condition here is a refusal to guess. The wrapper holds these two
+ * elements and nothing else, so a toolbar belonging to a whole article is not
+ * claimed by the first `<pre>` under it; what is left of the bar once its controls
+ * are gone must be a language a highlighter really ships, so a `<div>` reading
+ * `Example 3` keeps its place as text; and a heading is never taken, because a
+ * `<h3>` above a sample is the author's, not the widget's.
+ */
+const HEADER_TAGS = new Set(['div', 'span', 'p', 'header']);
+const CONTROLS = 'button, [role="button"], a[href], svg, input, select';
+
+export function liftCodeHeaders(root: ParentNode): void {
+  for (const pre of Array.from(root.querySelectorAll?.('pre') ?? [])) {
+    const parent = pre.parentElement;
+    if (!parent) continue;
+    const siblings = Array.from(parent.children);
+    if (siblings.length !== 2 || siblings[1] !== pre) continue;
+    const bar = siblings[0]!;
+    if (!HEADER_TAGS.has(bar.tagName.toLowerCase())) continue;
+    const label = bar.cloneNode(true) as Element;
+    for (const control of Array.from(label.querySelectorAll(CONTROLS))) control.remove();
+    const name = (label.textContent ?? '').trim();
+    if (!LANGUAGE_CLASSES.has(name.toLowerCase())) continue;
+    const caption = pre.ownerDocument!.createElement('figcaption');
+    caption.textContent = name;
+    pre.insertBefore(caption, pre.firstChild);
+    bar.remove();
+  }
+}
+
 function namedLanguage(el: Element | null): string {
   if (!el) return '';
   for (const name of (el.getAttribute('class') ?? '').split(/\s+/)) {
@@ -264,8 +310,14 @@ export const CODE_RULES: Rule[] = [
       // The HTML pass after the Markdown one and the block pass last, which is
       // the order `convert()` uses on every other text node and the reason it
       // gives: run the other way round and the `\<` gains a backslash of its own.
+      // A caption that names a language is never a label line, whichever language
+      // the fence ended up with. It is the same claim the info string carries, so
+      // writing it above the block prints the widget's chrome as prose — and the
+      // two disagree oftener than a comparison against `lang` can catch: a bar
+      // reading `Python` beside a `language-python` class, a bar the site never
+      // updated beside a class the highlighter did.
       const caption = captionOf(el);
-      const label = caption && caption !== lang
+      const label = caption && caption !== lang && !LANGUAGE_CLASSES.has(caption.toLowerCase())
         ? `${escapeBlockStarts(escapeHtmlSyntax(escapeInlineMarkdown(caption)))}\n\n`
         : '';
       const fence = fenceChar(text);

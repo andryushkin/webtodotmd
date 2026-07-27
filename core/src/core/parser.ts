@@ -1,6 +1,6 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { applyStyleEmphasis, emitsCodeSpan } from '../rules/inline.js';
+import { applyStyleEmphasis, emitsCodeSpan, emitsWithoutText } from '../rules/inline.js';
 import {
   displaysAsBlock,
   displaysInline,
@@ -11,6 +11,7 @@ import {
   statesDisplay,
 } from '../utils/inline-style.js';
 import { emitsEmphasis, emitsStrike } from '../utils/flanking.js';
+import { SEMANTIC_BLOCKS } from '../utils/blocks.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -30,7 +31,10 @@ const LITERAL_TAGS = new Set(['pre', 'code', 'kbd', 'samp']);
 const MATH_TAGS = new Set(['math', 'mjx-container', 'annotation']);
 
 // A line begins where a block begins, so `#`, `>`, a bullet or numbering can only
-// be mistaken for markup in the text node that opens one of these.
+// be mistaken for markup in the text node that opens one of these. The semantic
+// containers arrive from the set the rule that writes them reads: this list and
+// that rule are the two halves of one claim, and they had been made separately —
+// `<figure>` and `<form>` were named here and written by nothing.
 const BLOCK_PARENTS = new Set([
   'p',
   'li',
@@ -38,13 +42,10 @@ const BLOCK_PARENTS = new Set([
   'th',
   'blockquote',
   'div',
-  'section',
-  'article',
-  'main',
   'dd',
   'dt',
-  'figcaption',
   'caption',
+  ...SEMANTIC_BLOCKS,
 ]);
 
 // Where the line ends, and with it the chance of anything joining onto it. Only
@@ -59,9 +60,7 @@ const LINE_ENDS = new Set([...BLOCK_PARENTS, ...HEADING_TAGS, 'pre']);
 // Everything that leaves the next text at the start of a line: the blocks above,
 // plus the ones that are never a text node's parent and so are absent from them —
 // a rule, a list, a table. `<br>` is here for the same reason it is in LINE_ENDS.
-const ENDS_THE_LINE = new Set([
-  ...LINE_ENDS, 'br', 'hr', 'ul', 'ol', 'dl', 'table', 'figure', 'form',
-]);
+const ENDS_THE_LINE = new Set([...LINE_ENDS, 'br', 'hr', 'ul', 'ol', 'dl', 'table']);
 
 // The blocks whose whole conversion is their content between blank lines. Only
 // these can decline the block a `display:inline` says they did not draw: a `<br>`
@@ -330,6 +329,36 @@ function writesFirst(el: Element): boolean {
   return el.tagName.toLowerCase() === 'a' || written(el) !== '' || emitsEmphasis(el);
 }
 
+/**
+ * Whether this element puts a character on the line where it stands.
+ *
+ * Asked only by `opensBlock`, and only about what is written *before* the text
+ * it is judging, so the answer is allowed to be approximate in one direction and
+ * not the other. Reading an element that writes nothing as ink is what costs: the
+ * text after it is at the head of a line and goes unescaped, so a `#` the page
+ * printed becomes a heading and the character is gone. Reading ink as nothing
+ * costs a backslash in the source that renders as no character at all, since the
+ * text really was mid-line and `\#` and `#` are the same `#` there.
+ *
+ * So the walk is over what the rules really write: text the reader saw, plus the
+ * two elements that write a construct out of attributes alone.
+ */
+function writesSomething(el: Element): boolean {
+  if (emitsWithoutText(el)) return true;
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === TEXT_NODE) {
+      const text = child.textContent ?? '';
+      if (text !== '' && !drawsNothing(child, text)) return true;
+      continue;
+    }
+    if (child.nodeType !== ELEMENT_NODE) continue;
+    const inner = child as Element;
+    if (ENDS_THE_LINE.has(inner.tagName.toLowerCase()) || styledBlock(inner)) return true;
+    if (writesSomething(inner)) return true;
+  }
+  return false;
+}
+
 function opensBlock(node: Node): boolean {
   // Up through the inline wrappers, not just to the parent: an inline tag draws
   // no line of its own, so a text node first inside one opens whatever line the
@@ -347,8 +376,20 @@ function opensBlock(node: Node): boolean {
       // text to the start of a line and nothing escaped it there.
       if (prev.nodeType === ELEMENT_NODE) {
         const el = prev as Element;
-        return ENDS_THE_LINE.has(el.tagName.toLowerCase()) || styledBlock(el);
+        if (ENDS_THE_LINE.has(el.tagName.toLowerCase()) || styledBlock(el)) return true;
+        // An element that writes no character leaves this text exactly where it
+        // found it — at the start of the line, if that is where the element was.
+        // The tag alone was read as ink, and `<a href="javascript:…"> </a># `
+        // — a link dropped for its scheme — put the page's literal `#` at the
+        // head of a line, where it became an empty H1 and took the character
+        // with it. A spacer image and an empty wrapper are the same shape.
+        if (writesSomething(el)) return false;
+        continue;
       }
+      // A comment draws nothing either, and is stepped over for the same reason
+      // `atLineEdge` steps over one: a run of them between two blocks is what an
+      // ad slot, a template engine or a CMS leaves behind.
+      if (prev.nodeType === COMMENT_NODE) continue;
       if (prev.nodeType !== TEXT_NODE || (prev.textContent ?? '').trim() !== '') return false;
     }
     // Nothing written before it inside this parent, so the parent decides. A
@@ -628,6 +669,14 @@ function inLiteral(el: Element): boolean {
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
+const COMMENT_NODE = 8;
+
+// Everything `escapeBlockStarts` can act on, and deliberately wider than it: a
+// text node this does not match is one the escape would leave untouched, so the
+// walk behind it need not run at all. `opensBlock` used to be asked of every text
+// node on the page and could afford to be cheap; it reads what its neighbours
+// write now, and this is what keeps that off the ordinary word.
+const MAY_OPEN_MARKUP = /^\s*(?:[#>\-+=]|\d)/m;
 
 export function convert(node: Node, options: MarkItDownOptions): string {
   if (node.nodeType === TEXT_NODE) {
@@ -658,13 +707,18 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
     const escaped = escapeHtmlSyntax(escapeInlineMarkdown(own, seam), ahead.continues);
-    return opensBlock(node) ? escapeBlockStarts(escaped) : escaped;
+    return MAY_OPEN_MARKUP.test(escaped) && opensBlock(node)
+      ? escapeBlockStarts(escaped)
+      : escaped;
   }
   if (node.nodeType === ELEMENT_NODE) {
     const el = node as Element;
     const tag = el.tagName.toLowerCase();
     const rule = findRule(el, options);
-    const childContent = rule.ignoresChildContent ? '' : convertChildren(el, options);
+    const nodes = rule.ignoresChildContent ? [] : Array.from(el.childNodes);
+    const parts = nodes.map((child) => convert(child, options));
+    const join = laysARow(el) ? joinRow : (written: string[]) => written.join('');
+    const childContent = join(parts);
     // A rule that never converted its children has nothing for a line to take
     // back: `.katex` and `.mwe-math-element` are ordinary `<div>`s holding a
     // formula their rule reads off the element, and handing back the empty
@@ -687,7 +741,9 @@ export function convert(node: Node, options: MarkItDownOptions): string {
       // break a sentence the reader read in one.
       return inLine ? childContent : rule.replacement(el, childContent, options);
     }
-    const content = applyStyleEmphasis(el, childContent, options);
+    // The parts as well as the string they were joined into: a mark this element
+    // states may stop before its content does, and only the parts say where.
+    const content = applyStyleEmphasis(el, childContent, options, { nodes, parts, join });
     // Declining the block the tag implies, which is the mirror of adding one. It
     // is decided here rather than in each rule because every block tag has the
     // question and only `<div>` was answering it, while the snapshot records the

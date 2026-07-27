@@ -163,8 +163,25 @@ beforeAll(() => {
 //
 // Found on Hacker News, where every layout table is followed by one: a captured
 // discussion page carried 133 lines holding a lone backslash.
+//
+// Then 82 -> 81, and this is ground won. An element that writes no character was
+// read as ink on the line, so the text after it went unescaped at the head of
+// one: `<p><a href="javascript:alert(1)"> </a># </p>` — the link dropped for its
+// scheme — put the page's literal `#` where a renderer reads an empty heading,
+// and the character left the file. That class went and none arrived, across four
+// conversion changes measured together: this one, a style mark that now goes
+// round the run wearing it rather than round the whole assembled line, the
+// semantic containers that now write the block they draw, and a code block's
+// language bar lifted out of the paragraph it was arriving as.
+//
+// Two of those four are invisible here by construction. The mark is a claim the
+// text oracle cannot see — `structure()` is what measures it, and it had to be
+// taught the same distinction before it could, since it read the face off the
+// element and applied it to the whole subtree exactly as the converter did. The
+// language bar is a deliberate loss of characters, like the `<details>` fold: a
+// control's caption and a label the fence now carries as its info string.
 const SEEDS = 200;
-const CEILING = 82;
+const CEILING = 81;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -185,7 +202,6 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com/i.png)<kbd>word</kbd></p>",
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
   "<p>(https://example.com/i.png)_under_</p>",
-  "<p><a href=\"javascript:alert(1)\"> </a># </p>",
   "<p><code data-s2md-style=\"display:block\">``</code>&lt;/table&gt;</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
   "<p><img src=\"\" alt=\"foo bar\"></p>",

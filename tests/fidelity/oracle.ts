@@ -36,6 +36,7 @@ import {
   struckFrom,
   weightFrom,
 } from '../../core/src/utils/inline-style.js';
+import { SEMANTIC_BLOCKS } from '../../core/src/utils/blocks.js';
 import { CONVERSION_OPTIONS } from '../../src/content/raw-mathml-rule';
 
 export function installDOMAdapter(): void {
@@ -50,11 +51,15 @@ const MARKED_OPTIONS = { breaks: true, gfm: true, html: true, async: false } as 
 // across it: a <caption> next to a <td> reads back as "captioncell". Markdown puts
 // a real line break there, so the two documents would differ over nothing at all.
 // Boundaries are marked on both sides instead, then collapsed like any whitespace.
+// The semantic containers arrive from the core's own set, for the reason the CSS
+// value readers do: a second spelling drifts. This side had been missing `<form>`,
+// `<fieldset>`, `<legend>`, `<details>` and `<summary>`, every one of which a
+// browser draws as a block — so the oracle read `FormLegendField` as one word on
+// the page and would have reported the boundaries as blanks the file invented.
 const BLOCK_TAGS = new Set([
-  'address', 'article', 'aside', 'blockquote', 'br', 'caption', 'dd', 'div', 'dl',
-  'dt', 'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'header', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table',
-  'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul',
+  'blockquote', 'br', 'caption', 'dd', 'div', 'dl', 'dt', 'h1', 'h2', 'h3', 'h4',
+  'h5', 'h6', 'hr', 'li', 'ol', 'p', 'pre', 'table', 'tbody', 'td', 'tfoot', 'th',
+  'thead', 'tr', 'ul', ...SEMANTIC_BLOCKS,
 ]);
 
 const TEXT_NODE = 3;
@@ -358,15 +363,62 @@ function faceOf(el: Element, parent: Face): Face {
   };
 }
 
+/**
+ * The text still wearing a face the element states, which is not all of its text
+ * when something inside takes the face back.
+ *
+ * A container states a weight and one run inside declines it —
+ * `<div style="font-weight:700"><span style="font-weight:400">a</span> b</div>`,
+ * which is what a card component and an editor's paste both write. The reader saw
+ * the bold begin at `b`. Read as the whole subtree, this file claimed the bold ran
+ * from `a`, which is the same defect the converter had: knowing a mark reaches
+ * text is not knowing how much of the line wears it. So the oracle agreed with the
+ * conversion for as long as both were wrong, and would have called the repair a
+ * regression.
+ *
+ * The face is carried down rather than recomputed from the root, because that is
+ * what "still wearing" means: a descendant that declines and a deeper one that
+ * declares it again are two different claims, and only the walk can tell them
+ * apart.
+ */
+function wornText(el: Element, own: Face, wears: (face: Face) => boolean): string {
+  const out: string[] = [];
+  const walk = (node: Element, face: Face): void => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === TEXT_NODE) {
+        out.push(child.textContent ?? '');
+        continue;
+      }
+      if (child.nodeType !== ELEMENT_NODE) continue;
+      const kid = child as Element;
+      if (hidingVerdict(kid) === 'removed') continue;
+      const kidFace = faceOf(kid, face);
+      if (!wears(kidFace)) continue;
+      const block = isBlockBox(kid);
+      if (block) out.push('\n');
+      walk(kid, kidFace);
+      if (block) out.push('\n');
+    }
+  };
+  walk(el, own);
+  return out.join('').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function faceFacts(el: Element, parent: Face, own: Face, out: string[]): void {
-  const text = factText(el);
   // A mark around nothing claims nothing — the same rule `MARKS` states below.
-  if (text === '') return;
+  if (factText(el) === '') return;
   if (own.weight >= BOLD_THRESHOLD && parent.weight < BOLD_THRESHOLD && !boldByItself(el)) {
-    out.push(`strong:${text}`);
+    const text = wornText(el, own, (face) => face.weight >= BOLD_THRESHOLD);
+    if (text !== '') out.push(`strong:${text}`);
   }
-  if (own.italic && !parent.italic) out.push(`em:${text}`);
-  if (own.strike && !parent.strike) out.push(`del:${text}`);
+  if (own.italic && !parent.italic) {
+    const text = wornText(el, own, (face) => face.italic);
+    if (text !== '') out.push(`em:${text}`);
+  }
+  if (own.strike && !parent.strike) {
+    const text = wornText(el, own, (face) => face.strike);
+    if (text !== '') out.push(`del:${text}`);
+  }
 }
 
 // Literal contexts: their content is characters, not structure. Descending would
@@ -461,10 +513,14 @@ function tableFacts(table: Element, out: string[]): void {
 // rendered Markdown, so it has to make the same claim as a `<p>` or every page
 // built out of divs reports a difference in nothing. A `<div>` that wraps other
 // blocks is a container, not a paragraph, and claims nothing of its own.
+//
+// The semantic containers are read the same way and for the same reason: a
+// `<section>` holding a sentence draws one paragraph, and the conversion writes
+// one, so an oracle that only knew `<div>` would call the agreement a difference.
 function isParagraph(el: Element): boolean {
   const tag = tagOf(el);
   if (tag === 'p') return true;
-  if (tag !== 'div') return false;
+  if (tag !== 'div' && !SEMANTIC_BLOCKS.has(tag)) return false;
   return childElements(el).every((child) => !BLOCK_TAGS.has(tagOf(child)) || tagOf(child) === 'br');
 }
 
@@ -498,7 +554,11 @@ function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void 
   } else if (OPAQUE.has(tag)) {
     out.push(`${FACT_TAGS.get(tag) ?? tag}:${factText(el)}`);
     return; // characters from here down, not structure
-  } else if (isParagraph(el)) {
+    // A paragraph holding no text claims nothing — it is the rule `MARKS` states,
+    // and what it answers here is an image on a line of its own: the page writes
+    // it inside a `<figure>` and the render puts it in a `<p>`, which is a
+    // difference in the box around a picture whose own fact is checked either way.
+  } else if (isParagraph(el) && factText(el) !== '') {
     out.push(`para:${factText(el)}`);
   } else {
     const fact = FACT_TAGS.get(tag);

@@ -1,4 +1,5 @@
 import { isContentless } from './contentful.js';
+import { liftCodeHeaders } from '../rules/code.js';
 import { hidingVerdict, type Hiding } from '../utils/inline-style.js';
 // `<iframe>` is not here any more: it is how a page embeds a player, and deleting
 // it took every YouTube video on every blog out of the capture silently. The
@@ -24,6 +25,11 @@ export function sanitize(
   removeScripts(root, math);
   if (mode === 'full') removeByTagSet(root, REMOVE_STRUCTURAL);
   foldCollapsedDetails(root);
+  // The code block's own furniture, where the site drew it beside the `<pre>`
+  // rather than inside it. Before `removeHidden`, so a bar a page fades in is
+  // still there to be read, and before the rules, which is the point: the code
+  // rule already knows what a `<figcaption>` naming a language means.
+  liftCodeHeaders(root as ParentNode);
   removeHidden(root, math);
   unwrapLayoutTables(root);
   removeEmptyWrappers(root);
