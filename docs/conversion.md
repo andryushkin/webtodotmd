@@ -12,61 +12,72 @@ a stylesheet makes heavy is.
 
 **The output is Markdown, not HTML.** The product converts HTML *into* Markdown,
 so a live tag in the result is unfinished work. The only tags a file may hold are
-escaped ones the page itself displayed — `\<div\>` on a page about HTML, which
-the reader saw as characters and goes on seeing as characters.
+escaped ones the page itself displayed — `\<div>` on a page about HTML, which the
+reader saw as characters and goes on seeing as characters. Only the `<` takes the
+backslash: a `>` on its own opens nothing.
 
 ## Blocks
 
 | HTML | Markdown |
 | --- | --- |
-| `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` — **0 in the library, 1 in the extension** |
+| `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` — **0 in the library, 1 in the extension** — and clamped to 1…6 |
+| a heading's own anchor link | dropped, when its class is `anchor`, `heading-link` or `headerlink` — the `¶` a docs generator hangs off every heading |
 | `<p>` | paragraph, blank line either side |
+| `<div>` | paragraph, blank line either side |
 | `<blockquote>` | `> ` |
 | `<ul><li>` | `- ` |
 | `<ol><li>` | `1. ` |
 | nested list | indented by the width of the parent's marker — two spaces under `-`, three under `1.` |
 | `<ol start="5">` | numbering continues from `5.` |
 | `<li>` with a checkbox | `- [x]` / `- [ ]` |
-| `<pre>` | ` ``` ` fence |
-| `<pre><code data-lang="js">` | ` ```js ` fence |
+| `<pre>` | ` ``` ` fence, whitespace and `<br>` lines kept, the fence long enough to outrun any backtick run inside |
+| a highlighter's line-number gutter | dropped (`line-numbers-rows`, `linenumber`, `line-number`, `hljs-ln`) |
+| `<clipboard-copy value>` inside a `<pre>` | the attribute is the code — that is GitHub's copy button, and it holds the text without the gutter |
+| `<pre><code data-lang="js">` | ` ```js ` fence — also from `data-language` and from a highlighter class (`language-js`, `lang-js`, `highlight-source-js`, `brush: js`, `sourceCode js`, `shj-lang-js`, `prettyprint lang-js`); anything that is not a bare language token is dropped rather than written into the info string |
 | `<hr>` | `---` |
 | `<br>` | `\` + newline (hard break) |
 | `<figure>` + `<figcaption>` | image, then caption — **defect: they run together, `![A](x)Caption`** |
 | `<dl>` | terms and definitions as paragraphs |
-| `<details>` + `<summary>` | **defect: `TitleBody`, no break between them** |
-| `<address>` | contents inline — **defect: two adjacent ones concatenate, `OneTwo`** |
+| `<section>` `<article>` `<main>` `<figure>` `<figcaption>` `<details>` `<summary>` `<address>` `<form>` `<fieldset>` `<legend>` | contents inline — **defect: no rule writes a block for them, so two adjacent ones concatenate (`OneTwo`, `TitleBody`)**. A block *inside* still supplies the break, which is why `<details><summary>T</summary><p>B</p>` comes out as two paragraphs and `<summary>T</summary>B` as one word |
 
 ## Tables
 
 | HTML | Markdown |
 | --- | --- |
 | simple table | pipe table |
-| `<caption>` | paragraph before the table |
+| `<caption>` | paragraph before the table, and all that is left when the table has no rows |
+| the header row | the first `<thead>` row; with no `<thead>` — or an empty one, which CMS exports write — the table's own first row. Every other row is a body row, `<tfoot>` included |
+| row order | `<thead>`, then `<tbody>`, then `<tfoot>`, whatever order the source lists them in |
 | alignment (`<th>`, or unanimous `<td>`) | `:--`, `:-:`, `--:` |
-| merged cells, nested table, cell holding `<pre>` | flattened into an ordinary pipe table |
+| a `\|` in a cell | escaped, everywhere, formulas included — GFM splits a row into columns before anything reads maths, so a `\|` inside `$…$` would take the row apart |
+| a line break in a cell | `<br>`: a GFM row is one line, and this is the only break a pipe cell can carry |
+| merged cells, nested table, cell holding `<pre>` | flattened into an ordinary pipe table — a merge leaves the positions it covered empty, a nested table becomes its rows one per line with `·` between cells, preformatted text one code span per line |
 
 `complexTableFallback` can be set to `html`, `text` or `skip`; the default is
 `flatten`. The `html` value writes the converter's *own* limited table markup — it
 never passes the page's tags or attributes through; those stay text or are
 dropped. Inside such a cell emphasis, code and links emit tags too, since an HTML
-block is not parsed as Markdown.
+block is not parsed as Markdown. The extension offers `flatten` and `html` only
+(Settings → *Keep complex tables as HTML*); `text` and `skip` are for library
+callers.
 
-That is a caller's explicit choice. The one place HTML appears without being
-asked for is the emphasis fallback below, and it is a debt, not a feature.
+That is a caller's explicit choice. Two places emit HTML without being asked:
+the `<br>` in a folded cell above, and the emphasis fallback below. Both are
+debts, not features.
 
 ## Links and media
 
 | HTML | Markdown |
 | --- | --- |
-| `<a href>` | `[text](href)` — scheme checked |
+| `<a href>` | `[text](href)` — scheme checked against `http(s)`, `ftp(s)`, `mailto`, `tel`, `callto`, `sms`, `cid`, `xmpp`, `matrix`, which is DOMPurify's set and so the panel's; anything else keeps its text and loses its target |
 | `<a>` without `href` | text alone |
 | `<img>` | `![alt](src)` |
 | `<img>` without `alt` | `![](src)` |
 | `<img title>` | `![alt](src 'title')` |
 | `<img>` with no usable URL | the alt text alone, escaped |
-| `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL |
+| `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL — `data-src` and its spellings first, then the largest `srcset` candidate, then `src` unless it is a placeholder, then the URL rescued from a neighbouring `<noscript>` |
 | a relative URL | resolved against `baseUrl` |
-| `<sup><a href="#fn1">` | `[^1]` and a definitions section — **only with `footnotes: true`, which the extension does not set**; otherwise an ordinary link, `Fact[[1]](#fn1)` |
+| `<sup><a href="#fn1">` | `[^1]` plus a definitions section — **only with `footnotes: true`, which the extension does not set**; otherwise an ordinary link, `Fact[1](#fn1)`. The list the definitions were read from is still converted where it stands, unless it sits in a container the page marks as the notes (`class` containing `footnote`, or `role="doc-endnotes"`), which is dropped |
 
 ## Inline
 
@@ -75,9 +86,10 @@ asked for is the emphasis fallback below, and it is a debt, not a feature.
 | `<b>` `<strong>` | `**text**` | |
 | `<i>` `<em>` `<cite>` `<dfn>` `<var>` | `_text_` | the last three via the browser's own italic |
 | `<del>` `<s>` `<strike>` | `~~text~~` | `strike` via the browser's own line-through |
-| `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped |
+| `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped, and only the text: a `<strong>` inside writes no `**`. Two spans with nothing between them merge into one, since two backtick runs meeting cannot be told apart |
 | `<sub>` `<sup>` | Unicode: `H₂O`, `x²` | see below |
-| KaTeX, MathML | `$latex$` / `$$latex$$` | when `math` is on |
+| KaTeX, MathJax, `<math alttext>` | `$latex$` / `$$latex$$` | when `math` is on. The core reads LaTeX the page already carries — an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`, Wikipedia's `alttext` |
+| MathML carrying no LaTeX | `$latex$`, converted by `src/content/raw-mathml-rule.ts` | that rule is the extension's, not the core's. In the library `math: true` **drops such a formula**; with `math` off its text falls through as prose (`<mi>x</mi><mo>+</mo>` → `x+`) |
 
 Emphasis picks the first marker CommonMark's flanking rules allow: `_`/`**`, then
 `*`/`__`, then — for content flanked by punctuation, where no delimiter renders —
@@ -100,7 +112,8 @@ reads a single `~` as strikethrough, so it renders struck-through, corrupting th
 meaning rather than losing it; `x^2^` stays literal. Unicode needs no parser,
 survives copying, and is what the reader saw. Where a character does not exist
 the run stays plain: a half-mapped `x₂ab` states a different formula with the
-same confidence.
+same confidence. A run the escaper had to touch stays plain too — a backslash has
+no raised spelling, so `x<sup>*</sup>` is `x\*`.
 
 ## Styles the page states in CSS
 
@@ -127,10 +140,10 @@ Content nobody could read is not content:
 | CSS | |
 | --- | --- |
 | `display: none`, `visibility: hidden\|collapse`, `opacity: 0` | removed |
-| `clip: rect(0…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written |
-| `opacity: 0` under a transition or animation | **kept** — a section on its way in |
-| `visibility: hidden` under a transition, in the flow | **kept** — a reveal, not an overlay |
-| `visibility: hidden` under a transition, `absolute`/`fixed` | removed — a dropdown standing by |
+| `clip: rect(0px…)`, `clip-path: inset(≥50%)`, four-digit negative offset or `text-indent`, a 1×1 clipping box | removed — this is how `.sr-only` is written. The lengths must carry a unit: a computed style always writes `0px`, so the extension's snapshot is read, while a bare `clip: rect(0,0,0,0)` in a `style` attribute is missed |
+| `opacity: 0` under a transition or animation | **kept** — a section on its way in. The transition has to name `opacity` or `all`; any animation counts |
+| `visibility: hidden` under such a transition, in the flow | **kept** — a reveal, not an overlay |
+| `visibility: hidden` under such a transition, `absolute`/`fixed` | removed — a dropdown standing by |
 | a hidden box holding something declared visible again | kept, and what is still hidden inside says so |
 
 Removed by markup rather than by style:
@@ -140,7 +153,7 @@ Removed by markup rather than by style:
 | `hidden`, `aria-hidden="true"` | removed |
 | `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
 | `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |
-| `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode** (a whole page); **kept in selection mode**, because a person who selected them meant to |
+| `<nav>`, `<header>`, `<footer>`, `<aside>` | removed with their contents in **full mode**; kept in **selection mode**, because a person who selected them meant to. Only `selectionToMarkdown()` asks for selection mode, and the extension does not call it — every capture it makes goes through `toMarkdown()`, which is full mode, so a selected `<nav>` is dropped there |
 
 `script[type="math/tex"]` is the exception to the `<script>` rule: with `math: true`
 it holds the formula and is read, not dropped.
@@ -160,6 +173,23 @@ Not read from CSS either, and for the same reason plus a rate of false positives
 `font-size` (leads, prices, headings), `color` alone (links, brand accents, syntax
 highlighting), `text-transform` (the capitals are not in the text).
 
+## What the extension asks for
+
+The map above is the core's. The extension converts with one fixed set of options
+and steps of its own around them:
+
+| | |
+| --- | --- |
+| `headingOffset: 1` | a page's `<h1>` becomes `##`, leaving `#` for the note's own title |
+| `math: true` plus a rule of its own | `src/content/raw-mathml-rule.ts`, for the MathML the core does not read |
+| `baseUrl: document.baseURI` | so a relative URL resolves |
+| `complexTableFallback` | `html` or `flatten`, from Settings — never `text` or `skip` |
+| `footnotes` | never set |
+| `toMarkdown()` for every capture | which is full mode, selection or not |
+| a partial selection is enriched first | `enrichRange()` gives back the table header row, the list's numbering, the code block's language and the block the range was cut out of |
+| `\n` inside a text node → `<br>` | how Instagram and anything else that breaks lines inside one `<span>` gets its paragraphs; skipped inside `pre`, `code`, `script`, `style`, `svg`, `math`, `textarea` and under `white-space: pre` |
+| two or more hard breaks in a row → a blank line | what the page drew with `<br><br>` is a paragraph break; a fenced block is left alone, where `\` at the end of a line is a shell continuation |
+
 ## Escaping — the contract under all of the above
 
 What the page displayed as characters must reach the file as characters, and what
@@ -176,8 +206,11 @@ the converter emits as markup must be the only markup there is.
   defensively.
 - **Nothing is escaped inside `pre`, `code`, `kbd`, `samp` or a math subtree** — a
   backslash there is corruption, not protection. Their contents are preserved
-  literally, whitespace included.
-- **Whitespace collapses everywhere else**, as it does on screen.
+  literally, whitespace included. A math subtree has one exception, and it is not
+  a backslash: a `<` that would open a tag or a comment becomes `&lt;`, because
+  LaTeX between dollar signs is re-emitted into a document that carries raw HTML.
+- **Whitespace collapses everywhere else**, as it does on screen. A `&nbsp;`
+  survives the collapse and then becomes an ordinary space in the finished file.
 
 This is held by a round-trip oracle (`tests/fidelity/`), not by review: it
 compares the text a reader sees before and after conversion, over generated
