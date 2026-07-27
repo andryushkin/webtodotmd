@@ -250,23 +250,74 @@ export function styleScopeOf(range: Range, scope: Element | null): Element | nul
  */
 export function mirrorShadowRoots(roots: readonly ShadowRoot[]): () => void {
   const planted: Element[] = [];
+  const lifted: Array<{ node: Node; parent: Node; before: Node | null }> = [];
   const remove = (): void => {
     for (let index = planted.length - 1; index >= 0; index -= 1) planted[index]!.remove();
+    // Backwards, so each node finds the sibling it was in front of already back
+    // in place — restoring forwards would insert before a node still lifted.
+    for (let index = lifted.length - 1; index >= 0; index -= 1) {
+      const { node, parent, before } = lifted[index]!;
+      parent.insertBefore(node, before);
+    }
   };
   try {
     for (const root of roots) {
       const host = root.host;
       const doc = host?.ownerDocument;
       if (host == null || doc == null) continue;
+      for (const node of unrenderedLightChildren(root, host)) {
+        lifted.push({ node, parent: host, before: node.nextSibling });
+        host.removeChild(node);
+      }
       const wrapper = doc.createElement('s2md-shadow');
       wrapper.innerHTML = root.innerHTML;
       host.prepend(wrapper);
       planted.push(wrapper);
     }
   } catch {
-    /* whatever was planted before the fault still has to come back off */
+    /* whatever was planted or lifted before the fault still has to come back */
   }
   return remove;
+}
+
+/**
+ * The host's own children that the component never puts on screen.
+ *
+ * A light child is drawn only where a `<slot>` calls for it, and a component
+ * with no matching slot renders none of it — which is exactly how a fallback is
+ * written. GitHub's `<relative-time>` holds `Jul 24, 2026` in the light DOM for
+ * a reader with no JavaScript and shows `3 days ago` from its shadow tree; with
+ * the shadow copy planted beside the fallback, every date on the page came out
+ * as `3 days agoJul 24, 2026`.
+ *
+ * The assignment is worked out from the slots rather than read off
+ * `assignedSlot`, which is the browser's own answer and the right one — but only
+ * a browser has it, and this module is also exercised under happy-dom, where the
+ * property is `undefined` for assigned and unassigned children alike. The rule
+ * itself is small enough to state: a node goes to the slot named by its `slot`
+ * attribute, text and attribute-less elements to the unnamed one.
+ *
+ * Nothing is lifted when the shadow tree offers a matching slot: an unrendered
+ * child costs a duplicated line, a rendered one lifted by mistake costs the
+ * sentence it held.
+ */
+function unrenderedLightChildren(root: ShadowRoot, host: Element): Node[] {
+  const slots = new Set<string>();
+  for (const slot of root.querySelectorAll('slot')) slots.add(slot.getAttribute('name') ?? '');
+  if (slots.size === 0 && host.childNodes.length === 0) return [];
+  const out: Node[] = [];
+  for (const node of Array.from(host.childNodes)) {
+    // The numeric constant, not `Node.ELEMENT_NODE`: this module is imported by
+    // tests running under happy-dom, where the global is not defined, and the
+    // throw was swallowed by the fault handler around the whole mirroring —
+    // leaving both the copies and the fallback text in place, which is the
+    // defect this function exists to prevent.
+    const named = node.nodeType === 1 /* ELEMENT_NODE */
+      ? (node as Element).getAttribute('slot') ?? ''
+      : '';
+    if (!slots.has(named)) out.push(node);
+  }
+  return out;
 }
 
 /**

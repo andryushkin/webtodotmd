@@ -31,6 +31,7 @@ interface PageCapture {
   md: string;
   visibleText: string;
   selectionText: string;
+  componentTexts: string[];
   title: string;
   url: string;
   ms: number;
@@ -57,6 +58,7 @@ async function capturePage(browser: Browser, target: Target, harness: string, ou
     await writeFile(join(dir, 'out.md'), result.md);
     await writeFile(join(dir, 'visible.txt'), result.visibleText);
     await writeFile(join(dir, 'selection.txt'), result.selectionText);
+    await writeFile(join(dir, 'components.txt'), result.componentTexts.join('\n'));
     await writeFile(
       join(dir, 'meta.json'),
       JSON.stringify(

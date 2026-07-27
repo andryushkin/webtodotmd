@@ -16,6 +16,8 @@ installDOMAdapter();
 export interface PageReport {
   id: string;
   note: string;
+  /** Every component's text on the page, run together for a substring test. */
+  components: string;
   pageWords: number;
   fileWords: number;
   lost: number;
@@ -37,11 +39,11 @@ export interface Hunk {
  * pages nobody here wrote is that most of what it reports is expected, and the
  * expected kinds have to be nameable before the rest can be read.
  */
-export type Kind = 'maths' | 'weld' | 'split' | 'markup-shown' | 'lost' | 'added' | 'moved';
+export type Kind = 'maths' | 'weld' | 'split' | 'markup-shown' | 'shadow' | 'lost' | 'added' | 'moved';
 
 const MARKUP_RE = /^(\[|!\[|\]\(|https?:\/\/|\$|```|\|)|\]\(/;
 
-export function classify(hunk: Hunk): Kind {
+export function classify(hunk: Hunk, components = ''): Kind {
   const lost = hunk.lost.join(' ');
   const added = hunk.added.join(' ');
   // A formula leaves the page as glyphs and comes back as LaTeX: the conversion
@@ -54,6 +56,10 @@ export function classify(hunk: Hunk): Kind {
   if (lostChars === addedChars && lostChars !== '') {
     return hunk.added.length < hunk.lost.length ? 'weld' : 'split';
   }
+  // A component draws its text inside a shadow tree, which the page text cannot
+  // reach at all (`harness.ts`), so the file carrying it is right and the
+  // comparison is what is short.
+  if (addedChars !== '' && components.includes(addedChars)) return 'shadow';
   // Markdown the reader is shown as characters — a link that failed to parse, a
   // fence, a pipe: the file says it, the render still prints it.
   if (MARKUP_RE.test(added)) return 'markup-shown';
@@ -100,10 +106,11 @@ async function wordDiff(expected: string[], actual: string[], scratch: string): 
 }
 
 export async function analyze(dir: string, id: string, scratch: string): Promise<PageReport> {
-  const [md, pageText, metaRaw] = await Promise.all([
+  const [md, pageText, metaRaw, componentsRaw] = await Promise.all([
     readFile(join(dir, id, 'out.md'), 'utf8'),
     readFile(join(dir, id, 'visible.txt'), 'utf8'),
     readFile(join(dir, id, 'meta.json'), 'utf8'),
+    readFile(join(dir, id, 'components.txt'), 'utf8').catch(() => ''),
   ]);
   const meta = JSON.parse(metaRaw) as { note: string };
   const expected = words(normalizeVisible(pageText));
@@ -112,6 +119,7 @@ export async function analyze(dir: string, id: string, scratch: string): Promise
   return {
     id,
     note: meta.note,
+    components: normalizeVisible(componentsRaw).replace(/\s/g, ''),
     pageWords: expected.length,
     fileWords: actual.length,
     lost: hunks.reduce((n, h) => n + h.lost.length, 0),
@@ -147,10 +155,13 @@ if (import.meta.main) {
     await writeFile(join(dir, id, 'diff.txt'), body + '\n');
   }
 
-  const KINDS: Kind[] = ['maths', 'weld', 'split', 'markup-shown', 'moved', 'lost', 'added'];
-  const tally = (hunks: Hunk[]) => {
+  const KINDS: Kind[] = ['maths', 'shadow', 'weld', 'split', 'markup-shown', 'moved', 'lost', 'added'];
+  const tally = (report: PageReport) => {
     const counts = new Map<Kind, number>();
-    for (const h of hunks) counts.set(classify(h), (counts.get(classify(h)) ?? 0) + 1);
+    for (const h of report.hunks) {
+      const kind = classify(h, report.components);
+      counts.set(kind, (counts.get(kind) ?? 0) + 1);
+    }
     return counts;
   };
 
@@ -159,7 +170,7 @@ if (import.meta.main) {
   );
   const totals = new Map<Kind, number>();
   for (const r of reports) {
-    const counts = tally(r.hunks);
+    const counts = tally(r);
     for (const k of KINDS) totals.set(k, (totals.get(k) ?? 0) + (counts.get(k) ?? 0));
     console.log(
       `${r.id.padEnd(28)} ${String(r.pageWords).padStart(6)}  ` +
@@ -176,11 +187,11 @@ if (import.meta.main) {
   console.log('\n--- differences by kind ---');
   for (const r of reports) {
     const worst = r.hunks
-      .filter((h) => wanted.has(classify(h)))
+      .filter((h) => wanted.has(classify(h, r.components)))
       .sort((a, b) => b.lost.length + b.added.length - a.lost.length - a.added.length)
       .slice(0, perPage);
     if (worst.length === 0) continue;
     console.log(`\n== ${r.id} — ${r.note}`);
-    for (const h of worst) console.log(`[${classify(h)}]\n${describe(h)}`);
+    for (const h of worst) console.log(`[${classify(h, r.components)}]\n${describe(h)}`);
   }
 }

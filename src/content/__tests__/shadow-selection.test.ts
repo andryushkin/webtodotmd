@@ -463,6 +463,50 @@ describe('shadow selection: the shadow copies', () => {
     expect(page.root.querySelectorAll('s2md-shadow')).toHaveLength(0);
   });
 
+  // A component with no matching slot draws none of its light children, which is
+  // how a no-JavaScript fallback is written: GitHub's `<relative-time>` holds
+  // `Jul 24, 2026` in the light DOM and shows `3 days ago` from its shadow tree.
+  // With the copy planted beside the fallback, every date on the page came out
+  // as `3 days agoJul 24, 2026`.
+  it('lifts a light child the component never renders', () => {
+    const page = pageWithComponent('<p>3 days ago</p>');
+    page.host.textContent = 'Jul 24, 2026';
+
+    const undo = mirrorShadowRoots(openShadowRoots(page.doc));
+    try {
+      expect(page.host.textContent).toBe('3 days ago');
+    } finally {
+      undo();
+    }
+    expect(page.host.textContent).toBe('Jul 24, 2026');
+  });
+
+  it('keeps a light child the component slots in', () => {
+    const page = pageWithComponent('<p>Shown by the component:</p><slot></slot>');
+    page.host.textContent = 'Slotted text.';
+
+    const undo = mirrorShadowRoots(openShadowRoots(page.doc));
+    try {
+      expect(page.host.textContent).toContain('Slotted text.');
+    } finally {
+      undo();
+    }
+  });
+
+  it('keeps a child assigned to a named slot, and lifts one with no slot for it', () => {
+    const page = pageWithComponent('<slot name="title"></slot>');
+    page.host.innerHTML = '<h4 slot="title">Kept</h4><span slot="body">Lifted</span>';
+
+    const undo = mirrorShadowRoots(openShadowRoots(page.doc));
+    try {
+      expect(page.host.textContent).toContain('Kept');
+      expect(page.host.textContent).not.toContain('Lifted');
+    } finally {
+      undo();
+    }
+    expect(page.host.textContent).toContain('Lifted');
+  });
+
   it('hands back an undo for the copies it did plant when one of them faults', () => {
     const page = pageWithComponent();
     const roots = openShadowRoots(page.doc);
