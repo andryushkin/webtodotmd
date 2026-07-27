@@ -447,29 +447,40 @@ function parseSrcset(srcset: string): string {
   return bestUrl;
 }
 
+/**
+ * The address the page gives an image, or `''` when it gives none.
+ *
+ * Every candidate is trimmed, and a whitespace-only one counts as absent:
+ * whitespace is not an address. A browser strips it before parsing a URL, so
+ * `src=" "` names nothing — yet untrimmed it is truthy, which both hid the
+ * no-URL case from the caller and let a lazy-load attribute holding a single
+ * space shadow the real `src` beside it.
+ */
 function extractImageUrl(img: Element): string {
+  const attr = (name: string) => (img.getAttribute(name) ?? '').trim();
+
   // 1. data-src варианты (lazy-load)
   const lazySrc =
-    img.getAttribute('data-src') ||
-    img.getAttribute('data-original') ||
-    img.getAttribute('data-lazy-src') ||
-    img.getAttribute('data-full-src') ||
-    img.getAttribute('data-hi-res-src');
+    attr('data-src') ||
+    attr('data-original') ||
+    attr('data-lazy-src') ||
+    attr('data-full-src') ||
+    attr('data-hi-res-src');
   if (lazySrc) return lazySrc;
 
   // 2. srcset — выбрать максимальное разрешение
-  const srcset = img.getAttribute('data-srcset') || img.getAttribute('srcset');
+  const srcset = attr('data-srcset') || attr('srcset');
   if (srcset) {
     const best = parseSrcset(srcset);
     if (best) return best;
   }
 
   // 3. src — проверить что не placeholder
-  const src = img.getAttribute('src') || '';
+  const src = attr('src');
   if (src && !isPlaceholder(src)) return src;
 
   // 4. noscript fallback — src из соседнего <noscript> (сохранён санитайзером в data-noscript-src)
-  const noscriptSrc = img.getAttribute('data-noscript-src');
+  const noscriptSrc = attr('data-noscript-src');
   if (noscriptSrc) return noscriptSrc;
 
   return src;
@@ -610,7 +621,20 @@ export const INLINE_RULES: Rule[] = [
     name: 'image',
     filter: 'img',
     replacement: (el, _childContent, options: MarkItDownOptions) => {
-      const src = resolveUrl(extractImageUrl(el), options.baseUrl);
+      // An image with nothing to point at is not handed the base. Resolving is
+      // the step that invents an address: `new URL('', base).href` *is* the base,
+      // so a src-less `<img>` became `![alt](the-page-being-captured)` — a broken
+      // image whose target is the article the reader was reading, and the
+      // extension always passes `baseUrl: document.baseURI`, so that was every
+      // capture rather than a corner.
+      //
+      // The refusal belongs here rather than in `resolveUrl`, because an empty
+      // URL is not meaningless everywhere. `<a href="">` genuinely addresses the
+      // current document — that is where the reader's click went — so a link must
+      // go on resolving to the page. Only an image must not: a page is not a
+      // picture of itself, and what the reader got from it was the alt text.
+      const url = extractImageUrl(el);
+      const src = url ? resolveUrl(url, options.baseUrl) : '';
       const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
       // Inside an HTML block `![alt](src)` would not render, but emitting an
       // <img> would mean allowing `src` and `alt` through the preview's

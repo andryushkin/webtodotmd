@@ -179,3 +179,66 @@ describe('image-as-link', () => {
     );
   });
 });
+
+// The base is not an address for an image that has none of its own. Resolving
+// `''` against a base answers with the base, so with `baseUrl: document.baseURI`
+// — which is what the extension always passes — every src-less `<img>` in a
+// capture used to become a broken image pointing at the article being read.
+describe('image without a url: falls back to alt whatever the base says', () => {
+  const PAGE = { baseUrl: 'https://example.com/blog/post.html' };
+
+  it('no src at all, with a baseUrl set', () => {
+    expect(toMarkdown('<p><img alt="Fallback alt" /></p>', PAGE)).toBe('Fallback alt\n');
+  });
+
+  it('empty src, with a baseUrl set', () => {
+    expect(toMarkdown('<p><img src="" alt="Fallback alt" /></p>', PAGE)).toBe('Fallback alt\n');
+  });
+
+  // Whitespace is not an address: a browser strips it before parsing the URL,
+  // and without the base it went into the file as the escape `%20`.
+  it('whitespace-only src, with and without a baseUrl', () => {
+    expect(toMarkdown('<p><img src=" " alt="Fallback alt" /></p>', PAGE)).toBe('Fallback alt\n');
+    expect(toMarkdown('<p><img src=" " alt="Fallback alt" /></p>')).toBe('Fallback alt\n');
+  });
+
+  it('empty srcset with no other candidate, with a baseUrl set', () => {
+    expect(toMarkdown('<p><img srcset="" alt="Fallback alt" /></p>', PAGE)).toBe('Fallback alt\n');
+  });
+
+  it('a whitespace-only lazy attribute does not shadow the real src', () => {
+    expect(toMarkdown('<p><img data-src=" " src="photo.jpg" alt="Photo" /></p>', PAGE)).toBe(
+      '![Photo](https://example.com/blog/photo.jpg)\n',
+    );
+  });
+
+  it('no src and no alt is nothing at all, with a baseUrl set', () => {
+    expect(toMarkdown('<p><img /></p>', PAGE)).toBe('\n');
+  });
+
+  // The alt lands in the document as prose, so it takes the escaping prose takes
+  // — an unescaped `#` at the front invents a heading the page never had.
+  it('the alt is still escaped on this path', () => {
+    expect(toMarkdown('<p><img alt="*not italic*" /></p>', PAGE)).toBe('\\*not italic\\*\n');
+    expect(toMarkdown('<p><img alt="# not a heading" /></p>', PAGE)).toBe('\\# not a heading\n');
+    expect(toMarkdown('<p><img src="" alt="`not code`" /></p>', PAGE)).toBe('\\`not code\\`\n');
+    // A `[` the page's own text can close: the lookahead sees the `](url)` after
+    // the image and the alt would otherwise open a working link.
+    expect(toMarkdown('<p><img alt="see [" /> ](https://example.com)</p>', PAGE)).toBe(
+      'see \\[ ](https://example.com)\n',
+    );
+  });
+
+  // Not the same case, and not a defect. An empty `href` addresses the current
+  // document in a browser, so the page's own URL is the target the reader
+  // clicked — the link must keep resolving, and only the image must refuse.
+  it('an empty href still resolves to the page, which is where it pointed', () => {
+    expect(toMarkdown('<p><a href="">text</a></p>', PAGE)).toBe(
+      '[text](https://example.com/blog/post.html)\n',
+    );
+    expect(toMarkdown('<p><a href=" ">text</a></p>', PAGE)).toBe(
+      '[text](https://example.com/blog/post.html)\n',
+    );
+    expect(toMarkdown('<p><a href="">text</a></p>')).toBe('[text]()\n');
+  });
+});

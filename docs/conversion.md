@@ -76,7 +76,7 @@ debts, not features.
 | `<img title>` | `![alt](src 'title')` |
 | `<img>` with no usable URL | the alt text alone, escaped |
 | `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL — `data-src` and its spellings first, then the largest `srcset` candidate, then `src` unless it is a placeholder, then the URL rescued from a neighbouring `<noscript>` |
-| a relative URL | resolved against `baseUrl` |
+| a relative URL | resolved against `baseUrl`. An empty or whitespace-only one is not a relative URL and is not resolved: for a link that would be the page's own address, which is what `href=""` means and what the reader clicked, but for an image it would invent a picture out of the page they were reading |
 | `<sup><a href="#fn1">` | `[^1]` plus a definitions section — **only with `footnotes: true`, which the extension does not set**; otherwise an ordinary link, `Fact[1](#fn1)`. The list the definitions were read from is still converted where it stands, unless it sits in a container the page marks as the notes (`class` containing `footnote`, or `role="doc-endnotes"`), which is dropped |
 
 ## Inline
