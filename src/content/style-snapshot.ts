@@ -86,6 +86,51 @@ import {
  */
 const ROW_ATTR = 'data-s2md-row';
 
+/**
+ * What the walk read, written down beside what it decided — the HTML view's
+ * answer to "why did it judge this element that way".
+ *
+ * Off unless the reader asked for the HTML view, because it is one attribute per
+ * element and says nothing the conversion uses. Neither this nor the list below
+ * existed while both were being referenced: the walk threw `ReferenceError` on
+ * its first element, the `catch` around it swallowed that, and the capture went
+ * on with *no* snapshot at all — no hiding, no derived rows, no styled emphasis.
+ * Turning the HTML view on quietly turned the stylesheet off.
+ */
+const DIAGNOSTIC_ATTR = 'data-s2md-debug';
+
+/**
+ * Every property a verdict here rests on: the five this file reads itself, and
+ * the ones the core's readers ask for through the same `read` — hiding, the
+ * face, alignment, and the transition that says a box is on its way in.
+ *
+ * A list rather than "everything the style has", because a computed style has
+ * some 340 properties and this runs per element.
+ */
+const DIAGNOSTIC_PROPERTIES = [
+  'display',
+  'visibility',
+  'opacity',
+  'position',
+  'flex-direction',
+  'grid-template-columns',
+  'font-weight',
+  'font-style',
+  'text-decoration-line',
+  'text-align',
+  'clip',
+  'clip-path',
+  'text-indent',
+  'overflow',
+  'width',
+  'height',
+  'top',
+  'left',
+  'transition-property',
+  'transition-duration',
+  'animation-name',
+];
+
 /** How the walk asks for one element's computed style. */
 export type ComputedStyleOf = (el: Element) => StyleReader;
 

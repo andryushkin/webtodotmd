@@ -886,3 +886,32 @@ describe('what a captured page keeps that it used to lose', () => {
     expect(after).toBe('**Decision**\n\nShip _on Friday_, ~~not Monday~~');
   });
 });
+
+// The HTML view asks the walk to write down what it read, and for a while that
+// was all it did: `DIAGNOSTIC_PROPERTIES` and the attribute holding them did not
+// exist, so the walk threw on its first element, the `catch` guarding the page
+// swallowed it, and the capture proceeded with no snapshot whatever. Turning the
+// view on turned the stylesheet off — no hiding, no derived rows, no styled
+// emphasis — and nothing said so.
+describe('the diagnostic pass does not cost the snapshot', () => {
+  const html = '<p><span class="font-bold">b</span><span class="flex"><a>x</a><a>y</a></span></p>';
+
+  it('writes the same marks it writes without diagnostics', () => {
+    const plain = page(html);
+    snapshotStyles([plain.body], styleEngine(TAILWIND));
+    const diagnosed = page(html);
+    snapshotStyles([diagnosed.body], styleEngine(TAILWIND), true);
+    expect(marks(diagnosed)).toEqual(marks(plain));
+    expect(diagnosed.querySelector('.flex')?.getAttribute('data-s2md-row')).toBe('1');
+  });
+
+  it('and adds what it read', () => {
+    const doc = page(html);
+    const restore = snapshotStyles([doc.body], styleEngine(TAILWIND), true);
+    expect(doc.querySelector('.font-bold')?.getAttribute('data-s2md-debug')).toContain(
+      'font-weight:700',
+    );
+    restore();
+    expect(doc.querySelector('[data-s2md-debug]')).toBeNull();
+  });
+});
