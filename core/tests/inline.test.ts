@@ -822,3 +822,36 @@ describe('q quotation marks: the pair the reader saw', () => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });
 });
+
+// A flex or grid row puts its items side by side with nothing between them in
+// the markup: `<a>c#</a><a>python</a>` is what a tag list is. The snapshot marks
+// the container (`data-s2md-row`) rather than the items, because recording the
+// `block` the items derive turned a navigation row into one paragraph per link.
+describe('a row of items the reader saw side by side', () => {
+  const row = (inner: string) => `<div data-s2md-row="1">${inner}</div>`;
+
+  it('parts two items with the blank the page drew', () => {
+    expect(toMarkdown(row('<span>one</span><span>two</span>')).trim()).toBe('one two');
+  });
+
+  it('adds no second blank where one is already there', () => {
+    expect(toMarkdown(row('<span>one</span> <span>two</span>')).trim()).toBe('one two');
+  });
+
+  it('leaves an unmarked container running its items together', () => {
+    expect(toMarkdown('<div><span>one</span><span>two</span></div>').trim()).toBe('onetwo');
+  });
+
+  // The gap decides emphasis as well as spacing: pressed against a word, `**`
+  // has no CommonMark spelling that renders, and the mark fell back to a live
+  // `<strong>` — a Stack Overflow tag list came out as HTML from the second tag
+  // on.
+  it('lets a marker open where the blank precedes it', () => {
+    const bold = (text: string) => `<b>${text}</b>`;
+    expect(toMarkdown(row(bold('java') + bold('python'))).trim()).toBe('**java** **python**');
+  });
+
+  it('parts blocks without adding a blank inside them', () => {
+    expect(toMarkdown(row('<p>one</p><p>two</p>')).trim()).toBe('one\n\ntwo');
+  });
+});

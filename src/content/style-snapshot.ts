@@ -74,6 +74,18 @@ import {
   type StyleReader,
 } from '../../core/src/utils/inline-style';
 
+/**
+ * The mark left on a container whose items the reader saw side by side.
+ *
+ * The snapshot says nothing about the `block` such a container derives onto its
+ * items — that is rule 2 above, and recording it turned a navigation row into
+ * one paragraph per link. The gap between the items is what that silence lost,
+ * and markup has none to give: `<a>c#</a><a>python</a>` is what a tag list is,
+ * and it came back `c#python`. One mark per container rather than per item, and
+ * the core spends it in `convertChildren`.
+ */
+const ROW_ATTR = 'data-s2md-row';
+
 /** How the walk asks for one element's computed style. */
 export type ComputedStyleOf = (el: Element) => StyleReader;
 
@@ -330,6 +342,7 @@ function clippedDeclarations(read: StyleReader): string[] {
  */
 export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyleOf): () => void {
   const pending: Pending[] = [];
+  const rows: Element[] = [];
   const seen = new WeakSet<Element>();
 
   const record = (
@@ -476,12 +489,21 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
       declarations.push(`text-align:${align}`);
     }
 
+    // A row is recorded on the container, once, rather than on each item: what
+    // the core needs from it is the gap between the items, and the items
+    // themselves are told nothing — recording the `block` they derive is exactly
+    // what turned a navigation row into one paragraph per link. Markup writes
+    // nothing between them, so without this mark `<a>c#</a><a>python</a>` is
+    // `c#python` in the file and two words apart on the page.
+    const laysARow = blockifiesIntoRow(display, read, context.derivedBlock);
+    if (laysARow) rows.push(el);
+
     const next: Context = {
       weight,
       italic,
       align,
       invisible,
-      derivedBlock: blockifiesIntoRow(display, read, context.derivedBlock),
+      derivedBlock: laysARow,
     };
     const below: Pending[] = [];
     let seenBelow = false;
@@ -577,6 +599,22 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     }
   } catch {
     /* `restore` already knows about every attribute that was written */
+  }
+
+  try {
+    for (const el of rows) {
+      // The page may own this attribute the way it may own the style one, so the
+      // undo restores its value rather than removing what it finds.
+      const previous = el.getAttribute(ROW_ATTR);
+      undo.push(
+        previous === null
+          ? () => el.removeAttribute(ROW_ATTR)
+          : () => el.setAttribute(ROW_ATTR, previous),
+      );
+      el.setAttribute(ROW_ATTR, '1');
+    }
+  } catch {
+    /* same: every attribute already written is in `undo` */
   }
 
   return restore;

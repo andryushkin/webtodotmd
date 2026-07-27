@@ -31,6 +31,25 @@ export type StyleReader = (property: string) => string | undefined;
  */
 export const SNAPSHOT_ATTR = 'data-s2md-style';
 
+/**
+ * The mark a content script leaves on a container whose children the reader saw
+ * side by side — a flex or grid row (`src/content/style-snapshot.ts`).
+ *
+ * It is not a `display` and is deliberately not written as one: the snapshot
+ * stays silent about the `block` such a container derives onto its items,
+ * because recording it turned a navigation row into one paragraph per link.
+ * What that silence lost is the gap between the items, and markup has none to
+ * give — `<a>c#</a><a>python</a>` is what a tag list is, and it came back
+ * `c#python`.
+ */
+export const ROW_ATTR = 'data-s2md-row';
+
+/** Whether this node is such a container. */
+export function laysARow(node: Node | null | undefined): boolean {
+  return node?.nodeType === 1 /* ELEMENT_NODE */
+    && (node as Element).getAttribute?.(ROW_ATTR) != null;
+}
+
 const NO_STYLE: StyleReader = () => undefined;
 
 // A value that only points at another cascade level tells us nothing this file

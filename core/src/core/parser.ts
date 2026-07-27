@@ -4,6 +4,7 @@ import { applyStyleEmphasis, emitsCodeSpan } from '../rules/inline.js';
 import {
   displaysAsBlock,
   displaysInline,
+  laysARow,
   statesConversion,
   statesDisplay,
 } from '../utils/inline-style.js';
@@ -182,7 +183,15 @@ export function lookAhead(node: Node, wantsText: boolean, wantsTilde = false): L
     wantsTilde,
   };
   for (let current: Node | null = node; current; current = current.parentNode) {
+    // The same blank, read from the other side. It is added once per boundary
+    // and the walk goes on: a tilde looking for its partner further along the
+    // line has to keep finding it, and a blank between them does not part them.
+    let gapWritten = !laysARow(current.parentNode);
     for (let next = current.nextSibling; next; next = next.nextSibling) {
+      if (!gapWritten) {
+        ahead.text += ' ';
+        gapWritten = true;
+      }
       if (next.nodeType === ELEMENT_NODE) {
         // A <br> or a block ends the line here, exactly as it starts one in
         // opensBlock(). Tested before `continues` is set: claiming it first meant
@@ -222,9 +231,15 @@ export function lookAhead(node: Node, wantsText: boolean, wantsTilde = false): L
  */
 function writtenBefore(node: Node): string {
   for (let current: Node | null = node; current; current = current.parentNode) {
+    // Between two items of a row the file will carry a blank that the markup
+    // does not (`joinRow`), and what stands to the left decides whether an
+    // emphasis marker may open at all: asked without it, every tag after the
+    // first in a Stack Overflow tag list read as pressed against a word and fell
+    // back to `<strong>`, which is live HTML in a Markdown file.
+    const inRow = laysARow(current.parentNode);
     for (let prev = current.previousSibling; prev; prev = prev.previousSibling) {
       const tail = writtenTail(prev);
-      if (tail !== undefined) return tail;
+      if (tail !== undefined) return inRow ? ' ' : tail;
     }
     const parent = current.parentNode;
     if (!parent || parent.nodeType !== ELEMENT_NODE) return '';
@@ -578,7 +593,21 @@ export function convert(node: Node, options: MarkItDownOptions): string {
 }
 
 export function convertChildren(el: Element | Document, options: MarkItDownOptions): string {
-  return Array.from(el.childNodes)
-    .map((child) => convert(child, options))
-    .join('');
+  const parts = Array.from(el.childNodes).map((child) => convert(child, options));
+  // A Document has no `getAttribute` at all, and answers `undefined` here.
+  return laysARow(el as Node) ? joinRow(parts) : parts.join('');
+}
+
+/**
+ * One blank between boxes that stood apart on screen, and never a second one:
+ * whatever already ends or starts in whitespace has its gap.
+ */
+function joinRow(parts: string[]): string {
+  let out = '';
+  for (const part of parts) {
+    if (part === '') continue;
+    if (out !== '' && !/\s$/.test(out) && !/^\s/.test(part)) out += ' ';
+    out += part;
+  }
+  return out;
 }

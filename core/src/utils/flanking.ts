@@ -1,4 +1,4 @@
-import { addedMarks, displaysAsBlock, suppressedMarks, type StyleMarks } from './inline-style.js';
+import { addedMarks, displaysAsBlock, laysARow, suppressedMarks, type StyleMarks } from './inline-style.js';
 
 export function extractFlankingWhitespace(content: string): {
   leading: string;
@@ -297,16 +297,21 @@ function edgeNode(node: Node, side: 'start' | 'end'): Node | undefined {
   return (node.textContent ?? '').length > 0 ? node : undefined;
 }
 
-function neighbour(el: Element, side: 'start' | 'end'): Node | undefined {
+function neighbour(el: Element, side: 'start' | 'end'): { node: Node; gap: boolean } | undefined {
   let node: Node = el;
   for (;;) {
+    // Crossing out of one item of a row into the next: the file will carry a
+    // blank there that the markup does not (`joinRow`). Without it every tag
+    // after the first in a Stack Overflow tag list read as pressed against a
+    // word, had no marker CommonMark would render, and fell back to `<strong>`.
+    const gap = laysARow(node.parentElement);
     for (
       let sibling = side === 'start' ? node.previousSibling : node.nextSibling;
       sibling;
       sibling = side === 'start' ? sibling.previousSibling : sibling.nextSibling
     ) {
       const found = edgeNode(sibling, side === 'start' ? 'end' : 'start');
-      if (found) return found;
+      if (found) return { node: found, gap };
     }
     const parent = node.parentElement;
     if (!parent || BLOCK_BOUNDARY.has(parent.tagName.toLowerCase())) return undefined;
@@ -315,8 +320,10 @@ function neighbour(el: Element, side: 'start' | 'end'): Node | undefined {
 }
 
 function neighbourChar(el: Element, side: 'start' | 'end'): string | undefined {
-  const node = neighbour(el, side);
-  if (node === undefined) return undefined;
+  const found = neighbour(el, side);
+  if (found === undefined) return undefined;
+  if (found.gap) return ' ';
+  const { node } = found;
   if (node.nodeType === ELEMENT_NODE) {
     return edgeDelimiter(node as Element, side === 'start' ? 'end' : 'start');
   }
@@ -342,8 +349,10 @@ export function charAfter(el: Element): string | undefined {
  * runs into the next one. Only the tag tells the two apart.
  */
 export function followsEmphasis(el: Element): boolean {
-  const node = neighbour(el, 'start');
-  if (node === undefined || node.nodeType !== ELEMENT_NODE) return false;
-  const prev = node as Element;
+  const found = neighbour(el, 'start');
+  // Across a row boundary the two delimiters have a blank between them and
+  // cannot run into each other, which is the whole of what this asks.
+  if (found === undefined || found.gap || found.node.nodeType !== ELEMENT_NODE) return false;
+  const prev = found.node as Element;
   return emitsEmphasis(prev) && edgeDelimiter(prev, 'end') === '*';
 }
