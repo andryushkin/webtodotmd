@@ -132,7 +132,7 @@ rule writes.
 | `font-weight` heavier than context | `**text**` |
 | `font-style: italic` | `_text_` |
 | `text-decoration-line: line-through` | `~~text~~` |
-| `display: block` on an inline tag | its own paragraph |
+| `display: block` on an inline tag | its own paragraph — when the *page* states it. A `block` a flex or grid **row** derives for its items is the layout algorithm's word, not the page's: the reader saw one line, and twelve navigation links came back as twelve paragraphs. A flex column, and a grid one column wide, do stack, and there it is recorded |
 | `display: inline` on a block tag | stays in the line |
 | `text-align` on a column | `:--`, `:-:`, `--:` |
 | a style declining its tag's own mark | the mark is dropped |
@@ -197,7 +197,7 @@ and steps of its own around them:
 | `footnotes` | never set |
 | `mode: 'selection'` | every capture it makes is a selection or a highlight, so page furniture inside it is kept |
 | a partial selection is enriched first | `enrichRange()` gives back the table header row, the list's numbering, the code block's language and the block the range was cut out of |
-| `\n` inside a text node → `<br>` | how Instagram and anything else that breaks lines inside one `<span>` gets its paragraphs; skipped inside `pre`, `code`, `script`, `style`, `svg`, `math`, `textarea` and under `white-space: pre` |
+| `\n` inside a text node → `<br>` | only where the computed `white-space` of the element holding it preserves the newline — `pre`, `pre-wrap`, `pre-line`, `break-spaces`. That is how Instagram and anything else that breaks lines inside one `<span>` gets its paragraphs; under `normal` the browser draws a space and so does the file, which is why an indented `<p>` no longer arrives with a hard break per source line. Skipped where the core keeps the whitespace itself (`pre`, `code`, `kbd`, `samp`, `textarea`) or reads the subtree raw (`script`, `style`, `svg`, math) |
 | two or more hard breaks in a row → a blank line | what the page drew with `<br><br>` is a paragraph break; a fenced block is left alone, where `\` at the end of a line is a shell continuation |
 
 ## Escaping — the contract under all of the above

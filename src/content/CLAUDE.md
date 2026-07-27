@@ -36,6 +36,29 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   component lifts its deeper end to the host: over-capturing the component to its
   end costs a sentence, losing the range costs the capture.
 
+## Hard breaks
+
+- A `\n` inside a text node draws a line only where the computed `white-space`
+  preserves it (`pre`, `pre-wrap`, `pre-line`, `break-spaces`). A tag list cannot
+  answer that, and the `style` attribute cannot either — the old guard read
+  `white-space: pre` off an *ancestor of the clone*, which keeps nothing above
+  the range's common ancestor, so on an ordinary drag it never saw the styled box
+  at all, and its regex was inverted besides: the one value meaning "the reader
+  saw these breaks" was read as a reason to skip the rewrite. Under `normal` the
+  browser draws a space, and every indented `<p>` was arriving with a hard break
+  per source line.
+- The verdict is taken in `captureStyles()` beside the snapshot, read-before-write
+  like it, and marked with `data-s2md-nl` — the extension's own attribute, never a
+  `white-space` declaration in `data-s2md-style`. The core already has a
+  whitespace model keyed by tag (`PRESERVE_WS`); a second one on the other side of
+  the capture is free to disagree, and then the break is drawn twice. The mark is
+  stripped from the fragment before conversion and restored on the page in a
+  `finally`.
+- A clone is not enough on its own: `cloneContents()` strands the common
+  ancestor's children at the top of the fragment, where a text node has no parent
+  element to carry a mark — which is exactly the ordinary selection. The live
+  range is asked as well.
+
 ## Style snapshot
 
 - `snapshotStyles()` (`style-snapshot.ts`) is the only `getComputedStyle` in the
@@ -50,6 +73,15 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   `DocumentFragment` is not an element — so a selection whose common ancestor is
   one hands over the host instead, or the whole component arrives unstyled. Marks
   come off in a `finally`, restoring the page's value.
+- What the *parent's layout* implies is not the page's word either. A flex or
+  grid container blockifies its items, so an `<a>` in a navigation row computes
+  `display: block` though nothing said so — recorded, that turned twelve links
+  into twelve paragraphs where the reader saw one line. Only the content script
+  can tell: the difference is in the container's computed `display`, which the
+  core never sees. A flex *column* and a grid one column wide do stack, and there
+  the mark is kept — the column count comes from the used
+  `grid-template-columns`, which only live nodes have. `table` does not blockify,
+  measured rather than assumed.
 - That silence has two exceptions, both about `visibility`. The first is the only
   way the snapshot can *take something back*: where the page's own `style` hides
   an element and the cascade overruled it, the computed value has to be written
