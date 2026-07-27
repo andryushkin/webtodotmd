@@ -5,6 +5,7 @@ import { CONVERSION_OPTIONS } from './raw-mathml-rule';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
 import { computedStyleIn, snapshotScope, snapshotStyles } from './style-snapshot';
+import { joinFragments } from './join-fragments';
 // i18n: translations loaded from service worker via message passing
 // (content scripts cannot reliably fetch extension _locales files)
 
@@ -145,7 +146,7 @@ function selectionToMd(selection: Selection): string {
       const fragments = ranges.map((range) =>
         collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(range)), opts)),
       );
-      return fragments.join('\n\n');
+      return joinFragments(fragments);
     } finally {
       cleanup();
     }
@@ -488,7 +489,7 @@ function captureHighlightsMd(): string {
         range.selectNodeContents(el);
         return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
       });
-      return fragments.join('\n\n');
+      return joinFragments(fragments);
     } finally {
       cleanup();
     }
