@@ -25,6 +25,7 @@ export function sanitize(
   if (mode === 'full') removeByTagSet(root, REMOVE_STRUCTURAL);
   foldCollapsedDetails(root);
   removeHidden(root, math);
+  unwrapLayoutTables(root);
   removeEmptyWrappers(root);
   collapseWhitespace(root);
   // Adjacent text nodes are one line to the reader but separate nodes to the
@@ -263,6 +264,94 @@ function dropOwnText(el: Element, out: Node[]): void {
   for (let child = el.firstChild; child; child = child.nextSibling) {
     if (child.nodeType === 3 /* TEXT_NODE */ && /\S/.test(child.nodeValue ?? '')) out.push(child);
   }
+}
+
+/**
+ * A grid the reader never saw: a table used to lay a page out.
+ *
+ * Hacker News is built this way throughout — 131 tables on one discussion page,
+ * not one `<th>`, `<thead>` or `<caption>` among them: the page is a table, each
+ * comment is a table inside it, and the indentation of a reply is a spacer image
+ * in the first cell. Serialized as grids, a 205 KB page became 378 KB of pipes on
+ * six lines and took fourteen seconds to convert. What the reader saw was
+ * comments under one another.
+ *
+ * What says so is `border="0"` on a table that declares no header of any kind —
+ * no `<th>`, no `<thead>`, no `<caption>`. Each half carries the other: the
+ * attribute is the only spelling HTML 4 had for "draw no grid here", which is
+ * what a page writes when the table is furniture, and a header is the page
+ * stating that its columns mean something. A table with a header keeps its grid
+ * however it is drawn, and a headerless table that asks for no border is left
+ * alone unless it says `border="0"` outright.
+ *
+ * `role="presentation"` and `role="none"` are the page saying it in the modern
+ * spelling, and `role="table"` or `role="grid"` the opposite, so both are
+ * believed before anything else is read.
+ *
+ * A nested table is deliberately *not* a signal, though every layout is nested:
+ * a data table inside a cell is a shape this converter already has an answer for
+ * (`rules/tables.ts` folds it into rows), and reading the nesting as layout would
+ * throw that answer away.
+ *
+ * The cells become blocks and the rest of the scaffolding goes. Every table is
+ * asked separately, so a real table inside a layout one keeps its grid.
+ */
+function unwrapLayoutTables(root: SanitizeRoot): void {
+  const tables: Element[] = [];
+  walkElements(root, (el) => {
+    if (el.tagName.toLowerCase() === 'table' && laysOutRatherThanTabulates(el)) tables.push(el);
+  });
+  for (const table of tables) flattenLayoutTable(table);
+}
+
+function laysOutRatherThanTabulates(table: Element): boolean {
+  const role = (table.getAttribute('role') ?? '').toLowerCase();
+  if (role === 'presentation' || role === 'none') return true;
+  if (role === 'table' || role === 'grid') return false;
+  if (ownParts(table, 'th').length > 0) return false;
+  if (table.querySelector('thead, caption')) return false;
+  return table.getAttribute('border') === '0';
+}
+
+/** The rows and cells of this table, never those of a table inside it. */
+function ownParts(table: Element, tag: 'tr' | 'td' | 'th'): Element[] {
+  return Array.from(table.querySelectorAll(tag)).filter((el) => ancestorTable(el) === table);
+}
+
+function ancestorTable(el: Element): Element | null {
+  let node = el.parentElement;
+  while (node) {
+    if (node.tagName.toLowerCase() === 'table') return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+const TABLE_SCAFFOLDING = new Set(['table', 'thead', 'tbody', 'tfoot', 'tr', 'colgroup', 'col']);
+
+function flattenLayoutTable(table: Element): void {
+  const doc = table.ownerDocument;
+  if (!doc) return;
+  // Cells first, while the scaffolding still says which element is a cell. A cell
+  // becomes a `<div>` rather than being unwrapped: two cells side by side are two
+  // boxes, and running them together would weld the last word of one onto the
+  // first of the next.
+  for (const cell of [...ownParts(table, 'td'), ...ownParts(table, 'th')]) {
+    const box = doc.createElement('div');
+    while (cell.firstChild) box.appendChild(cell.firstChild);
+    cell.parentNode?.replaceChild(box, cell);
+  }
+  const scaffolding = Array.from(table.querySelectorAll('*')).filter(
+    (el) => TABLE_SCAFFOLDING.has(el.tagName.toLowerCase()) && ancestorTable(el) === table,
+  );
+  for (const el of [...scaffolding.reverse(), table]) unwrapElement(el);
+}
+
+function unwrapElement(el: Element): void {
+  const parent = el.parentNode;
+  if (!parent) return;
+  while (el.firstChild) parent.insertBefore(el.firstChild, el);
+  parent.removeChild(el);
 }
 
 function removeEmptyWrappers(root: SanitizeRoot): void {

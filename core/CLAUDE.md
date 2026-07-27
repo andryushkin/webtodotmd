@@ -208,6 +208,16 @@ threshold sits where no layout lands by accident.
   `colspan="4"` over a `<th>` label and a `<td colspan="3">` value, and one arrived four columns wide
   with the last two empty in all 22 rows. Asked of the grid position and never of its text — a
   `<td></td>` is a column the page drew, and a wiki table parts two halves of a list with one.
+- A `border="0"` table with no `<th>`, `<thead>` or `<caption>` is furniture, not data: the cells
+  become blocks and the scaffolding goes, in `sanitize()` before any rule sees it. Hacker News is
+  built this way throughout — 131 tables on one page, the page a table and each comment a table
+  inside it — and serialized as grids a 205 KB page became 378 KB of pipes on six lines, in fourteen
+  seconds; read as layout it is 74 KB in 65 milliseconds. Both halves are needed: a header means the
+  columns mean something whatever border is drawn, and a headerless table that says nothing about
+  its border keeps its grid. `role="presentation"`/`none` says it outright and `role="table"`/`grid`
+  denies it, both before anything else is read. Nesting is *not* a signal, though every layout is
+  nested — a data table inside a cell already has an answer (folded into rows), and reading the
+  nesting as layout would throw it away.
 - The HTML table fallback sets `outputContext: 'html'` for its cells: an HTML block is not parsed as
   Markdown, so escaping shows backslashes *and* `**bold**` shows asterisks. Emphasis, code and links
   emit tags; an image emits alt text, since allowing `src`/`alt` past the preview's allow-list would

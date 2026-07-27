@@ -165,6 +165,45 @@ describe('pipe в содержимом', () => {
   });
 });
 
+// Hacker News is built out of them: 131 tables on one discussion page, not one
+// `<th>` among them, the page a table and every comment a table inside it.
+// Serialized as grids, a 205 KB page became 378 KB of pipes on six lines and took
+// fourteen seconds; read as layout it is 74 KB in 65 milliseconds.
+describe('таблица-раскладка', () => {
+  it('border="0" без заголовков разворачивается в блоки', () => {
+    const html = '<table border="0"><tr><td>left</td><td>right</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('left\n\nright');
+  });
+
+  it('вложенная раскладка тоже', () => {
+    const html =
+      '<table border="0"><tr><td><table border="0"><tr><td>deep</td></tr></table></td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('deep');
+  });
+
+  it('role="presentation" говорит то же самое', () => {
+    const html = '<table role="presentation"><tr><td>a</td><td>b</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('a\n\nb');
+  });
+
+  // A header is the page saying its columns mean something, whatever border it
+  // asks for; and a table that says nothing about its border is left alone.
+  it('заголовок оставляет сетку даже при border="0"', () => {
+    const html = '<table border="0"><tr><th>H</th></tr><tr><td>v</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('| H   |\n| --- |\n| v   |');
+  });
+
+  it('без border и без заголовка сетка остаётся', () => {
+    const html = '<table><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></table>';
+    expect(toMarkdown(html)).toContain('| a   | b   |');
+  });
+
+  it('role="table" перевешивает border="0"', () => {
+    const html = '<table role="table" border="0"><tr><td>a</td><td>b</td></tr></table>';
+    expect(toMarkdown(html)).toContain('| a   | b   |');
+  });
+});
+
 describe('строки, колонки и подпись в pipe-таблице', () => {
   it('colspan="1" и нечисловой span не уводят таблицу в HTML', () => {
     // Wikipedia, Word and Confluence exports write colspan="1"; the gate and the
