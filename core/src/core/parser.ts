@@ -276,6 +276,97 @@ function opensBlock(node: Node): boolean {
   return true;
 }
 
+// A run of whitespace and nothing else — the only text node the rule below
+// judges. U+00A0 is deliberately outside the class: `sanitize()` leaves a
+// non-breaking space alone because a browser draws one, and `trim()` would have
+// taken it for a blank and thrown away a character the reader saw.
+const BLANK_RUN = /^[\t\n\v\f\r ]+$/;
+
+// The wrappers that hold a page's whole text and are named in none of the sets
+// above, because no escaper ever had to name them: nothing is written before a
+// `<body>` begins, and `<head>` — the only thing beside it — draws nothing at
+// all. `opensBlock()` stops short of them as well, and answers `false` for a
+// text node whose parent is one, which is exactly where a capture leaves the
+// blanks between a page's top-level blocks.
+const DOCUMENT_WRAPPERS = new Set(['body', 'html']);
+
+/**
+ * Whether this element's style keeps its content on the line its tag would have
+ * left — the mirror of `styledBlock`, gated the same cheap way round.
+ */
+function inlinedBlock(el: Element): boolean {
+  return statesDisplay(el) && displaysInline(el);
+}
+
+/**
+ * Whether this element leaves the line it stands on, as `convert()` really
+ * writes it.
+ *
+ * `ENDS_THE_LINE` reads the tag alone, and for an escaper that is the safe
+ * direction: over-reading a boundary there costs a backslash. Here it would cost
+ * a word. A block declaring `display:inline` returns its content instead of
+ * running its rule, so two `<p style="display:inline">` are one sentence on the
+ * page and one line in the file — calling the first of them a line end would
+ * take the blank between them and weld `Yes No` into `YesNo`.
+ */
+function endsTheLine(el: Element): boolean {
+  if (styledBlock(el)) return true;
+  const tag = el.tagName.toLowerCase();
+  if (INLINEABLE_BLOCKS.has(tag) && inlinedBlock(el)) return false;
+  return ENDS_THE_LINE.has(tag);
+}
+
+/** The same question about a container: whether its edge is the line's edge. */
+function boundsTheLine(el: Element): boolean {
+  return endsTheLine(el) || DOCUMENT_WRAPPERS.has(el.tagName.toLowerCase());
+}
+
+/**
+ * Whether nothing that draws stands between this node and one edge of its line.
+ *
+ * Both directions are the same walk, and the same shape `lookAhead()` and
+ * `writtenBefore()` use: along the siblings on that side, then out through every
+ * container that does not itself bound the line. A comment is stepped over, and
+ * so is another blank — neither draws anything, and a run of them between two
+ * blocks is what an ad slot, a template engine or a CMS leaves behind.
+ */
+function atLineEdge(node: Node, side: 'previousSibling' | 'nextSibling'): boolean {
+  for (let current: Node | null = node; current; current = current.parentNode) {
+    for (let sibling = current[side]; sibling; sibling = sibling[side]) {
+      if (sibling.nodeType === ELEMENT_NODE) return endsTheLine(sibling as Element);
+      const text = sibling.nodeType === TEXT_NODE ? (sibling.textContent ?? '') : '';
+      if (text !== '' && !BLANK_RUN.test(text)) return false;
+    }
+    const parent = current.parentNode;
+    // A Document, or the fragment a selection builds: there is no more document
+    // on this side, so the line begins or ends right here.
+    if (!parent || parent.nodeType !== ELEMENT_NODE) return true;
+    if (boundsTheLine(parent as Element)) return true;
+  }
+  return true;
+}
+
+/**
+ * Whether a whitespace-only node stands where the browser drew nothing.
+ *
+ * The newline and the indentation between a `</p>` and the tag after it are not
+ * a space on screen — a block ended, so the run begins a line and none of it is
+ * painted. `sanitize()` cannot tell that seam from the one between two words: it
+ * collapses every run to a single space before anything knows what stands around
+ * it, and the space then reaches the file at the start of a line.
+ *
+ * The rule is drawn at the line's two edges and nowhere between them. A blank in
+ * the middle separates two runs the reader saw side by side, and taking it welds
+ * them into one word — `<span>a</span> <span>b</span>` is `a b`, not `ab`. At an
+ * edge it separates nothing, and it is more than noise there: four such blanks
+ * in a row are an indented code block, so a paragraph the page showed as prose
+ * reaches the reader as a code listing.
+ */
+function drawsNothing(node: Node, text: string): boolean {
+  if (!BLANK_RUN.test(text)) return false;
+  return atLineEdge(node, 'previousSibling') || atLineEdge(node, 'nextSibling');
+}
+
 /** True while writing into an HTML block, where Markdown is not parsed. */
 export function isHtmlContext(options: MarkItDownOptions): boolean {
   return options.outputContext === 'html' || options.escapeSyntax === false;
@@ -323,6 +414,8 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // A fence or a code span already makes code inert; LaTeX does not, so only
     // what could open a tag is neutralized there.
     if (literal === 'code') return text;
+    // Whitespace the browser painted nowhere is nothing in the file either.
+    if (drawsNothing(node, text)) return '';
     // Every escaper judges a construct by what follows it, and none can see past
     // the end of this node — so they are told what does. Only the bracket and
     // tilde rules read the text itself, so a node neither has a use for skips

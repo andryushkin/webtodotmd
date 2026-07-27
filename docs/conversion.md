@@ -209,8 +209,13 @@ the converter emits as markup must be the only markup there is.
   literally, whitespace included. A math subtree has one exception, and it is not
   a backslash: a `<` that would open a tag or a comment becomes `&lt;`, because
   LaTeX between dollar signs is re-emitted into a document that carries raw HTML.
-- **Whitespace collapses everywhere else**, as it does on screen. A `&nbsp;`
-  survives the collapse and then becomes an ordinary space in the finished file.
+- **Whitespace collapses everywhere else**, as it does on screen — which means to
+  nothing at a line's edge. A run standing after a block, at a container's start
+  or in front of the next block is drawn nowhere by a browser and is written
+  nowhere here; four of them in a row, which is what comments between blocks
+  leave behind, would otherwise open an indented code block. A run between two
+  inline runs is a space the reader saw and stays one. A `&nbsp;` survives the
+  collapse and then becomes an ordinary space in the finished file.
 
 This is held by a round-trip oracle (`tests/fidelity/`), not by review: it
 compares the text a reader sees before and after conversion, over generated
