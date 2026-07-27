@@ -42,6 +42,43 @@ describe('ol start', () => {
   });
 });
 
+// A `start` that is not a number used to reach the prefix as `NaN`, and the
+// reader got a list numbered `NaN.`, `NaN.`, `NaN.` — every item, not one.
+// The browser ignores such an attribute and numbers from 1; so does the file.
+describe('ol start: unreadable attribute numbers from 1', () => {
+  it('start="x" — not a number at all', () => {
+    expect(toMarkdown('<ol start="x"><li>A</li><li>B</li></ol>')).toBe('1. A\n2. B\n');
+  });
+
+  it('start="" — empty', () => {
+    expect(toMarkdown('<ol start=""><li>A</li><li>B</li></ol>')).toBe('1. A\n2. B\n');
+  });
+
+  it('start="  " — whitespace only', () => {
+    expect(toMarkdown('<ol start="  "><li>A</li></ol>')).toBe('1. A\n');
+  });
+});
+
+// Numbers a page may legally write that are not 1 keep their meaning: the guard
+// covers the unreadable attribute only, and a zero is falsy but perfectly valid.
+describe('ol start: legal numbers survive the guard', () => {
+  it('start="0" counts from zero', () => {
+    expect(toMarkdown('<ol start="0"><li>A</li><li>B</li></ol>')).toBe('0. A\n1. B\n');
+  });
+
+  it('start="-2" counts from minus two', () => {
+    expect(toMarkdown('<ol start="-2"><li>A</li><li>B</li></ol>')).toBe('-2. A\n-1. B\n');
+  });
+
+  it('trailing junk is read up to it, as a browser reads it', () => {
+    expect(toMarkdown('<ol start="3x"><li>A</li><li>B</li></ol>')).toBe('3. A\n4. B\n');
+  });
+
+  it('no attribute at all still counts from 1', () => {
+    expect(toMarkdown('<ol><li>A</li><li>B</li></ol>')).toBe('1. A\n2. B\n');
+  });
+});
+
 describe('nested lists', () => {
   it('ul > li > ul > li (2 уровня)', () => {
     const html = '<ul><li>Level 1<ul><li>Level 2</li></ul></li></ul>';

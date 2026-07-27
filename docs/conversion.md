@@ -28,7 +28,7 @@ backslash: a `>` on its own opens nothing.
 | `<ul><li>` | `- ` |
 | `<ol><li>` | `1. ` |
 | nested list | indented by the width of the parent's marker — two spaces under `-`, three under `1.` |
-| `<ol start="5">` | numbering continues from `5.` |
+| `<ol start="5">` | numbering continues from `5.`; `0` and a negative start are legal and kept, and a `start` no number can be read out of numbers from 1, as a browser renders it |
 | `<li>` with a checkbox | `- [x]` / `- [ ]` |
 | `<pre>` | ` ``` ` fence, whitespace and `<br>` lines kept, the fence long enough to outrun any backtick run inside |
 | a highlighter's line-number gutter | dropped (`line-numbers-rows`, `linenumber`, `line-number`, `hljs-ln`) |

@@ -10,7 +10,13 @@ export const LIST_RULES: Rule[] = [
 
       let prefix: string;
       if (isOrdered) {
-        const start = parseInt(parent?.getAttribute('start') ?? '1', 10);
+        // A `start` no number can be read out of — `start="x"`, `start=""` — is
+        // ignored by the browser, which numbers from 1; unguarded it wrote the
+        // literal `NaN. ` in front of every item. `0` and `-2` do parse and are
+        // legal, so only the unreadable case falls back. Same guard as
+        // `itemOrdinal()` in `src/browser.ts`, which reads the same attribute.
+        const parsed = parseInt(parent?.getAttribute('start') ?? '1', 10);
+        const start = Number.isNaN(parsed) ? 1 : parsed;
         const siblings = Array.from(parent?.children ?? []).filter(
           (c) => c.tagName.toLowerCase() === 'li',
         );
