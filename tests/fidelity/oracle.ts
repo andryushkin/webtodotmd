@@ -31,7 +31,7 @@ import {
   NORMAL_WEIGHT,
   displayFrom,
   elementStyle,
-  hiddenByStyle,
+  hidingVerdict,
   italicFrom,
   struckFrom,
   weightFrom,
@@ -80,10 +80,21 @@ function collectText(node: Node, out: string[]): void {
   if (node.nodeType !== ELEMENT_NODE) return;
 
   // Styled out of the render: the converter drops it, and so did the reader's eye.
-  if (hiddenByStyle(node as Element)) return;
+  const hiding = hidingVerdict(node as Element);
+  if (hiding === 'removed') return;
   const block = isBlockBox(node as Element);
   if (block) out.push('\n');
-  for (const child of Array.from(node.childNodes)) collectText(child, out);
+  for (const child of Array.from(node.childNodes)) {
+    // An invisible box kept for a descendant that declared itself visible again
+    // paints none of its own text, and the converter drops exactly those nodes
+    // (`dropOwnText` in the sanitizer). Asking only "is this removed" here would
+    // read them as seen and report that removal as a loss. Whitespace stays on
+    // both sides: a blank looks the same either way, and the box holds its width
+    // open, so dropping it would weld the visible runs into one word.
+    const glyphs = child.nodeType === TEXT_NODE && /\S/.test(child.textContent ?? '');
+    if (hiding === 'invisible-but-kept' && glyphs) continue;
+    collectText(child, out);
+  }
   if (block) out.push('\n');
 }
 
@@ -460,8 +471,10 @@ function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void 
   const el = node as Element;
   const tag = tagOf(el);
   // Styled out of the render: there was nothing on the screen here to claim
-  // anything about, which is why the converter drops it too.
-  if (hiddenByStyle(el)) return;
+  // anything about, which is why the converter drops it too. Only `'removed'`:
+  // an invisible box kept for a visible descendant still makes its claims, about
+  // the text that is left once `collectText` has taken its own away.
+  if (hidingVerdict(el) === 'removed') return;
   const face = faceOf(el, inherited);
 
   if (tag === 'table') tableFacts(el, out);

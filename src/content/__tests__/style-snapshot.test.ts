@@ -313,23 +313,27 @@ describe('text nobody could see', () => {
   });
 
   // `visibility` is the one of these a child can undo, and the sanitizer deletes
-  // an element with its whole subtree — so a claim above a visible descendant is
-  // taken back rather than left to remove text the reader was looking at.
-  it('visibility:hidden is retracted by a visible descendant', () => {
+  // an element with its whole subtree — so a box above a visible descendant is
+  // kept rather than left to remove text the reader was looking at, and says at
+  // both ends what it is: invisible itself, visible where the descendant took
+  // the property back.
+  it('visibility:hidden over a visible descendant is stated, not retracted', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     expect(snapshot('<div class="invisible"><p>x</p></div>', rules).written)
       .toEqual({ div: 'visibility:hidden' });
     const revealed = snapshot('<div class="invisible"><p class="shown">x</p></div>', rules);
-    expect(revealed.written).toEqual({});
+    expect(revealed.written).toEqual({ div: 'visibility:hidden', p: 'visibility:visible' });
   });
 
-  // Once the ancestor's claim is gone, the branch that really is hidden has to
-  // speak for itself — nothing above it is left to remove it.
+  // The box's own claim now covers only the text it holds directly, so the
+  // branch that really is hidden goes on speaking for itself — and that mark is
+  // all there is wherever a selection cut the box above out of the fragment.
   it('a hidden sibling of a revealed one marks itself', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     const doc = page('<div class="invisible"><p class="shown" data-name="seen">a</p><p data-name="unseen">b</p></div>');
     snapshotStyles([doc.body], styleEngine(rules));
-    expect(marks(doc)).toEqual({ unseen: 'visibility:hidden' });
+    expect(marks(doc))
+      .toEqual({ div: 'visibility:hidden', seen: 'visibility:visible', unseen: 'visibility:hidden' });
     expect(toMarkdown(doc.body).trim()).toBe('a');
   });
 
@@ -341,7 +345,8 @@ describe('text nobody could see', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     const doc = page('<div class="invisible"><p data-name="unseen">b</p><p class="shown" data-name="seen">a</p></div>');
     snapshotStyles([doc.body], styleEngine(rules));
-    expect(marks(doc)).toEqual({ unseen: 'visibility:hidden' });
+    expect(marks(doc))
+      .toEqual({ div: 'visibility:hidden', seen: 'visibility:visible', unseen: 'visibility:hidden' });
     expect(toMarkdown(doc.body).trim()).toBe('a');
   });
 
@@ -354,18 +359,21 @@ describe('text nobody could see', () => {
         '</div>',
     );
     snapshotStyles([doc.body], styleEngine(rules));
-    expect(marks(doc)).toEqual({ branch: 'visibility:hidden' });
+    expect(marks(doc))
+      .toEqual({ div: 'visibility:hidden', branch: 'visibility:hidden', seen: 'visibility:visible' });
     expect(toMarkdown(doc.body).trim()).toBe('a');
   });
 
   // The attribute the page wrote itself is the one the core falls back on, and
-  // the snapshot's silence cannot take it back: leaving the retraction unsaid
-  // deleted the `<div>` with the paragraph the page had just revealed inside it.
-  it('a retraction is stated when the page hid the box in its own attribute', () => {
+  // the snapshot's silence cannot take it back: saying nothing here deleted the
+  // `<div>` with the paragraph the page had just revealed inside it. What is
+  // said is no longer a retraction but both ends of the same claim, and the
+  // paragraph now survives on the child's mark rather than on the box's.
+  it('a box the page hid in its own attribute is stated at both ends', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     const doc = page('<div style="visibility:hidden"><p class="shown">Read me</p></div>');
     const restore = snapshotStyles([doc.body], styleEngine(rules));
-    expect(marks(doc)).toEqual({ div: 'visibility:visible' });
+    expect(marks(doc)).toEqual({ div: 'visibility:hidden', p: 'visibility:visible' });
     expect(toMarkdown(doc.body).trim()).toBe('Read me');
     restore();
   });
@@ -410,19 +418,111 @@ describe('text nobody could see', () => {
     expect(after).toBe('Read me');
   });
 
-  it('a retraction leaves the rest of the element standing', () => {
+  // The hiding joins what the element says about its face instead of standing in
+  // for it, and the descendant that takes the property back says that alone.
+  it('a hiding mark leaves the rest of the element standing', () => {
     const rules = { ...TAILWIND, shown: { visibility: 'visible' } };
     const { written } = snapshot(
-      '<span class="invisible font-bold"><span class="shown">x</span></span>',
+      '<span class="invisible font-bold" data-name="box">' +
+        '<span class="shown" data-name="leaf">x</span></span>',
       rules,
     );
-    expect(written).toEqual({ span: 'font-weight:700' });
+    expect(written)
+      .toEqual({ box: 'font-weight:700;visibility:hidden', leaf: 'visibility:visible' });
   });
 
   it('the text goes with the mark', () => {
     const { before, after } = convert('<p><span class="sr-only">Skip to content</span>Read me</p>', TAILWIND);
     expect(before).toBe('Skip to contentRead me');
     expect(after).toBe('Read me');
+  });
+});
+
+// The box `visibility` can be taken back inside, read end to end rather than off
+// the attributes: what the snapshot writes only matters as what the core then
+// does with it, and the two halves of this claim are wrong in opposite
+// directions on their own. The box marked alone is removed with the text it was
+// kept for; the descendant marked alone leaves the box's own text in the file as
+// prose nobody was shown, which is what the reader used to get.
+describe('kept hidden box snapshot: what the reader could still see', () => {
+  const REVEALING = { ...TAILWIND, shown: { visibility: 'visible' } };
+
+  it('a class-hidden box keeps the child it was kept for, and loses its own text', () => {
+    const html = '<div class="invisible">HIDDEN_TEXT<span class="shown">seen</span>ALSO_HIDDEN</div>';
+    const { before, after } = convert(html, REVEALING);
+    expect(before).toBe('HIDDEN_TEXTseenALSO_HIDDEN');
+    expect(after).toBe('seen');
+  });
+
+  // The same page with the hiding in the page's own attribute and the cascade
+  // agreeing with it. The core falls back on that attribute, so the box was
+  // already removed whole here — the marks now keep the child and drop the text
+  // around it, which is the same answer the class-hidden box gives.
+  it('the same box hidden in its own attribute', () => {
+    const html =
+      '<div style="visibility:hidden">HIDDEN_TEXT<span class="shown">seen</span>ALSO_HIDDEN</div>';
+    const { after } = convert(html, REVEALING);
+    expect(after).toBe('seen');
+  });
+
+  // Whitespace the box holds directly is not text nobody saw: the box keeps its
+  // width open, so the blank between two revealed runs was on the screen, and
+  // taking it would weld them into one word.
+  it('the blank between two revealed runs survives', () => {
+    const html = '<div class="invisible"><span class="shown">one</span> <span class="shown">two</span></div>';
+    expect(convert(html, REVEALING).after).toBe('one two');
+  });
+
+  // The mark the older `visibility:visible` case exists for, from the other
+  // side: the attribute hides and the stylesheet overrules it, so nothing here
+  // was hidden at all and every word of it stays.
+  it('an attribute-hidden box the cascade overrules keeps everything', () => {
+    const rules = { ...REVEALING, forced: { visibility: 'visible !important' } };
+    const html =
+      '<div style="visibility:hidden" class="forced">SEEN <span class="shown">seen</span> ALSO</div>';
+    const { doc, restore, written } = snapshot(html, rules);
+    expect(written).toEqual({ div: 'visibility:visible' });
+    expect(toMarkdown(doc.body).trim()).toBe('SEEN seen ALSO');
+    restore();
+  });
+
+  it('a box with nothing visible under it still goes whole, on one mark', () => {
+    const html = '<div class="invisible">HIDDEN_TEXT<span>also hidden</span></div><p>Read me</p>';
+    const { doc, restore, written } = snapshot(html, REVEALING);
+    expect(written).toEqual({ div: 'visibility:hidden' });
+    expect(toMarkdown(doc.body).trim()).toBe('Read me');
+    restore();
+  });
+
+  // Two boxes deep, and still two marks: `visibility` inherits, so the inner box
+  // is answered by the outer one's and writing it again would be a mark per
+  // element on the way down to the leaf.
+  it('a leaf revealed two hidden boxes down costs two marks', () => {
+    const html =
+      '<div class="invisible">OUTER' +
+      '<section class="invisible">INNER<span class="shown">seen</span></section>' +
+      '</div>';
+    const { doc, restore, written } = snapshot(html, REVEALING);
+    expect(written).toEqual({ div: 'visibility:hidden', span: 'visibility:visible' });
+    expect(toMarkdown(doc.body).trim()).toBe('seen');
+    restore();
+  });
+
+  // The ancestry answers for an element only where the core reads the ancestry.
+  // An element whose own attribute claims `visible` is read from that attribute
+  // instead, so silence there would hand the page's claim the last word over the
+  // `!important` rule that beat it — and put the text back in the file.
+  it('an element claiming visible against the cascade is answered', () => {
+    const rules = { ...REVEALING, forced: { visibility: 'hidden !important' } };
+    const html =
+      '<div class="invisible">' +
+      '<p style="visibility:visible" class="forced" data-name="liar">HIDDEN_TEXT' +
+      '<span class="shown" data-name="leaf">Read me</span></p></div>';
+    const { doc, restore, written } = snapshot(html, rules);
+    expect(written)
+      .toEqual({ div: 'visibility:hidden', liar: 'visibility:hidden', leaf: 'visibility:visible' });
+    expect(toMarkdown(doc.body).trim()).toBe('Read me');
+    restore();
   });
 });
 

@@ -106,13 +106,21 @@ stops at `display:none` instead of marking a hidden menu one node at a time, and
 it descends into `shadowRoot`, since `expandShadowRoots()` flattens a component
 by copying `innerHTML` and attributes are the only thing that copy carries.
 
-Silence has one exception, and it is the only way the snapshot can take something
-back rather than add to it. The core falls back on the page's own `style` for
-every property the snapshot says nothing about, so where the cascade overruled
-that attribute — an `!important` rule lifting a `display:none`, a stylesheet
-transition turning an `opacity:0` into a reveal — the computed value is written
-down explicitly. Left unsaid, the attribute decides alone, and what it decides is
-to delete the element with everything under it.
+Silence has two exceptions. The first is the only way the snapshot can take
+something back rather than add to it. The core falls back on the page's own
+`style` for every property the snapshot says nothing about, so where the cascade
+overruled that attribute — an `!important` rule lifting a `display:none`, a
+stylesheet transition turning an `opacity:0` into a reveal — the computed value
+is written down explicitly. Left unsaid, the attribute decides alone, and what it
+decides is to delete the element with everything under it.
+
+The second adds rather than retracts, and it comes in a pair: a box the cascade
+makes invisible while something under it is visible again says
+`visibility:hidden`, and the descendant that takes the property back says
+`visibility:visible`. The core keeps such a box for that descendant's sake and
+drops the text the box holds itself, which it can only do if it is told both
+halves — one mark alone would have it delete the box and the visible text with
+it.
 
 Several places read the same declarations for their own questions: `isHidden()`
 in the sanitizer, which drops `display:none`, `visibility:hidden|collapse` and

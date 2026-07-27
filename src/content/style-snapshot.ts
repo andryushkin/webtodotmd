@@ -25,10 +25,11 @@
  *    has one exception, and it is the whole of what a snapshot can take back.
  *    The core reads the page's own `style` wherever this is silent, so a hiding
  *    declaration the cascade overruled — an `!important` rule, a transition that
- *    turns an `opacity: 0` into a reveal, a box a descendant makes visible again
- *    — has to be answered with the computed value. Silence there is the
- *    attribute deciding alone, and it decides to delete the element with
- *    everything under it.
+ *    turns an `opacity: 0` into a reveal — has to be answered with the computed
+ *    value. Silence there is the attribute deciding alone, and it decides to
+ *    delete the element with everything under it. It runs the other way too, and
+ *    costs the other way: an attribute claiming `visible` where the cascade hid
+ *    the element keeps text nobody was shown.
  * 4. **Put the page back exactly as it was.** A capture is a read. The
  *    attribute's previous value is restored rather than removed, because the
  *    page may own the name — the same discipline `core/src/browser.ts` uses for
@@ -38,7 +39,11 @@
  * is the one that cannot be decided on the way down: the walk collects the
  * subtree's claims and settles them on the way out, where it knows whether
  * anything below can be seen. Reading it in document order kept a hidden
- * paragraph whenever a visible one happened to come after it.
+ * paragraph whenever a visible one happened to come after it. A box that has to
+ * be kept for something visible inside it is then stated at both ends — hidden
+ * on the box, visible on the descendant that took the property back — and never
+ * at one: the box alone is removed with the text it was kept for, the descendant
+ * alone leaves the box's own text in the file as prose nobody was shown.
  */
 
 import {
@@ -94,9 +99,27 @@ interface Context {
   weight: number;
   italic: boolean;
   align: 'left' | 'center' | 'right' | undefined;
+  /**
+   * Whether the ancestry above this element is invisible. `visibility` inherits,
+   * so every box under a hidden one computes `hidden` until something declares
+   * itself back — which is what makes this a fact about the ancestry and not
+   * about the element, and so what it travels with the rest of the inheritance
+   * for. Both marks the kept-box case writes are decided by it: the box states
+   * the hiding only where the hiding starts, and the element that takes the
+   * property back states that only where there was something to take back.
+   * Asked of the element alone, the first would be a mark on every box under a
+   * hidden one, and the second could not be asked at all — "visible" is news
+   * only against an ancestry that is not.
+   */
+  invisible: boolean;
 }
 
-const PLAIN: Context = { weight: NORMAL_WEIGHT, italic: false, align: undefined };
+const PLAIN: Context = {
+  weight: NORMAL_WEIGHT,
+  italic: false,
+  align: undefined,
+  invisible: false,
+};
 
 interface Pending {
   el: Element;
@@ -285,8 +308,12 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     // have to agree about that or the snapshot would mark what the core keeps.
     const invisible = invisibleFrom(read);
     // What the `style` attribute says on its own, which is what the core falls
-    // back on wherever the snapshot is silent.
-    const claimsInvisible = invisibleFrom(inlineStyle(el));
+    // back on wherever the snapshot is silent — in both directions: an attribute
+    // claiming `visible` under an ancestry the cascade hid decides for itself
+    // too, and decides against the screen.
+    const own = inlineStyle(el);
+    const claimsInvisible = invisibleFrom(own);
+    const claimsVisible = own('visibility') === 'visible';
 
     const declarations: string[] = [];
     answerOverruledAttribute(el, read, declarations);
@@ -296,7 +323,11 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
     // and the stylesheet showed again has to say so.
     if (OPAQUE.has(tag) || el.classList?.contains('katex')) {
       if (invisible) declarations.push(`visibility:${visibility}`);
-      else if (claimsInvisible) declarations.push('visibility:visible');
+      // `context.invisible` for the same reason as the branch at the end of the
+      // walk: a code sample the page made visible again inside a hidden box is
+      // the whole reason that box is kept, and a kept box with nothing marked
+      // visible under it is one the core removes whole.
+      else if (claimsInvisible || context.invisible) declarations.push('visibility:visible');
       record(el, declarations);
       return !invisible;
     }
@@ -348,7 +379,7 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
       declarations.push(`text-align:${align}`);
     }
 
-    const next: Context = { weight, italic, align };
+    const next: Context = { weight, italic, align, invisible };
     const below: Pending[] = [];
     let seenBelow = false;
     for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
@@ -382,11 +413,29 @@ export function snapshotStyles(roots: Iterable<Element>, computed: ComputedStyle
       return false;
     }
 
-    // Something in here is visible, or this element is. Either way the box stays
-    // — and if its own attribute hides it, the snapshot has to say so, because
-    // removal would take the visible part with it. What is genuinely hidden
-    // inside has already marked itself.
-    if (claimsInvisible) declarations.push('visibility:visible');
+    // Something in here is visible, or this element is. Either way the box stays,
+    // and what it is has to be said in full: the two marks below are one claim
+    // written in two places, and half of it is worse than none. A box marked
+    // invisible with nothing below it marked visible is a box the core removes
+    // whole, which takes the text the reader could see with it.
+    if (invisible) {
+      // Kept and invisible. Every hidden element inside says so for itself, but
+      // the box's own text nodes have no style to say it with, so this mark is
+      // the only thing that can speak for them — without it they walk into the
+      // file as prose nobody was shown. Written where the hiding starts and not
+      // below it: `visibility` inherits, so a box under a marked one is already
+      // answered, and this is a page-sized budget where a mark per element is
+      // what it cannot pay. The exception is an element whose own attribute
+      // claims the opposite, where the ancestry is not what the core reads.
+      if (!context.invisible || claimsVisible) declarations.push(`visibility:${visibility}`);
+    } else if (claimsInvisible || context.invisible) {
+      // Visible where the ancestry is not: either the page's own attribute hid
+      // this element and the cascade overruled it, or this is the element that
+      // takes `visibility` back — the one the box above is kept for. Unmarked,
+      // it is invisible by inheritance to the core, and the mark above deletes
+      // it along with the box.
+      declarations.push('visibility:visible');
+    }
     record(el, declarations);
     marks.push(...below);
     return true;
@@ -436,6 +485,11 @@ function contextOf(read: StyleReader, el: Element): Context {
     weight: weightFrom(read, NORMAL_WEIGHT) ?? (isBoldTag(tag) ? BOLD_WEIGHT : NORMAL_WEIGHT),
     italic: italicFrom(read) ?? isItalicTag(tag),
     align: alignFrom(read),
+    // Visible whatever the parent computes, unlike everything above. The parent
+    // is not in the fragment the core reads, so its hiding cannot reach the root
+    // from there and the root's own claim would go unstated — the one place
+    // where deferring to the ancestry loses the verdict instead of implying it.
+    invisible: false,
   };
 }
 

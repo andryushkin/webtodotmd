@@ -38,14 +38,23 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   `shadowRoot` too: `expandShadowRoots()` copies `innerHTML`, which carries
   attributes and nothing else, so a component not snapshotted first arrives
   unstyled for good. Marks come off in a `finally`, restoring the page's value.
-- That silence has one exception, and it is the only way the snapshot can *take
-  something back*: where the page's own `style` hides an element and the cascade
-  overruled it, the computed value has to be written down, because the core falls
-  back on the attribute wherever the snapshot says nothing. Same reason a
-  `visibility:hidden` mark is settled on the way *out* of the walk — until the
-  subtree has been read, nothing knows whether something below is visible, and
-  deciding in document order kept a hidden paragraph whenever a visible sibling
-  happened to follow it.
+- That silence has two exceptions, both about `visibility`. The first is the only
+  way the snapshot can *take something back*: where the page's own `style` hides
+  an element and the cascade overruled it, the computed value has to be written
+  down, because the core falls back on the attribute wherever the snapshot says
+  nothing. Same reason a `visibility:hidden` mark is settled on the way *out* of
+  the walk — until the subtree has been read, nothing knows whether something
+  below is visible, and deciding in document order kept a hidden paragraph
+  whenever a visible sibling happened to follow it.
+- The second states a hiding the cascade agrees with, and it is a *pair*: a box
+  that is invisible with something visible under it says `visibility:hidden`, and
+  the descendant that takes the property back says `visibility:visible`. The core
+  keeps such a box for the descendant's sake and drops the text the box itself
+  holds — but only if it is told, and a class-hidden box tells it nothing on its
+  own. Either mark alone is worse than neither: with the first, `revealedBelow()`
+  finds nothing and the whole box goes, visible text and all. Both are written
+  where the state *changes*, so a revealed subtree costs one mark rather than one
+  per element, and a page with no hidden boxes costs nothing.
 - The verdicts themselves live in `core/` and are asked of it, never spelled
   again here: the two sides disagreeing is how a snapshot marks what the core
   keeps.
