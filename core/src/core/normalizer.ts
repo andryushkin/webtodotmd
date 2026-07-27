@@ -85,6 +85,15 @@ export function normalize(raw: string): string {
       // the page's own non-breaking spaces already gone.
       .replace(CODE_INDENT_MARK_PATTERN, '\u00A0')
       .replace(/[ \t]+$/gm, '') // trailing spaces per line
+      // A hard break with nothing left to break: a `<br>` a block ends on, or one
+      // a page puts between two blocks to draw vertical space without a
+      // paragraph. Hacker News does both — a `<br>` after every table it lays the
+      // page out with — and a discussion page came back carrying 133 lines that
+      // held one backslash. The run becomes the blank line it was drawing.
+      //
+      // Only against a blank line or the end of the document. Inside a paragraph
+      // `a\\\nb` is the break the reader saw, and `a\\\n\\\nb` is two of them.
+      .replace(/(?:\\\n)+(?=\n|$)/g, '\n')
       .replace(/\n{3,}/g, '\n\n') // 3+ newlines → 2
       .replace(/^\n+/, '') // убрать leading newlines
       // Unconditional, and last: a block the document never closed still holds

@@ -7,7 +7,7 @@ import {
   markerWorks,
 } from '../utils/flanking.js';
 import { isHtmlContext, lookAhead } from '../core/parser.js';
-import { addedMarks, suppressedMarks } from '../utils/inline-style.js';
+import { addedMarks, elementStyle, suppressedMarks } from '../utils/inline-style.js';
 import {
   escapeBlockStarts,
   escapeHtmlSyntax,
@@ -478,6 +478,36 @@ function isRenderableUrl(url: string): boolean {
   // here" about a scheme is wrong in a way its next caller inherits.
   const scheme = URL_SCHEME.exec(url.replace(/[\u0000-\u0020\u007f]/g, ''));
   return scheme === null || RENDERABLE_SCHEME.test(scheme[1]!);
+}
+
+/**
+ * An image the page drew no pixels of.
+ *
+ * A spacer: `<img src="s.gif" height="1" width="80">`, which is how a table
+ * layout writes indentation and how a tracking pixel hides. Hacker News puts one
+ * in front of every comment, and a discussion page arrived with 128 `![](s.gif)`
+ * between the replies. It carries no `alt` — nothing was authored to say the
+ * image is decorative — so the `alt=""` rule above never reaches it, and what is
+ * left is the size the page itself stated.
+ *
+ * A single pixel in either direction is the threshold: nothing an author means
+ * as a picture is drawn one pixel tall, and nothing wider is refused, so a small
+ * icon still arrives. Read from the attributes and from a `width`/`height` in
+ * the style, which is the same claim written the other way.
+ */
+function drawsNothing(el: Element): boolean {
+  return statedPixels(el, 'width') <= 1 || statedPixels(el, 'height') <= 1;
+}
+
+/** A dimension the page states, in pixels; `Infinity` where it states none. */
+function statedPixels(el: Element, axis: 'width' | 'height'): number {
+  const styled = elementStyle(el)(axis);
+  const value = styled !== undefined && /px$/.test(styled.trim())
+    ? styled.trim().slice(0, -2)
+    : el.getAttribute(axis);
+  if (value === null || value === undefined || value.trim() === '') return Infinity;
+  const px = Number(value.trim());
+  return Number.isFinite(px) ? px : Infinity;
 }
 
 /** Whether anything else in this element's parent carries text of its own. */
@@ -1033,6 +1063,7 @@ export const INLINE_RULES: Rule[] = [
       // or an empty paragraph — deleting what the reader saw to save a few
       // characters, which is the trade this project refuses everywhere else.
       if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return '';
+      if (drawsNothing(el)) return '';
       // Inside an HTML block `![alt](src)` would not render, but emitting an
       // <img> would mean allowing `src` and `alt` through the preview's
       // allow-list — a real widening of what counts as the core's own markup,

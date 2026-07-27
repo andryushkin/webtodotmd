@@ -39,3 +39,24 @@ describe('div', () => {
     expect(toMarkdown('<div></div><div>Content</div>')).toBe('Content\n');
   });
 });
+// A `<br>` with nothing left to break: one a block ends on, or one a page puts
+// between two blocks to draw vertical space without a paragraph. Hacker News
+// does both, and a captured discussion page carried 133 lines holding a lone
+// backslash.
+describe('перенос, которому нечего переносить', () => {
+  it('в конце блока не пишется', () => {
+    expect(toMarkdown('<p>text<br></p><p>next</p>')).toBe('text\n\nnext\n');
+  });
+
+  it('между блоками не пишется', () => {
+    expect(toMarkdown('<div>a</div><br><div>b</div>')).toBe('a\n\nb\n');
+  });
+
+  it('внутри абзаца остаётся', () => {
+    expect(toMarkdown('<p>a<br>b</p>')).toBe('a\\\nb\n');
+  });
+
+  it('два подряд внутри абзаца остаются оба', () => {
+    expect(toMarkdown('<p>a<br><br>b</p>')).toBe('a\\\n\\\nb\n');
+  });
+});

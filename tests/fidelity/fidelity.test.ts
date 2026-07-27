@@ -154,8 +154,17 @@ beforeAll(() => {
 // dropped for its scheme and the `#` it left behind is at the start of a line
 // after all. Run against the previous commit, where it fails identically — the
 // shrinker reaches it only now that the two classes above stop failing first.
+// Then 83 -> 82, and this is ground won. A hard break with nothing left to break
+// — a `<br>` a block ends on, or one a page puts between two blocks to draw
+// vertical space — wrote a backslash on a line of its own, and the renderer shows
+// it. `<p>(https://example.com/i.png)\\</p>` is the class that went. The run
+// becomes the blank line it was drawing; inside a paragraph both `a\\b` and two
+// breaks in a row are untouched, because there the reader saw them.
+//
+// Found on Hacker News, where every layout table is followed by one: a captured
+// discussion page carried 133 lines holding a lone backslash.
 const SEEDS = 200;
-const CEILING = 83;
+const CEILING = 82;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -175,7 +184,6 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com/i.png)<b>x</b></p>",
   "<p>(https://example.com/i.png)<kbd>word</kbd></p>",
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
-  "<p>(https://example.com/i.png)\\</p>",
   "<p>(https://example.com/i.png)_under_</p>",
   "<p><a href=\"javascript:alert(1)\"> </a># </p>",
   "<p><code data-s2md-style=\"display:block\">``</code>&lt;/table&gt;</p>",

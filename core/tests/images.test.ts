@@ -360,3 +360,26 @@ describe('a protocol-relative address', () => {
     );
   });
 });
+// A spacer: how a table layout writes indentation, and how a tracking pixel
+// hides. Hacker News puts one in front of every comment, and a discussion page
+// arrived with 128 `![](s.gif)` between the replies. It carries no `alt`, so the
+// decorative rule never reaches it — what is left is the size the page states.
+describe('картинка, которую страница не нарисовала', () => {
+  it.each([
+    ['высота 1', '<p><img src="s.gif" height="1" width="80"> text</p>'],
+    ['ширина 0', '<p><img src="s.gif" height="1" width="0"> text</p>'],
+    ['через style', '<p><img src="s.gif" style="width:120px;height:1px"> text</p>'],
+  ])('%s не пишется', (_name, html) => {
+    expect(toMarkdown(html).trim()).toBe('text');
+  });
+
+  it('маленькая иконка остаётся', () => {
+    expect(toMarkdown('<p><img src="i.png" width="16" height="16"> text</p>').trim()).toBe(
+      '![](i.png) text',
+    );
+  });
+
+  it('без размеров остаётся', () => {
+    expect(toMarkdown('<p><img src="i.png"> text</p>').trim()).toBe('![](i.png) text');
+  });
+});

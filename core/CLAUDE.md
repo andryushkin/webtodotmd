@@ -94,6 +94,17 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 
 ## Whitespace and gaps
 
+- A hard break with nothing left to break is not written: a `<br>` a block ends on, or one a page
+  puts between two blocks to draw vertical space without a paragraph. The run becomes the blank line
+  it was drawing. Hacker News does both — a `<br>` after every layout table — and a captured
+  discussion page carried 133 lines holding a lone backslash, which the renderer shows. Inside a
+  paragraph nothing changes: `a\b` is the break the reader saw, and two in a row are two of them.
+- An image the page drew no pixels of is not written either — a `width` or `height` of one pixel or
+  less, stated in the attribute or in the style. That is a spacer, how a table layout writes
+  indentation and how a tracking pixel hides; the same page carried 128 of them as `![](s.gif)`.
+  It differs from the `alt=""` rule: a spacer states no `alt` at all, so nothing was authored to
+  call it decorative, and the size is all that is left to read.
+
 - A wrapper holding only blanks is not an empty one. Every syntax highlighter writes indentation as
   `<span class="w">  </span>`, so removing such a span took the blank with it: an mkdocs YAML sample
   came back flush left with `anchor_linenums:true`, and a Python one as `importtensorflowastf`. The
