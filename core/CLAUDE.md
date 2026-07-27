@@ -108,6 +108,15 @@ threshold sits where no layout lands by accident.
   of 31 formulas on one article are display and all 31 carry the wrapper), so reading it as display
   cut a sentence into centred blocks, and the same test read a real display equation as inline
   because it was asked of the wrong attribute.
+- That wrapper comes *off*, once, at the one exit every source passes through — the annotation, the
+  `math/tex` script and the `alttext` alike. It was stripped on the `alttext` branch alone, which is
+  the branch the live site never reaches, so every captured formula carried eleven characters of
+  someone else's syntax into whatever the reader pasted it into; the preview hid that, because KaTeX
+  renders the wrapper as the formula. `{\textstyle …}` is the same wrapper stating the opposite and
+  goes too — 264 of 905 sampled formulas use it — but it must not vote on display, or a
+  `<math display="block">` written with it would come back inline. The start anchor is what keeps a
+  formula's own `\displaystyle` safe, and a brace-balance check is what keeps `{\displaystyle a}+{\displaystyle b}`
+  from being read as one group.
 
 ## Tables
 

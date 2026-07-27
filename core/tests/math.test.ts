@@ -115,20 +115,19 @@ describe('display maths: what states it', () => {
   });
 
   // The live article ships `alttext` *and* an annotation, so the annotation branch
-  // answers and the verdict still has to come off the `<math>`. Asserted on the
-  // delimiters alone: that branch leaves `{\displaystyle …}` in the LaTeX, which is
-  // a separate defect and not this block's subject.
+  // answers and the verdict still has to come off the `<math>`. The wrapper this
+  // block was written around no longer reaches the file — see «displaystyle
+  // wrapper: comes off whatever carried it» — so the delimiters are asserted on a
+  // body that is only the formula.
   it.each([
-    ['inline', '', '$'],
-    ['display', 'display="block" ', '$$'],
-  ])('живая разметка Wikipedia (alttext + annotation): %s', (_name, attrs, fence) => {
+    ['inline', '', '$E=mc^{2}$'],
+    ['display', 'display="block" ', '$$E=mc^{2}$$'],
+  ])('живая разметка Wikipedia (alttext + annotation): %s', (_name, attrs, expected) => {
     const html =
       `<math ${attrs}alttext="{\\displaystyle E=mc^{2}}"><semantics>` +
       '<annotation encoding="application/x-tex">{\\displaystyle E=mc^{2}}</annotation>' +
       '</semantics></math>';
-    const out = md(`<p>${html}</p>`).trim();
-    expect(out.startsWith(`${fence}{`)).toBe(true);
-    expect(out.endsWith(`}${fence}`)).toBe(true);
+    expect(md(`<p>${html}</p>`).trim()).toBe(expected);
   });
 
   // `display="true"` is MathJax's spelling on its own container. On a `<math>` the
@@ -177,6 +176,134 @@ describe('display maths: what states it', () => {
     ],
   ])('остаётся верным: %s', (_name, html, expected) => {
     expect(md(html)).toBe(expected);
+  });
+});
+
+// Wikipedia's Math extension publishes every formula with a style command wrapped
+// round it for its own renderer — `{\displaystyle …}`, or `{\textstyle …}` for the
+// ones the page sets inline. Measured over Mass–energy equivalence, Normal
+// distribution, Riemann zeta function and Taylor series: 905 of 905 formulas carry
+// one, 264 of them the `\textstyle` spelling, and every one repeats the same
+// wrapped string in `alttext` and in an `<annotation>`. The strip used to sit on the
+// `alttext` branch, which the annotation branch answers before, so all 905 reached
+// the file wrapped. KaTeX renders the wrapper as the formula, so the panel showed
+// the right thing and only the file a reader pasted elsewhere was wrong.
+describe('displaystyle wrapper: comes off whatever carried it', () => {
+  const md = (html: string) => toMarkdown(`<body>${html}</body>`, { math: true }).trim();
+
+  /** The live shape: the same wrapped string in the attribute and in the annotation. */
+  const wikipedia = (attrs: string, latex: string) =>
+    `<math xmlns="http://www.w3.org/1998/Math/MathML" ${attrs}alttext="${latex}">` +
+    '<semantics><mrow><mi>E</mi></mrow>' +
+    `<annotation encoding="application/x-tex">${latex}</annotation></semantics></math>`;
+
+  it.each([
+    ['inline', '', '$E=mc^{2}$'],
+    ['display', 'display="block" ', '$$E=mc^{2}$$'],
+  ])(
+    'live Wikipedia carries both, and the file gets neither wrapper: %s',
+    (_n, attrs, expected) => {
+      expect(md(wikipedia(attrs, '{\\displaystyle E=mc^{2}}'))).toBe(expected);
+    },
+  );
+
+  // `\textstyle` is the same wrapper stating the opposite, and 264 of the 905 use
+  // it — leaving it in leaks the identical nine characters of foreign syntax.
+  it.each([
+    ['annotation and alttext', wikipedia('', '{\\textstyle \\sigma {\\sqrt {2/\\pi }}}')],
+    ['alttext alone', '<math alttext="{\\textstyle \\sigma {\\sqrt {2/\\pi }}}"><mi>s</mi></math>'],
+  ])('\\textstyle is a wrapper too: %s', (_name, html) => {
+    expect(md(html)).toBe('$\\sigma {\\sqrt {2/\\pi }}$');
+  });
+
+  // Every branch, because the wrapper is taken off once for all of them rather than
+  // beside the one that happens to read an attribute.
+  it.each([
+    [
+      'KaTeX annotation',
+      '<span class="katex"><annotation encoding="application/x-tex">' +
+        '{\\displaystyle E=mc^{2}}</annotation></span>',
+      '$E=mc^{2}$',
+    ],
+    [
+      'mjx-container',
+      '<mjx-container display="true"><math display="block"><semantics>' +
+        '<annotation encoding="application/x-tex">{\\displaystyle E=mc^{2}}</annotation>' +
+        '</semantics></math></mjx-container>',
+      '$$E=mc^{2}$$',
+    ],
+    [
+      'MathJax v2 script',
+      '<script type="math/tex">{\\displaystyle E=mc^{2}}</script>',
+      '$E=mc^{2}$',
+    ],
+    [
+      'bare <math alttext>',
+      '<math alttext="{\\displaystyle E=mc^{2}}"><mi>E</mi></math>',
+      '$E=mc^{2}$',
+    ],
+  ])('every source it can arrive through: %s', (_name, html, expected) => {
+    expect(md(html)).toBe(expected);
+  });
+
+  // The `display` attribute is what states display, and it still is: `\textstyle`
+  // says inline and loses to a `<math display="block">`, which is what keeps the
+  // strip and the verdict two things rather than the one expression they were.
+  it('the wrapper never votes on the delimiters', () => {
+    expect(md(wikipedia('display="block" ', '{\\textstyle E=mc^{2}}'))).toBe('$$E=mc^{2}$$');
+  });
+
+  // What the start anchor buys: a command the formula uses for itself is never the
+  // string's first character, so no amount of `\displaystyle` inside it is a wrapper.
+  it.each([
+    ['inside a subscript', '\\sum_{\\displaystyle i} x'],
+    ['inside a group', 'a + {\\textstyle b} + c'],
+    ['not at the start', 'x \\displaystyle y'],
+  ])('a style command the formula owns survives: %s', (_name, latex) => {
+    expect(md(`<math alttext="${latex}"><mi>x</mi></math>`)).toBe(`$${latex}$`);
+  });
+
+  // Both anchors match and the braces still do not pair: the leading one is closed
+  // by the third, so stripping the pair would emit `a}+{\displaystyle b`.
+  it('two wrapped groups side by side are not one wrapper', () => {
+    const latex = '{\\displaystyle a}+{\\displaystyle b}';
+    expect(md(`<math alttext="${latex}"><mi>a</mi></math>`)).toBe(`$${latex}$`);
+  });
+
+  // One wrapper comes off, not a run of them. Wikipedia writes these where the
+  // wikitext asked for the command, and that inner one is part of the formula.
+  it.each([
+    [
+      '\\displaystyle',
+      '{\\displaystyle \\displaystyle \\sum _{n=0}^{\\infty }x^{n}}',
+      '$\\displaystyle \\sum _{n=0}^{\\infty }x^{n}$',
+    ],
+    [
+      '\\textstyle',
+      '{\\displaystyle \\textstyle f:\\mathbb {R} \\to \\mathbb {R} }',
+      '$\\textstyle f:\\mathbb {R} \\to \\mathbb {R}$',
+    ],
+    ['a braced one', '{\\displaystyle {\\displaystyle x}}', '${\\displaystyle x}$'],
+  ])('what survives the strip is the formula, not a second wrapper: %s', (_n, latex, expected) => {
+    expect(md(`<math alttext="${latex}"><mi>x</mi></math>`)).toBe(expected);
+  });
+
+  it.each([
+    ['both sides padded', '{\\displaystyle  \\gamma  }', '$\\gamma$'],
+    ['trailing only, as Wikipedia writes it', '{\\displaystyle \\gamma }', '$\\gamma$'],
+    ['escaped braces are characters, not grouping', '{\\displaystyle a\\}b}', '$a\\}b$'],
+  ])('the body arrives without the padding: %s', (_name, latex, expected) => {
+    expect(md(`<math alttext="${latex}"><mi>g</mi></math>`)).toBe(expected);
+  });
+
+  // A wrapper on show costs characters; an empty pair of delimiters costs the line
+  // around it, and a longer command that merely starts the same way is not a wrapper.
+  it.each([
+    ['nothing inside it', '{\\displaystyle }'],
+    ['nothing at all inside it', '{\\displaystyle}'],
+    ['a different command', '{\\displaystyleish x}'],
+  ])('left alone: %s', (_name, latex) => {
+    expect(md(`<math alttext="${latex}"><mi>x</mi></math>`)).toBe(`$${latex}$`);
   });
 });
 
