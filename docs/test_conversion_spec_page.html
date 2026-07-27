@@ -179,6 +179,19 @@
     display: inline;
     font-family: "Times New Roman", serif;
   }
+  /* S4: an inline thing given a box of its own inside a flex row — a mention, a
+     tag, a badge. The row is the only reason the words share a line, and the
+     column holding one item stacks nothing. */
+  .line-row { display: flex; align-items: baseline; gap: .25rem; }
+  .line-column { display: flex; flex-direction: column; }
+  /* S5: the same markup carrying paragraphs, which the reader met as columns. */
+  .card-row { display: flex; gap: .75rem; }
+  .card-row > div {
+    flex: 1;
+    padding: .6rem .8rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
   .plain-semantics > * { margin-right: .4rem; }
   .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
   .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
@@ -402,6 +415,34 @@
         <p>Before the styled span.<span class="block-span">This span is visibly a block.</span>After the styled span.</p>
         <div class="inline-div">First inline div,</div>
         <div class="inline-div"> second inline div.</div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S4.</strong> A mention given a box of its own stays in the sentence it stands in. Nothing here is a paragraph on screen: the row puts the words on one line, the column holds a single item and so stacks nothing, and the wrapper is a plain <code>div</code>. The file used to hold three paragraphs, the last opening on a stray space. What settles it is the line the content was drawn on, counted rather than read off <code>flex-direction</code> — so if the window is narrow enough to wrap this sentence, two lines on screen are two in the file, which is the same rule and not a failure.</aside>
+      <div class="subject">
+        <div class="line-row">
+          <span>Wow even</span>
+          <div class="line-column"><a href="https://x.com/karpathy">@karpathy</a></div>
+          <span>admits it.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S5.</strong> The same markup carrying paragraphs. A row of cards is drawn on several lines and each item holds blocks of its own, so both halves of the question answer no and the blocks stay blocks — columns are a layout Markdown cannot spell, and welding two into one line is worse than losing them.</aside>
+      <div class="subject">
+        <div class="card-row">
+          <div><p>First card heading</p><p>First card body</p></div>
+          <div><p>Second card heading</p><p>Second card body</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S6.</strong> Two paragraphs the page drew side by side stay two paragraphs. One line is what the reader met, but <code>p</code> is the one tag that means paragraph and nothing else, and the author's own word outweighs a measurement. The price is a byline written this way arriving one paragraph per column; the same byline built out of <code>div</code>s comes back as one line, as S4 does.</aside>
+      <div class="subject">
+        <div class="line-row"><p>Andrej Karpathy</p><p>@karpathy</p><p>Jul 27</p></div>
       </div>
     </article>
   </section>

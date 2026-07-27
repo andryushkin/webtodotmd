@@ -4,6 +4,17 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.7 — 2026-07-28
+
+- **A mention no longer breaks the sentence it stands in.** An inline thing given
+  a box of its own — a mention, a tag, a badge — sat in a flex row, and the row
+  was the only reason the words shared a line. The file held three paragraphs
+  where the page showed one sentence, the last opening on a stray space. The
+  lines are now counted rather than read off `flex-direction`: what the reader
+  met on one line arrives on one line. A row of cards is the same markup carrying
+  paragraphs and keeps its blocks, a heading keeps its level, and a list keeps
+  its bullets.
+
 ## 1.4.6 — 2026-07-27
 
 - **The extension no longer captures itself.** A full-page capture ended with

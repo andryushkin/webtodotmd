@@ -180,6 +180,19 @@
     display: inline;
     font-family: "Times New Roman", serif;
   }
+  /* S4: an inline thing given a box of its own inside a flex row — a mention, a
+     tag, a badge. The row is the only reason the words share a line, and the
+     column holding one item stacks nothing. */
+  .line-row { display: flex; align-items: baseline; gap: .25rem; }
+  .line-column { display: flex; flex-direction: column; }
+  /* S5: the same markup carrying paragraphs, which the reader met as columns. */
+  .card-row { display: flex; gap: .75rem; }
+  .card-row > div {
+    flex: 1;
+    padding: .6rem .8rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
   .plain-semantics > * { margin-right: .4rem; }
   .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
   .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
@@ -360,6 +373,31 @@
         <p>Before the styled span.<span class="block-span">This span is visibly a block.</span>After the styled span.</p>
         <div class="inline-div">First inline div,</div>
         <div class="inline-div"> second inline div.</div>
+      
+</div>
+
+<div class="case" data-case="S4">
+
+        <div class="line-row">
+          <span>Wow even</span>
+          <div class="line-column"><a href="https://x.com/karpathy">@karpathy</a></div>
+          <span>admits it.</span>
+        </div>
+      
+</div>
+
+<div class="case" data-case="S5">
+
+        <div class="card-row">
+          <div><p>First card heading</p><p>First card body</p></div>
+          <div><p>Second card heading</p><p>Second card body</p></div>
+        </div>
+      
+</div>
+
+<div class="case" data-case="S6">
+
+        <div class="line-row"><p>Andrej Karpathy</p><p>@karpathy</p><p>Jul 27</p></div>
       
 </div>
 
