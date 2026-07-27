@@ -481,12 +481,16 @@ describe('HTML fallback — своя разметка, а не разметка 
     }
   });
 
-  it('<video autoplay> не переносится вовсе', () => {
+  // The player itself does not cross into the cell — neither the tag nor the
+  // attribute that would make it play there. What crosses is the link the media
+  // rule writes, which is the fallback's own markup like the `<a>` of any other
+  // link, and it is how the reader learns the cell held a video at all.
+  it('<video autoplay> не переносится вовсе, остаётся ссылка на источник', () => {
     const html = '<table><tr><td colspan="2"><video autoplay src="https://example.com/x.mp4"></video></td></tr></table>';
     const result = toHtmlTable(html);
-    expect(result).not.toContain('video');
+    expect(result).not.toContain('<video');
     expect(result).not.toContain('autoplay');
-    expect(result).toContain('<td colspan="2"></td>');
+    expect(result).toContain('<td colspan="2"><a href="https://example.com/x.mp4">x.mp4</a></td>');
   });
 
   it('атрибуты страницы не переносятся, кроме colspan и rowspan', () => {

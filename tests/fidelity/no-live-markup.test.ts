@@ -114,6 +114,19 @@ describe('markup shown as text never becomes markup again', () => {
       `$${SHOWN_TEXT}$`,
     ],
     ['ruby reading', `<p><ruby>word<rt>${SHOWN}</rt></ruby></p>`, `word(${SHOWN_TEXT})`],
+    // The label of an embedded player comes out of an attribute, which no text
+    // node's escaper has ever seen — and it lands inside `[…]`, which a renderer
+    // parses as inline content. `alt` is the same shape and is escaped for the
+    // same reason; the difference is that link text renders the markup where alt
+    // text only quotes it.
+    // The payload's own `"` would close the attribute it is being put in, so it
+    // is written the way a page would have to write it — the parser hands the
+    // rule the same string either way.
+    [
+      'embedded player label',
+      `<p><iframe src="${OWN_IMAGE}" title="${PAYLOAD.replace(/"/g, '&quot;')}"></iframe></p>`,
+      SHOWN_TEXT,
+    ],
     // A style is the second way to be a block, and `convert()` writes such an
     // element between blank lines — so its text opens a line exactly as a `<div>`
     // does, and everything a line start makes dangerous is dangerous here. Only

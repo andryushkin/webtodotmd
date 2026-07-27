@@ -1,6 +1,10 @@
 import { isContentless } from './contentful.js';
 import { hidingVerdict, type Hiding } from '../utils/inline-style.js';
-const REMOVE_TAGS = new Set(['style', 'noscript', 'iframe', 'object', 'embed', 'template', 'svg']);
+// `<iframe>` is not here any more: it is how a page embeds a player, and deleting
+// it took every YouTube video on every blog out of the capture silently. The
+// media rule writes the link (`src/rules/inline.ts`), and the address is all that
+// leaves this document — the frame's own contents were never reachable from here.
+const REMOVE_TAGS = new Set(['style', 'noscript', 'object', 'embed', 'template', 'svg']);
 const REMOVE_STRUCTURAL = new Set(['nav', 'footer', 'aside', 'header']);
 const UNWRAP_IF_EMPTY = new Set(['div', 'span', 'section', 'article']);
 const PRESERVE_WS = new Set(['pre', 'code', 'textarea', 'kbd', 'samp']);

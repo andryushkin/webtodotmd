@@ -274,3 +274,62 @@ describe('an image the markup calls decorative', () => {
     );
   });
 });
+
+// A player is content with no Markdown spelling. Neither way of embedding one
+// wrote anything: `<iframe>` was deleted by the sanitizer, and `<video>` had no
+// rule and so fell to the default one, which hands back children a player has
+// none of. A Notion help page with three videos came back with three blank
+// places in it.
+describe('an embedded player', () => {
+  it('writes the address of a video the page names in `src`', () => {
+    expect(toMarkdown('<video src="https://v.example.com/clip.mp4"></video>')).toBe(
+      '[clip.mp4](https://v.example.com/clip.mp4)\n',
+    );
+  });
+
+  it('takes the first `<source>` where the element itself names none', () => {
+    const html = '<video><source src="https://v.example.com/a.webm"><source src="https://v.example.com/a.mp4"></video>';
+    expect(toMarkdown(html)).toBe('[a.webm](https://v.example.com/a.webm)\n');
+  });
+
+  // The embed code YouTube hands out fills in `title`, and it is what a screen
+  // reader announces — the page's own name for what is playing.
+  it('reads the label off `title`, then `aria-label`, then the address', () => {
+    const iframe = (attrs: string) =>
+      toMarkdown(`<iframe src="https://www.youtube.com/embed/abc123" ${attrs}></iframe>`);
+    expect(iframe('title="Building with blocks"')).toBe(
+      '[Building with blocks](https://www.youtube.com/embed/abc123)\n',
+    );
+    expect(iframe('aria-label="Building with blocks"')).toBe(
+      '[Building with blocks](https://www.youtube.com/embed/abc123)\n',
+    );
+    expect(iframe('')).toBe('[abc123](https://www.youtube.com/embed/abc123)\n');
+  });
+
+  it('reads a file name the address percent-encoded', () => {
+    expect(toMarkdown('<audio src="https://e.com/ep%2012.mp3"></audio>')).toBe(
+      '[ep 12.mp3](https://e.com/ep%2012.mp3)\n',
+    );
+  });
+
+  // The children are the fallback for a browser that cannot play it, and the
+  // browser a capture comes from can — the same reason a closed `<details>`
+  // gives up its body.
+  it('drops the fallback the reader was never shown', () => {
+    expect(toMarkdown('<video src="https://e.com/a.mp4">Your browser cannot play this.</video>'))
+      .toBe('[a.mp4](https://e.com/a.mp4)\n');
+  });
+
+  it('writes nothing for a player with no address, or one nobody can follow', () => {
+    expect(toMarkdown('<video>Your browser cannot play this.</video>').trim()).toBe('');
+    expect(toMarkdown('<iframe src="javascript:alert(1)" title="x"></iframe>').trim()).toBe('');
+  });
+
+  // The label comes out of an attribute, which has never been near the text
+  // escaper — and inside `[…]` it is parsed as inline content, so this is the
+  // one position where a `title` could put working markup in the file.
+  it('escapes a label the page wrote as markup', () => {
+    expect(toMarkdown('<iframe src="https://e.com/v" title="<img src=x onerror=alert(1)>"></iframe>'))
+      .toBe('[\\<img src=x onerror=alert(1)>](https://e.com/v)\n');
+  });
+});

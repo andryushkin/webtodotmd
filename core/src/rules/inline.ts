@@ -560,6 +560,55 @@ function resolveUrl(url: string, baseUrl?: string): string {
   }
 }
 
+// The three ways a page puts a player in an article. `<object>` and `<embed>` are
+// not here: both are removed before conversion, and what they carry is a plugin
+// document rather than a film — a `data` URL naming a PDF viewer is not something
+// a reader was watching.
+const EMBEDS_MEDIA = new Set(['video', 'audio', 'iframe']);
+
+/**
+ * The address a player points at, or `''` when it names none.
+ *
+ * `<video>` and `<audio>` state it either on themselves or in the `<source>`
+ * children they offer a browser to pick from — the first is what the page listed
+ * first, which is the one it wanted played. An `<iframe>` has only `src`; a
+ * `srcdoc` one carries its document inline and there is nothing to link to.
+ */
+function mediaUrl(el: Element): string {
+  const own = (el.getAttribute('src') ?? '').trim();
+  if (own) return own;
+  for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+    if (child.tagName.toLowerCase() !== 'source') continue;
+    const src = (child.getAttribute('src') ?? '').trim();
+    if (src) return src;
+  }
+  return '';
+}
+
+/**
+ * What the link says. The page's own name for the player first — `title` is what
+ * a screen reader announces and what YouTube's embed code fills in — then the
+ * tail of the address, which is a file name often enough to be worth reading and
+ * is never invented.
+ *
+ * Never a word this converter made up. "Video" would be English on a page that is
+ * not, and the library has no locale to pick one in.
+ */
+function mediaLabel(el: Element, src: string): string {
+  const named = (el.getAttribute('title') ?? el.getAttribute('aria-label') ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (named) return named;
+  const path = (src.split(/[?#]/)[0] ?? '').split('/').filter((part) => part !== '');
+  const tail = path[path.length - 1] ?? '';
+  try {
+    return decodeURIComponent(tail);
+  } catch {
+    // A malformed escape — `%zz`, or a stray `%` a CMS left in a file name.
+    return tail;
+  }
+}
+
 function isPlaceholder(src: string): boolean {
   return (
     src.startsWith('data:image/') ||
@@ -856,6 +905,45 @@ export const INLINE_RULES: Rule[] = [
     name: 'source',
     filter: 'source',
     replacement: () => '',
+  },
+  // A player is content, and Markdown has no spelling for one. Nothing was
+  // written for either of the two ways a page embeds one — `<iframe>` was deleted
+  // outright and `<video>` had no rule, so it fell to the default one, which
+  // hands back its children and a player has none. A Notion help page with three
+  // videos in it came back with three blank places, and every YouTube embed on
+  // every blog was a hole the reader could not even see.
+  //
+  // A link is what is left: the address is the one thing about a player that
+  // survives into text, and it still takes the reader to what they were looking
+  // at. No preview picture — an `<img>` beside the link would state that the
+  // still is the content, and on a `<video poster>` the reader saw a frame of the
+  // film rather than a picture of it.
+  {
+    name: 'embedded-media',
+    filter: (el) => EMBEDS_MEDIA.has(el.tagName.toLowerCase()),
+    // The children of one of these are the fallback for a browser that cannot
+    // play it, and every browser a capture comes from can. It is `<details>`
+    // again: markup that is there and was never on screen.
+    ignoresChildContent: true,
+    replacement: (el, _childContent, options: MarkItDownOptions) => {
+      const url = mediaUrl(el);
+      if (!url) return '';
+      const src = resolveUrl(url, options.baseUrl);
+      // Same answer a link gives an unusable scheme, for the same reason — except
+      // that here nothing is wrapped, so an unusable one leaves nothing at all.
+      if (!isRenderableUrl(src)) return '';
+      const label = mediaLabel(el, src);
+      if (isHtmlContext(options)) {
+        return `<a href="${htmlAttr(encodeUrl(src))}">${htmlAttr(label)}</a>`;
+      }
+      // The label comes from an attribute or from the address, and neither has
+      // ever been near the text escaper. Inside `[…]` it is parsed as inline
+      // content, so a `title` holding `<img onerror=…>` would render as that
+      // image — the one position where the page's own markup can act, and the
+      // reason `alt` is escaped the same way where it lands in prose. No block
+      // pass: the `[` in front of it means this text never opens a line.
+      return `[${escapeHtmlSyntax(escapeInlineMarkdown(label))}](${markdownUrl(src)})`;
+    },
   },
   {
     name: 'picture',
