@@ -27,7 +27,7 @@ backslash: a `>` on its own opens nothing.
 | `<blockquote>` | `> ` |
 | `<ul><li>` | `- ` |
 | `<ol><li>` | `1. ` |
-| nested list | indented by the width of the parent's marker — two spaces under `-`, three under `1.` |
+| nested list | indented by the width of the parent's marker — two spaces under `-`, three under `1.`, four under `10.`. A task marker is content, not a marker, so `- [x] ` still indents by two: four more would be an indented code block, and the nested list would arrive as literal text |
 | `<ol start="5">` | numbering continues from `5.`; `0` and a negative start are legal and kept, and a `start` no number can be read out of numbers from 1, as a browser renders it |
 | `<li>` with a checkbox | `- [x]` / `- [ ]` |
 | `<pre>` | ` ``` ` fence, whitespace and `<br>` lines kept, the fence long enough to outrun any backtick run inside |

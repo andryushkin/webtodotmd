@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
+// The extension vendors marked as plain JS with no declarations, and this
+// package's tsconfig covers `tests/`, so the specifier is excused by hand and
+// narrowed to `render` below. Reaching out of `core/` is deliberate: this is the
+// parser that draws the side panel's preview, and only it can say whether the
+// reader got a list or a line of text.
+// @ts-expect-error untyped vendor module
+import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../src/server.js';
 
 beforeAll(() => {
@@ -128,6 +135,97 @@ describe('task list', () => {
     const html =
       '<ul><li><input type="checkbox" checked> Done</li><li><input type="checkbox"> Todo</li></ul>';
     expect(toMarkdown(html)).toBe('- [x] Done\n- [ ] Todo\n');
+  });
+});
+
+// A task marker is not a list marker. The item's content column is after `- ` or
+// `8. `; `[x] ` is the first thing *in* that content. Indenting the continuation
+// lines by the whole prefix put them four columns past the content column — the
+// indented-code threshold — and the same list without a checkbox nested fine.
+// So these assert on what `marked` makes of the file as well as on the file:
+// the emitted text alone cannot tell a nested list from a line that starts with
+// a hyphen, and `marked` is what draws the side panel's preview.
+const parser = marked as { parse(md: string, opts: object): string };
+const render = (md: string): string => parser.parse(md, { gfm: true, breaks: true });
+
+describe('task item nesting: a nested list stays a list', () => {
+  it('a nested <ul> under a checked item sits at the content column', () => {
+    const html =
+      '<ol start="8"><li><input type="checkbox" checked>Eighth:<ul><li>shipped</li><li>document</li></ul></li></ol>';
+    const md = toMarkdown(html);
+    expect(md).toBe('8. [x] Eighth:\n   - shipped\n   - document\n');
+
+    // Before the fix the sub-items reached the reader as one line of literal
+    // text: `Eighth:<br>- shipped<br>- document`.
+    const out = render(md);
+    expect(out).toContain('<li>shipped</li>');
+    expect(out).toContain('<li>document</li>');
+    expect(out).not.toContain('- shipped');
+  });
+
+  it('a nested <ol> under a checked item keeps its numbers', () => {
+    const html =
+      '<ul><li><input type="checkbox" checked>Task:<ol><li>one</li><li>two</li></ol></li></ul>';
+    const md = toMarkdown(html);
+    expect(md).toBe('- [x] Task:\n  1. one\n  2. two\n');
+
+    const out = render(md);
+    expect(out).toContain('<ol>');
+    expect(out).toContain('<li>one</li>');
+    expect(out).not.toContain('1. one');
+  });
+
+  it('an unchecked item indents the same — `[ ] ` is the same width', () => {
+    const html = '<ul><li><input type="checkbox">Task<ul><li>sub</li></ul></li></ul>';
+    const md = toMarkdown(html);
+    expect(md).toBe('- [ ] Task\n  - sub\n');
+    expect(render(md)).toContain('<li>sub</li>');
+  });
+
+  // The indent follows the marker, so a wider one still lines up — and only the
+  // marker widens. `10. [x] ` used to indent by 8 where 4 was the column.
+  it('a two-digit marker indents by four, checkbox or not', () => {
+    const plain = toMarkdown('<ol start="10"><li>Tenth<ul><li>sub</li></ul></li></ol>');
+    const task = toMarkdown(
+      '<ol start="10"><li><input type="checkbox" checked>Tenth<ul><li>sub</li></ul></li></ol>',
+    );
+    expect(plain).toBe('10. Tenth\n    - sub\n');
+    expect(task).toBe('10. [x] Tenth\n    - sub\n');
+    expect(render(task)).toContain('<li>sub</li>');
+  });
+
+  it('a task item inside a task item nests both levels', () => {
+    const html =
+      '<ul><li><input type="checkbox" checked>Outer<ul><li><input type="checkbox">Inner<ul><li>Deepest</li></ul></li></ul></li></ul>';
+    const md = toMarkdown(html);
+    expect(md).toBe('- [x] Outer\n  - [ ] Inner\n    - Deepest\n');
+    expect(render(md)).toContain('<li>Deepest</li>');
+  });
+});
+
+describe('task item nesting: a second block stays a block', () => {
+  it('a second paragraph is a paragraph, not an indented code block', () => {
+    const html = '<ul><li><input type="checkbox" checked><p>First</p><p>Second</p></li></ul>';
+    const md = toMarkdown(html);
+    expect(md).toBe('- [x] First\n\n  Second\n');
+
+    // Six spaces made `Second` an indented code block — the reader got the
+    // sentence in a monospace box.
+    const out = render(md);
+    expect(out).toContain('<p>Second</p>');
+    expect(out).not.toContain('<pre>');
+  });
+
+  it('a fenced block keeps its fence instead of being swallowed by one', () => {
+    const html = '<ul><li><input type="checkbox" checked>Ex:<pre><code>a\nb</code></pre></li></ul>';
+    const md = toMarkdown(html);
+    expect(md).toBe('- [x] Ex:\n\n  ```\n  a\n  b\n  ```\n');
+
+    // The over-indent turned the fence itself into code: the reader saw the
+    // three backticks as two lines of the listing.
+    const out = render(md);
+    expect(out).toContain('<code>a\nb\n</code>');
+    expect(out).not.toContain('```');
   });
 });
 

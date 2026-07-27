@@ -8,7 +8,7 @@ export const LIST_RULES: Rule[] = [
       const parent = el.parentElement;
       const isOrdered = parent?.tagName.toLowerCase() === 'ol';
 
-      let prefix: string;
+      let marker: string;
       if (isOrdered) {
         // A `start` no number can be read out of — `start="x"`, `start=""` — is
         // ignored by the browser, which numbers from 1; unguarded it wrote the
@@ -21,21 +21,27 @@ export const LIST_RULES: Rule[] = [
           (c) => c.tagName.toLowerCase() === 'li',
         );
         const index = siblings.indexOf(el as Element);
-        prefix = `${start + index}. `;
+        marker = `${start + index}. `;
       } else {
-        prefix = '- ';
+        marker = '- ';
       }
 
       // Task list: <input type="checkbox"> → [x] / [ ]
       const checkbox = el.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        prefix += checkbox.hasAttribute('checked') ? '[x] ' : '[ ] ';
-      }
+      const task = checkbox ? (checkbox.hasAttribute('checked') ? '[x] ' : '[ ] ') : '';
 
       const trimmed = childContent.trim();
       if (!trimmed) return '';
 
-      const indent = ' '.repeat(prefix.length);
+      // Indented by the marker alone, never by the task marker beside it: `[x] `
+      // is the first thing *in* the content, not part of the bullet, so the
+      // content column is still after `- ` or `8. `. Counting it in put a nested
+      // list four columns past that column — the indented-code threshold — and
+      // the reader got the sub-items as one line of literal text, `- shipped` and
+      // all. A second paragraph under the same item fared worse and came out a
+      // code block.
+      const indent = ' '.repeat(marker.length);
+      const prefix = marker + task;
       const content = trimmed.replace(/\n/g, `\n${indent}`);
       return `\n${prefix}${content}`;
     },
