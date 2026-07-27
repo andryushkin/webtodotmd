@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "জটিল টেবিল HTML হিসেবে রাখুন"
   },
+  "labelHtmlView": {
+    "message": "ক্যাপচার করা HTML ভিউ দেখান"
+  },
   "labelDefaultView": {
     "message": "ডিফল্ট ভিউ মোড"
   },

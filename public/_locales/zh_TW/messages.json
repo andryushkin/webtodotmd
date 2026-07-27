@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "複雜表格保留為 HTML"
   },
+  "labelHtmlView": {
+    "message": "顯示擷取的 HTML 檢視"
+  },
   "labelDefaultView": {
     "message": "預設檢視模式"
   },

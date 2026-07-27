@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "الإبقاء على الجداول المعقّدة بصيغة HTML"
   },
+  "labelHtmlView": {
+    "message": "إظهار عرض HTML الملتقط"
+  },
   "labelDefaultView": {
     "message": "وضع العرض الافتراضي"
   },

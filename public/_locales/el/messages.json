@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Διατήρηση σύνθετων πινάκων ως HTML"
   },
+  "labelHtmlView": {
+    "message": "Εμφάνιση της προβολής του HTML που καταγράφηκε"
+  },
   "labelDefaultView": {
     "message": "Προεπιλεγμένη προβολή"
   },

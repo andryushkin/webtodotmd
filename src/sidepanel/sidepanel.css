@@ -485,6 +485,13 @@ span[data-display='1'] {
   display: none;
 }
 
+/* Same trap, same remedy: `.toggle` sets display: inline-flex, so the HTML view
+   tab stayed on screen with its `hidden` attribute set and the setting that is
+   supposed to reveal it appeared to do nothing at all. */
+.toggle[hidden] {
+  display: none;
+}
+
 .txt-menu-wrap {
   position: relative;
   display: inline-flex;

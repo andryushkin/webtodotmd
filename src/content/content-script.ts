@@ -1,6 +1,6 @@
 import type { PageMeta, CaptureSelectionResponse, CaptureErrorResponse, OpenAndCaptureRequest } from '../shared/messaging';
 import { icon } from '../shared/icons';
-import { highlightsToMd, selectionToMd } from './capture';
+import { highlightsToMd, selectionToCapture, type Capture, type CaptureOptions } from './capture';
 import { BLOCK_TAGS, findHighlightTarget } from './highlight-target';
 import { normalizePageTitle } from './page-title';
 import { hasCapturableSelection } from './shadow-selection';
@@ -8,12 +8,12 @@ import { hasCapturableSelection } from './shadow-selection';
 // (content scripts cannot reliably fetch extension _locales files)
 
 /** The capture options the user can change; see Settings.htmlTables. */
-function captureOptions(): { htmlTables: boolean } {
-  return { htmlTables: htmlTablesSetting };
+function captureOptions(): CaptureOptions {
+  return { htmlTables: htmlTablesSetting, withHtml: htmlViewSetting };
 }
 
-function captureSelectionMd(selection: Selection): string {
-  return selectionToMd(selection, document, captureOptions());
+function captureSelectionMd(selection: Selection): Capture {
+  return selectionToCapture(selection, document, captureOptions());
 }
 
 function showToast(msg: string, type: 'success' | 'error' = 'success') {
@@ -33,6 +33,7 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
 
 let showBubbleSetting = true;
 let htmlTablesSetting = false;
+let htmlViewSetting = false;
 let translations: Record<string, string> = {};
 
 /**
@@ -56,6 +57,7 @@ const settingsLoaded = new Promise<void>((resolve) => {
     chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
       if (settings?.showBubble === false) showBubbleSetting = false;
       htmlTablesSetting = settings?.htmlTables === true;
+      htmlViewSetting = settings?.showHtmlView === true;
       if (contentI18n) translations = contentI18n;
       resolve();
     });
@@ -70,6 +72,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.settings) {
     showBubbleSetting = changes.settings.newValue?.showBubble !== false;
     htmlTablesSetting = changes.settings.newValue?.htmlTables === true;
+    htmlViewSetting = changes.settings.newValue?.showHtmlView === true;
   }
   if (changes.contentI18n) {
     translations = changes.contentI18n.newValue ?? {};
@@ -336,7 +339,7 @@ function findPageTitle(): string {
   return normalizePageTitle(raw);
 }
 
-function captureHighlightsMd(): string {
+function captureHighlightsMd(): Capture {
   return highlightsToMd(highlights, document, captureOptions());
 }
 
@@ -382,13 +385,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const md = captureHighlightsMd();
+        const { md, html } = captureHighlightsMd();
         const meta: PageMeta = {
           title: findPageTitle(),
           url: window.location.href,
           date: new Date().toISOString(),
         };
-        sendResponse({ md, meta } satisfies CaptureSelectionResponse);
+        sendResponse({ md, meta, html } satisfies CaptureSelectionResponse);
       } catch {
         sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
       }
@@ -417,14 +420,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const md = captureSelectionMd(selection);
+        const { md, html } = captureSelectionMd(selection);
         const meta: PageMeta = {
           title: findPageTitle(),
           url: window.location.href,
           date: new Date().toISOString(),
         };
         window.getSelection()?.removeAllRanges();
-        sendResponse({ md, meta } satisfies CaptureSelectionResponse);
+        sendResponse({ md, meta, html } satisfies CaptureSelectionResponse);
       } catch {
         sendResponse({ error: 'CONVERSION_ERROR' } satisfies CaptureErrorResponse);
       }
@@ -444,7 +447,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       await settingsLoaded;
       try {
-        const md = captureSelectionMd(selection);
+        const { md } = captureSelectionMd(selection);
         await navigator.clipboard.writeText(md);
         showToast(i18n('toastCopied', 'Copied!'));
       } catch {

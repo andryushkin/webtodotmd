@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "复杂表格保留为 HTML"
   },
+  "labelHtmlView": {
+    "message": "显示捕获的 HTML 视图"
+  },
   "labelDefaultView": {
     "message": "默认视图模式"
   },

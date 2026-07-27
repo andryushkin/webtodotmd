@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Зберігати складні таблиці як HTML"
   },
+  "labelHtmlView": {
+    "message": "Показувати вкладку з вихідним HTML"
+  },
   "labelDefaultView": {
     "message": "Режим перегляду за замовчуванням"
   },

@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Säilita keerukad tabelid HTML-ina"
   },
+  "labelHtmlView": {
+    "message": "Näita jäädvustatud HTML-i vaadet"
+  },
   "labelDefaultView": {
     "message": "Vaikevaade"
   },

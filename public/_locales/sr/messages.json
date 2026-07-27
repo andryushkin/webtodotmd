@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Задржи сложене табеле као HTML"
   },
+  "labelHtmlView": {
+    "message": "Прикажи приказ снимљеног HTML-а"
+  },
   "labelDefaultView": {
     "message": "Podrazumevani prikaz"
   },

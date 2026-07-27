@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Complexe tabellen als HTML behouden"
   },
+  "labelHtmlView": {
+    "message": "De weergave van de vastgelegde HTML tonen"
+  },
   "labelDefaultView": {
     "message": "Standaard weergavemodus"
   },

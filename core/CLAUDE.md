@@ -74,11 +74,31 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   the key, and `EMPHASIS_TAGS['constructor']` answered with `Object` — truthy, so an unknown
   `<constructor>` element read as an emphasis wrapper and the `<em>` beside it gave up its `*`.
 
+## Whitespace and gaps
+
+- A wrapper holding only blanks is not an empty one. Every syntax highlighter writes indentation as
+  `<span class="w">  </span>`, so removing such a span took the blank with it: an mkdocs YAML sample
+  came back flush left with `anchor_linenums:true`, and a Python one as `importtensorflowastf`. The
+  tag goes and the text stays; whether it survives as a space or collapses is `collapseWhitespace`'s
+  question, already asked of every other text node. A *block* wrapper is removed as before —
+  `<div> </div>` between two paragraphs is a line the reader saw, never a space.
+- A flex or grid row is the one place markup has no separator at all: `<a>c#</a><a>python</a>` is
+  what a tag list is, and the snapshot deliberately keeps quiet about the `block` such a container
+  derives onto its items. `ROW_ATTR` on the container is what is left to say the items stood apart,
+  and `convertChildren` spends it — one blank, never a second where whitespace already is. The same
+  blank decides emphasis, so both neighbour walks (`lookAhead`, `writtenBefore`, `neighbour`) read
+  it: pressed against a word, `**` has no spelling CommonMark renders, and 47 Stack Overflow tags
+  had been falling back to a live `<strong>`.
+
 ## Hiding
 
 The expensive mistake here is deleting text a person saw, not keeping text they did not. Every
 threshold sits where no layout lands by accident.
 
+- A `<details>` with no `open` attribute shows its `<summary>` and nothing else. It is the one
+  hiding no style declares: Chrome draws the body away behind `::details-content`, so the markup and
+  a computed style taken off live nodes both describe a visible box. MDN folds its whole sidebar
+  that way, and a 2,655-word article arrived carrying 500 words the reader never saw.
 - `hiddenByStyle()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
   inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
   `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
@@ -151,7 +171,7 @@ threshold sits where no layout lands by accident.
 
 `core/` is an npm package (`htmltodotmd`) with its own `tsup` build, its own version, and its own
 `exports`. It has never been published — there is no npm release and `docs/releasing.md` covers the
-extension only, so the version in `package.json` currently numbers nothing. Three `data-s2md-*`
-attribute names are baked into its public surface (`SNAPSHOT_ATTR` here, `ORIGIN_ATTR` and
-`ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library means making those a
-parameter first.
+extension only, so the version in `package.json` currently numbers nothing. Four `data-s2md-*`
+attribute names are baked into its public surface (`SNAPSHOT_ATTR` and `ROW_ATTR` here,
+`ORIGIN_ATTR` and `ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library
+means making those a parameter first.

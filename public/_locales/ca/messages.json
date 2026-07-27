@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Mantén les taules complexes com a HTML"
   },
+  "labelHtmlView": {
+    "message": "Mostra la vista de l'HTML capturat"
+  },
   "labelDefaultView": {
     "message": "Mode de visualització predeterminat"
   },

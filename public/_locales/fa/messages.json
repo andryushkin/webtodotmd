@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "نگه داشتن جدول‌های پیچیده به‌صورت HTML"
   },
+  "labelHtmlView": {
+    "message": "نمایش نمای HTML گرفته‌شده"
+  },
   "labelDefaultView": {
     "message": "حالت نمایش پیش‌فرض"
   },

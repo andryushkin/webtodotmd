@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "సంక్లిష్ట పట్టికలను HTML గా ఉంచు"
   },
+  "labelHtmlView": {
+    "message": "క్యాప్చర్ చేసిన HTML వీక్షణను చూపించు"
+  },
   "labelDefaultView": {
     "message": "డిఫాల్ట్ వ్యూ మోడ్"
   },

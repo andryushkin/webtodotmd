@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "जटिल तक्ते HTML म्हणून ठेवा"
   },
+  "labelHtmlView": {
+    "message": "कॅप्चर केलेले HTML दृश्य दाखवा"
+  },
   "labelDefaultView": {
     "message": "डीफॉल्ट व्ह्यू मोड"
   },

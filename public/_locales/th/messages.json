@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "คงตารางที่ซับซ้อนไว้เป็น HTML"
   },
+  "labelHtmlView": {
+    "message": "แสดงมุมมอง HTML ที่จับได้"
+  },
   "labelDefaultView": {
     "message": "โหมดการแสดงผลเริ่มต้น"
   },

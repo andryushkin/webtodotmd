@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "जटिल तालिकाओं को HTML के रूप में रखें"
   },
+  "labelHtmlView": {
+    "message": "कैप्चर किया गया HTML व्यू दिखाएँ"
+  },
   "labelDefaultView": {
     "message": "डिफ़ॉल्ट व्यू मोड"
   },

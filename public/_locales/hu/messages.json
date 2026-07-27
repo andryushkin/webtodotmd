@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Összetett táblázatok megtartása HTML-ként"
   },
+  "labelHtmlView": {
+    "message": "A rögzített HTML nézet megjelenítése"
+  },
   "labelDefaultView": {
     "message": "Alapértelmezett nézet"
   },

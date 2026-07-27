@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "ಸಂಕೀರ್ಣ ಕೋಷ್ಟಕಗಳನ್ನು HTML ಆಗಿ ಇರಿಸಿ"
   },
+  "labelHtmlView": {
+    "message": "ಸೆರೆಹಿಡಿದ HTML ವೀಕ್ಷಣೆಯನ್ನು ತೋರಿಸಿ"
+  },
   "labelDefaultView": {
     "message": "ಡೀಫಾಲ್ಟ್ ವೀಕ್ಷಣಾ ಮೋಡ್"
   },

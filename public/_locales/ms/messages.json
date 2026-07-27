@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Kekalkan jadual kompleks sebagai HTML"
   },
+  "labelHtmlView": {
+    "message": "Tunjukkan paparan HTML yang ditangkap"
+  },
   "labelDefaultView": {
     "message": "Mod paparan lalai"
   },

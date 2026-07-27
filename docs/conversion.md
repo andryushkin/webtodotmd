@@ -157,6 +157,7 @@ Removed by markup rather than by style:
 | | |
 | --- | --- |
 | `hidden` | removed — it is `display:none` in the UA stylesheet, so nothing was on screen |
+| a `<details>` with no `open` | body removed, `<summary>` kept — the browser draws the body away behind `::details-content`, where no style says so and every element inside still computes `display:block`. MDN folds its sidebar this way, and a 2,655-word article carried 500 words nobody had opened |
 | `aria-hidden="true"` | **kept.** It takes a node out of the accessibility tree and leaves every pixel where it was: a star rating drawn as `★★★★★`, the `→` in a "read more" link, a number beside a chart. Everything that really hides is read from the style, and this attribute only subtracted text the reader saw |
 | `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<template>`, `<svg>` | removed outright |
 | `<noscript>` | removed — but an image URL inside it is first handed to the neighbouring `<img>`, which is where lazy-loading pages keep the real one |

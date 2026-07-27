@@ -177,6 +177,7 @@ the text.
 | Show floating bubble | toggle | on | Show the "add to .md" button near selections |
 | Keep complex tables as HTML | toggle | off | Emit an HTML table for merged cells, nested tables and preformatted cells instead of flattening them into the pipe form |
 | Default view mode | Preview / Source | Preview | View mode when the panel opens |
+| Show the captured HTML view | toggle | off | Add a third view holding the markup the conversion was given — the selection with its style snapshot. It is a report, not part of the document: it shows the last capture alone, and while the setting is off the capture does not build it |
 | Highlight color | color | `#0066cc` | Highlighter mode outline and fill |
 | Language | 22 choices + Auto | English | Interface language |
 

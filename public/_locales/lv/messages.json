@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Saglabāt sarežģītas tabulas kā HTML"
   },
+  "labelHtmlView": {
+    "message": "Rādīt tvertā HTML skatu"
+  },
   "labelDefaultView": {
     "message": "Noklusējuma skats"
   },

@@ -25,6 +25,37 @@ import { mirrorShadowRoots, openShadowRoots, selectionRanges, styleScopeOf } fro
 /** The one conversion option the user can change; see Settings.htmlTables. */
 export interface CaptureOptions {
   htmlTables?: boolean;
+  /**
+   * Also hand back the markup the conversion was given.
+   *
+   * Off unless the reader asked for it (Settings.showHtmlView): the fragment is
+   * the whole selection with a computed style written onto every element that
+   * needed one, which on a long article is larger than the Markdown it produces,
+   * and nothing in the ordinary path reads it.
+   */
+  withHtml?: boolean;
+}
+
+/** What one capture produced: the file, and — on request — its input. */
+export interface Capture {
+  md: string;
+  /** The fragment handed to the converter, exactly as the converter saw it. */
+  html?: string;
+}
+
+/**
+ * The clone as text, taken before the conversion rather than after.
+ *
+ * `toMarkdown` sanitizes in place — hidden boxes removed, wrappers unwrapped,
+ * whitespace collapsed — so a fragment serialized afterwards would be a report
+ * about the sanitizer rather than about the page. What this shows is the input:
+ * the reader's selection, carrying the style snapshot, which is what makes a
+ * defect reproducible from the panel alone.
+ */
+function serialize(fragment: DocumentFragment, doc: Document): string {
+  const holder = doc.createElement('div');
+  holder.appendChild(fragment.cloneNode(true));
+  return holder.innerHTML;
 }
 
 function conversionOptions(doc: Document, options: CaptureOptions): MarkItDownOptions {
@@ -108,6 +139,14 @@ export function selectionToMd(
   doc: Document,
   options: CaptureOptions = {},
 ): string {
+  return selectionToCapture(selection, doc, options).md;
+}
+
+export function selectionToCapture(
+  selection: Selection,
+  doc: Document,
+  options: CaptureOptions = {},
+): Capture {
   // Collected once and spent twice: the composed range has to be told which
   // shadow roots it may answer inside, and the copies below are made from the
   // same list — two walks would be two answers to the same question.
@@ -121,10 +160,16 @@ export function selectionToMd(
     const cleanup = mirrorShadowRoots(shadowRoots);
     try {
       const opts = conversionOptions(doc, options);
-      const fragments = ranges.map((range) =>
-        collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(expandRangeToWords(range)), opts)),
-      );
-      return joinFragments(fragments);
+      const markup: string[] = [];
+      const fragments = ranges.map((range) => {
+        const fragment = cloneRangeWithBr(expandRangeToWords(range));
+        if (options.withHtml) markup.push(serialize(fragment, doc));
+        return collapseHardBreaksToParagraphs(toMarkdown(fragment, opts));
+      });
+      return {
+        md: joinFragments(fragments),
+        html: options.withHtml ? markup.join('\n') : undefined,
+      };
     } finally {
       cleanup();
     }
@@ -137,7 +182,7 @@ export function highlightsToMd(
   highlights: Iterable<Element>,
   doc: Document,
   options: CaptureOptions = {},
-): string {
+): Capture {
   const sorted = [...highlights].sort((a, b) => {
     const pos = a.compareDocumentPosition(b);
     return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
@@ -148,12 +193,18 @@ export function highlightsToMd(
     const cleanup = mirrorShadowRoots(openShadowRoots(doc));
     try {
       const opts = conversionOptions(doc, options);
+      const markup: string[] = [];
       const fragments = sorted.map(el => {
         const range = doc.createRange();
         range.selectNodeContents(el);
-        return collapseHardBreaksToParagraphs(toMarkdown(cloneRangeWithBr(range), opts));
+        const fragment = cloneRangeWithBr(range);
+        if (options.withHtml) markup.push(serialize(fragment, doc));
+        return collapseHardBreaksToParagraphs(toMarkdown(fragment, opts));
       });
-      return joinFragments(fragments);
+      return {
+        md: joinFragments(fragments),
+        html: options.withHtml ? markup.join('\n') : undefined,
+      };
     } finally {
       cleanup();
     }

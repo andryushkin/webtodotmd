@@ -11,6 +11,16 @@ export interface Settings {
    * renderers that strip HTML show nothing at all.
    */
   htmlTables: boolean;
+  /**
+   * Show a third view holding the markup the conversion was given.
+   *
+   * Off by default, and the capture does not even build it while it is: the
+   * fragment carries a computed style on every element that needed one, which on
+   * a long article outweighs the Markdown itself. What it is for is reporting —
+   * a defect in the file is reproducible from this text alone, without anyone
+   * having to fetch the page and guess which part of it was selected.
+   */
+  showHtmlView: boolean;
   uiLanguage: string;
 }
 
@@ -20,6 +30,7 @@ const DEFAULTS: Settings = {
   highlighterColor: '#0066cc',
   showBubble: true,
   htmlTables: false,
+  showHtmlView: false,
   uiLanguage: 'en',
 };
 

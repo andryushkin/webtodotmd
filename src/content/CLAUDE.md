@@ -36,6 +36,17 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   component lifts its deeper end to the host: over-capturing the component to its
   end costs a sentence, losing the range costs the capture.
 
+- A host's light children are drawn only where a `<slot>` calls for them, so a component with no
+  matching slot renders none of them — which is exactly how a no-JavaScript fallback is written.
+  GitHub's `<relative-time>` holds `Jul 24, 2026` in the light DOM and shows `3 days ago` from its
+  shadow tree, and with the copy planted beside the fallback every date came out as
+  `3 days agoJul 24, 2026`. Those children are lifted for the length of the capture and put back in
+  a `finally`, backwards, so each finds the sibling it stood in front of already in place. The
+  assignment is worked out from the slots and never from `assignedSlot`: only a browser has that
+  property, and these paths are also exercised under happy-dom, where it is `undefined` for assigned
+  and unassigned children alike. Nothing is lifted where a matching slot exists — an unrendered
+  child costs a duplicated line, a rendered one lifted by mistake costs the sentence it held.
+
 ## Hard breaks
 
 - A `\n` inside a text node draws a line only where the computed `white-space`
@@ -99,6 +110,10 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   finds nothing and the whole box goes, visible text and all. Both are written
   where the state *changes*, so a revealed subtree costs one mark rather than one
   per element, and a page with no hidden boxes costs nothing.
+- Silence about a derived block leaves the *gap* between the items unsaid, and markup has none:
+  `<a>c#</a><a>python</a>` is what a tag list is. The container — not the item — gets
+  `data-s2md-row`, once, and the core turns it into the one blank the reader saw. Recording it per
+  item would be the paragraph-per-link defect again by another name.
 - The verdicts themselves live in `core/` and are asked of it, never spelled
   again here: the two sides disagreeing is how a snapshot marks what the core
   keeps.

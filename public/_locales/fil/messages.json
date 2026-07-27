@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Panatilihin ang mga kumplikadong talahanayan bilang HTML"
   },
+  "labelHtmlView": {
+    "message": "Ipakita ang view ng nakuhang HTML"
+  },
   "labelDefaultView": {
     "message": "Default na mode ng view"
   },

@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Ponechať zložité tabuľky ako HTML"
   },
+  "labelHtmlView": {
+    "message": "Zobraziť zachytené zobrazenie HTML"
+  },
   "labelDefaultView": {
     "message": "Predvolené zobrazenie"
   },

@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Sudėtingas lenteles palikti kaip HTML"
   },
+  "labelHtmlView": {
+    "message": "Rodyti užfiksuoto HTML rodinį"
+  },
   "labelDefaultView": {
     "message": "Numatytasis rodinys"
   },

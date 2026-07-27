@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Säilytä monimutkaiset taulukot HTML-muodossa"
   },
+  "labelHtmlView": {
+    "message": "Näytä siepatun HTML:n näkymä"
+  },
   "labelDefaultView": {
     "message": "Oletusnäkymätila"
   },

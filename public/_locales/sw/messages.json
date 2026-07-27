@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Weka majedwali changamano kama HTML"
   },
+  "labelHtmlView": {
+    "message": "Onyesha mwonekano wa HTML iliyonaswa"
+  },
   "labelDefaultView": {
     "message": "Hali ya mwonekano wa chaguo-msingi"
   },

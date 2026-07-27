@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "സങ്കീർണ്ണ പട്ടികകൾ HTML ആയി നിലനിർത്തുക"
   },
+  "labelHtmlView": {
+    "message": "പകർത്തിയ HTML കാഴ്ച കാണിക്കുക"
+  },
   "labelDefaultView": {
     "message": "ഡിഫോൾട്ട് വ്യൂ മോഡ്"
   },

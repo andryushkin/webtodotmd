@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Mantener las tablas complejas como HTML"
   },
+  "labelHtmlView": {
+    "message": "Mostrar la vista del HTML capturado"
+  },
   "labelDefaultView": {
     "message": "Modo de vista predeterminado"
   },

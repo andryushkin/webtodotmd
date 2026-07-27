@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "לשמור טבלאות מורכבות כ‑HTML"
   },
+  "labelHtmlView": {
+    "message": "הצגת תצוגת ה-HTML שנלכד"
+  },
   "labelDefaultView": {
     "message": "מצב תצוגה ברירת מחדל"
   },

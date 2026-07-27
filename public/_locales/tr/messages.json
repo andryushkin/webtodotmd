@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Karmaşık tabloları HTML olarak koru"
   },
+  "labelHtmlView": {
+    "message": "Yakalanan HTML görünümünü göster"
+  },
   "labelDefaultView": {
     "message": "Varsayılan görünüm modu"
   },

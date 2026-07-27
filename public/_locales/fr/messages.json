@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Conserver les tableaux complexes en HTML"
   },
+  "labelHtmlView": {
+    "message": "Afficher la vue du HTML capturé"
+  },
   "labelDefaultView": {
     "message": "Mode d’affichage par défaut"
   },

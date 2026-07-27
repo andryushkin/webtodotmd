@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "சிக்கலான அட்டவணைகளை HTML ஆக வைத்திரு"
   },
+  "labelHtmlView": {
+    "message": "பிடிக்கப்பட்ட HTML காட்சியைக் காட்டு"
+  },
   "labelDefaultView": {
     "message": "இயல்புநிலை காட்சி முறை"
   },

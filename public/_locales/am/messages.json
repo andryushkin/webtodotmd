@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "ውስብስብ ሠንጠረዦችን እንደ HTML አቆይ"
   },
+  "labelHtmlView": {
+    "message": "የተቀዳውን HTML እይታ አሳይ"
+  },
   "labelDefaultView": {
     "message": "ነባሪ ዕይታ ሁነታ"
   },

@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "複雑な表を HTML のまま保持する"
   },
+  "labelHtmlView": {
+    "message": "取り込んだ HTML ビューを表示する"
+  },
   "labelDefaultView": {
     "message": "デフォルト表示モード"
   },

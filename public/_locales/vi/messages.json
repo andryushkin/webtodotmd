@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Giữ bảng phức tạp ở dạng HTML"
   },
+  "labelHtmlView": {
+    "message": "Hiển thị chế độ xem HTML đã ghi"
+  },
   "labelDefaultView": {
     "message": "Chế độ xem mặc định"
   },

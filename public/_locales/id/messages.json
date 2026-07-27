@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Pertahankan tabel kompleks sebagai HTML"
   },
+  "labelHtmlView": {
+    "message": "Tampilkan tampilan HTML yang diambil"
+  },
   "labelDefaultView": {
     "message": "Mode tampilan default"
   },

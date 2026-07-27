@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Komplexe Tabellen als HTML behalten"
   },
+  "labelHtmlView": {
+    "message": "Ansicht des erfassten HTML anzeigen"
+  },
   "labelDefaultView": {
     "message": "Standardansicht"
   },

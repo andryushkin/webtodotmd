@@ -38,8 +38,10 @@ const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
 const previewSource = document.getElementById('preview-source') as HTMLTextAreaElement;
+const previewHtml = document.getElementById('preview-html') as HTMLTextAreaElement;
 const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElement;
 const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
+const btnHtmlTab = document.getElementById('btn-html') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const ratingRow = document.getElementById('rating-row') as HTMLDivElement;
 const toolbar = document.querySelector('.toolbar') as HTMLDivElement;
@@ -64,7 +66,18 @@ let mathCounter = 0;
 const MAX_HISTORY = 50;
 let undoStack: string[] = [];
 let redoStack: string[] = [];
-let viewMode: 'preview' | 'source' = 'preview';
+/** The third view is a report, and only exists while the setting asks for it. */
+type ViewMode = 'preview' | 'source' | 'html';
+
+let viewMode: ViewMode = 'preview';
+/**
+ * The markup the last capture was given, when the reader asked to see it
+ * (Settings.showHtmlView). It is not part of the document: `rawMd` is the source
+ * of truth for everything the panel edits, saves and sends, and this is a report
+ * about how the last one was produced — appending a capture leaves it showing
+ * that capture alone, which is what makes it useful for a bug report.
+ */
+let rawHtml = '';
 let highlighterEnabled = false;
 let highlightCount = 0;
 let autoMetadata = false;
@@ -315,14 +328,31 @@ function redo() {
   applyContent(redoStack.pop()!);
 }
 
-function setViewMode(mode: 'preview' | 'source') {
+function setViewMode(mode: ViewMode) {
   viewMode = mode;
   previewRendered.hidden = mode !== 'preview';
   previewSource.hidden = mode !== 'source';
-  btnPreviewTab.classList.toggle('active', mode === 'preview');
-  btnSourceTab.classList.toggle('active', mode === 'source');
-  btnPreviewTab.setAttribute('aria-pressed', String(mode === 'preview'));
-  btnSourceTab.setAttribute('aria-pressed', String(mode === 'source'));
+  previewHtml.hidden = mode !== 'html';
+  for (const [button, name] of [
+    [btnPreviewTab, 'preview'],
+    [btnSourceTab, 'source'],
+    [btnHtmlTab, 'html'],
+  ] as const) {
+    button.classList.toggle('active', mode === name);
+    button.setAttribute('aria-pressed', String(mode === name));
+  }
+}
+
+/**
+ * Whether the third view is offered at all.
+ *
+ * Turning it off while it is the view on screen leaves the panel showing a pane
+ * with no way back to it, so the mode falls back to the source — the view whose
+ * text this one explains.
+ */
+function showHtmlView(on: boolean) {
+  btnHtmlTab.hidden = !on;
+  if (!on && viewMode === 'html') setViewMode('source');
 }
 
 function updateUndoRedoButtons() {
@@ -493,6 +523,11 @@ async function captureSelection(silent = false) {
   }
 
   const { meta, md } = response;
+  // Replaced rather than appended: this is a report about the capture that just
+  // happened, and a reader sending it on wants the fragment that produced the
+  // paragraph they are looking at, not every fragment of the session.
+  rawHtml = response.html ?? '';
+  previewHtml.value = rawHtml;
   const prevUrl = lastMeta?.url ?? null;
   lastMeta = meta;
 
@@ -545,6 +580,7 @@ btnRedo.addEventListener('click', redo);
 
 btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
 btnSourceTab.addEventListener('click', () => setViewMode('source'));
+btnHtmlTab.addEventListener('click', () => setViewMode('html'));
 
 btnCapture.addEventListener('click', () => captureSelection(false));
 btnHighlighter.addEventListener('click', () => toggleHighlighter());
@@ -729,6 +765,9 @@ function applyButtonLabels() {
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
+  // "HTML" is the name of the format in every language this ships in, so the
+  // label is the word itself rather than a fifty-second string to translate.
+  btnHtmlTab.innerHTML = icon('fileText', 12) + '<span class="btn-label">HTML</span>';
   updateToolbarDensity();
 }
 
@@ -769,6 +808,7 @@ async function init() {
   attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
 
   autoMetadata = settings.autoMetadata;
+  showHtmlView(settings.showHtmlView);
   setViewMode(settings.defaultViewMode);
   updateButtonStates();
   updateUndoRedoButtons();
@@ -791,6 +831,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     const s = changes.settings.newValue;
     if (s) {
       autoMetadata = s.autoMetadata ?? false;
+      showHtmlView(s.showHtmlView === true);
       const newLang = s.uiLanguage ?? 'en';
       const oldLang = changes.settings.oldValue?.uiLanguage ?? 'en';
       if (newLang !== oldLang) {

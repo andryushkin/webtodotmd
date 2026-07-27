@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Mantieni le tabelle complesse come HTML"
   },
+  "labelHtmlView": {
+    "message": "Mostra la vista dell'HTML acquisito"
+  },
   "labelDefaultView": {
     "message": "Modalità vista predefinita"
   },

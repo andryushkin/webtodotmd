@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Zachowaj złożone tabele jako HTML"
   },
+  "labelHtmlView": {
+    "message": "Pokaż widok przechwyconego HTML-a"
+  },
   "labelDefaultView": {
     "message": "Domyślny widok"
   },

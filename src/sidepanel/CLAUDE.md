@@ -19,3 +19,17 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 - `setButtonContent()` always sets `aria-label`: in compact mode the visible
   label is gone. `updateToolbarDensity()` measures in the non-compact state,
   which is what stops it oscillating.
+
+## The HTML view
+
+- It is a *report*, not a document. `rawMd` stays the only source of truth for what the panel
+  renders, edits, saves and sends; the HTML pane holds the markup the last capture was handed —
+  the selection with its style snapshot — and is replaced rather than appended, because whoever
+  sends it on wants the fragment behind the paragraph in front of them, not the whole session.
+- Off by default, and while it is off the content script does not build it: the fragment carries a
+  computed style on every element that needed one and outweighs the Markdown on a long article.
+- Its label is the word `HTML`, deliberately untranslated — it is the name of the format in every
+  locale this ships in, and a fifty-second string that always reads the same is a fifty-second
+  string to keep in sync for nothing. The setting that reveals it is translated (`labelHtmlView`).
+- Turning the setting off while that view is on screen falls back to the source view: a hidden tab
+  with its pane still showing is a panel with no way back.

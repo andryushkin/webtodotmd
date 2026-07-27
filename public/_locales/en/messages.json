@@ -118,6 +118,10 @@
   "labelHtmlTables": {
     "message": "Keep complex tables as HTML"
   },
+  "labelHtmlView": {
+    "message": "Show the captured HTML view",
+    "description": "Settings checkbox: show a third panel view holding the markup the conversion was given"
+  },
   "labelDefaultView": {
     "message": "Default view mode"
   },

@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Ohrani zapletene tabele kot HTML"
   },
+  "labelHtmlView": {
+    "message": "Pokaži pogled zajetega HTML-ja"
+  },
   "labelDefaultView": {
     "message": "Privzeti prikaz"
   },

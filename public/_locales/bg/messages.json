@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Запазване на сложните таблици като HTML"
   },
+  "labelHtmlView": {
+    "message": "Показване на изгледа с прихванатия HTML"
+  },
   "labelDefaultView": {
     "message": "Изглед по подразбиране"
   },

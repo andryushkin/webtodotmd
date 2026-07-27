@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Behold komplekse tabeller som HTML"
   },
+  "labelHtmlView": {
+    "message": "Vis visningen av den fangede HTML-en"
+  },
   "labelDefaultView": {
     "message": "Standard visningsmodus"
   },

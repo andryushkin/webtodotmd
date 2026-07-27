@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Păstrează tabelele complexe ca HTML"
   },
+  "labelHtmlView": {
+    "message": "Afișează vizualizarea HTML capturată"
+  },
   "labelDefaultView": {
     "message": "Vizualizare implicită"
   },

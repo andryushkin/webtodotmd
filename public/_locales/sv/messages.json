@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Behåll komplexa tabeller som HTML"
   },
+  "labelHtmlView": {
+    "message": "Visa vyn med den fångade HTML-koden"
+  },
   "labelDefaultView": {
     "message": "Standardvisningsläge"
   },

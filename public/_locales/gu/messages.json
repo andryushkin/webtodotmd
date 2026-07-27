@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "જટિલ કોષ્ટકોને HTML તરીકે રાખો"
   },
+  "labelHtmlView": {
+    "message": "કૅપ્ચર કરેલ HTML વ્યૂ બતાવો"
+  },
   "labelDefaultView": {
     "message": "ડિફૉલ્ટ વ્યૂ મોડ"
   },

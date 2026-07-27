@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "복잡한 표를 HTML로 유지"
   },
+  "labelHtmlView": {
+    "message": "캡처한 HTML 보기 표시"
+  },
   "labelDefaultView": {
     "message": "기본 보기 모드"
   },

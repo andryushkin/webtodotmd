@@ -118,6 +118,9 @@
   "labelHtmlTables": {
     "message": "Ponechat složité tabulky jako HTML"
   },
+  "labelHtmlView": {
+    "message": "Zobrazit zachycený pohled HTML"
+  },
   "labelDefaultView": {
     "message": "Výchozí zobrazení"
   },

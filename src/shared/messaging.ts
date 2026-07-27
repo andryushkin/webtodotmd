@@ -11,6 +11,8 @@ export interface CaptureSelectionRequest {
 export interface CaptureSelectionResponse {
   md: string;
   meta: PageMeta;
+  /** The markup the conversion was given, when Settings.showHtmlView is on. */
+  html?: string;
 }
 
 export interface CaptureErrorResponse {
