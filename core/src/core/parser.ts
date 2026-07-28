@@ -1,6 +1,6 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { applyStyleEmphasis, emitsCodeSpan, emitsWithoutText } from '../rules/inline.js';
+import { applyStyleEmphasis, attributeOutput, emitsCodeSpan } from '../rules/inline.js';
 import {
   displaysAsBlock,
   displaysInline,
@@ -346,7 +346,11 @@ function writesFirst(el: Element): boolean {
  * writable once resolved against the base the caller supplied.
  */
 function writesSomething(el: Element, options: MarkItDownOptions): boolean {
-  if (emitsWithoutText(el, options)) return true;
+  // An element writing its whole output from attributes has answered completely,
+  // both ways round: its rule ignores what it holds, so the children below are
+  // markup that never reaches the file and must not vote on the line.
+  const own = attributeOutput(el, options);
+  if (own !== undefined) return own;
   for (const child of Array.from(el.childNodes)) {
     if (child.nodeType === TEXT_NODE) {
       const text = child.textContent ?? '';

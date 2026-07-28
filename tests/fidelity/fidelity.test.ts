@@ -192,6 +192,13 @@ beforeAll(() => {
 // measurement records that nothing moved rather than that nothing was fixed.
 // Each has its own test: two in `no-live-markup.test.ts`, which is where the
 // reader's characters are checked after a render, and the third in the core.
+//
+// Then 81 -> 81 once more, same class list, for the rest of that first change: a
+// player writes nothing from its children either, since its rule ignores them,
+// and the check that had just learned to read the address still walked into them
+// and counted the fallback markup as ink. It answers in three values now, so a
+// `no` from an element written out of attributes is final. Unreachable here for
+// the same reason as the rest — the generator emits no players.
 const SEEDS = 200;
 const CEILING = 81;
 

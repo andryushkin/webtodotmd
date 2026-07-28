@@ -643,9 +643,10 @@ function accompaniedByText(el: Element): boolean {
 }
 
 /**
- * Whether this element writes something although it holds no text of its own.
+ * What this element writes out of its attributes alone — or `undefined` where it
+ * is not one of the two that do, and the caller has to look at its content.
  *
- * The parser asks it about what stands in front of a line's first characters:
+ * The parser asks about what stands in front of a line's first characters:
  * anything written there means the text is mid-line and its `#` or `-` is
  * ordinary punctuation. Text is the usual answer and the parser can see that for
  * itself; a picture and a player are what it cannot, since both write a whole
@@ -656,11 +657,21 @@ function accompaniedByText(el: Element): boolean {
  * alt; a player with no address to point at, or none it can point at — and the
  * rules below are the authority for all of them, so this asks them rather than
  * restating them.
+ *
+ * Three answers rather than two, because for these elements "writes nothing" is
+ * the *whole* answer and a walk of the children would overturn it. Both rules set
+ * `ignoresChildContent`: what a player holds is the fallback for a browser that
+ * cannot play it, and an `<img>` holds nothing at all — so a `no` here is final
+ * where for any other element it only means "not from the tag". Returning a plain
+ * `false` let the caller go on to the children and find text there:
+ * `<p><video src="javascript:x">fallback</video># y</p>` writes nothing whatever
+ * — the whole element converts to `''` — yet the `fallback` nobody would ever see
+ * was counted as ink, and the `#` behind it opened a heading.
  */
-export function emitsWithoutText(el: Element, options: MarkItDownOptions): boolean {
+export function attributeOutput(el: Element, options: MarkItDownOptions): boolean | undefined {
   const tag = el.tagName.toLowerCase();
   if (EMBEDS_MEDIA.has(tag)) return mediaLink(el, options) !== '';
-  if (tag !== 'img') return false;
+  if (tag !== 'img') return undefined;
   const alt = (el.getAttribute('alt') ?? '').trim();
   if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return false;
   if (!extractImageUrl(el)) return alt !== '';

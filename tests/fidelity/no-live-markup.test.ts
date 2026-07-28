@@ -260,6 +260,20 @@ describe('a player that writes nothing does not open a line', () => {
     expect(visibleText(out)).toBe('# x');
     expect(liveMarkup(out)).toEqual([]);
   });
+
+  // And the fallback such a player carries does not make it ink. The rule ignores
+  // what a player holds — that is markup for a browser that cannot play it, never
+  // anything on the screen — so the element writes nothing, children and all,
+  // while a walk of those children read `fallback` as a character on the line.
+  it.each([
+    ['a player', '<video src="javascript:x">fallback</video>'],
+    ['a frame', '<iframe src="about:blank">fallback</iframe>'],
+    ['an audio element', '<audio>fallback</audio>'],
+  ])('%s with a fallback nobody sees', (_name, player) => {
+    const out = render(toMarkdown(`<p>${player}# x</p>`, { ...CONVERSION_OPTIONS }));
+    expect(visibleText(out)).toBe('# x');
+    expect(liveMarkup(out)).toEqual([]);
+  });
 });
 
 // A child that wrote nothing cannot end a run of a mark, because it stands

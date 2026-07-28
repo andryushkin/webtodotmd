@@ -346,6 +346,14 @@ describe('an element that writes nothing does not open a line', () => {
     // why this class is not only the hostile one.
     ['player still waiting for its address', '<iframe src="about:blank"></iframe>'],
     ['player carrying its document inline', '<iframe src="data:text/html,x"></iframe>'],
+    // What a player holds is the fallback for a browser that cannot play it, and
+    // its rule ignores it — so this converts to nothing at all, children and all.
+    // Read as text the walk found inside, `fallback` counted as ink on the line
+    // although no reader and no file ever sees it.
+    ['player whose fallback is never written', '<video src="javascript:x">fallback</video>'],
+    ['the same in an audio element', '<audio>fallback</audio>'],
+    ['the same in a frame', '<iframe src="about:blank">fallback</iframe>'],
+    ['a fallback holding markup rather than text', '<video src="javascript:x"><b>fb</b></video>'],
   ] as const;
 
   const markers = [
@@ -369,9 +377,26 @@ describe('an element that writes nothing does not open a line', () => {
     ['link', '<a href="https://example.com">a</a># x', '# x'],
     ['image', '<img src="photo.jpg" alt="a"># x', '# x'],
     ['player', '<video src="clip.mp4"></video># x', '# x'],
+    // An address it can link to is what makes a player ink, and the fallback it
+    // carries changes nothing either way — the link is written, the fallback is
+    // not, and the text behind them is mid-line.
+    ['player with an address and a fallback', '<video src="https://e.com/c.mp4">fb</video># x', '# x'],
+    ['frame with an address and a fallback', '<iframe src="https://e.com/v">fb</iframe># x', '# x'],
     ['wrapper holding text', '<span>a</span># x', '# x'],
   ])('leaves it alone after %s', (_name, html, expected) => {
     expect(toMarkdown(`<p>${html}</p>`)).toContain(expected);
+  });
+
+  // The fallback is not merely uncounted, it is unwritten: the rule ignores what
+  // a player holds, so an element the address made unusable converts to nothing
+  // whatever is inside it. That is what makes the answer above final.
+  it.each([
+    ['text', '<video src="javascript:x">fallback</video>'],
+    ['markup', '<video src="javascript:x"><b>fb</b><a href="https://e.com">l</a></video>'],
+    ['a frame', '<iframe src="about:blank">fallback</iframe>'],
+    ['an audio element', '<audio>fallback</audio>'],
+  ])('a player that cannot be linked writes nothing at all: %s', (_name, html) => {
+    expect(toMarkdown(`<p>${html}</p>`).trim()).toBe('');
   });
 });
 

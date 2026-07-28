@@ -51,7 +51,12 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   being able to link to one — `<iframe src="about:blank">`, which is a lazily loaded embed before
   its real address arrives, was read as ink and the `#` behind it opened a heading. The rule and the
   check share one `mediaLink()` for that reason: the escaper's question is exactly "what does the
-  rule write here", so a second reading of the same rule drifts the next time either moves.
+  rule write here", so a second reading of the same rule drifts the next time either moves. The
+  check answers in three values rather than two, because for a picture and a player a `no` is the
+  *whole* answer: both rules ignore what the element holds, so the walk that follows a `false` for
+  every other tag had no business looking inside one — it found the `fallback` in
+  `<video src="javascript:x">fallback</video>` and counted it as ink, although the element writes
+  nothing at all and that markup was for a browser that cannot play the film.
 
 ## Emphasis and style
 
