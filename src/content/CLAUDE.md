@@ -16,6 +16,13 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   compete. Use `chrome.storage.local`.
 - Anything that needs a test goes in its own module: `content-script.ts` cannot
   be imported by a test, because of its top-level Chrome API calls.
+- Never name the `Node` global — write the node type and document-position
+  constants out as numbers, the way `shadow-selection.ts` and `capture.ts` both
+  do. These modules are imported by tests running under happy-dom, where the
+  global does not exist, and a `ReferenceError` from a constant is swallowed by
+  the fault handling around a capture: the failure arrives as an empty file
+  rather than as an error. Lending the global back from a test hides the
+  condition instead of removing it, and the next harness will not think to.
 
 ## Selection
 

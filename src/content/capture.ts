@@ -119,6 +119,15 @@ function sharedHeadingOffset(
   };
 }
 
+// The numeric constants, never the `Node` global — the same spelling
+// `shadow-selection.ts` keeps and for the same reason: this module is imported by
+// tests running under happy-dom, where the global does not exist, and a
+// `ReferenceError` here is swallowed by the fault handling around a capture. The
+// tests had been lending the global back to work around it, which made the whole
+// file's coverage conditional on a line nobody would think to copy.
+const TEXT_NODE = 3;
+const DOCUMENT_POSITION_FOLLOWING = 4;
+
 // Expands a Range to whitespace boundaries when start/end land mid-token
 // in text nodes (token = run of non-whitespace, includes letters/digits/
 // punctuation). Element-boundary selections are left untouched.
@@ -126,13 +135,13 @@ const WORD_CHAR_RE = /\S/u;
 export function expandRangeToWords(range: Range): Range {
   const out = range.cloneRange();
   const { startContainer, startOffset, endContainer, endOffset } = out;
-  if (startContainer.nodeType === Node.TEXT_NODE) {
+  if (startContainer.nodeType === TEXT_NODE) {
     const text = startContainer.textContent ?? '';
     let i = startOffset;
     while (i > 0 && WORD_CHAR_RE.test(text[i - 1]!)) i--;
     if (i !== startOffset) out.setStart(startContainer, i);
   }
-  if (endContainer.nodeType === Node.TEXT_NODE) {
+  if (endContainer.nodeType === TEXT_NODE) {
     const text = endContainer.textContent ?? '';
     let i = endOffset;
     while (i < text.length && WORD_CHAR_RE.test(text[i]!)) i++;
@@ -271,7 +280,7 @@ export function highlightsToMd(
 ): Capture {
   const sorted = [...highlights].sort((a, b) => {
     const pos = a.compareDocumentPosition(b);
-    return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    return pos & DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
   });
 
   const restoreStyles = captureStyles(
