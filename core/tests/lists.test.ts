@@ -73,8 +73,12 @@ describe('ol start: legal numbers survive the guard', () => {
     expect(toMarkdown('<ol start="0"><li>A</li><li>B</li></ol>')).toBe('0. A\n1. B\n');
   });
 
-  it('start="-2" counts from minus two', () => {
-    expect(toMarkdown('<ol start="-2"><li>A</li><li>B</li></ol>')).toBe('-2. A\n-1. B\n');
+  // The numbers survive; the list does not, because Markdown has no marker for
+  // them — a CommonMark ordered marker is digits, so `-2.` was never going to be
+  // one. Written as items they were a single paragraph with both lines joined,
+  // and the page drew two. A block each is the closest the file comes.
+  it('start="-2" keeps both numbers and both lines', () => {
+    expect(toMarkdown('<ol start="-2"><li>A</li><li>B</li></ol>')).toBe('-2. A\n\n-1. B\n');
   });
 
   it('trailing junk is read up to it, as a browser reads it', () => {
@@ -305,5 +309,43 @@ describe('списки определений', () => {
   // их началом строки — теперь это правда и на выходе.
   it('текст страницы не становится разметкой', () => {
     expect(toMarkdown('<dl><dt># term</dt><dd>- def</dd></dl>')).toBe('\\# term\n\n\\- def\n');
+  });
+});
+
+// A task box belongs to the item that holds it, and to no item above that one.
+describe('own task box: a nested checkbox does not mark its parent', () => {
+  it('a plain parent holding a task list has no state of its own', () => {
+    expect(
+      toMarkdown('<ul><li>Eighth item:<ul><li><input type="checkbox" checked> shipped</li></ul></li></ul>'),
+    ).toBe('- Eighth item:\n  - [x] shipped\n');
+  });
+
+  it('the item that holds the box still gets it', () => {
+    expect(toMarkdown('<ul><li><input type="checkbox" checked> done</li></ul>')).toBe('- [x] done\n');
+    expect(toMarkdown('<ul><li><input type="checkbox"> todo</li></ul>')).toBe('- [ ] todo\n');
+  });
+});
+
+// A blank line does not end a list — only a change of delimiter does — so two the
+// page drew apart came back as one, and the second one's numbering with it.
+describe('neighbouring ordered lists: the delimiter parts them', () => {
+  it('two in a row alternate, and each keeps its start', () => {
+    const md = toMarkdown('<ol start="7"><li>a</li></ol><ol start="9"><li>b</li><li>c</li></ol>');
+    expect(md).toBe('7. a\n\n9) b\n10) c\n');
+    // The file alone cannot show this: written with one delimiter throughout, the
+    // same text renders as a single list whose second half is renumbered 8, 9.
+    const out = render(md);
+    expect(out).toContain('<ol start="7">');
+    expect(out).toContain('<ol start="9">');
+  });
+
+  it('three in a row keep every neighbour apart', () => {
+    expect(toMarkdown('<ol><li>a</li></ol><ol start="5"><li>b</li></ol><ol start="9"><li>c</li></ol>')).toBe(
+      '1. a\n\n5) b\n\n9. c\n',
+    );
+  });
+
+  it('a list nobody put a list beside writes the ordinary marker', () => {
+    expect(toMarkdown('<p>x</p><ol start="3"><li>a</li></ol>')).toBe('x\n\n3. a\n');
   });
 });

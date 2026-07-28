@@ -302,3 +302,38 @@ describe('whitespace phase 2 — flanking utility', () => {
     });
   });
 });
+
+// The seam had only the tag to go on, so an element that writes nothing still
+// reported ink and neither neighbour folded its blank. Same invariant as the
+// escaper's, one boundary over: a line starts where nothing has been *written*.
+describe('seam across an element that writes nothing', () => {
+  it('a spacer image between two words leaves one space', () => {
+    expect(
+      toMarkdown('<p>Cited by <img alt="" src="s.gif" width="1" height="1"> Smashing Magazine</p>'),
+    ).toBe('Cited by Smashing Magazine\n');
+  });
+
+  it('an empty wrapper between two words leaves one space', () => {
+    expect(toMarkdown('<p>Empty: <q></q> and a mark</p>')).toBe('Empty: and a mark\n');
+  });
+
+  // Never the other way: an element that does write still parts its neighbours,
+  // or the fold would weld two words into one.
+  it('a picture that is written still parts them', () => {
+    expect(toMarkdown('<p>before <img alt="A photo" src="p.jpg"> after</p>')).toBe(
+      'before ![A photo](p.jpg) after\n',
+    );
+  });
+
+  it('one real space between two runs is still one', () => {
+    expect(toMarkdown('<p><span>Two runs</span> <span>with one space</span></p>')).toBe(
+      'Two runs with one space\n',
+    );
+  });
+
+  it('runs the page welded stay welded', () => {
+    expect(toMarkdown('<p><span>Neither side offers one</span><span>and they weld.</span></p>')).toBe(
+      'Neither side offers oneand they weld.\n',
+    );
+  });
+});

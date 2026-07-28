@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="72" viewBox="0 0 180 72" role="img" aria-label="Services and message flow">
+  <rect width="180" height="72" fill="#f4f7fb" stroke="#d9e0ea"/>
+  <rect x="12" y="20" width="48" height="32" rx="4" fill="#ffffff" stroke="#165dcc"/>
+  <rect x="120" y="20" width="48" height="32" rx="4" fill="#ffffff" stroke="#165dcc"/>
+  <path d="M60 36 H114" stroke="#165dcc" stroke-width="2"/>
+  <path d="M114 36 l-8 -4 v8 z" fill="#165dcc"/>
+</svg>

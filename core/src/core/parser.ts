@@ -563,7 +563,7 @@ const HANDS_CONTENT_BACK = new Set([
 ]);
 
 /** What this node leaves at its end, as the file really receives it. */
-function trailingWritten(node: Node): Trailing {
+function trailingWritten(node: Node, options: MarkItDownOptions): Trailing {
   if (node.nodeType === TEXT_NODE) {
     const text = node.textContent ?? '';
     // A node that writes no character is one the seam cannot see: an empty one,
@@ -579,9 +579,21 @@ function trailingWritten(node: Node): Trailing {
   const tag = el.tagName.toLowerCase();
   // A block that declined the block its tag implies returns its content and
   // writes nothing else; `endsTheLine()` has answered for the ones that kept it.
-  if (!INLINEABLE_BLOCKS.has(tag) && !HANDS_CONTENT_BACK.has(tag)) return 'other';
+  //
+  // Everything else is asked the escaper's question instead of being assumed to
+  // write. This is the same invariant one boundary over — a line starts where
+  // nothing has been *written*, not where no element stands — and the seam had
+  // only the tag to go on: a spacer image between two words reported ink, so
+  // neither neighbour folded its blank and `Cited by  Smashing` carried two
+  // spaces; an empty `<q>` did the same. Wrong this way costs a character that
+  // renders as nothing, and it is the direction the escaper is allowed to err in
+  // too — but never wrong the other way, which would weld two words, so an
+  // element that writes anything at all still answers `other` below.
+  if (!INLINEABLE_BLOCKS.has(tag) && !HANDS_CONTENT_BACK.has(tag)) {
+    return writesSomething(el, options) ? 'other' : 'nothing';
+  }
   for (let child = el.lastChild; child; child = child.previousSibling) {
-    const trailing = trailingWritten(child);
+    const trailing = trailingWritten(child, options);
     if (trailing !== 'nothing') return trailing;
   }
   return 'nothing';
@@ -600,10 +612,10 @@ function trailingWritten(node: Node): Trailing {
  * would cost a word here. So the boundary is `endsTheLine()`, which reads the
  * display the page declared, and each node is asked what it really writes.
  */
-function blankBefore(node: Node): boolean {
+function blankBefore(node: Node, options: MarkItDownOptions): boolean {
   for (let current: Node | null = node; current; current = current.parentNode) {
     for (let prev = current.previousSibling; prev; prev = prev.previousSibling) {
-      const trailing = trailingWritten(prev);
+      const trailing = trailingWritten(prev, options);
       if (trailing !== 'nothing') return trailing === 'blank';
     }
     const parent = current.parentNode;
@@ -634,9 +646,9 @@ function blankBefore(node: Node): boolean {
  * finished document would eat a pipe table's column padding and the indentation
  * `preInCell` writes, which are the converter's characters, not the page's.
  */
-function foldedIntoSeam(node: Node, text: string): string {
+function foldedIntoSeam(node: Node, text: string, options: MarkItDownOptions): string {
   if (!LEADING_BLANK.test(text)) return text;
-  return blankBefore(node) ? text.replace(LEADING_BLANK, '') : text;
+  return blankBefore(node, options) ? text.replace(LEADING_BLANK, '') : text;
 }
 
 /** True while writing into an HTML block, where Markdown is not parsed. */
@@ -708,7 +720,7 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // a run meeting the blank the line already ends in adds nothing. Below the
     // literal returns above, because inside a fence, a code span or a formula
     // every character is content.
-    const own = foldedIntoSeam(node, text);
+    const own = foldedIntoSeam(node, text, options);
     const seam = { behind: wantsTilde ? writtenBefore(node) : '', ahead: ahead.text };
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.

@@ -275,7 +275,7 @@
     <p class="section-lead">Ordinary document structure, followed by less tidy combinations.</p>
 
     <article class="case">
-      <aside><strong>B1.</strong> Headings shift by one and clamp at level six; the permalink glyph is dropped. Paragraphs stay separated, one <code>br</code> is a hard break, two become a paragraph break, and <code>hr</code> becomes <code>---</code>.</aside>
+      <aside><strong>B1.</strong> Headings keep the ranks the page gave them, and clamp at level six. The shift is only ever <em>upwards</em>: a capture whose shallowest heading is already an <code>h1</code> — this one — is not pushed down to keep <code>#</code> free, because an H1 is the rank the page chose for its title and spending it on the note's own formatting costs the reader their structure. Deeper input is still pulled up, which is what the shift is for, and B5 is where that shows. The permalink glyph is dropped. Paragraphs stay separated, one <code>br</code> is a hard break, two become a paragraph break, and <code>hr</code> becomes <code>---</code>.</aside>
       <div class="subject">
         <h1>Page title</h1>
         <h2>Section title <a class="headerlink" href="#blocks" aria-label="Permalink">¶</a></h2>
@@ -366,7 +366,7 @@
     <p class="section-lead">Tags, nesting, punctuation, and whitespace at delimiter boundaries.</p>
 
     <article class="case">
-      <aside><strong>I1.</strong> Expect bold, italic, strikethrough, code, keyboard/sample code, and their nesting. Spaces inside formatting move outside the delimiters.</aside>
+      <aside><strong>I1.</strong> Expect bold, italic, strikethrough, code, keyboard/sample code, and their nesting. Spaces inside formatting move outside the delimiters. The last line ends on the one form that has no Markdown spelling: two emphasised runs meeting with no character between them, where a single pair of delimiters would merge them into one. <span class="known">Known limit</span> — it falls back to a live <code>&lt;em&gt;</code> in Source, the preview renders it correctly, and K3 is where that debt is stated in full.</aside>
       <div class="subject">
         <p><strong>bold</strong>, <em>italic</em>, <del>deleted</del>, <s>struck</s>, and <strike>legacy struck</strike>.</p>
         <p><cite>citation</cite>, <dfn>defined term</dfn>, and <var>variable</var> are italic because that is how the browser displays them.</p>
@@ -524,7 +524,7 @@
     </article>
 
     <article class="case">
-      <aside><strong>L2.</strong> What a <code>start</code> is allowed to be, and what a marker's width does to everything under it. <code>0</code> and a negative start are legal and kept; a start no number can be read out of numbers from 1, as a browser renders it. A marker that widens at <code>10.</code> indents its own item by one more column, and a task marker is content rather than marker — four more columns would make the nested list an indented code block and the second paragraph a listing.</aside>
+      <aside><strong>L2.</strong> What a <code>start</code> is allowed to be, and what a marker's width does to everything under it. <code>0</code> is legal and kept. A negative start is legal in HTML and has no marker in Markdown at all — CommonMark counts an ordered marker as digits — so those two items keep their numbers and become a block each; written as list items they were one paragraph with both lines welded. A start no number can be read out of numbers from 1, as a browser renders it. Neighbouring lists alternate <code>.</code> and <code>)</code>, because a blank line does not end a list and the second one's numbering was being taken over by the first. A marker that widens at <code>10.</code> indents its own item by one more column, and a task marker is content rather than marker — four more columns would make the nested list an indented code block and the second paragraph a listing.</aside>
       <div class="subject">
         <ol start="0"><li>Counts from zero</li><li>Then one</li></ol>
         <ol start="-2"><li>Counts from minus two</li><li>Then minus one</li></ol>
@@ -736,7 +736,7 @@ path\file | a &lt; b &amp; c
           <tr><td># heading</td><td>Literal label</td></tr>
           <tr><td>---</td><td>Three literal dashes</td></tr>
           <tr><td>&lt;button autofocus&gt;Pay&lt;/button&gt;</td><td>Displayed HTML tutorial text</td></tr>
-          <tr><td><span class="katex"><annotation encoding="application/x-tex">P(A|B)</annotation><span aria-hidden="true">P(A|B)</span></span></td><td>Conditional probability</td></tr>
+          <tr><td><span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">P(A|B)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">P(A|B)</span></span></td><td>Conditional probability</td></tr>
         </table>
       </div>
     </article>
@@ -759,7 +759,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>T9.</strong> <span class="setting">Keep complex tables as HTML.</span> With the setting off, this flattens. With it on, converter-owned HTML renders a table with bold/link semantics and image alt text, but carries no <code>onclick</code>, page style, form control, or unsafe URL.</aside>
+      <aside><strong>T9.</strong> <span class="setting">Keep complex tables as HTML.</span> <span class="known">Judged on screen, not from a full-page screenshot</span> — the table is <code>position:fixed</code>, which <code>contain: layout</code> holds inside this card for a reader scrolling the page, but a stitched whole-page capture drops it and leaves the card looking empty. With the setting off, this flattens. With it on, converter-owned HTML renders a table with bold/link semantics and image alt text, but carries no <code>onclick</code>, page style, form control, or unsafe URL.</aside>
       <div class="subject holds-fixed">
         <!-- The handler is inert on purpose. What this case asserts is that an
              `onclick` never reaches the file; a dialog would only block the
@@ -856,9 +856,9 @@ path\file | a &lt; b &amp; c
     <article class="case">
       <aside><strong>M6.</strong> An <code>alt</code> that is present and empty is the markup saying the image is not content — a favicon in a citation pill, a spacer, an icon beside a label. It goes wherever something else in its parent carries text, and stays when it was all that was there, because dropping it would leave an empty link or an empty paragraph. A <em>missing</em> alt claims nothing of the kind and is kept. Google's AI answers put a 2.5 KB base64 favicon inside a sentence this way.</aside>
       <div class="subject">
-        <p>Cited by <img alt="" src="images/favicon.png" width="12" height="12"> Smashing Magazine +1</p>
-        <p><a href="https://commonmark.org/"><img alt="" src="images/favicon.png" width="12" height="12"><span>CommonMark</span></a></p>
-        <p><img alt="" src="images/diagram.png"></p>
+        <p>Cited by <img alt="" src="images/favicon.svg" width="12" height="12"> Smashing Magazine +1</p>
+        <p><a href="https://commonmark.org/"><img alt="" src="images/favicon.svg" width="12" height="12"><span>CommonMark</span></a></p>
+        <p><img alt="" src="images/diagram.svg" width="180" height="72"></p>
         <p>An author who simply forgot: <img src="images/photo.jpg"></p>
       </div>
     </article>
@@ -927,7 +927,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>E6.</strong> A hard break starts a line, and everything a line start makes dangerous is dangerous there — even when the run sits inside a wrapper, which is how every chat interface writes one. The literal <code>#</code> below became a real heading and swallowed the break before it. A wrapper that writes a delimiter of its own is the exception: inside emphasis the backslash would be visible, so nothing is escaped there.</aside>
+      <aside><strong>E6.</strong> A hard break starts a line, and everything a line start makes dangerous is dangerous there — even when the run sits inside a wrapper, which is how every chat interface writes one. The literal <code>#</code> below became a real heading and swallowed the break before it. A wrapper that writes a delimiter of its own is the exception, and the reason is the construct rather than the backslash: inside emphasis the run is not at the head of a line at all — the <code>_</code> is written before it — so there is no block start to escape. (A backslash there would render as nothing, as it does anywhere else; it becomes visible only in an HTML-context cell, which is the table fallback's business.)</aside>
       <div class="subject">
         <p><span>**two asterisks**</span><br><span># a hash at the start of a line</span><br><span>`backticks`</span></p>
         <p>plain text<br>&gt; a quote marker<br>- a bullet<br>1. numbering</p>
@@ -936,7 +936,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>E7.</strong> A line starts where nothing has been <em>written</em>, not where no element stands. A picture the page drew no pixels of — a spacer, a tracking pixel — writes nothing at all, so the text behind it is still at the head of its line and still needs its backslash. Both shapes below are the same nothing: one states no address, one states a real one and is still a single pixel. Expect a literal <code>#</code> and a literal <code>-</code>, and no heading and no bullet.</aside>
+      <aside><strong>E7.</strong> A line starts where nothing has been <em>written</em>, not where no element stands. A picture the page drew no pixels of — a spacer, a tracking pixel — writes nothing at all, so the text behind it is still at the head of its line and still needs its backslash. The second shape is that nothing: it states a real address and is still a single pixel, so the reader met no picture and the escape behind it is the whole of what the case asks. <span class="known">The first is under review</span> — an <code>&lt;img&gt;</code> with no address at all is laid out as its <em>alt text</em>, and the stated <code>width</code> never applies to that box, so the word <code>spacer</code> is drawn where the markup claims a pixel. The escape is right either way; whether the word should reach the file is the open question. Expect a literal <code>#</code> and a literal <code>-</code>, and no heading and no bullet.</aside>
       <div class="subject">
         <p><img alt="spacer" width="1" height="1"># not a heading, behind a picture nobody saw</p>
         <p><img alt="spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1">- not a bullet, behind the same shape with an address</p>
@@ -982,7 +982,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>R3.</strong> Active and embedded markup is removed outright. Only the two visible sentinel paragraphs remain. The <code>srcdoc</code> frame is the one line here a reader can argue with: <code>IFRAME_PAYLOAD</code> was on the screen and is not in the file. It is an accepted boundary rather than an oversight — a frame is a document of its own, a selection cannot cross into one, and every other frame on the web is cross-origin and unreadable, so parsing the one kind that happens to be inline would make the product's answer depend on which frame a page chose.</aside>
+      <aside><strong>R3.</strong> Active and embedded markup is removed outright. Only the two visible sentinel paragraphs remain. Two lines here a reader can argue with. <code>IFRAME_PAYLOAD</code> was on the screen and is not in the file; so was the <code>&lt;svg&gt;</code>, drawn as a single outsized letter, and its text is gone with it — a reader cannot make out the word from the drawing, so nothing readable was lost, but the pixels were there. It is an accepted boundary rather than an oversight — a frame is a document of its own, a selection cannot cross into one, and every other frame on the web is cross-origin and unreadable, so parsing the one kind that happens to be inline would make the product's answer depend on which frame a page chose.</aside>
       <div class="subject">
         <p>Before removed elements.</p>
         <script>void "SCRIPT_PAYLOAD";</script>
@@ -991,7 +991,7 @@ path\file | a &lt; b &amp; c
         <object data="about:blank">OBJECT_PAYLOAD</object>
         <embed src="about:blank">
         <template>TEMPLATE_PAYLOAD</template>
-        <svg viewBox="0 0 10 10" aria-label="SVG_PAYLOAD"><text x="0" y="8">SVG_PAYLOAD</text></svg>
+        <svg width="150" height="24" viewBox="0 0 150 24" aria-label="SVG_PAYLOAD"><text x="0" y="17">SVG_PAYLOAD</text></svg>
         <p>After removed elements.</p>
       </div>
     </article>
@@ -1044,11 +1044,11 @@ path\file | a &lt; b &amp; c
       <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text, while tag- or comment-shaped text is converted to <code>&amp;lt;</code> rather than becoming live HTML.</aside>
       <div class="subject">
         <p>
-          <span class="katex"><annotation encoding="application/x-tex">a &lt; b</annotation><span aria-hidden="true">a &lt; b</span></span>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">a &lt; b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">a &lt; b</span></span>
           and
-          <span class="katex"><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation><span aria-hidden="true">x custom X y</span></span>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x custom X y</span></span>
           and
-          <span class="katex"><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation><span aria-hidden="true">x less-than comment-shaped</span></span>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x less-than comment-shaped</span></span>
         </p>
       </div>
     </article>
@@ -1193,7 +1193,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
     </article>
 
     <article class="case">
-      <aside><strong>W5.</strong> Wikipedia's Vector 2022 skin: the heading is inlined so its <code>[edit]</code> link lands beside the title, and the wrapper around them carries the weight. The heading keeps its level — the reader saw a line of large type — and the link follows it as its own paragraph. Read as the style states it, the section titles of a whole article arrive as prose. The second wrapper's <code>[edit]</code> comes out bold, which is K9.</aside>
+      <aside><strong>W5.</strong> Wikipedia's Vector 2022 skin: the heading is inlined so its <code>[edit]</code> link lands beside the title, and the wrapper around them carries the weight. The heading keeps its level — the reader saw a line of large type — and the link follows it as its own paragraph. Read as the style states it, the section titles of a whole article arrive as prose. Neither <code>[edit]</code> comes out bold: the wrapper states the weight, the heading carries it away, and a heading takes no mark of its own — so the file says what the screen does, where the link is drawn in ordinary type.</aside>
       <div class="subject">
         <div class="mw-heading" style="font-weight:700">
           <h2 style="display:inline;font-weight:400">Definitions</h2>
@@ -1210,7 +1210,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
     </article>
 
     <article class="case">
-      <aside><strong>W6.</strong> Reddit's comment header: the <code>summary</code> states a weight that every child takes back, and the author's name declares it again for itself. Only the name is bold on screen, so only the name is bold in the file — no <code>**</code> around the line, and no <code>****</code> anywhere. The bolded block below states the other half: a mark goes round each block, never across the blank between two of them.</aside>
+      <aside><strong>W6.</strong> Reddit's comment header: the <code>summary</code> states a weight that every child takes back, and the author's name declares it again for itself. The name and the <code>MODERATOR</code> badge each declare the weight for themselves and each is bold on screen; the timestamp beside them is not, and neither is the line as a whole. So the file marks those two runs and nothing else — no <code>**</code> around the line, and no <code>****</code> anywhere. The bolded block below states the other half: a mark goes round each block, never across the blank between two of them.</aside>
       <div class="subject">
         <details open>
           <summary style="font-weight:700">
@@ -1428,7 +1428,7 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K2.</strong> A <code>&lt;summary&gt;</code> and an <code>&lt;address&gt;</code> each draw a line of their own and each now writes one: a summary parts from the body it opens, and two addresses are two lines. They used to arrive as <code>TitleBody</code> and as one line. The addresses also arrive emphasised, and correctly: every UA stylesheet sets <code>address { font-style: italic }</code>, so the reader saw them slanted — the second falls back to a tag because two emphasis runs meeting would merge into one.</aside>
+      <aside><strong>K2.</strong> A <code>&lt;summary&gt;</code> and an <code>&lt;address&gt;</code> each draw a line of their own and each now writes one: a summary parts from the body it opens, and two addresses are two lines. They used to arrive as <code>TitleBody</code> and as one line. The addresses also arrive emphasised, and correctly: every UA stylesheet sets <code>address { font-style: italic }</code>, so the reader saw them slanted. Both get an ordinary <code>_</code>: the blank line each address now writes stands between them, so no two emphasis runs meet and nothing has to fall back to a tag — the first half of this case repaired the second.</aside>
       <div class="subject">
         <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
         <address>One</address><address>Two</address>

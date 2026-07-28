@@ -141,6 +141,14 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   It differs from the `alt=""` rule: a spacer states no `alt` at all, so nothing was authored to
   call it decorative, and the size is all that is left to read.
 
+- The seam between two runs is folded by what was *written* there, not by what stood there. Two
+  collapsible runs meeting across an element boundary are one space on screen, and the fold that
+  makes them one asked the tag: an element outside the inlineable sets reported ink whatever its
+  rules did, so a spacer image between two words left `Cited by  Smashing` with two spaces and an
+  empty `<q>` did the same. It asks `writesSomething()` now — the escaper's own question, one
+  boundary over, and the same asymmetry decides which way to err: reading ink as nothing costs a
+  character that renders as nothing, reading nothing as ink welds two words, so anything that
+  writes at all still parts its neighbours.
 - A wrapper holding only blanks is not an empty one. Every syntax highlighter writes indentation as
   `<span class="w">  </span>`, so removing such a span took the blank with it: an mkdocs YAML sample
   came back flush left with `anchor_linenums:true`, and a Python one as `importtensorflowastf`. The

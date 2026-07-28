@@ -261,7 +261,23 @@ function preprocessMath(text: string): string {
   });
 
   // Inline math: $...$ → placeholder span
-  text = text.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (_, latex) => {
+  //
+  // A price is not a formula, and two of them in one paragraph are not a formula
+  // either — which is the whole of what a bare pair of dollars looks like.
+  // `**$129.00** ~~$159.00~~`, an ordinary product card, became
+  // `**«129.00** ~~»159.00~~` and KaTeX drew the asterisks and tildes between the
+  // two amounts as mathematics. `Costs $5 and $7 in total.` went the same way. The
+  // file was never wrong — `rawMd` is the source of truth and this runs on the way
+  // to the preview only — but the panel showed something the page never said,
+  // which is the one thing the preview is for.
+  //
+  // The three conditions are Pandoc's, and they are about the dollars rather than
+  // about the body — the body between two prices is `129.00** ~~`, which no test
+  // for "looks like money" would ever catch. An opening dollar is not followed by
+  // a blank, a closing one is not preceded by one, and a closing one is not
+  // followed by a digit. That last is what parts two amounts: the dollar of
+  // `$159.00` has a `1` behind it and so cannot close anything.
+  text = text.replace(/(?<!\$)\$(?!\$)(?!\s)([^$\n]*?[^$\s])\$(?!\$)(?!\d)/g, (_, latex: string) => {
     const id = String(mathCounter++);
     mathMap.set(id, { latex: latex.trim().replace(INVISIBLE_MATH_CHARS, ''), display: false });
     return `<span data-katex="${id}" data-display="0"></span>`;

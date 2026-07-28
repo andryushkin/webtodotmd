@@ -158,7 +158,14 @@ function readLang(codeEl: Element | null, preEl: Element): string {
     const dl = codeEl.getAttribute('data-lang') ?? codeEl.getAttribute('data-language');
     if (dl) return dl.trim();
   }
-  for (const target of [codeEl, preEl]) {
+  // The wrapper too, and only for the highlighters' own spellings. GitHub writes
+  // the language on the box rather than on either tag — `<div class="highlight
+  // highlight-source-typescript"><pre>` — so a sample copied from a repository or
+  // a README arrived as a fence with no language at all, although
+  // `highlight-source-` is a pattern this list has always carried. Never the bare
+  // class name here: a wrapper is where `highlight`, `snippet` and `code-block`
+  // live, and any of them would pass for a language read off the word alone.
+  for (const target of [codeEl, preEl, preEl.parentElement]) {
     if (!target) continue;
     const cls = target.getAttribute('class') ?? '';
     for (const re of LANG_PATTERNS) {

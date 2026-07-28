@@ -51,3 +51,13 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   string to keep in sync for nothing. The setting that reveals it is translated (`labelHtmlView`).
 - Turning the setting off while that view is on screen falls back to the source view: a hidden tab
   with its pane still showing is a panel with no way back.
+
+- The preview's math pass runs on the way to `marked` and never on `rawMd`, so what it gets wrong
+  is what the reader is shown rather than what they save — which is the whole of what the preview
+  is for. A bare pair of dollars is what a price looks like: `**$129.00** ~~$159.00~~`, an ordinary
+  product card, was read as one formula from `129.00` to `159.00` and KaTeX drew the asterisks
+  between them as mathematics, and `Costs $5 and $7 in total.` went the same way. The three
+  conditions are Pandoc's and they are about the dollars, not the body — the body between two
+  prices is `129.00** ~~`, which no test for "looks like money" would catch: an opening dollar is
+  not followed by a blank, a closing one is not preceded by one, and a closing one is not followed
+  by a digit. The last is what parts two amounts.

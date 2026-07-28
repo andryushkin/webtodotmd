@@ -405,3 +405,28 @@ describe('a language bar drawn beside the <pre>', () => {
     expect(toMarkdown(html)).toBe('```js\nx\n```\n');
   });
 });
+
+// GitHub states the language on the box rather than on either tag, and
+// `highlight-source-` has always been in the pattern list — it was only ever
+// asked of the `<code>` and the `<pre>`, so every sample copied out of a
+// repository or a README arrived as a fence with no language at all.
+describe('language on the wrapper: the highlighters that state it there', () => {
+  it('GitHub writes it on the div around the pre', () => {
+    const html = '<div class="highlight highlight-source-typescript"><pre>type Box = {}</pre></div>';
+    expect(toMarkdown(html)).toBe('```typescript\ntype Box = {}\n```\n');
+  });
+
+  it('the tags still answer first', () => {
+    const html =
+      '<div class="highlight highlight-source-typescript"><pre><code class="language-js">x</code></pre></div>';
+    expect(toMarkdown(html)).toBe('```js\nx\n```\n');
+  });
+
+  // Never the bare class name one level up: a wrapper is where `highlight`,
+  // `snippet` and `code-block` live, and any of them would pass for a language
+  // read off the word alone.
+  it('a wrapper named for itself claims no language', () => {
+    expect(toMarkdown('<div class="highlight"><pre>x</pre></div>')).toBe('```\nx\n```\n');
+    expect(toMarkdown('<div class="snippet"><pre>x</pre></div>')).toBe('```\nx\n```\n');
+  });
+});
