@@ -531,8 +531,51 @@ describe('обёртка без читаемого LaTeX', () => {
     const html =
       '<span class="katex">' +
       '<span class="katex-mathml"><math><semantics>' +
-      '<annotation encoding="application/x-tex">E = m</annotation></semantics></math></span>' +
-      '<span class="katex-html" aria-hidden="true">E=m</span></span>';
-    expect(md(html)).toBe('see $E = m$ here\n');
+      '<annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math></span>' +
+      '<span class="katex-html" aria-hidden="true">E = mc²</span></span>';
+    expect(md(html)).toBe('see $E = mc^2$ here\n');
+  });
+});
+
+// Строка, не использующая ни одной возможности LaTeX, — не формула, а текст,
+// который кто-то прогнал через рендерер. Такую страница рисует сама, и что
+// нарисовано, читатель и видел: annotation `x <x-foo style="position:fixed">X</
+// x-foo> y` рисовалась как `x custom X y`, а в файл уходил атрибут, не стоявший
+// на экране, — плюс `\lt`/`\gt`, потраченные на обезвреживание разметки, которой
+// читателю никто не показывал.
+describe('носитель без синтаксиса LaTeX', () => {
+  const wrap = (latex: string, drawn: string) =>
+    '<span class="katex"><span class="katex-mathml"><math><semantics>' +
+    `<annotation encoding="application/x-tex">${latex}</annotation>` +
+    `</semantics></math></span><span class="katex-html" aria-hidden="true">${drawn}</span></span>`;
+  const md = (html: string) => toMarkdown(`<p>${html}</p>`, { math: true }).trim();
+
+  it.each([
+    ['расходится с нарисованным', 'x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y', 'x custom X y', 'x custom X y'],
+    ['комментарий', 'x&lt;!--comment-shaped', 'x less-than comment-shaped', 'x less-than comment-shaped'],
+    // `<` с пробелом справа не открывает тега, поэтому и обратного слэша не стоит.
+    ['совпадает с нарисованным', 'a &lt; b', 'a &lt; b', 'a < b'],
+  ])('берёт нарисованное: %s', (_name, latex, drawn, expected) => {
+    expect(md(wrap(latex, drawn))).toBe(expected);
+  });
+
+  // Настоящая формула до этой ветки не доходит: её нельзя записать без команды,
+  // степени или группы.
+  it.each([
+    ['степень', 'E = mc^2', 'E = mc²'],
+    ['команда', '\\alpha + \\beta', 'α + β'],
+    ['группа и дробь', '\\frac{a}{b}', 'ba'],
+    ['индекс', 'x_1 + x_2', 'x₁ + x₂'],
+  ])('остаётся формулой: %s', (_name, latex, drawn) => {
+    expect(md(wrap(latex, drawn))).toBe(`$${latex}$`);
+  });
+
+  // Нарисованного может не быть вовсе — тогда annotation единственный свидетель,
+  // и формула на виду лучше удалённой.
+  it('без нарисованной половины остаётся формулой', () => {
+    const html =
+      '<span class="katex"><span class="katex-mathml"><math><semantics>' +
+      '<annotation encoding="application/x-tex">a &lt; b</annotation></semantics></math></span></span>';
+    expect(md(html)).toBe('$a < b$');
   });
 });

@@ -1,5 +1,5 @@
 import type { Rule } from '../types.js';
-import { escapeMathTags } from '../core/escape.js';
+import { escapeMathTags, escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
 
 // Two attributes are spelled `display` and mean different things, so each question
 // has to be put to the element that answers it. On `<math>` it is MathML's own,
@@ -109,6 +109,63 @@ function toMathString(latex: string, display: boolean): string {
   return display ? `$$${safe}$$` : `$${safe}$`;
 }
 
+// LaTeX is a language, and a string using none of it is not a formula — it is text
+// somebody ran through a renderer. `\`, `^`, `_`, `{`, `}` and `&` are the whole of
+// what separates the two: every command, every script, every group and every
+// alignment character is one of them, so `E = mc^2`, `\frac{a}{b}` and `\alpha` all
+// answer yes on their first special character, while `a < b` answers no.
+const LATEX_SYNTAX = /[\\^_{}&]/;
+
+// Everything the wrapper holds that is not a carrier — the half a renderer draws.
+// Taken from a clone, because the page's own nodes are what a later rule converts
+// and the capture must not be edited on the way past.
+function drawnText(el: Element): string {
+  // A carrier standing on its own has no drawn half to offer: what a `<math>` holds
+  // is the formula again in MathML, and a `<script type="math/tex">` holds the very
+  // LaTeX being read. Neither is anything the reader was shown.
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'math' || tag === 'script') return '';
+  const clone = el.cloneNode(true) as Element;
+  // Every shape a carrier comes in, not only the MathML one: `<annotation>` is read
+  // straight off the wrapper where a page writes no `<math>` around it, and leaving
+  // it in made the drawn half read back as the LaTeX itself.
+  const carriers = 'math, annotation, mjx-assistive-mml, .katex-mathml, script[type^="math/tex"]';
+  for (const carrier of clone.querySelectorAll(carriers)) {
+    carrier.remove();
+  }
+  return (clone.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * What the wrapper writes: the formula where the annotation states one, and what
+ * the page drew where it does not.
+ *
+ * A carrier holding no LaTeX syntax is the case the screen has to settle, and it
+ * is settled the way everything else here is — by what the reader met. `x <x-foo
+ * style="position:fixed">X</x-foo> y` is a string a page rendered as `x custom X
+ * y`, and reading it as a formula put an attribute into the file that stood
+ * nowhere on screen, with `\lt`/`\gt` spent defusing markup that was never the
+ * reader's to see. Where the two agree the choice costs nothing — `a < b` is drawn
+ * `a < b` — and where they disagree the drawing is the only one of them anybody
+ * looked at.
+ *
+ * A real formula never reaches this branch: it cannot be written without a
+ * command, a script or a group, and `E = mc^2` beside its drawn `E = mc²` stays
+ * `$E = mc^2$` — which is the case the whole maths path exists for, and the reason
+ * the test is on the LaTeX rather than on whether the two halves match.
+ */
+function wrapperOutput(el: Element): string {
+  const result = extractMath(el);
+  if (!result) return '';
+  if (!LATEX_SYNTAX.test(result.latex)) {
+    const drawn = drawnText(el);
+    // Nothing drawn leaves the annotation as the only witness there is, and a
+    // formula on show beats a formula deleted.
+    if (drawn) return escapeHtmlSyntax(escapeInlineMarkdown(drawn));
+  }
+  return toMathString(result.latex, result.display);
+}
+
 export const MATH_RULES: Rule[] = [
   {
     name: 'katex',
@@ -122,11 +179,7 @@ export const MATH_RULES: Rule[] = [
     // the annotation is not — `E=mc²` left the page altogether, and with `math`
     // off the same capture kept it.
     filter: (el) => el.classList.contains('katex') && extractMath(el) !== null,
-    replacement: (el) => {
-      const result = extractMath(el);
-      if (!result) return '';
-      return toMathString(result.latex, result.display);
-    },
+    replacement: (el) => wrapperOutput(el),
   },
   {
     name: 'mjx-container',
@@ -135,11 +188,7 @@ export const MATH_RULES: Rule[] = [
     // MathML the annotation lives in comes from the a11y extension, and a page
     // loading `tex-chtml` without it draws `<mjx-math>` and nothing else.
     filter: (el) => el.tagName.toLowerCase() === 'mjx-container' && extractMath(el) !== null,
-    replacement: (el) => {
-      const result = extractMath(el);
-      if (!result) return '';
-      return toMathString(result.latex, result.display);
-    },
+    replacement: (el) => wrapperOutput(el),
   },
   // The third renderer wrapper, and the one that holds a picture beside the
   // meaning. Wikipedia's Math extension publishes both halves of every formula —
@@ -165,11 +214,7 @@ export const MATH_RULES: Rule[] = [
     name: 'mwe-math-element',
     ignoresChildContent: true,
     filter: (el) => el.classList.contains('mwe-math-element') && extractMath(el) !== null,
-    replacement: (el) => {
-      const result = extractMath(el);
-      if (!result) return '';
-      return toMathString(result.latex, result.display);
-    },
+    replacement: (el) => wrapperOutput(el),
   },
   {
     name: 'math-script-v2',
@@ -178,20 +223,12 @@ export const MATH_RULES: Rule[] = [
       if (el.tagName.toLowerCase() !== 'script') return false;
       return (el.getAttribute('type') ?? '').startsWith('math/tex');
     },
-    replacement: (el) => {
-      const result = extractMath(el);
-      if (!result) return '';
-      return toMathString(result.latex, result.display);
-    },
+    replacement: (el) => wrapperOutput(el),
   },
   {
     name: 'math-element',
     ignoresChildContent: true,
     filter: (el) => el.tagName.toLowerCase() === 'math',
-    replacement: (el) => {
-      const result = extractMath(el);
-      if (!result) return '';
-      return toMathString(result.latex, result.display);
-    },
+    replacement: (el) => wrapperOutput(el),
   },
 ];

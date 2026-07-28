@@ -269,6 +269,18 @@ threshold sits where no layout lands by accident.
   *wrapper* — `.katex`, `<mjx-container>`, `.mwe-math-element` each have a rule that ignores its
   children — because the wrapper is the only element that knows the two are one formula. A rule that
   merely refused the `<img>` would have to be taught every further fallback the renderer adds.
+- A carrier using no LaTeX at all carries no formula either, and there the screen settles it like
+  everything else: the wrapper writes what the page *drew*. `\`, `^`, `_`, `{`, `}` and `&` are the
+  whole of the language — no command, script, group or alignment is written without one — so
+  `E = mc^2` and `\frac{a}{b}` never reach this branch, and `x <x-foo style="position:fixed">X</x-foo> y`
+  does: a string somebody's page rendered, drawn as `x custom X y`, which used to reach the file as
+  an attribute nobody saw plus `\lt`/`\gt` spent defusing markup that was never the reader's. The
+  drawn half is the wrapper minus every carrier shape — `<math>`, a bare `<annotation>`, `<mjx-assistive-mml>`,
+  `.katex-mathml`, the `math/tex` script — and where there is none the annotation stays the only
+  witness, so the formula is written rather than deleted. The cost is real and knowingly paid: on a
+  page KaTeX really rendered, `a < b` and `x + y` now arrive as the glyphs `a\<b` and `x+y`, spacing
+  and italics gone, because glyph spans carry no spaces. It buys the rule that the file says what
+  the screen said.
 - Every one of those three claims its wrapper only where it can *read* a formula there, and the
   class alone is never enough. Claiming it with nothing to read returns the empty string, and
   ignoring the children then takes the drawing with it — so the wrapper of a formula whose LaTeX
