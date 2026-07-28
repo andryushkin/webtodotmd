@@ -25,7 +25,7 @@ together, `split` a blank it invented, `markup-shown` Markdown the render still
 prints as characters, `lost` and `added` text on one side only.
 
 ```bash
-bun add -d playwright        # once; the repository itself does not depend on it
+bunx playwright install chromium   # once; the package itself is a devDependency
 bun build tests/real-pages/harness.ts --target=browser --format=iife \
   --outfile=/tmp/harness.js
 bun tests/real-pages/run.ts tests/real-pages/targets.json /tmp/harness.js store/research/real-pages
