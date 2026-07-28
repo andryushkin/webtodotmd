@@ -170,3 +170,116 @@ describe('aria heading criteria: a level deeper than Markdown writes', () => {
     expect(toMarkdown('<h4>Real</h4>', { topHeadingLevel: 2 })).toBe('## Real\n');
   });
 });
+
+// What a `<div>` has to show before its claim of being a heading is written as
+// one. A tag is drawn by the browser, so an `<h3>` cannot look like body text;
+// a `<div>` is drawn like everything else, and the role alone put four headings
+// in the file where the reader met six identical lines.
+describe('aria heading criteria: the three factors', () => {
+  // What a snapshot writes on an element claiming the role: the size it was
+  // drawn at as a multiple of the text around it, whether or not it differs.
+  // `1em` is the declaration that says the drawing was read and was ordinary.
+  const drawn = (ratio: string, rest = ''): string =>
+    `<div role="heading" aria-level="3" data-s2md-style="font-size:${ratio}${rest}">T</div>`;
+
+  describe('F1: it draws a line of its own', () => {
+    it('a role inside a sentence is a label, not a heading', () => {
+      // `##` here would cut the sentence in two, and the words either side of it
+      // would land in different blocks.
+      const html = '<div>before <span role="heading" aria-level="3">Label</span> after</div>';
+      expect(toMarkdown(html)).toBe('before Label after\n');
+    });
+
+    it('the same span drawn as a block is one', () => {
+      const html =
+        '<div>before <span role="heading" aria-level="3" style="display:block">Label</span></div>';
+      expect(toMarkdown(html)).toContain('### Label');
+    });
+
+    it('a block tag the page inlines is not one either', () => {
+      const html =
+        '<div>before <div role="heading" aria-level="3" style="display:inline">Label</div> after</div>';
+      expect(toMarkdown(html)).toBe('before Label after\n');
+    });
+  });
+
+  describe('F2: it holds no block of its own', () => {
+    it('a role on the wrapper of a section is not a heading', () => {
+      // Written as one, the `##` either drags the whole section onto the heading's
+      // line or puts a heading inside a heading.
+      const html = '<div role="heading" aria-level="2"><p>First</p><p>Second</p></div>';
+      expect(toMarkdown(html)).toBe('First\n\nSecond\n');
+    });
+
+    it('a line broken inside the heading still is', () => {
+      // A `<br>` draws a second line of the heading, not a block under it, which
+      // is what `<h2>a<br>b</h2>` has always meant.
+      expect(toMarkdown('<div role="heading" aria-level="2">a<br>b</div>')).toContain('## a');
+    });
+
+    it('inline wrappers are not blocks', () => {
+      const html = '<div role="heading" aria-level="2"><span><em>Title</em></span></div>';
+      expect(toMarkdown(html)).toBe('## _Title_\n');
+    });
+  });
+
+  describe('F3: it was drawn apart from the text around it', () => {
+    it('heavier than its surroundings is a heading', () => {
+      expect(toMarkdown(drawn('1em', ';font-weight:700'))).toBe('### T\n');
+    });
+
+    it('larger than its surroundings is a heading', () => {
+      // Either spelling on its own: a page tells a heading apart by size or by
+      // weight, and requiring both would lose half the interfaces there are.
+      expect(toMarkdown(drawn('1.5em'))).toBe('### T\n');
+    });
+
+    it('drawn like the text around it is a paragraph', () => {
+      expect(toMarkdown(drawn('1em'))).toBe('T\n');
+    });
+
+    it('and so is one drawn smaller', () => {
+      expect(toMarkdown(drawn('0.75em'))).toBe('T\n');
+    });
+
+    it('reads the percentage spelling of the same thing', () => {
+      expect(toMarkdown(drawn('150%'))).toBe('### T\n');
+      expect(toMarkdown(drawn('100%'))).toBe('T\n');
+    });
+
+    it('the wrapper carrying the size costs the heading, knowingly', () => {
+      // `<div class="h3"><div role="heading">` — the size is on the wrapper, so
+      // the element itself is drawn at 1em and reads as ordinary text. The error
+      // runs towards a paragraph, which keeps every word.
+      const html = `<div data-s2md-style="font-size:1.5em">${drawn('1em')}</div>`;
+      expect(toMarkdown(html)).toBe('T\n');
+    });
+  });
+
+  describe('the silence rule: no snapshot, no question', () => {
+    it('a library caller keeps the role exactly as before', () => {
+      // `server.ts` and every caller with no content script behind it convert
+      // markup nobody wrote a drawing down for, and there an absent declaration
+      // means the question was never put.
+      expect(toMarkdown('<div role="heading" aria-level="3">T</div>')).toBe('### T\n');
+    });
+
+    it('a colour is not a drawing anybody read', () => {
+      const html = '<div role="heading" aria-level="3" style="color:red">T</div>';
+      expect(toMarkdown(html)).toBe('### T\n');
+    });
+
+    it('a demoted role sets no level for the rest of the page', () => {
+      // The `<h4>` is then the shallowest heading there is, and rises to `##`.
+      // Counted at its stated 2 it would have held the whole page down.
+      const plain = '<div role="heading" aria-level="2" data-s2md-style="font-size:1em">P</div>';
+      expect(toMarkdown('<h4>Real</h4>' + plain, { topHeadingLevel: 2 })).toContain('## Real');
+    });
+
+    it('and a kept one still does', () => {
+      const kept =
+        '<div role="heading" aria-level="2" data-s2md-style="font-size:1.5em">K</div>';
+      expect(toMarkdown('<h4>Real</h4>' + kept, { topHeadingLevel: 2 })).toContain('#### Real');
+    });
+  });
+});

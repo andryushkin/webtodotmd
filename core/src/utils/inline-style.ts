@@ -329,6 +329,42 @@ export function weightFrom(read: StyleReader, inherited: number): number | undef
   return Number.isFinite(number) ? number : undefined;
 }
 
+/**
+ * The type size this style states, in pixels — what a computed style always
+ * writes, and undefined for anything relative, which a length alone cannot say.
+ *
+ * Read by whoever holds live nodes; nothing in the core asks it, because an
+ * absolute size says nothing on its own. 24px is a heading on one page and body
+ * text on another, and the clone cannot see which.
+ */
+export function sizeFrom(read: StyleReader): number | undefined {
+  return px(read('font-size'));
+}
+
+/**
+ * The size this style states as a multiple of the text it sits in — `1.5em` is
+ * half again the size of its surroundings, and `1em` is no different at all.
+ *
+ * That is what `em` means on `font-size` and only on `font-size`: the property
+ * resolves against the *inherited* size rather than its own, so this is ordinary
+ * CSS saying exactly the thing a heading has to be judged by. A snapshot writes
+ * it that way for the same reason — see `src/content/style-snapshot.ts`, which
+ * has the two computed sizes in hand and hands over the ratio rather than a pair
+ * of lengths the clone would have to find each other by.
+ *
+ * `%` is the same statement in the other spelling and is read too. `rem` is not:
+ * it resolves against the document root, which is a size the surrounding text
+ * need have nothing to do with.
+ */
+export function relativeSizeFrom(read: StyleReader): number | undefined {
+  const value = read('font-size');
+  if (value === undefined) return undefined;
+  const match = /^(\d*\.?\d+)(em|%)$/.exec(value.trim());
+  if (!match) return undefined;
+  const number = Number.parseFloat(match[1]!);
+  return match[2] === '%' ? number / 100 : number;
+}
+
 /** Whether this style declares a slant, and which way. */
 export function italicFrom(read: StyleReader): boolean | undefined {
   const value = read('font-style');
@@ -781,6 +817,46 @@ function ownFace(el: Element, inherited: Face): Face {
 function inheritedFace(el: Element): Face {
   const parent = el.parentElement;
   return parent === null ? PLAIN : ownFace(parent, inheritedFace(parent));
+}
+
+/**
+ * Whether this element was drawn as something other than the text around it —
+ * larger type, or heavier — and `undefined` where nothing said how it was drawn.
+ *
+ * The question a `<div>` claiming to be a heading has to answer. A tag carries
+ * its own drawing: the browser paints an `<h3>` large and bold whatever the page
+ * says, so the claim and the appearance cannot disagree. A `<div>` is painted
+ * like everything else, so the role is a statement about meaning and this is the
+ * only witness to what the reader met.
+ *
+ * Either spelling counts, and that is not a loophole: a page tells a heading
+ * apart by size *or* by weight — a sidebar title at 600 in body type, a card
+ * heading at 20px in body weight — and requiring both would lose half the
+ * interfaces there are. Weight comes through `weightFrom`, so `bolder` resolves
+ * against what was inherited rather than adding a fixed amount, and it is
+ * compared against the inherited weight for the reason `addedMarks` gives.
+ *
+ * The third answer is the important one. Silence in a snapshot is not a denial —
+ * that is the standing rule here — so a rule that wants to read silence as "no"
+ * has to know first that somebody was speaking. `style-snapshot.ts` states the
+ * relative size on every element carrying the role, whether or not it differs,
+ * for exactly this: a declaration is the evidence that the drawing was read at
+ * all, and its value is the answer. Without one — `server.ts`, every library
+ * caller, a capture whose snapshot faulted — the question was never put, and the
+ * caller keeps what it would have kept before.
+ *
+ * The known cost of measuring against the *inherited* size: `<div class="h3">
+ * <div role="heading">` has the size on the wrapper, so the element itself is
+ * drawn at `1em` and the heading is demoted to a paragraph. That direction loses
+ * structure and no words, which is the side to be wrong on.
+ */
+export function drawnApart(el: Element): boolean | undefined {
+  const read = elementStyle(el);
+  const relative = relativeSizeFrom(read);
+  const inherited = inheritedFace(el).weight;
+  const weight = weightFrom(read, inherited);
+  if (relative === undefined && weight === undefined) return undefined;
+  return (relative ?? 1) > 1 || (weight ?? inherited) > inherited;
 }
 
 export interface StyleMarks {

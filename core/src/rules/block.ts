@@ -1,7 +1,7 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
 import { SEMANTIC_BLOCKS } from '../utils/blocks.js';
-import { ariaLevel } from '../utils/headings.js';
+import { ariaLevel, writtenAsHeading } from '../utils/headings.js';
 
 const ELEMENT_NODE = 1;
 const ANCHOR_CLASSES = new Set(['anchor', 'heading-link', 'headerlink']);
@@ -50,13 +50,19 @@ export const BLOCK_RULES: Rule[] = [
   // the tag said — Google's AI answers put every one of theirs this way, and the
   // file came back with the sections as plain paragraphs.
   //
+  // The role alone is not enough, which is the difference between this rule and
+  // the one above: a tag is drawn as a heading by the browser and a `<div>` is
+  // drawn like everything else, so the claim and the appearance can come apart.
+  // `writtenAsHeading` is what asks whether they did, and `minHeadingLevel` asks
+  // it too — one answer, or a demoted role would still set the level.
+  //
   // The level comes from `aria-level`, which the role requires; a missing or
   // unreadable one is read as 2, the level a browser reports for a heading that
   // does not say, and a level deeper than Markdown writes lands on the deepest
   // one it has. `ariaLevel` says why, and `minHeadingLevel` reads the same answer.
   {
     name: 'aria-heading',
-    filter: (el) => el.getAttribute('role') === 'heading',
+    filter: (el) => el.getAttribute('role') === 'heading' && writtenAsHeading(el),
     replacement(el, _childContent, options) {
       const text = getHeadingText(el, options);
       if (!text) return '';

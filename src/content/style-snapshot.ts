@@ -70,6 +70,7 @@ import {
   italicFrom,
   removedFrom,
   revealsFrom,
+  sizeFrom,
   struckFrom,
   visuallyHiddenFrom,
   weightFrom,
@@ -314,6 +315,17 @@ function withinBudget(el: Element): boolean {
 /** What an element inherits from the box it sits in. */
 interface Context {
   weight: number;
+  /**
+   * The type size of the box this element sits in, in pixels, or `undefined`
+   * where nothing could be read — a caller with no layout engine behind it.
+   *
+   * Carried rather than written: what goes into the snapshot is the ratio of an
+   * element's own size to this one, and only on an element that claims to be a
+   * heading, since that is the only thing on the other side that reads a size.
+   * Recorded on every element it would be an attribute over most of a page for
+   * a question nothing asks.
+   */
+  size: number | undefined;
   italic: boolean;
   align: 'left' | 'center' | 'right' | undefined;
   /**
@@ -344,6 +356,7 @@ interface Context {
 
 const PLAIN: Context = {
   weight: NORMAL_WEIGHT,
+  size: undefined,
   italic: false,
   align: undefined,
   invisible: false,
@@ -687,6 +700,40 @@ export function snapshotStyles(
       declarations.push(`font-weight:${weight}`);
     }
 
+    // The size, and only where something can spend it: an element claiming the
+    // heading role. It is the other half of what makes a heading look like one,
+    // and the only half a `<div role="heading">` can be judged by that an `<h3>`
+    // is not — the browser draws the tag large whatever the page says, and draws
+    // the `<div>` like body text unless a stylesheet speaks. The core cannot see
+    // a stylesheet, so without this the role is a claim with no witness, and the
+    // spec page showed what that costs: six identical lines on screen, four
+    // headings in the file.
+    //
+    // Written as a ratio, which is what `em` means on `font-size` and the whole
+    // of the question — 1.5 is half again the text around it, 1 is no different
+    // at all. A length would not do: 24px is a heading on one page and body text
+    // on another, and the base it would have to be compared against is the
+    // parent's, which a selection starting on the heading leaves outside the
+    // fragment altogether.
+    //
+    // And written whether or not it differs, unlike every other property here,
+    // because the core reads its absence as well as its value: silence in a
+    // snapshot is not a denial anywhere else, so a declaration standing at `1em`
+    // is the only thing that can say the drawing was read and found ordinary. A
+    // library caller writes none of these and its roles stand as they always did.
+    // The pair is the coupling: `drawnApart()` in the core reads exactly this,
+    // and anything else the criterion learns to ask has to be written here too.
+    //
+    // Both sizes or neither: a caller whose computed style answers nothing about
+    // `font-size` has not read the drawing, and a `1em` written there would claim
+    // it had. Every browser answers; a stub in a test does not, and the core's
+    // third answer is exactly for that.
+    const size = sizeFrom(read) ?? context.size;
+    if (el.getAttribute('role') === 'heading' && size !== undefined && context.size) {
+      const ratio = Number((size / context.size).toFixed(3));
+      declarations.push(`font-size:${ratio}em`);
+    }
+
     const italic = italicFrom(read) ?? context.italic;
     if (italic !== (isItalicTag(tag) || context.italic)) {
       declarations.push(`font-style:${italic ? 'italic' : 'normal'}`);
@@ -765,6 +812,7 @@ export function snapshotStyles(
 
     const next: Context = {
       weight,
+      size,
       italic,
       align,
       invisible,
@@ -919,6 +967,11 @@ function contextOf(
   const display = read('display');
   return {
     weight: weightFrom(read, NORMAL_WEIGHT) ?? (isBoldTag(tag) ? BOLD_WEIGHT : NORMAL_WEIGHT),
+    // The size the root is measured against. Read off the parent, which is what
+    // makes the root's own size news where the page changed it there — and left
+    // unread where the parent has none, since a size nobody stated is not a size
+    // the root is bigger than.
+    size: sizeFrom(read),
     italic: italicFrom(read) ?? isItalicTag(tag),
     align: alignFrom(read),
     // Visible whatever the parent computes, unlike everything above. The parent

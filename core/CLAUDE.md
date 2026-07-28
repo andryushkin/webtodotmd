@@ -240,6 +240,32 @@ threshold sits where no layout lands by accident.
 
 ## Blocks
 
+- A `role="heading"` is a claim a `<div>` cannot back up on its own, and the rule took it on its
+  word: the spec page showed six identical lines, one size, one weight, no hierarchy anywhere on
+  screen, and four headings went into the file. A tag is never in that position — the browser paints
+  an `<h3>` large and bold whatever the page says, so what it states and what the reader met cannot
+  come apart. Three things have to agree (`writtenAsHeading`): the element takes a line of its own,
+  it holds no block of its own, and it was drawn apart from the text around it. Each answers a way of
+  being wrong — a role on a label inside a sentence would be cut in two by a `##`, one on the wrapper
+  of a section would drag the section onto the heading's line, one on nothing visible would invent
+  structure. Strictness is affordable here and nowhere else: both errors cost a rank and no words, so
+  a demoted heading arrives as a paragraph with every character in it. `minHeadingLevel` asks the
+  same question, or a role written as a paragraph would still set the level every real heading is
+  then normalized against.
+- The third of those is the one place a rule reads *silence* in a snapshot as an answer, and it can
+  only do that because something positive says the drawing was read: `style-snapshot.ts` writes the
+  relative size on every element carrying the role, whether or not it differs, so `font-size:1em` is
+  the declaration meaning "looked at, and ordinary". A ratio rather than a length, because 24px is a
+  heading on one page and body text on another, and because the length it would be compared against
+  sits on the parent — which a selection starting at the heading leaves outside the fragment. The
+  two sides are one pair: anything further the criterion learns to ask has to be written there too.
+  Weight is the other spelling and either alone is enough — a page tells a heading apart by size or
+  by weight, and requiring both loses half the interfaces there are.
+- `aria-level` outside 1…6 is clamped, not defaulted. The default 2 is what a browser reports for a
+  heading that states *no* level; ARIA puts a floor of 1 on the attribute and no ceiling, so
+  `aria-level="9"` is a level the page really stated, and reading it as 2 wrote `## Child` under
+  `### Parent` — a heading above its own parent, which a tag never does. One such line also entered
+  `minHeadingLevel` as a 2 and held the whole page down.
 - The semantic containers are one set, `src/utils/blocks.ts`, read by the parser and by the rule
   that writes them. Two lists made separately disagreed: the escaper counted a `<figure>` and a
   `<form>` as the end of a line while nothing wrote a boundary there, so the reading model ended the

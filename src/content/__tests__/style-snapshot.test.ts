@@ -915,3 +915,63 @@ describe('the diagnostic pass does not cost the snapshot', () => {
     expect(doc.querySelector('[data-s2md-debug]')).toBeNull();
   });
 });
+
+// The size, which nothing here recorded before. A `<div role="heading">` states
+// a heading and is drawn like body text unless a stylesheet says otherwise, so
+// the drawing is the only evidence there is for the claim — and the core cannot
+// see a stylesheet. The weight was already written down; this is the other half
+// of what a page tells a heading apart by, and the only half a heading set in
+// body weight at 24px has.
+describe('aria heading criteria: what the snapshot says about size', () => {
+  const SIZES: Record<string, Declarations> = {
+    ...TAILWIND,
+    'text-2xl': { 'font-size': '24px' },
+    'text-sm': { 'font-size': '14px' },
+    card: { 'font-size': '16px' },
+  };
+
+  it('writes the size as a ratio of the text the role sits in', () => {
+    const html = '<div class="card"><div class="text-2xl" role="heading" data-name="role">T</div></div>';
+    expect(snapshot(html, SIZES).written.role).toBe('font-size:1.5em');
+  });
+
+  it('writes it at 1em where the role is drawn like its surroundings', () => {
+    // The one property here written whether or not it differs: the core reads
+    // its absence as "nobody looked", so a role drawn plainly needs a
+    // declaration of its own to say the drawing was read and was ordinary.
+    const html = '<div class="card"><div role="heading" data-name="role">T</div></div>';
+    expect(snapshot(html, SIZES).written.role).toBe('font-size:1em');
+  });
+
+  it('writes no size for anything that is not claiming to be a heading', () => {
+    // Nothing on the other side reads a size anywhere else, and an attribute per
+    // element is what this walk cannot pay for a question nobody asks.
+    const { written } = snapshot('<div class="card"><p class="text-2xl">big</p></div>', SIZES);
+    expect(written.p).toBeUndefined();
+  });
+
+  it('turns a role drawn large into a heading, and one drawn plain into prose', () => {
+    const large =
+      '<div class="card"><div class="text-2xl" role="heading" aria-level="3">Title</div>'
+      + '<p>Body</p></div>';
+    expect(convert(large, SIZES).after).toBe('### Title\n\nBody');
+
+    const plain =
+      '<div class="card"><div role="heading" aria-level="3">Title</div><p>Body</p></div>';
+    expect(convert(plain, SIZES).after).toBe('Title\n\nBody');
+  });
+
+  it('a role drawn bold and no larger is still a heading', () => {
+    const html =
+      '<div class="card"><div class="font-bold" role="heading" aria-level="3">Title</div>'
+      + '<p>Body</p></div>';
+    expect(convert(html, SIZES).after).toBe('### Title\n\nBody');
+  });
+
+  it('keeps the role where the drawing was never read', () => {
+    // The same markup with no snapshot behind it: a library caller, and the
+    // level is all there is to go on.
+    const plain = '<div class="card"><div role="heading" aria-level="3">Title</div></div>';
+    expect(convert(plain, SIZES).before).toBe('### Title');
+  });
+});
