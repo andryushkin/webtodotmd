@@ -19,6 +19,10 @@
   "copied": {
     "message": "Копирано"
   },
+  "copyHtml": {
+    "message": "Копирай HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Изтегли"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Запазване на сложните таблици като HTML"
   },
-  "labelHtmlView": {
-    "message": "Показване на изгледа с прихванатия HTML"
+  "labelCopyHtml": {
+    "message": "Добавяне на бутон за копиране на прихванатия HTML",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Изглед по подразбиране"

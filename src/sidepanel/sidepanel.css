@@ -478,17 +478,13 @@ span[data-display='1'] {
   display: none;
 }
 
-/* The EditMD button is hidden off macOS (see sidepanel.ts). `.btn` sets
+/* The EditMD button is hidden off macOS, and the Copy HTML button until the
+   debugging setting asks for it (both in sidepanel.ts). `.btn` sets
    display: inline-flex, which beats the UA [hidden] rule — so state it here,
-   the way .txt-menu[hidden] below does. */
-#btn-editmd[hidden] {
-  display: none;
-}
-
-/* Same trap, same remedy: `.toggle` sets display: inline-flex, so the HTML view
-   tab stayed on screen with its `hidden` attribute set and the setting that is
-   supposed to reveal it appeared to do nothing at all. */
-.toggle[hidden] {
+   the way .txt-menu[hidden] below does. The same trap already made a hidden
+   view tab stay on screen, with the setting that reveals it looking dead. */
+#btn-editmd[hidden],
+#btn-copy-html[hidden] {
   display: none;
 }
 

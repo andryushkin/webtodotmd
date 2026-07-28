@@ -19,6 +19,10 @@
   "copied": {
     "message": "Kopioitu"
   },
+  "copyHtml": {
+    "message": "Kopioi HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Lataa"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Säilytä monimutkaiset taulukot HTML-muodossa"
   },
-  "labelHtmlView": {
-    "message": "Näytä siepatun HTML:n näkymä"
+  "labelCopyHtml": {
+    "message": "Lisää painike siepatun HTML:n kopioimiseen",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Oletusnäkymätila"

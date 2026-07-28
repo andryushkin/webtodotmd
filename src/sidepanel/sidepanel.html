@@ -22,7 +22,6 @@
         <div class="view-toggle">
           <button id="btn-preview" class="toggle active" aria-pressed="true" title="Preview"></button>
           <button id="btn-source" class="toggle" aria-pressed="false" title="Source"></button>
-          <button id="btn-html" class="toggle" aria-pressed="false" title="HTML" hidden></button>
         </div>
         <button id="btn-undo" class="btn-icon" disabled title="Undo"></button>
         <button id="btn-redo" class="btn-icon" disabled title="Redo"></button>
@@ -31,7 +30,6 @@
 
       <div id="preview-rendered" class="preview preview-rendered" dir="auto" aria-label="Rendered preview"></div>
       <textarea id="preview-source" class="preview preview-source" dir="auto" data-i18n="markdownPlaceholder" data-i18n-attr="placeholder" placeholder="Markdown will appear here…" hidden></textarea>
-      <textarea id="preview-html" class="preview preview-source" dir="ltr" readonly hidden></textarea>
 
       <div id="rating-row" class="rating-row hidden">
         <button class="star" data-value="1">★</button>
@@ -55,6 +53,7 @@
           </div>
         </div>
         <button id="btn-editmd" class="btn btn-secondary" disabled></button>
+        <button id="btn-copy-html" class="btn btn-secondary" disabled hidden></button>
         <button id="btn-clear" class="btn btn-ghost" disabled></button>
       </div>
     </main>

@@ -19,6 +19,10 @@
   "copied": {
     "message": "కాపీ అయింది"
   },
+  "copyHtml": {
+    "message": "HTML కాపీ చేయి",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "డౌన్‌లోడ్ చేయి"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "సంక్లిష్ట పట్టికలను HTML గా ఉంచు"
   },
-  "labelHtmlView": {
-    "message": "క్యాప్చర్ చేసిన HTML వీక్షణను చూపించు"
+  "labelCopyHtml": {
+    "message": "క్యాప్చర్ చేసిన HTML కాపీ చేయడానికి బటన్ జోడించు",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "డిఫాల్ట్ వ్యూ మోడ్"

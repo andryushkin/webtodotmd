@@ -19,6 +19,10 @@
   "copied": {
     "message": "Nukopijuota"
   },
+  "copyHtml": {
+    "message": "Kopijuoti HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Atsisiųsti"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Sudėtingas lenteles palikti kaip HTML"
   },
-  "labelHtmlView": {
-    "message": "Rodyti užfiksuoto HTML rodinį"
+  "labelCopyHtml": {
+    "message": "Pridėti mygtuką užfiksuotam HTML kopijuoti",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Numatytasis rodinys"

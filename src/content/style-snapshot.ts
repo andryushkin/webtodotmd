@@ -103,15 +103,15 @@ const ROW_ATTR = 'data-s2md-row';
 const ROW_MARK = '1';
 
 /**
- * What the walk read, written down beside what it decided — the HTML view's
+ * What the walk read, written down beside what it decided — the copied markup's
  * answer to "why did it judge this element that way".
  *
- * Off unless the reader asked for the HTML view, because it is one attribute per
+ * Off unless the reader asked for that markup, because it is one attribute per
  * element and says nothing the conversion uses. Neither this nor the list below
  * existed while both were being referenced: the walk threw `ReferenceError` on
  * its first element, the `catch` around it swallowed that, and the capture went
  * on with *no* snapshot at all — no hiding, no derived rows, no styled emphasis.
- * Turning the HTML view on quietly turned the stylesheet off.
+ * Asking for the markup quietly turned the stylesheet off.
  */
 const DIAGNOSTIC_ATTR = 'data-s2md-debug';
 

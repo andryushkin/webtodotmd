@@ -19,6 +19,10 @@
   "copied": {
     "message": "Disalin"
   },
+  "copyHtml": {
+    "message": "Salin HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Muat turun"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Kekalkan jadual kompleks sebagai HTML"
   },
-  "labelHtmlView": {
-    "message": "Tunjukkan paparan HTML yang ditangkap"
+  "labelCopyHtml": {
+    "message": "Tambah butang untuk menyalin HTML yang ditangkap",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Mod paparan lalai"

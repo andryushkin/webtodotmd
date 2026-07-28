@@ -19,6 +19,10 @@
   "copied": {
     "message": "कॉपी झाले"
   },
+  "copyHtml": {
+    "message": "HTML कॉपी करा",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "डाउनलोड करा"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "जटिल तक्ते HTML म्हणून ठेवा"
   },
-  "labelHtmlView": {
-    "message": "कॅप्चर केलेले HTML दृश्य दाखवा"
+  "labelCopyHtml": {
+    "message": "कॅप्चर केलेले HTML कॉपी करण्यासाठी बटण जोडा",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "डीफॉल्ट व्ह्यू मोड"

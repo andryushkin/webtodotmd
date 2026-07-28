@@ -19,6 +19,10 @@
   "copied": {
     "message": "Imenakiliwa"
   },
+  "copyHtml": {
+    "message": "Nakili HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Pakua"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Weka majedwali changamano kama HTML"
   },
-  "labelHtmlView": {
-    "message": "Onyesha mwonekano wa HTML iliyonaswa"
+  "labelCopyHtml": {
+    "message": "Ongeza kitufe cha kunakili HTML iliyonaswa",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Hali ya mwonekano wa chaguo-msingi"

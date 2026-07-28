@@ -19,6 +19,10 @@
   "copied": {
     "message": "ನಕಲಿಸಲಾಗಿದೆ"
   },
+  "copyHtml": {
+    "message": "HTML ನಕಲಿಸಿ",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "ಸಂಕೀರ್ಣ ಕೋಷ್ಟಕಗಳನ್ನು HTML ಆಗಿ ಇರಿಸಿ"
   },
-  "labelHtmlView": {
-    "message": "ಸೆರೆಹಿಡಿದ HTML ವೀಕ್ಷಣೆಯನ್ನು ತೋರಿಸಿ"
+  "labelCopyHtml": {
+    "message": "ಸೆರೆಹಿಡಿದ HTML ನಕಲಿಸಲು ಬಟನ್ ಸೇರಿಸಿ",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "ಡೀಫಾಲ್ಟ್ ವೀಕ್ಷಣಾ ಮೋಡ್"

@@ -19,6 +19,10 @@
   "copied": {
     "message": "已複製"
   },
+  "copyHtml": {
+    "message": "複製 HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "下載"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "複雜表格保留為 HTML"
   },
-  "labelHtmlView": {
-    "message": "顯示擷取的 HTML 檢視"
+  "labelCopyHtml": {
+    "message": "新增複製擷取的 HTML 的按鈕",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "預設檢視模式"

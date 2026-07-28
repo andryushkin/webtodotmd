@@ -19,6 +19,10 @@
   "copied": {
     "message": "Copié"
   },
+  "copyHtml": {
+    "message": "Copier le HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Télécharger"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Conserver les tableaux complexes en HTML"
   },
-  "labelHtmlView": {
-    "message": "Afficher la vue du HTML capturé"
+  "labelCopyHtml": {
+    "message": "Ajouter un bouton pour copier le HTML capturé",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Mode d’affichage par défaut"

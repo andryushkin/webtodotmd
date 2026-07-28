@@ -19,6 +19,10 @@
   "copied": {
     "message": "복사됨"
   },
+  "copyHtml": {
+    "message": "HTML 복사",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "다운로드"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "복잡한 표를 HTML로 유지"
   },
-  "labelHtmlView": {
-    "message": "캡처한 HTML 보기 표시"
+  "labelCopyHtml": {
+    "message": "캡처한 HTML을 복사하는 버튼 추가",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "기본 보기 모드"

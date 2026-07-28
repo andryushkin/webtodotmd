@@ -19,6 +19,10 @@
   "copied": {
     "message": "Nakopya"
   },
+  "copyHtml": {
+    "message": "Kopyahin ang HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "I-download"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Panatilihin ang mga kumplikadong talahanayan bilang HTML"
   },
-  "labelHtmlView": {
-    "message": "Ipakita ang view ng nakuhang HTML"
+  "labelCopyHtml": {
+    "message": "Magdagdag ng button para kopyahin ang nakuhang HTML",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Default na mode ng view"

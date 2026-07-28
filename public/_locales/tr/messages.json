@@ -19,6 +19,10 @@
   "copied": {
     "message": "Kopyalandı"
   },
+  "copyHtml": {
+    "message": "HTML'yi kopyala",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "İndir"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Karmaşık tabloları HTML olarak koru"
   },
-  "labelHtmlView": {
-    "message": "Yakalanan HTML görünümünü göster"
+  "labelCopyHtml": {
+    "message": "Yakalanan HTML'yi kopyalamak için düğme ekle",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Varsayılan görünüm modu"

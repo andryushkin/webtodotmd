@@ -17,7 +17,7 @@ export interface CaptureSelectionRequest {
 export interface CaptureSelectionResponse {
   md: string;
   meta: PageMeta;
-  /** The markup the conversion was given, when Settings.showHtmlView is on. */
+  /** The markup the conversion was given, when Settings.copyHtmlButton is on. */
   html?: string;
   /**
    * The shallowest heading level in what was just captured, before any shift.

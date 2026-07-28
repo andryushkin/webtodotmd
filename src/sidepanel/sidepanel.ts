@@ -39,14 +39,13 @@ const txtMenu = document.getElementById('txt-menu') as HTMLDivElement;
 const btnCopyTxt = document.getElementById('btn-copy-txt') as HTMLButtonElement;
 const btnDownloadTxt = document.getElementById('btn-download-txt') as HTMLButtonElement;
 const btnEditmd = document.getElementById('btn-editmd') as HTMLButtonElement;
+const btnCopyHtml = document.getElementById('btn-copy-html') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const previewRendered = document.getElementById('preview-rendered') as HTMLDivElement;
 const previewSource = document.getElementById('preview-source') as HTMLTextAreaElement;
-const previewHtml = document.getElementById('preview-html') as HTMLTextAreaElement;
 const btnPreviewTab = document.getElementById('btn-preview') as HTMLButtonElement;
 const btnSourceTab = document.getElementById('btn-source') as HTMLButtonElement;
-const btnHtmlTab = document.getElementById('btn-html') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const ratingRow = document.getElementById('rating-row') as HTMLDivElement;
 const toolbar = document.querySelector('.toolbar') as HTMLDivElement;
@@ -88,16 +87,16 @@ let mathCounter = 0;
 const MAX_HISTORY = 50;
 let undoStack: string[] = [];
 let redoStack: string[] = [];
-/** The third view is a report, and only exists while the setting asks for it. */
-type ViewMode = 'preview' | 'source' | 'html';
+type ViewMode = 'preview' | 'source';
 
 let viewMode: ViewMode = 'preview';
 /**
- * The markup the last capture was given, when the reader asked to see it
- * (Settings.showHtmlView). It is not part of the document: `rawMd` is the source
- * of truth for everything the panel edits, saves and sends, and this is a report
- * about how the last one was produced — appending a capture leaves it showing
- * that capture alone, which is what makes it useful for a bug report.
+ * The markup the last capture was given, when the reader asked for the button
+ * that copies it (Settings.copyHtmlButton). It is not part of the document:
+ * `rawMd` is the source of truth for everything the panel edits, saves and
+ * sends, and this is a report about how the last one was produced — appending a
+ * capture leaves it holding that capture alone, which is what makes it useful
+ * for a bug report.
  */
 let rawHtml = '';
 let highlighterEnabled = false;
@@ -370,11 +369,9 @@ function setViewMode(mode: ViewMode) {
   viewMode = mode;
   previewRendered.hidden = mode !== 'preview';
   previewSource.hidden = mode !== 'source';
-  previewHtml.hidden = mode !== 'html';
   for (const [button, name] of [
     [btnPreviewTab, 'preview'],
     [btnSourceTab, 'source'],
-    [btnHtmlTab, 'html'],
   ] as const) {
     button.classList.toggle('active', mode === name);
     button.setAttribute('aria-pressed', String(mode === name));
@@ -382,15 +379,14 @@ function setViewMode(mode: ViewMode) {
 }
 
 /**
- * Whether the third view is offered at all.
+ * Whether the debugging button that copies the captured markup is offered.
  *
- * Turning it off while it is the view on screen leaves the panel showing a pane
- * with no way back to it, so the mode falls back to the source — the view whose
- * text this one explains.
+ * The toolbar measures its own width, so a button appearing or leaving has to be
+ * re-measured — otherwise it wraps onto a second row and stays there.
  */
-function showHtmlView(on: boolean) {
-  btnHtmlTab.hidden = !on;
-  if (!on && viewMode === 'html') setViewMode('source');
+function showCopyHtmlButton(on: boolean) {
+  btnCopyHtml.hidden = !on;
+  updateToolbarDensity();
 }
 
 function updateUndoRedoButtons() {
@@ -405,6 +401,9 @@ function updateButtonStates() {
   btnTxtMenu.disabled = !hasContent;
   if (!hasContent) closeTxtMenu();
   btnEditmd.disabled = !hasContent;
+  // Its own content, not the note's: hand-typed Markdown has no markup behind
+  // it, and a capture made before the setting was turned on has none either.
+  btnCopyHtml.disabled = rawHtml.length === 0;
   btnClear.disabled = !hasContent;
 }
 
@@ -578,7 +577,6 @@ async function captureSelection(silent = false) {
   // happened, and a reader sending it on wants the fragment that produced the
   // paragraph they are looking at, not every fragment of the session.
   rawHtml = response.html ?? '';
-  previewHtml.value = rawHtml;
   const prevUrl = lastMeta?.url ?? null;
   lastMeta = meta;
 
@@ -641,7 +639,6 @@ btnRedo.addEventListener('click', redo);
 
 btnPreviewTab.addEventListener('click', () => setViewMode('preview'));
 btnSourceTab.addEventListener('click', () => setViewMode('source'));
-btnHtmlTab.addEventListener('click', () => setViewMode('html'));
 
 btnCapture.addEventListener('click', () => captureSelection(false));
 btnHighlighter.addEventListener('click', () => toggleHighlighter());
@@ -799,11 +796,26 @@ btnEditmd.addEventListener('click', async () => {
   setTempStatus(t('openingEditmd'), 'default', 'send', 2000);
 });
 
+// A debugging aid: the markup behind the last capture, for a bug report that can
+// be reproduced without the page. No telemetry and no action count — it is not
+// something the reader does with their note.
+btnCopyHtml.addEventListener('click', async () => {
+  if (!rawHtml) return;
+  if (!await copyToClipboard(rawHtml)) return;
+  setButtonContent(btnCopyHtml, 'check', t('copied'));
+  setTimeout(() => {
+    setButtonContent(btnCopyHtml, 'fileText', t('copyHtml'));
+  }, 1500);
+});
+
 btnClear.addEventListener('click', () => {
   setContent('');
   previewRendered.innerHTML = '';
   lastMeta = null;
   headingBase = null;
+  // The report belongs to the capture that is being thrown away.
+  rawHtml = '';
+  updateButtonStates();
 });
 
 // ---- Init ----
@@ -824,12 +836,10 @@ function applyButtonLabels() {
   setButtonContent(btnEditmd, 'send', 'EditMD');
   // The visible label is the brand alone; name the action for assistive tech.
   btnEditmd.setAttribute('aria-label', t('tooltipSendEditmd'));
+  setButtonContent(btnCopyHtml, 'fileText', t('copyHtml'));
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
-  // "HTML" is the name of the format in every language this ships in, so the
-  // label is the word itself rather than a fifty-second string to translate.
-  btnHtmlTab.innerHTML = icon('fileText', 12) + '<span class="btn-label">HTML</span>';
   updateToolbarDensity();
 }
 
@@ -870,7 +880,7 @@ async function init() {
   attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
 
   autoMetadata = settings.autoMetadata;
-  showHtmlView(settings.showHtmlView);
+  showCopyHtmlButton(settings.copyHtmlButton);
   setViewMode(settings.defaultViewMode);
   updateButtonStates();
   updateUndoRedoButtons();
@@ -893,7 +903,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     const s = changes.settings.newValue;
     if (s) {
       autoMetadata = s.autoMetadata ?? false;
-      showHtmlView(s.showHtmlView === true);
+      showCopyHtmlButton(s.copyHtmlButton === true);
       const newLang = s.uiLanguage ?? 'en';
       const oldLang = changes.settings.oldValue?.uiLanguage ?? 'en';
       if (newLang !== oldLang) {

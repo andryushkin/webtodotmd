@@ -13,7 +13,7 @@ import { hasCapturableSelection } from './shadow-selection';
  * thing that knows, since each press of the button is its own conversion here.
  */
 function captureOptions(headingBase?: number): CaptureOptions {
-  return { htmlTables: htmlTablesSetting, withHtml: htmlViewSetting, headingBase };
+  return { htmlTables: htmlTablesSetting, withHtml: copyHtmlSetting, headingBase };
 }
 
 function captureSelectionMd(selection: Selection, headingBase?: number): Capture {
@@ -37,7 +37,7 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
 
 let showBubbleSetting = true;
 let htmlTablesSetting = false;
-let htmlViewSetting = false;
+let copyHtmlSetting = false;
 let translations: Record<string, string> = {};
 
 /**
@@ -61,7 +61,7 @@ const settingsLoaded = new Promise<void>((resolve) => {
     chrome.storage.local.get(['settings', 'contentI18n'], ({ settings, contentI18n }) => {
       if (settings?.showBubble === false) showBubbleSetting = false;
       htmlTablesSetting = settings?.htmlTables === true;
-      htmlViewSetting = settings?.showHtmlView === true;
+      copyHtmlSetting = settings?.copyHtmlButton === true;
       if (contentI18n) translations = contentI18n;
       resolve();
     });
@@ -76,7 +76,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.settings) {
     showBubbleSetting = changes.settings.newValue?.showBubble !== false;
     htmlTablesSetting = changes.settings.newValue?.htmlTables === true;
-    htmlViewSetting = changes.settings.newValue?.showHtmlView === true;
+    copyHtmlSetting = changes.settings.newValue?.copyHtmlButton === true;
   }
   if (changes.contentI18n) {
     translations = changes.contentI18n.newValue ?? {};
@@ -389,7 +389,7 @@ function captureHighlightsMd(headingBase?: number): Capture {
   // The marks come off for the length of the capture, the same reason the bubble
   // is dropped from the clone: the outline and the wash are the extension's, not
   // the page's, and the inline copy of them would otherwise reach the snapshot
-  // and the HTML view as if the page had written them.
+  // and the copied markup as if the page had written them.
   const painted = [...highlights];
   for (const el of painted) unpaintHighlight(el);
   try {

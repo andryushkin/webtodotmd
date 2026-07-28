@@ -19,6 +19,10 @@
   "copied": {
     "message": "تم النسخ"
   },
+  "copyHtml": {
+    "message": "نسخ HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "تنزيل"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "الإبقاء على الجداول المعقّدة بصيغة HTML"
   },
-  "labelHtmlView": {
-    "message": "إظهار عرض HTML الملتقط"
+  "labelCopyHtml": {
+    "message": "إضافة زر لنسخ HTML الملتقط",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "وضع العرض الافتراضي"

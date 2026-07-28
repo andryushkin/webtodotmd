@@ -19,6 +19,10 @@
   "copied": {
     "message": "Kopiert"
   },
+  "copyHtml": {
+    "message": "Kopier HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Last ned"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Behold komplekse tabeller som HTML"
   },
-  "labelHtmlView": {
-    "message": "Vis visningen av den fangede HTML-en"
+  "labelCopyHtml": {
+    "message": "Legg til en knapp for å kopiere den fangede HTML-en",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Standard visningsmodus"

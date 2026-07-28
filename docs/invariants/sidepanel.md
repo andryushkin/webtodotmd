@@ -79,16 +79,21 @@ file is given.
   label is gone. `updateToolbarDensity()` measures in the non-compact state,
   which is what stops it oscillating.
 
-## The HTML view
+## The captured HTML
 
 - It is a *report*, not a document. `rawMd` stays the only source of truth for what the panel
-  renders, edits, saves and sends; the HTML pane holds the markup the last capture was handed —
+  renders, edits, saves and sends; `rawHtml` holds the markup the last capture was handed —
   the selection with its style snapshot — and is replaced rather than appended, because whoever
   sends it on wants the fragment behind the paragraph in front of them, not the whole session.
+  Clear throws it away with the note it explains.
 - Off by default, and while it is off the content script does not build it: the fragment carries a
   computed style on every element that needed one and outweighs the Markdown on a long article.
-- Its label is the word `HTML`, deliberately untranslated — it is the name of the format in every
-  locale this ships in, and a fifty-second string that always reads the same is a fifty-second
-  string to keep in sync for nothing. The setting that reveals it is translated (`labelHtmlView`).
-- Turning the setting off while that view is on screen falls back to the source view: a hidden tab
-  with its pane still showing is a panel with no way back.
+- It reaches the reader as one toolbar button (`Copy HTML`, `#btn-copy-html`) which the setting
+  reveals, not as a view. It was a third tab beside the preview and the source until 1.4.9, and a
+  debugging aid does not earn a place in the row a reader uses on every capture — the panel is
+  narrow and the two views are what it is for.
+- Its own enabled state is `rawHtml`, not the note: text typed by hand has no markup behind it, and
+  neither has a capture made before the setting was turned on. A button that copies an empty string
+  reports nothing and looks like a failure of the capture.
+- Revealing or hiding it re-measures the toolbar (`updateToolbarDensity()`). A button appearing in a
+  row that already fitted wraps onto a second one and stays there until the panel is resized.

@@ -19,6 +19,10 @@
   "copied": {
     "message": "Skopírované"
   },
+  "copyHtml": {
+    "message": "Kopírovať HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Stiahnuť"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Ponechať zložité tabuľky ako HTML"
   },
-  "labelHtmlView": {
-    "message": "Zobraziť zachytené zobrazenie HTML"
+  "labelCopyHtml": {
+    "message": "Pridať tlačidlo na kopírovanie zachyteného HTML",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Predvolené zobrazenie"

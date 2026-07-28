@@ -19,6 +19,10 @@
   "copied": {
     "message": "Nokopēts"
   },
+  "copyHtml": {
+    "message": "Kopēt HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Lejupielādēt"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Saglabāt sarežģītas tabulas kā HTML"
   },
-  "labelHtmlView": {
-    "message": "Rādīt tvertā HTML skatu"
+  "labelCopyHtml": {
+    "message": "Pievienot pogu tvertā HTML kopēšanai",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Noklusējuma skats"

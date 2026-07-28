@@ -19,6 +19,10 @@
   "copied": {
     "message": "הועתק"
   },
+  "copyHtml": {
+    "message": "העתק HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "הורד"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "לשמור טבלאות מורכבות כ‑HTML"
   },
-  "labelHtmlView": {
-    "message": "הצגת תצוגת ה-HTML שנלכד"
+  "labelCopyHtml": {
+    "message": "הוספת לחצן להעתקת ה-HTML שנלכד",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "מצב תצוגה ברירת מחדל"

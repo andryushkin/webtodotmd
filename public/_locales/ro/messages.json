@@ -19,6 +19,10 @@
   "copied": {
     "message": "Copiat"
   },
+  "copyHtml": {
+    "message": "Copiază HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Descarcă"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Păstrează tabelele complexe ca HTML"
   },
-  "labelHtmlView": {
-    "message": "Afișează vizualizarea HTML capturată"
+  "labelCopyHtml": {
+    "message": "Adaugă un buton pentru copierea HTML-ului capturat",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Vizualizare implicită"

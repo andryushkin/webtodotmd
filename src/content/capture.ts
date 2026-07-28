@@ -33,7 +33,7 @@ export interface CaptureOptions {
   /**
    * Also hand back the markup the conversion was given.
    *
-   * Off unless the reader asked for it (Settings.showHtmlView): the fragment is
+   * Off unless the reader asked for it (Settings.copyHtmlButton): the fragment is
    * the whole selection with a computed style written onto every element that
    * needed one, which on a long article is larger than the Markdown it produces,
    * and nothing in the ordinary path reads it.

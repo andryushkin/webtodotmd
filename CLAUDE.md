@@ -21,7 +21,7 @@ nothing in the code says so; the sheet is where the reason lives.
 | --- | --- | --- |
 | `core/` | `htmltodotmd`: the HTML → Markdown library — rules, parser, its own tests and build | `docs/invariants/core.md` — output language, escaping, emphasis and style, reading a style, whitespace, rows, hiding, maths, blocks, code, tables, the package |
 | `src/content/` | Selection capture, highlighter mode, floating bubble, Shadow DOM flattening, style snapshot | `docs/invariants/content.md` — isolation from the extension, selection, hard breaks, the snapshot, entities and titles |
-| `src/sidepanel/` | Main UI: preview/source, HTML view, toolbar, status bar, rating | `docs/invariants/sidepanel.md` — `rawMd` as the source of truth, the heading base, sanitizing, status layers, toolbar density |
+| `src/sidepanel/` | Main UI: preview/source, toolbar, status bar, rating | `docs/invariants/sidepanel.md` — `rawMd` as the source of truth, the heading base, sanitizing, status layers, toolbar density |
 | `src/background/` | Service worker: context menu, commands, panel behavior, install/update pages | `docs/invariants/background.md` — panel behavior on worker start, permissions the store flags |
 | `src/shared/` | i18n, icons, settings store, injection, messaging, telemetry, identity, restricted pages | — |
 | `src/settings/` | Options page | — |

@@ -19,6 +19,10 @@
   "copied": {
     "message": "কপি হয়েছে"
   },
+  "copyHtml": {
+    "message": "HTML কপি করুন",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "ডাউনলোড করুন"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "জটিল টেবিল HTML হিসেবে রাখুন"
   },
-  "labelHtmlView": {
-    "message": "ক্যাপচার করা HTML ভিউ দেখান"
+  "labelCopyHtml": {
+    "message": "ক্যাপচার করা HTML কপি করার বোতাম যোগ করুন",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "ডিফল্ট ভিউ মোড"

@@ -19,6 +19,10 @@
   "copied": {
     "message": "Đã sao chép"
   },
+  "copyHtml": {
+    "message": "Sao chép HTML",
+    "description": "Toolbar button: copy the markup the last capture was given, for a bug report"
+  },
   "download": {
     "message": "Tải xuống"
   },
@@ -118,8 +122,9 @@
   "labelHtmlTables": {
     "message": "Giữ bảng phức tạp ở dạng HTML"
   },
-  "labelHtmlView": {
-    "message": "Hiển thị chế độ xem HTML đã ghi"
+  "labelCopyHtml": {
+    "message": "Thêm nút để sao chép HTML đã ghi",
+    "description": "Settings checkbox: add a toolbar button that copies the markup the conversion was given"
   },
   "labelDefaultView": {
     "message": "Chế độ xem mặc định"

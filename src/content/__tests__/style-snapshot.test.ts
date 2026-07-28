@@ -891,12 +891,12 @@ describe('what a captured page keeps that it used to lose', () => {
   });
 });
 
-// The HTML view asks the walk to write down what it read, and for a while that
-// was all it did: `DIAGNOSTIC_PROPERTIES` and the attribute holding them did not
-// exist, so the walk threw on its first element, the `catch` guarding the page
-// swallowed it, and the capture proceeded with no snapshot whatever. Turning the
-// view on turned the stylesheet off — no hiding, no derived rows, no styled
-// emphasis — and nothing said so.
+// Asking for the captured markup asks the walk to write down what it read, and
+// for a while that was all it did: `DIAGNOSTIC_PROPERTIES` and the attribute
+// holding them did not exist, so the walk threw on its first element, the `catch`
+// guarding the page swallowed it, and the capture proceeded with no snapshot
+// whatever. Asking for the markup turned the stylesheet off — no hiding, no
+// derived rows, no styled emphasis — and nothing said so.
 describe('the diagnostic pass does not cost the snapshot', () => {
   const html = '<p><span class="font-bold">b</span><span class="flex"><a>x</a><a>y</a></span></p>';
 
