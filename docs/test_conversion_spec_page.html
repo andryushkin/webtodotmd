@@ -1028,7 +1028,7 @@ path\file | a &lt; b &amp; c
     <p class="section-lead">Math cases require math conversion to be enabled; Unicode sub/sup cases do not.</p>
 
     <article class="case">
-      <aside><strong>F1.</strong> Subscript and superscript are Unicode, all or nothing per element: <code>H₂O</code>, <code>xⁿ⁺¹</code>, <code>a⁽ⁱ⁾</code>, then plain <code>xABC</code>, <code>x2q</code>, and escaped <code>x\*</code>.</aside>
+      <aside><strong>F1.</strong> Subscript and superscript are Unicode, all or nothing per element: <code>H₂O</code>, <code>xⁿ⁺¹</code>, <code>a⁽ⁱ⁾</code>. Where Unicode has no spelling for the run the level is kept as a <code>^</code> or a <code>_</code> in front of the page's own characters — <code>x^ABC</code>, <code>x^2q</code>, <code>x^\*</code> — because a half-mapped run states a different formula and a plain one states that there was no level at all, which the reader of the file cannot see is missing. The marker is a character the page never showed, and it is paid knowingly: it costs the fidelity survey twelve failures. A footnote marker keeps none — <code>&lt;sup&gt;</code> around a link is every citation on Wikipedia, and <code>[1]</code> reads as a reference already; see Q3.</aside>
       <div class="subject">
         <p>H<sub>2</sub>O; x<sup>n+1</sup>; a<sup>(i)</sup>; x<sup>ABC</sup>; x<sup>2q</sup>; x<sup>*</sup>.</p>
       </div>

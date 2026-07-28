@@ -361,9 +361,11 @@ describe('соседние выделения', () => {
     // span is read for its text rather than its backtick: emphasis is resolved
     // after code spans, and renderers disagree about what is left at that seam.
     ['a code span next door', '<p><em>a</em><code>b</code></p>', '*a*`b`'],
-        // A shifted run is letters now, not a tag, so the neighbour picks the marker
-    // a letter after it allows: `_a_b` would render as its own underscores.
-    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '*a*b'],
+    // A lowered run is characters now, not a tag, so the neighbour picks the
+    // marker what follows it allows: `_a__b` would render as its own
+    // underscores. Rendered, this is `<em>a</em>_b` — the emphasis holds and the
+    // marker stays a character, the `_` being intraword where it lands.
+    ['a sub next door', '<p><em>a</em><sub>b</sub></p>', '*a*_b'],
 
     // Flanking is decided per code point. Indexing UTF-16 handed the test half a
     // surrogate pair, which is in no category at all: an emoji is symbol
@@ -751,43 +753,63 @@ describe('надстрочный и подстрочный', () => {
   });
 
   // All or nothing per element: a half-mapped run states a different formula
-  // with the same confidence, and losing the raising is the smaller error.
+  // with the same confidence. What is left is the marker, not the plain run —
+  // `xABC` says the level was never there.
   it.each([
-    ['заглавные — регистр не подменяем', '<p>x<sup>ABC</sup></p>', 'xABC'],
-    ['кириллица', '<p>x<sup>Примечание</sup></p>', 'xПримечание'],
-    ['частично отображается', '<p>x<sup>2q</sup></p>', 'x2q'],
+    ['заглавные — регистр не подменяем', '<p>x<sup>ABC</sup></p>', 'x^ABC'],
+    ['кириллица', '<p>x<sup>Примечание</sup></p>', 'x^Примечание'],
+    ['частично отображается', '<p>x<sup>2q</sup></p>', 'x^2q'],
+    ['нижний индекс симметричен', '<p>x<sub>ABC</sub></p>', 'x_ABC'],
+    ['экранированный символ тоже помечен', '<p>x<sup>*</sup></p>', 'x^\\*'],
   ])('%s', (_n, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });
 });
 
-// And such a run keeps no boundary of its own, which is a decision rather than
-// an oversight: `Brand<sup>TM</sup> here` is `BrandTM here`, the order the line
-// is read in and the string a browser puts on the clipboard. Nothing is written
-// between the two — a `^`, a `_` or the tag back again would each be a character
-// the reader never saw, and the round-trip oracle counts it as one: `visibleText`
-// reads a raised run as its characters standing in the line, so one marker per
-// untranslatable run took the survey from 70 defect classes to 80, `<sub>_</sub>`
-// among them, where the invented character also changed what the page's own
-// escaped one rendered as. `<small>`, `<big>` and `<u>` are answered the same way
-// — an appearance Markdown cannot spell is dropped, never traded for a character
-// — and what is lost here is the boundary, which Markdown has nowhere to put.
-describe('a raised run Unicode cannot spell stands in the line as it was read', () => {
+// Such a run keeps a marker and not the tag: `x<sup>ABC</sup>` is `x^ABC`. The
+// run used to be handed back plain, on the argument that a `^` is a character
+// the reader never saw and the round-trip oracle counts it as one — which it
+// does, and the price is recorded: the survey went from 81 failures to 93, every
+// arriving class a `<p><sub>…</sub></p>`.
+//
+// That argument weighed the wrong two things against each other. Plain `xABC`
+// does not lose a character, it loses the fact that the run stood above the
+// line, and a reader of the file cannot see that anything is missing — while a
+// `^` is visible, costs one character, and says the one thing Markdown has no
+// syntax for. `^ABC^` and `~ABC~` were never the alternative: GFM renders the
+// first as its own characters and the second as strikethrough, so the pair would
+// state something the page did not.
+//
+// Bare, with nothing closing it — `x^ABCy` is ambiguous where text is pressed
+// against the run, and that shape is rare enough not to pay brackets on every
+// index for. `<small>`, `<big>` and `<u>` stay as they were: an appearance is not
+// a level, and dropping one loses nothing a formula depends on.
+describe('a raised run Unicode cannot spell keeps its level as a marker', () => {
   it.each([
-    ['a trademark', '<p>Brand<sup>TM</sup> here</p>', 'BrandTM here'],
-    ["an author's mark", '<p>Note<sup>a,b</sup> next</p>', 'Notea,b next'],
-    ['a lowered run in another script', '<p>x<sub>Прим</sub> next</p>', 'xПрим next'],
-    // The shapes that part themselves: brackets the page wrote, and a run
-    // Unicode does spell, which needs no boundary because it carries one.
-    ['a reference the page bracketed', '<p>Fact<sup>[12]</sup> next</p>', 'Fact[12] next'],
+    ['a trademark', '<p>Brand<sup>TM</sup> here</p>', 'Brand^TM here'],
+    ["an author's mark", '<p>Note<sup>a,b</sup> next</p>', 'Note^a,b next'],
+    ['a lowered run in another script', '<p>x<sub>Прим</sub> next</p>', 'x_Прим next'],
+    // A run Unicode does spell needs no marker: it carries the level in the
+    // characters themselves.
     ['a formula, which is raised on its own', '<p>H<sub>2</sub>O next</p>', 'H₂O next'],
+    // Nothing raised about a blank, and nothing to state a level over.
+    ['a run of blanks', '<p>a<sup> </sup>b</p>', 'a b'],
   ])('%s', (_name, html, expected) => {
     const out = toMarkdown(html).trim();
     expect(out).toBe(expected);
-    // Neither the tag nor a marker invented in its place.
+    // The marker, never the tag back again.
     expect(out).not.toContain('<sup>');
     expect(out).not.toContain('<sub>');
-    expect(out).not.toContain('^');
+  });
+
+  // Wikipedia writes every citation as a `<sup>` holding a link, and the
+  // brackets around the number are exactly what Unicode cannot raise — so the
+  // rule would fire on each of the dozens an article carries. It loses nothing
+  // without a marker: `[12]` reads as a reference wherever it stands.
+  it('leaves a footnote marker alone', () => {
+    expect(toMarkdown('<p>Fact<sup><a href="#c12">[12]</a></sup> next</p>').trim()).toBe(
+      'Fact[[12]](#c12) next',
+    );
   });
 });
 

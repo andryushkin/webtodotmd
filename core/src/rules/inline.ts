@@ -292,8 +292,7 @@ const SUBSCRIPT = new Map(
 );
 
 /**
- * The run in shifted characters, or unchanged when Unicode cannot spell all of
- * it.
+ * The run in shifted characters, or `null` when Unicode cannot spell all of it.
  *
  * All or nothing per element: `x` with `ab2` above it, half-mapped, would read
  * `xᵃᵇ2` — a different expression, stated confidently. Losing the raising is a
@@ -303,17 +302,57 @@ const SUBSCRIPT = new Map(
  * Markdown character the escaper had to defuse, and there is no shifted spelling
  * of a defused character.
  */
-function shifted(content: string, table: Map<string, string>): string {
-  if (content === '' || content.includes('\\')) return content;
+function shifted(content: string, table: Map<string, string>): string | null {
+  if (content === '') return '';
+  if (content.includes('\\')) return null;
   let out = '';
   for (const ch of content) {
     // Matched exactly, never case-folded: Unicode has almost no capital shifted
     // letters, and answering `ABC` with `ᵃᵇᶜ` changes what the page said.
     const mapped = table.get(ch);
-    if (mapped === undefined) return content;
+    if (mapped === undefined) return null;
     out += mapped;
   }
   return out;
+}
+
+// A footnote marker is a `<sup>` holding a link, which is how Wikipedia writes
+// every citation on the page — and the brackets around its number are exactly
+// what Unicode cannot raise. Marking those would put a `^` in front of each of
+// the dozens on an article while losing nothing without it: `[12]` reads as a
+// reference wherever it stands.
+const REFERENCE_LINK = 'a[href]';
+
+/**
+ * What a raised or lowered run becomes.
+ *
+ * Unicode first, and where it cannot spell the run, the marker in front of the
+ * page's own characters. The run used to be handed back plain, which read as
+ * ordinary text: `x<sup>ABC</sup>` came out `xABC` and `x<sub>ijk</sub>` came
+ * out `xijk` — not an approximation of the expression but a different one, and
+ * the reader of the file has no way to see that a level was lost. A `^` is not
+ * Markdown and renders as itself, which is the point: it says *this run stood
+ * above the line* in the one notation everyone already reads, and it costs one
+ * character against a meaning.
+ *
+ * Bare, with nothing closing it. `x^(ABC)` and `x^{ABC}` mark where the run ends
+ * and would be unambiguous, but text pressed against a closing `</sup>` is rare
+ * enough that the brackets would be paid on every index to buy clarity on
+ * almost none.
+ *
+ * A run of blanks keeps none of this: there is nothing raised about a space, and
+ * a marker in front of one states a level over nothing at all.
+ */
+function raisedRun(
+  el: Element,
+  content: string,
+  table: Map<string, string>,
+  marker: string,
+): string {
+  const lifted = shifted(content, table);
+  if (lifted !== null) return lifted;
+  if (content.trim() === '' || el.querySelector?.(REFERENCE_LINK)) return content;
+  return marker + content;
 }
 
 type QuotePair = readonly [open: string, close: string];
@@ -1070,18 +1109,21 @@ export const INLINE_RULES: Rule[] = [
   // characters.
   //
   // Unicode covers digits and the common operators; letters only in patches
-  // (`ᵃᵇᶜⁿ`, `ₐₑₒₓ`). Where a character is missing the run stays plain, because a
-  // half-mapped `x₂ab` reads as a different formula, not as an approximation of
-  // one — all or nothing, per element.
+  // (`ᵃᵇᶜⁿ`, `ₐₑₒₓ`). Where a character is missing the run is not half-mapped —
+  // `x₂ab` reads as a different formula, not as an approximation of one — it
+  // keeps its own characters behind a `^` or a `_`. That marker is not Markdown
+  // and renders as itself, which is what it is for: plain `xABC` says the run
+  // was never raised at all, and the level is the part of the meaning a formula
+  // cannot spare. See `raisedRun`.
   {
     name: 'subscript',
     filter: 'sub',
-    replacement: (_el, childContent) => shifted(childContent, SUBSCRIPT),
+    replacement: (el, childContent) => raisedRun(el, childContent, SUBSCRIPT, '_'),
   },
   {
     name: 'superscript',
     filter: 'sup',
-    replacement: (_el, childContent) => shifted(childContent, SUPERSCRIPT),
+    replacement: (el, childContent) => raisedRun(el, childContent, SUPERSCRIPT, '^'),
   },
   // A ruby annotation is the reading of the word it stands over: furigana above
   // Japanese, pinyin above Chinese, bopomofo beside it. No rule claimed `<rt>`,

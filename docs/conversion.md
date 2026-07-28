@@ -97,7 +97,7 @@ debts, not features.
 | `<i>` `<em>` `<cite>` `<dfn>` `<var>` | `_text_` | the last three via the browser's own italic |
 | `<del>` `<s>` `<strike>` | `~~text~~` | `strike` via the browser's own line-through |
 | `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped, and only the text: a `<strong>` inside writes no `**`. Two spans with nothing between them merge into one, since two backtick runs meeting cannot be told apart |
-| `<sub>` `<sup>` | Unicode: `H₂O`, `x²` | see below |
+| `<sub>` `<sup>` | Unicode: `H₂O`, `x²`; where Unicode cannot spell the run, `x^ABC` / `x_Прим` | see below |
 | `<ruby>` + `<rt>` | `漢字(かんじ)` | the reading beside the word rather than welded onto it — `漢字かんじ` is the word read twice and a search for either half then fails. `<rp>` is dropped: it holds the same two characters for a browser that cannot draw ruby, and keeping both gives `((かんじ))` |
 | `<q>` | `“quoted”` | the marks a UA stylesheet draws, written as characters. The pair comes from the nearest `lang` — `«…»` under `ru`, `„…“` under `de`, `「…」` under `ja` — out of CLDR's delimiters, which is what CSS's `quotes: auto` resolves against; unknown falls back to `“…”`, and a nested `<q>` takes the second pair. An empty one writes nothing, and a page that styled the marks off (`quotes: none`) gets them anyway: that is a stylesheet, and the core reads attributes |
 | KaTeX, MathJax, `<math alttext>` | `$latex$` / `$$latex$$` | when `math` is on. The core reads LaTeX the page already carries — an `<annotation encoding="application/x-tex">`, a `<script type="math/tex">`, Wikipedia's `alttext` |
@@ -111,36 +111,50 @@ an HTML tag. That last case is a known debt against the no-HTML rule.
 
 ### Raised and lowered runs
 
-Written with the Unicode characters for them, all or nothing per element:
+Written with the Unicode characters for them, all or nothing per element, and
+where Unicode cannot spell the run, behind a `^` or a `_`:
 
 ```
 H<sub>2</sub>O      → H₂O
 x<sup>n+1</sup>     → xⁿ⁺¹
 a<sup>(i)</sup>     → a⁽ⁱ⁾
-x<sup>ABC</sup>     → xABC      no capital shifted letters exist
-x<sup>Примечание</sup> → xПримечание
+x<sup>ABC</sup>     → x^ABC     no capital shifted letters exist
+x<sup>2q</sup>      → x^2q      half-mapped would state another formula
+x<sub>Прим</sub>    → x_Прим
+x<sup>*</sup>       → x^\*      escaped content is marked too
 ```
 
 Markdown has no syntax of its own. Pandoc's `H~2~O` is worse than absent — GFM
 reads a single `~` as strikethrough, so it renders struck-through, corrupting the
 meaning rather than losing it; `x^2^` stays literal. Unicode needs no parser,
 survives copying, and is what the reader saw. Where a character does not exist
-the run stays plain: a half-mapped `x₂ab` states a different formula with the
-same confidence. A run the escaper had to touch stays plain too — a backslash has
-no raised spelling, so `x<sup>*</sup>` is `x\*`.
+the run is not half-mapped — `x₂ab` states a different formula with the same
+confidence — it keeps its own characters behind the marker.
 
-A plain run keeps no boundary of its own, and that is decided rather than
-overlooked: `Brand<sup>TM</sup> here` is `BrandTM here`, the order the line is
-read in and the string a browser puts on the clipboard. Nothing is written
-between the two — a `^`, a `_`, or the tag back again would each be a character
-the reader never saw, and the fidelity oracle counts it as one, since it reads a
-raised run as its characters standing in the line. Measured: one marker per
-untranslatable run takes the survey from 70 defect classes to 80 (81 → 93 of 200
-seeds), `<sub>_</sub>` coming back as `__` among them, where the invented
-character also changed what the page's own escaped one rendered as. It is the
-answer `<small>`, `<big>` and `<u>` already get — an appearance Markdown cannot
-spell is dropped, never traded for a character. What is lost is the boundary, and
-Markdown has nowhere to put it.
+The marker is a character the page did not show, and that is paid deliberately.
+Plain `xABC` costs no character and loses the fact that the run stood above the
+line; a reader of the file cannot see that anything is missing, and in a formula
+the level is the part of the meaning that cannot be spared. A `^` renders as
+itself in every renderer, which is what makes it a notation rather than syntax.
+
+Measured, both ways round: the marker takes the fidelity survey from 70 defect
+classes to 80 (81 → 93 of 200 seeds), every arriving class a `<p><sub>…</sub></p>`
+— the oracle reads a raised run as its characters standing in the line, so a
+marker is exactly what it reports. That is the price of the decision, recorded
+rather than chased.
+
+Bare, with nothing closing it: `x<sup>ABC</sup>y` is `x^ABCy`, ambiguous where
+text presses against the run. `^(ABC)` and `^{ABC}` would mark the end, and that
+shape is rare enough not to pay two characters on every index for it.
+
+Two runs keep nothing: a run of blanks, which has no level to state, and a
+footnote marker — a `<sup>` holding a link, which is how Wikipedia writes every
+citation on a page. The brackets are what Unicode cannot raise, so the rule would
+fire on each of dozens, and `[12]` reads as a reference wherever it stands.
+
+`<small>`, `<big>` and `<u>` are still answered the other way: an appearance
+Markdown cannot spell is dropped, never traded for a character. A level is not an
+appearance.
 
 ## Styles the page states in CSS
 

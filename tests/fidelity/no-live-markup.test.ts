@@ -175,9 +175,12 @@ describe('markup shown as text never becomes markup again', () => {
     ['kbd', `<p><kbd>${SHOWN}</kbd></p>`, SHOWN_TEXT],
     ['samp', `<p><samp>${SHOWN}</samp></p>`, SHOWN_TEXT],
     ['pre', `<pre>${SHOWN}</pre>`, SHOWN_TEXT],
-    // Tags the core emits itself, wrapping page text.
-    ['sub', `<p><sub>${SHOWN}</sub></p>`, SHOWN_TEXT],
-    ['sup', `<p><sup>${SHOWN}</sup></p>`, SHOWN_TEXT],
+    // Tags the core emits itself, wrapping page text. The marker in front is the
+    // level Unicode could not spell, and it is a character rather than syntax:
+    // what has to hold here is that the escaped payload behind it stays inert,
+    // which is what these two assert once the marker is accounted for.
+    ['sub', `<p><sub>${SHOWN}</sub></p>`, `_${SHOWN_TEXT}`],
+    ['sup', `<p><sup>${SHOWN}</sup></p>`, `^${SHOWN_TEXT}`],
     // Attribute values reach the file through the converter's own syntax. The
     // payload was never text on the page here, so what the reader is left with is
     // the label around it — an `alt` shows nothing, a link shows its own words.

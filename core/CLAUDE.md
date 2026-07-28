@@ -19,6 +19,11 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   punctuation, where the alternative was losing the italics and leaving the delimiters on show.
   `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),
   all or nothing per element, since a half-mapped run states a different formula just as firmly.
+  Where Unicode cannot spell the run it keeps its own characters behind a `^` or a `_`, which is a
+  character and not a tag: `x^ABC`. That marker is paid knowingly — it takes the fidelity survey
+  from 81 failures to 93 — because plain `xABC` costs nothing visible and loses the level, and a
+  reader of the file cannot see that a level is missing. A run of blanks and a footnote marker (a
+  `<sup>` holding a link, which is every Wikipedia citation) keep no marker.
 
 ## Escaping
 

@@ -199,8 +199,26 @@ beforeAll(() => {
 // and counted the fallback markup as ink. It answers in three values now, so a
 // `no` from an element written out of attributes is final. Unreachable here for
 // the same reason as the rest — the generator emits no players.
+//
+// It rose from 81 to 93, and the classes from 70 to 80, when a raised run Unicode
+// cannot spell started keeping its level as a `^` or a `_` instead of being
+// handed back plain. Every one of the twelve arriving classes is a
+// `<p><sub>…</sub></p>`; nothing else moved. The cost is exactly what this oracle
+// is built to report — `visibleText` reads a raised run as its characters
+// standing in the line, so a marker is a character the page did not show — and it
+// is the price of the decision rather than a defect to chase: plain `xABC` costs
+// no character and loses the fact that the run stood above the line, which a
+// reader of the file cannot see is missing. This was measured once before, went
+// the other way, and the argument is recorded beside the rule in `inline.ts`.
+//
+// Two table classes left the list at the same time and are *not* repaired: both
+// still fail when the oracle is handed them directly (`\` in a merged cell,
+// `~` in a nested caption). Their keys are shrunk documents, so a change of
+// behaviour anywhere sends the shrinker down a different path and a class that is
+// still broken stops being reached. Checked rather than assumed, which is the
+// whole reason the class list is recorded beside the count.
 const SEEDS = 200;
-const CEILING = 81;
+const CEILING = 93;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -228,11 +246,22 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p><span data-s2md-style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"text-decoration-line:line-through\">~~</span></p>",
+  "<p><sub>##</sub></p>",
+  "<p><sub>#</sub></p>",
+  "<p><sub>&amp;amp;</sub></p>",
+  "<p><sub>&gt;</sub></p>",
+  "<p><sub>&lt;div&gt;</sub></p>",
+  "<p><sub>**</sub></p>",
+  "<p><sub>*</sub></p>",
+  "<p><sub>---</sub></p>",
+  "<p><sub>1. </sub></p>",
+  "<p><sub>_</sub></p>",
+  "<p><sub>foo bar</sub></p>",
+  "<p><sub>word</sub></p>",
   "<p>x](https://example.com)&lt;/table&gt;</p>",
   "<p>x](https://example.com)<strong>hello world</strong></p>",
   "<p>🇺🇸<i data-s2md-style=\"font-weight:700\">x</i></p>",
   "<p>🎉<b>:</b></p>",
-  "<table><tbody><tr><td colspan=\"2\"><span data-s2md-style=\"display:block\">\\</span>foo bar</td></tr><tr><td>a</td><td>b</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>!-- swallowed --&gt; b</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><div><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></div></td></tr><tr><td>outer</td></tr></tbody></table>",
@@ -259,7 +288,6 @@ const RECORDED_CLASSES: readonly string[] = [
   "<table><tbody><tr><td><table><caption>===</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>a</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>x</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
-  "<table><tbody><tr><td><table><caption>~</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><caption>❤️</caption><tbody><tr><td>x</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td> </td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
   "<table><tbody><tr><td><table><tbody><tr><td>![</td><td>b</td></tr></tbody></table></td></tr><tr><td>outer</td></tr></tbody></table>",
