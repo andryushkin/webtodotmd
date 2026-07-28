@@ -194,7 +194,11 @@ function isMarkedHeader(row: Element): boolean {
  * caller falls through to the clone-with-context path, which converts the
  * nested table as the table it is.
  */
-function collectFragmentRows(fragment: DocumentFragment, doc: Document): Element[] {
+function collectFragmentRows(
+  fragment: DocumentFragment,
+  doc: Document,
+  sourceRow: Element | null = null,
+): Element[] {
   const rows: Element[] = [];
 
   function walk(node: Node): void {
@@ -224,6 +228,14 @@ function collectFragmentRows(fragment: DocumentFragment, doc: Document): Element
     });
     if (cells.length > 0) {
       const tr = doc.createElement('tr');
+      // Built fresh, so it carries none of the marks the original was given —
+      // and the header mark is exactly what the caller asks it for next. Select
+      // the cells of the header row and the row that came back was not
+      // recognised as the header, so the header was restored *beside* it and the
+      // file held it twice: once as the header, once as the only body row. The
+      // mark travels from the row the cells were cut out of.
+      const mark = sourceRow?.getAttribute(ORIGIN_ROW_ATTR);
+      if (mark != null) tr.setAttribute(ORIGIN_ROW_ATTR, mark);
       for (const cell of cells) tr.appendChild(cell.cloneNode(true));
       rows.push(tr);
     }
@@ -289,7 +301,13 @@ function tryEnrichTableFragment(range: Range): DocumentFragment | null {
     // Marked before cloning so the clone can be recognised as the header itself
     // rather than merely reading like it.
     originalHeaderRow = markTableHeader(ancestorTable, marks);
-    selectedRows = collectFragmentRows(range.cloneContents(), doc);
+    // Read while the marks are on: a selection that lies inside one row leaves
+    // the row itself outside the clone, and this is the only link back to it.
+    selectedRows = collectFragmentRows(
+      range.cloneContents(),
+      doc,
+      findAncestorElement(range.commonAncestorContainer, 'tr'),
+    );
   } finally {
     marks.restore();
   }

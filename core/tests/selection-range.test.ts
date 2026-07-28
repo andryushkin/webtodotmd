@@ -36,6 +36,35 @@ const TABLE = `<div><table>
 <tbody><tr><td>a</td><td>1</td></tr><tr><td>b</td><td>2</td></tr></tbody>
 </table><p>after the table</p></div>`;
 
+// A selection that lies *inside* one row: the row is the common ancestor, so the
+// clone holds bare cells and the row is rebuilt from them. Rebuilt fresh, it
+// carried none of the marks the original was given — including the one that says
+// it is the header — so the header was restored beside it and the file held it
+// twice, once as the header and once as the only body row.
+describe('a selection made inside one row', () => {
+  const cells = (doc: Document, range: Range, sel: string, from: number, to: number): void => {
+    const found = doc.querySelectorAll(sel);
+    range.setStart(found[from]!.firstChild!, 0);
+    range.setEnd(found[to]!.firstChild!, (found[to]!.textContent ?? '').length);
+  };
+
+  it('writes the header once when the header itself is what was selected', () => {
+    const doc = setup(TABLE);
+    expect(convert(doc, (r) => cells(doc, r, 'th', 0, 1))).toBe('| Name | Age |\n| ---- | --- |');
+  });
+
+  it('writes the header once for a table that has no thead', () => {
+    const doc = setup('<div><table><tr><th>Name</th><th>Age</th></tr><tr><td>a</td><td>1</td></tr></table></div>');
+    expect(convert(doc, (r) => cells(doc, r, 'th', 0, 1))).toBe('| Name | Age |\n| ---- | --- |');
+  });
+
+  it('still restores the header for a body row selected the same way', () => {
+    const doc = setup(TABLE);
+    const md = convert(doc, (r) => cells(doc, r, 'tbody tr:nth-child(2) td', 0, 1));
+    expect(md).toBe('| Name | Age |\n| ---- | --- |\n| b    | 2   |');
+  });
+});
+
 describe('a selection that crosses out of a table', () => {
   it('keeps the header the selection scrolled past', () => {
     const doc = setup(TABLE);
