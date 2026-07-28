@@ -382,4 +382,14 @@ describe('картинка, которую страница не нарисов�
   it('без размеров остаётся', () => {
     expect(toMarkdown('<p><img src="i.png"> text</p>').trim()).toBe('![](i.png) text');
   });
+
+  // The size is read before the address is looked for, and that order is the
+  // answer: a pixel the page drew nothing of is furniture whatever else it
+  // carries. A tracking pixel with an `alt` and no usable `src` writes neither
+  // the picture nor the alt — and the escaper, which asks the same rule now,
+  // agrees with it (`escape.test.ts`).
+  it('спейсер с alt и без адреса — тоже спейсер', () => {
+    expect(toMarkdown('<p><img alt="x" width="1"> text</p>').trim()).toBe('text');
+    expect(toMarkdown('<p><img alt="x" style="height:1px"> text</p>').trim()).toBe('text');
+  });
 });

@@ -643,6 +643,85 @@ function accompaniedByText(el: Element): boolean {
 }
 
 /**
+ * The whole of what a picture writes — the `image` rule's body, kept here
+ * because the escaper's check runs it as well.
+ *
+ * Every refusal below is one of the ways an `<img>` comes to nothing, and their
+ * order is part of the answer: a spacer is refused before its address is even
+ * looked for, so an `alt` on a tracking pixel changes nothing. Reading them a
+ * second time in another order is what the check used to do, and the two
+ * readings disagreed on exactly that element.
+ */
+function imageOutput(el: Element, options: MarkItDownOptions): string {
+  // An image with nothing to point at is not handed the base. Resolving is
+  // the step that invents an address: `new URL('', base).href` *is* the base,
+  // so a src-less `<img>` became `![alt](the-page-being-captured)` — a broken
+  // image whose target is the article the reader was reading, and the
+  // extension always passes `baseUrl: document.baseURI`, so that was every
+  // capture rather than a corner.
+  //
+  // The refusal belongs here rather than in `resolveUrl`, because an empty
+  // URL is not meaningless everywhere. `<a href="">` genuinely addresses the
+  // current document — that is where the reader's click went — so a link must
+  // go on resolving to the page. Only an image must not: a page is not a
+  // picture of itself, and what the reader got from it was the alt text.
+  const url = extractImageUrl(el);
+  const src = url ? resolveUrl(url, options.baseUrl) : '';
+  const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
+  // An `alt` that is there and empty is the markup saying so: HTML defines it
+  // as "this image is not part of the content", which is how a favicon in a
+  // citation pill, a spacer and an icon beside a label are all written. A
+  // *missing* `alt` says nothing of the kind — the author forgot — and that
+  // image stays. Google's AI answers put a 2.5 KB base64 favicon in the
+  // middle of a sentence this way, and a dozen 1×1 gifs after it.
+  //
+  // Only where something else survives on the line: an image alone in its
+  // parent is all that was there, and dropping it would leave an empty link
+  // or an empty paragraph — deleting what the reader saw to save a few
+  // characters, which is the trade this project refuses everywhere else.
+  if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return '';
+  if (drawsNothing(el)) return '';
+  // Inside an HTML block `![alt](src)` would not render, but emitting an
+  // <img> would mean allowing `src` and `alt` through the preview's
+  // allow-list — a real widening of what counts as the core's own markup,
+  // for a case that is rare and already showed nothing. The alt text is what
+  // a reader would have got from a broken image anyway. The cell escapes it.
+  if (isHtmlContext(options)) return alt || '';
+  // With no URL the alt is all that survives, and it lands in the document as
+  // ordinary text — so it needs everything ordinary text gets, in the order
+  // the parser applies it: inline marks, then HTML, then the constructs that
+  // only bite at the start of a line. It had none of it to begin with, because
+  // an attribute never passes the text escaper: an `alt` holding
+  // `<img onerror=…>` went into the file as working markup, and one holding
+  // `# heading` became a real H1 — a heading the page never had, swallowing
+  // the picture's description into the document's outline.
+  //
+  // The block pass runs unconditionally here, where a text node gets it only
+  // when it opens a line. `opensBlock()` is that question and it lives
+  // unexported in the parser; without it the whole cost is one backslash, and
+  // only on an image that had no usable src, whose alt starts with `#`, `>`, a
+  // bullet or a number, and that sits mid-sentence rather than at the front of
+  // one. The backslash renders as nothing; the heading it prevents was a
+  // structural claim invented out of an attribute.
+  if (!src) {
+    if (!alt) return '';
+    // With the same lookahead a text node gets: this alt lands in the document
+    // as prose, so an alt ending in `[` assembled a link with the page's own
+    // text after it — `<img alt="see [">` followed by ` ](url)` gave a working
+    // link whose opener came from an attribute and whose target came from
+    // elsewhere on the page.
+    const ahead = lookAhead(el, mayOpenLink(alt), alt.includes('~'));
+    return escapeBlockStarts(
+      escapeHtmlSyntax(escapeInlineMarkdown(alt, { ahead: ahead.text }), ahead.continues),
+    );
+  }
+  const title = el.getAttribute('title');
+  const dest = markdownUrl(src);
+  const urlPart = title ? `${dest} '${markdownTitle(title)}'` : dest;
+  return `![${markdownLabel(alt)}](${urlPart})`;
+}
+
+/**
  * What this element writes out of its attributes alone — or `undefined` where it
  * is not one of the two that do, and the caller has to look at its content.
  *
@@ -652,11 +731,18 @@ function accompaniedByText(el: Element): boolean {
  * itself; a picture and a player are what it cannot, since both write a whole
  * construct out of attributes.
  *
- * Each of the two has its own way of coming to nothing — an image the page drew
+ * Each of the two has several ways of coming to nothing — an image the page drew
  * no pixels of, one marked decorative beside text, one with neither address nor
  * alt; a player with no address to point at, or none it can point at — and the
- * rules below are the authority for all of them, so this asks them rather than
- * restating them.
+ * question here is exactly "what does the rule write", so each answer comes from
+ * running that rule (`mediaLink()`, `imageOutput()`) rather than from reading it
+ * a second time. The second reading is what drifted: it asked for an address
+ * before it asked about the size, while the rule refuses a spacer first, so
+ * `<p><img alt="x" width="1"># y</p>` — a tracking pixel carrying an `alt`, which
+ * the picture rule converts to nothing at all — was counted as ink and the
+ * reader's literal `#` opened a heading. That is this class in the direction that
+ * costs a character rather than adding one, and it is the same drift the player
+ * had before the two halves were made one call.
  *
  * Three answers rather than two, because for these elements "writes nothing" is
  * the *whole* answer and a walk of the children would overturn it. Both rules set
@@ -672,10 +758,7 @@ export function attributeOutput(el: Element, options: MarkItDownOptions): boolea
   const tag = el.tagName.toLowerCase();
   if (EMBEDS_MEDIA.has(tag)) return mediaLink(el, options) !== '';
   if (tag !== 'img') return undefined;
-  const alt = (el.getAttribute('alt') ?? '').trim();
-  if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return false;
-  if (!extractImageUrl(el)) return alt !== '';
-  return !drawsNothing(el);
+  return imageOutput(el, options) !== '';
 }
 
 function htmlAttr(value: string): string {
@@ -1219,73 +1302,8 @@ export const INLINE_RULES: Rule[] = [
   {
     name: 'image',
     filter: 'img',
-    replacement: (el, _childContent, options: MarkItDownOptions) => {
-      // An image with nothing to point at is not handed the base. Resolving is
-      // the step that invents an address: `new URL('', base).href` *is* the base,
-      // so a src-less `<img>` became `![alt](the-page-being-captured)` — a broken
-      // image whose target is the article the reader was reading, and the
-      // extension always passes `baseUrl: document.baseURI`, so that was every
-      // capture rather than a corner.
-      //
-      // The refusal belongs here rather than in `resolveUrl`, because an empty
-      // URL is not meaningless everywhere. `<a href="">` genuinely addresses the
-      // current document — that is where the reader's click went — so a link must
-      // go on resolving to the page. Only an image must not: a page is not a
-      // picture of itself, and what the reader got from it was the alt text.
-      const url = extractImageUrl(el);
-      const src = url ? resolveUrl(url, options.baseUrl) : '';
-      const alt = (el.getAttribute('alt') ?? '').replace(/[\n\r]+/g, ' ').trim();
-      // An `alt` that is there and empty is the markup saying so: HTML defines it
-      // as "this image is not part of the content", which is how a favicon in a
-      // citation pill, a spacer and an icon beside a label are all written. A
-      // *missing* `alt` says nothing of the kind — the author forgot — and that
-      // image stays. Google's AI answers put a 2.5 KB base64 favicon in the
-      // middle of a sentence this way, and a dozen 1×1 gifs after it.
-      //
-      // Only where something else survives on the line: an image alone in its
-      // parent is all that was there, and dropping it would leave an empty link
-      // or an empty paragraph — deleting what the reader saw to save a few
-      // characters, which is the trade this project refuses everywhere else.
-      if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return '';
-      if (drawsNothing(el)) return '';
-      // Inside an HTML block `![alt](src)` would not render, but emitting an
-      // <img> would mean allowing `src` and `alt` through the preview's
-      // allow-list — a real widening of what counts as the core's own markup,
-      // for a case that is rare and already showed nothing. The alt text is what
-      // a reader would have got from a broken image anyway. The cell escapes it.
-      if (isHtmlContext(options)) return alt || '';
-      // With no URL the alt is all that survives, and it lands in the document as
-      // ordinary text — so it needs everything ordinary text gets, in the order
-      // the parser applies it: inline marks, then HTML, then the constructs that
-      // only bite at the start of a line. It had none of it to begin with, because
-      // an attribute never passes the text escaper: an `alt` holding
-      // `<img onerror=…>` went into the file as working markup, and one holding
-      // `# heading` became a real H1 — a heading the page never had, swallowing
-      // the picture's description into the document's outline.
-      //
-      // The block pass runs unconditionally here, where a text node gets it only
-      // when it opens a line. `opensBlock()` is that question and it lives
-      // unexported in the parser; without it the whole cost is one backslash, and
-      // only on an image that had no usable src, whose alt starts with `#`, `>`, a
-      // bullet or a number, and that sits mid-sentence rather than at the front of
-      // one. The backslash renders as nothing; the heading it prevents was a
-      // structural claim invented out of an attribute.
-      if (!src) {
-        if (!alt) return '';
-        // With the same lookahead a text node gets: this alt lands in the document
-        // as prose, so an alt ending in `[` assembled a link with the page's own
-        // text after it — `<img alt="see [">` followed by ` ](url)` gave a working
-        // link whose opener came from an attribute and whose target came from
-        // elsewhere on the page.
-        const ahead = lookAhead(el, mayOpenLink(alt), alt.includes('~'));
-        return escapeBlockStarts(
-          escapeHtmlSyntax(escapeInlineMarkdown(alt, { ahead: ahead.text }), ahead.continues),
-        );
-      }
-      const title = el.getAttribute('title');
-      const dest = markdownUrl(src);
-      const urlPart = title ? `${dest} '${markdownTitle(title)}'` : dest;
-      return `![${markdownLabel(alt)}](${urlPart})`;
-    },
+    // The whole of it is `imageOutput()`, which the escaper runs too: what a
+    // picture puts on the line is the same question either side is asking.
+    replacement: (el, _childContent, options: MarkItDownOptions) => imageOutput(el, options),
   },
 ];
