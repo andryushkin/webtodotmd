@@ -26,7 +26,7 @@ the reason beside it is what keeps it from being undone.
 
 | Sheet | Constrains |
 | --- | --- |
-| [invariants/core.md](invariants/core.md) | `core/` — escaping, emphasis, reading a style, hiding, tables, maths, the package |
+| [invariants/core.md](invariants/core.md) | `core/` — output language, escaping, emphasis and style, reading a style, whitespace, rows, hiding, maths, blocks, code, tables, the package |
 | [invariants/content.md](invariants/content.md) | `src/content/` — isolation, selection, the style snapshot, entities and titles |
 | [invariants/sidepanel.md](invariants/sidepanel.md) | `src/sidepanel/` — `rawMd`, sanitizing, status layers, toolbar density |
 | [invariants/background.md](invariants/background.md) | `src/background/` — panel behavior on worker start, permissions |

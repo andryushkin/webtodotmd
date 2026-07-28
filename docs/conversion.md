@@ -292,13 +292,3 @@ This is held by a round-trip oracle (`tests/fidelity/`), not by review: it
 compares the text a reader sees before and after conversion, over generated
 documents, and the gate records both the count of known failures and which ones
 they are.
-
-## Decided, not yet built
-
-| HTML / CSS | Markdown | Status |
-| --- | --- | --- |
-| `<mark>`, and an inline run whose background contrasts with what is behind it | `==text==` | decided 2026-07-27; needs escaping for `==` in page text, a `marked` extension so the panel renders it, and a generator hazard |
-
-Escaping is the load-bearing part: a page printing `x==y` or `C==C++` must not
-acquire a highlight. See `store/research/visual-emphasis.md` for the measurements
-behind the decision.
