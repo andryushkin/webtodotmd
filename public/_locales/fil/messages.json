@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Ipadala sa EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Kopyahin ang nakuhang HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "I-clear ang panel",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Binubuksan ang EditMD…"
   }

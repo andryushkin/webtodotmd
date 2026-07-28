@@ -78,6 +78,11 @@ file is given.
 - `setButtonContent()` always sets `aria-label`: in compact mode the visible
   label is gone. `updateToolbarDensity()` measures in the non-compact state,
   which is what stops it oscillating.
+- Every toolbar button gets `attachStatusTooltip()`. In compact mode the labels
+  are dropped and the icon is all a mouse user has — Copy HTML and Clear shipped
+  without one and were an ambiguous glyph in exactly the narrow panel the compact
+  mode exists for. The tooltip names the action rather than repeating the label:
+  `tooltipClear` says which thing is emptied, `tooltipCopyHtml` says which HTML.
 
 ## The captured HTML
 
@@ -94,6 +99,8 @@ file is given.
   narrow and the two views are what it is for.
 - Its own enabled state is `rawHtml`, not the note: text typed by hand has no markup behind it, and
   neither has a capture made before the setting was turned on. A button that copies an empty string
-  reports nothing and looks like a failure of the capture.
+  reports nothing and looks like a failure of the capture. Clear is judged on *either* — a capture
+  whose Markdown came out empty, all of it hidden text with the metadata block switched off, still
+  leaves markup behind, and while Clear read the note alone there was no way to drop it.
 - Revealing or hiding it re-measures the toolbar (`updateToolbarDensity()`). A button appearing in a
   row that already fitted wraps onto a second one and stays there until the panel is resized.

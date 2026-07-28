@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "إرسال إلى EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "نسخ HTML الملتقط",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "مسح اللوحة",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "جارٍ فتح EditMD…"
   }

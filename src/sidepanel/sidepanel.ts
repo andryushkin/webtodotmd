@@ -403,8 +403,13 @@ function updateButtonStates() {
   btnEditmd.disabled = !hasContent;
   // Its own content, not the note's: hand-typed Markdown has no markup behind
   // it, and a capture made before the setting was turned on has none either.
-  btnCopyHtml.disabled = rawHtml.length === 0;
-  btnClear.disabled = !hasContent;
+  const hasReport = rawHtml.length > 0;
+  btnCopyHtml.disabled = !hasReport;
+  // The report counts as something to clear, not only the note. A capture whose
+  // Markdown came out empty — a selection that was all hidden text, with the
+  // metadata block switched off — still leaves markup behind, and with Clear
+  // judged on the note alone there was no way to drop it.
+  btnClear.disabled = !hasContent && !hasReport;
 }
 
 function sendMessageWithTimeout(
@@ -878,6 +883,8 @@ async function init() {
   attachStatusTooltip(btnDownload, 'tooltipDownloadMd');
   attachStatusTooltip(btnTxtMenu, 'tooltipTxtMenu');
   attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
+  attachStatusTooltip(btnCopyHtml, 'tooltipCopyHtml');
+  attachStatusTooltip(btnClear, 'tooltipClear');
 
   autoMetadata = settings.autoMetadata;
   showCopyHtmlButton(settings.copyHtmlButton);

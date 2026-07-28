@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Pošalji u EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Kopiraj zabilježeni HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Očisti ploču",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Otvaranje EditMD-a…"
   }

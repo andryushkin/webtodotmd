@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Sūtīt uz EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Kopēt tverto HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Notīrīt paneli",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Tiek atvērts EditMD…"
   }

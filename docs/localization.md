@@ -35,6 +35,7 @@
 | Any occurrence of `Markdown` | `Markdown` | Proper noun (technical term). |
 | Any occurrence of `.md` | `.md` | File extension. |
 | Any occurrence of `PDF` | `PDF` | Universal abbreviation. |
+| Any occurrence of `HTML` | `HTML` | Name of the format, the same in every locale this ships in. |
 | Any occurrence of `URL` | `URL` | Universal abbreviation. |
 | `✓` symbol in `toastCopied` | `✓` | Keep as-is. |
 | Any occurrence of `EditMD` | `EditMD` | Product name of a separate app. Never transliterate. |
@@ -147,6 +148,15 @@ These are the main interactive controls in the Side Panel. They must be **short,
 | **Function** | Confirmation micro-state (shows for ~1.5s, then reverts) |
 | **Constraint** | ≤ 12 chars. Should be same or shorter than `copy`. |
 | **Adaptation** | Past-tense or completion form of the copy verb. Must feel like a quick "done!" confirmation, not a sentence. |
+
+#### `copyHtml`
+| | |
+|---|---|
+| **EN** | `Copy HTML` |
+| **Where** | Toolbar button beside Clear, present only while the "add a button to copy the captured HTML" setting is on |
+| **Function** | Copies the markup the last capture was handed — the fragment given to the converter — for a bug report |
+| **Constraint** | ≤ 16 chars. Keep `HTML` untranslated. |
+| **Adaptation** | Same copy verb as `copy` in this locale. It is a debugging aid, so the audience is technical — "HTML" needs no gloss. |
 
 #### `download`
 | | |
@@ -476,6 +486,15 @@ Settings appear on a dedicated `options.html` page. Labels can be longer. Use na
 | **Constraint** | ≤ 40 chars. |
 | **Adaptation** | "Floating bubble" = a small pill-shaped button that appears near the cursor when the user selects text. Describe what the user sees, not the technical mechanism. |
 
+#### `labelCopyHtml`
+| | |
+|---|---|
+| **EN** | `Add a button to copy the captured HTML` |
+| **Where** | Checkbox/toggle label, Display section |
+| **Function** | Reveals the `copyHtml` toolbar button. "Captured HTML" is the fragment handed to the converter — the selection with a computed style written onto the elements that needed one |
+| **Constraint** | ≤ 45 chars. Keep `HTML` untranslated. |
+| **Adaptation** | Says a button appears, not that a view opens — it was a third panel view until 1.4.9 and the wording is what tells the two apart. Use the same copy verb as `copyHtml`. |
+
 #### `labelDefaultView`
 | | |
 |---|---|
@@ -566,6 +585,22 @@ So they must say what the button *does*, never repeat the icon.
 | **Constraint** | ≤ 30 chars. Keep `EditMD` untranslated. |
 | **Adaptation** | Names the action the brand alone does not. macOS-only button, absent on other platforms — still translate it. |
 
+#### `tooltipCopyHtml`
+| | |
+|---|---|
+| **EN** | `Copy the captured HTML` |
+| **Where** | The Copy HTML button, present only while its setting is on |
+| **Constraint** | ≤ 30 chars. Keep `HTML` untranslated. |
+| **Adaptation** | Says *which* HTML: the markup the last capture was handed, not the page's own source. Verb matches `copyHtml`. |
+
+#### `tooltipClear`
+| | |
+|---|---|
+| **EN** | `Clear the panel` |
+| **Where** | The Clear button, whose visible label is one word |
+| **Constraint** | ≤ 30 chars. |
+| **Adaptation** | Verb matches `clear`. Name what is emptied — the side panel — so it cannot read as clearing the page or the selection. |
+
 ---
 
 ### 3.14 Rating Widget
@@ -595,7 +630,7 @@ times, asking for a Web Store review.
 Before delivering a locale file, the translator (human or LLM) must verify:
 
 - [ ] `appName` is exactly `to .md` (not translated)
-- [ ] `Markdown`, `.md`, `PDF`, `URL`, `EditMD` are NOT translated
+- [ ] `Markdown`, `.md`, `PDF`, `URL`, `HTML`, `EditMD` are NOT translated
 - [ ] `{1}` placeholder is present and correctly positioned
 - [ ] `✓` is present in `toastCopied`
 - [ ] No string exceeds its character constraint by more than 20%

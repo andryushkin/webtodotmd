@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Küldés az EditMD-be"
   },
+  "tooltipCopyHtml": {
+    "message": "A rögzített HTML másolása",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "A panel törlése",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "EditMD megnyitása…"
   }

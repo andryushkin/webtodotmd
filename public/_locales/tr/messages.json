@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "EditMD'ye gönder"
   },
+  "tooltipCopyHtml": {
+    "message": "Yakalanan HTML'yi kopyala",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Paneli temizle",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "EditMD açılıyor…"
   }

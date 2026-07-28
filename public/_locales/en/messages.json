@@ -193,6 +193,14 @@
     "message": "Send to EditMD",
     "description": "Tooltip for the Send to EditMD toolbar button"
   },
+  "tooltipCopyHtml": {
+    "message": "Copy the captured HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Clear the panel",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Opening in EditMD…",
     "description": "Status after the handoff to the EditMD app was started — Chrome does not report whether the editmd:// scheme has a handler, so this must not claim delivery"

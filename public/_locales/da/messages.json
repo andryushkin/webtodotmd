@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Send til EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Kopiér den opfangede HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Ryd panelet",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Åbner EditMD…"
   }

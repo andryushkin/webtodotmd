@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "ส่งไปยัง EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "คัดลอก HTML ที่จับได้",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "ล้างแผง",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "กำลังเปิด EditMD…"
   }

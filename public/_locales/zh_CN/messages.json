@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "发送到 EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "复制捕获的 HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "清空面板",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "正在打开 EditMD…"
   }

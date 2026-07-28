@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Trimite în EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Copiază HTML-ul capturat",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Șterge panoul",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Se deschide EditMD…"
   }

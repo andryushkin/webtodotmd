@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Hantar ke EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Salin HTML yang ditangkap",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Kosongkan panel",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Membuka EditMD…"
   }

@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Tuma kwa EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Nakili HTML iliyonaswa",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Futa paneli",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Inafungua EditMD…"
   }

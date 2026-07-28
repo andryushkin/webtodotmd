@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "Odeslat do EditMD"
   },
+  "tooltipCopyHtml": {
+    "message": "Kopírovat zachycené HTML",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "Vymazat panel",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "Otevírání EditMD…"
   }

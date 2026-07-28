@@ -192,6 +192,14 @@
   "tooltipSendEditmd": {
     "message": "EditMD కి పంపండి"
   },
+  "tooltipCopyHtml": {
+    "message": "క్యాప్చర్ చేసిన HTML కాపీ చేయి",
+    "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
+  },
+  "tooltipClear": {
+    "message": "ప్యానెల్ తొలగించు",
+    "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
+  },
   "openingEditmd": {
     "message": "EditMD తెరవబడుతోంది…"
   }
