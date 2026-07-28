@@ -26,6 +26,10 @@ import { parseHTML } from 'linkedom';
 import { marked } from '../../vendor/marked.esm.js';
 import { toMarkdown, setDOMAdapter } from '../../core/src/server.js';
 import {
+  foldedDetailsContent,
+  laysOutRatherThanTabulates,
+} from '../../core/src/core/sanitizer.js';
+import {
   BOLD_THRESHOLD,
   BOLD_WEIGHT,
   NORMAL_WEIGHT,
@@ -65,6 +69,51 @@ const BLOCK_TAGS = new Set([
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
+// The children the reader is shown — every walk in this file descends through
+// here, so none of them can disagree about what was on the screen.
+//
+// A `<details>` the page did not open shows its `<summary>` and nothing else, and
+// `sanitize()` folds the body away for exactly that reason. It is the one hiding
+// no style declares — the browser draws the body behind `::details-content`, so
+// `hidingVerdict` has nothing to read and answers `shown` about every element in
+// it. This file knew `hidingVerdict` and no other rule, so it counted the folded
+// body as text on the page and would have reported a deliberate fold as content
+// the file lost. The core owns the question (`foldedDetailsContent`) because the
+// answer is the conversion's, and a second spelling of it here would drift the
+// next time either side moved — the same reason the CSS value readers are the
+// core's own.
+function shownChildren(el: Element): Node[] {
+  return (foldedDetailsContent(el) as Node[] | null) ?? Array.from(el.childNodes);
+}
+
+// The table a cell belongs to: the nearest one, since a nested table's cells are
+// its own.
+function enclosingTable(el: Element): Element | null {
+  let node: Element | null = el.parentElement;
+  while (node !== null && tagOf(node) !== 'table') node = node.parentElement;
+  return node;
+}
+
+/**
+ * A cell of a table the reader never saw as a grid.
+ *
+ * `sanitize()` turns such a cell into a `<div>` before any rule looks at it
+ * (`unwrapLayoutTables`), so the file writes its content as a block and the render
+ * brings it back as a `<p>`. Read as a cell, this file claimed a column the
+ * conversion no longer writes and read the first row as bold — two facts on the
+ * page's side that nothing on the file's side could ever match.
+ *
+ * The core answers which tables those are, for the reason `shownChildren` gives.
+ * Asked of the input document, where every table still stands: the sanitizer
+ * judges each one before it flattens any, so the answers are the same ones.
+ */
+function laidOutCell(el: Element): boolean {
+  const tag = tagOf(el);
+  if (tag !== 'td' && tag !== 'th') return false;
+  const table = enclosingTable(el);
+  return table !== null && laysOutRatherThanTabulates(table);
+}
+
 // A `display` the page states decides this before the tag does: `<span
 // style="display:block">` is a line of its own on screen, and a `<div
 // style="display:inline">` is not. `elementStyle` is what the converter reads —
@@ -89,7 +138,7 @@ function collectText(node: Node, out: string[]): void {
   if (hiding === 'removed') return;
   const block = isBlockBox(node as Element);
   if (block) out.push('\n');
-  for (const child of Array.from(node.childNodes)) {
+  for (const child of shownChildren(node as Element)) {
     // An invisible box kept for a descendant that declared itself visible again
     // paints none of its own text, and the converter drops exactly those nodes
     // (`dropOwnText` in the sanitizer). Asking only "is this removed" here would
@@ -339,12 +388,16 @@ const BOLD_BLOCKS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
  */
 function isHeaderCell(el: Element): boolean {
   const tag = tagOf(el);
+  // A layout cell is a `<div>` before any rule sees it, and no renderer paints a
+  // `<div>` bold. Held to be a header, the first row of a `role="presentation"`
+  // table swallowed the `<b>` inside it and the round trip came back with a
+  // `strong:` the page was said never to have claimed.
+  if (laidOutCell(el)) return false;
   if (tag === 'th') return true;
   if (tag !== 'td') return false;
   const row = el.parentElement;
   if (!row || tagOf(row) !== 'tr') return false;
-  let table: Element | null = row.parentElement;
-  while (table !== null && tagOf(table) !== 'table') table = table.parentElement;
+  const table = enclosingTable(el);
   return table !== null && ownRows(table)[0] === row;
 }
 
@@ -384,7 +437,7 @@ function faceOf(el: Element, parent: Face): Face {
 function wornText(el: Element, own: Face, wears: (face: Face) => boolean): string {
   const out: string[] = [];
   const walk = (node: Element, face: Face): void => {
-    for (const child of Array.from(node.childNodes)) {
+    for (const child of shownChildren(node)) {
       if (child.nodeType === TEXT_NODE) {
         out.push(child.textContent ?? '');
         continue;
@@ -517,10 +570,14 @@ function tableFacts(table: Element, out: string[]): void {
 // The semantic containers are read the same way and for the same reason: a
 // `<section>` holding a sentence draws one paragraph, and the conversion writes
 // one, so an oracle that only knew `<div>` would call the agreement a difference.
+// A cell of a layout table is included for the same reason: the sanitizer makes it
+// a `<div>`, so the file writes its content between blank lines and the render
+// hands back a `<p>`. Omitted, the paragraph the conversion writes had nothing on
+// the page's side to answer it.
 function isParagraph(el: Element): boolean {
   const tag = tagOf(el);
   if (tag === 'p') return true;
-  if (tag !== 'div' && !SEMANTIC_BLOCKS.has(tag)) return false;
+  if (tag !== 'div' && !SEMANTIC_BLOCKS.has(tag) && !laidOutCell(el)) return false;
   return childElements(el).every((child) => !BLOCK_TAGS.has(tagOf(child)) || tagOf(child) === 'br');
 }
 
@@ -541,7 +598,11 @@ function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void 
   if (hidingVerdict(el) === 'removed') return;
   const face = faceOf(el, inherited);
 
-  if (tag === 'table') tableFacts(el, out);
+  // A grid, unless the reader never saw one: a layout table is scaffolding the
+  // sanitizer takes away, so naming its columns claimed a shape no file on the
+  // other side of the round trip could carry back. Its content still makes every
+  // claim it made — the walk below reaches it either way.
+  if (tag === 'table' && !laysOutRatherThanTabulates(el)) tableFacts(el, out);
 
   if (tag === 'a') {
     // The target is the whole point of a link: text that survives while the href
@@ -571,7 +632,7 @@ function collectFacts(node: Node, out: string[], inherited: Face = PLAIN): void 
   // rendered `<li><strong>` will.
   faceFacts(el, inherited, face, out);
 
-  for (const child of Array.from(el.childNodes)) collectFacts(child, out, face);
+  for (const child of shownChildren(el)) collectFacts(child, out, face);
 }
 
 /**
