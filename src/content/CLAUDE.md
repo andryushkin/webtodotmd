@@ -127,6 +127,18 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   finds nothing and the whole box goes, visible text and all. Both are written
   where the state *changes*, so a revealed subtree costs one mark rather than one
   per element, and a page with no hidden boxes costs nothing.
+- One property breaks the "only what is not already implied" rule on purpose, and it is the only
+  one: an element carrying `role="heading"` gets its size written down whether or not it differs,
+  as a ratio of the text it sits in (`font-size:1.5em`, `font-size:1em`). The core has to read
+  silence there as an answer — a `<div>` claiming to be a heading is drawn like body text unless a
+  stylesheet says otherwise, and the clone cannot see a stylesheet — and silence is only readable
+  where something positive says the drawing was read at all. `1em` is that something. A ratio rather
+  than a length because 24px is a heading on one page and body text on another, and because the size
+  it would be compared against sits on the parent, which a selection starting at the heading leaves
+  outside the fragment. Written nowhere else: nothing on the other side reads a size anywhere else,
+  and an attribute per element is what a page-sized budget cannot pay. Both sizes or neither — a
+  caller whose computed style answers nothing about `font-size` has not read the drawing, and a `1em`
+  written there would claim it had.
 - Silence about a derived block leaves the *gap* between the items unsaid, and markup has none:
   `<a>c#</a><a>python</a>` is what a tag list is. The container — not the item — gets
   `data-s2md-row`, once, and the core turns it into the one blank the reader saw. Recording it per

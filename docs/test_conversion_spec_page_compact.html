@@ -120,6 +120,19 @@
   .case > :last-child { margin-bottom: 0; }
   .case h1, .case h2, .case h3, .case h4,
   .case h5, .case h6 { margin: .8rem 0 .35rem; }
+  /* B5: a role drawn as the heading it claims to be. A tag needs none of this —
+     the browser paints an `<h3>` large and bold whatever the page says — so a
+     `<div>` has to state it, and stating it is what makes the claim judgeable
+     against a screenshot. B6 is the same markup with this class left off. */
+  .case .drawn { margin: .8rem 0 .35rem; font-weight: 700; }
+  .case .drawn[aria-level="1"] { font-size: 2em; }
+  .case .drawn[aria-level="2"] { font-size: 1.5em; }
+  .case .drawn[aria-level="3"] { font-size: 1.17em; }
+  .case .drawn[aria-level="4"] { font-size: 1em; }
+  .case .drawn[aria-level="5"] { font-size: .83em; }
+  .case .drawn[aria-level="6"] { font-size: .67em; }
+  /* No level stated is level 2, so it is drawn at one. */
+  .case .drawn:not([aria-level]) { font-size: 1.5em; }
   .case blockquote {
     margin: .75rem 0;
     padding: .2rem 1rem;
@@ -298,12 +311,21 @@
 
 <div class="case" data-case="B5">
 
-        <div role="heading" aria-level="3">Section stated by role</div>
+        <div class="drawn" role="heading" aria-level="3">Section stated by role</div>
         <p>Body under a heading that has no heading tag.</p>
-        <div role="heading" aria-level="4">Subsection stated by role</div>
+        <div class="drawn" role="heading" aria-level="4">Subsection stated by role</div>
         <p>Body under the deeper one.</p>
-        <div role="heading">Level not stated, read as two</div>
-        <div role="heading" aria-level="9">Level nine is not a level Markdown can write</div>
+        <div class="drawn" role="heading">Level not stated, read as two</div>
+        <div class="drawn" role="heading" aria-level="9">Level nine is clamped to six</div>
+      
+</div>
+
+<div class="case" data-case="B6">
+
+        <div role="heading" aria-level="3">Section stated by role alone</div>
+        <p>Body under a claim the page drew nothing for.</p>
+        <div role="heading" aria-level="4">Subsection stated by role alone</div>
+        <p>The row above is <span role="heading" aria-level="2">a heading by role</span> in the middle of this sentence.</p>
       
 </div>
 

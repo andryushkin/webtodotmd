@@ -329,6 +329,42 @@ export function weightFrom(read: StyleReader, inherited: number): number | undef
   return Number.isFinite(number) ? number : undefined;
 }
 
+/**
+ * The type size this style states, in pixels — what a computed style always
+ * writes, and undefined for anything relative, which a length alone cannot say.
+ *
+ * Read by whoever holds live nodes; nothing in the core asks it, because an
+ * absolute size says nothing on its own. 24px is a heading on one page and body
+ * text on another, and the clone cannot see which.
+ */
+export function sizeFrom(read: StyleReader): number | undefined {
+  return px(read('font-size'));
+}
+
+/**
+ * The size this style states as a multiple of the text it sits in — `1.5em` is
+ * half again the size of its surroundings, and `1em` is no different at all.
+ *
+ * That is what `em` means on `font-size` and only on `font-size`: the property
+ * resolves against the *inherited* size rather than its own, so this is ordinary
+ * CSS saying exactly the thing a heading has to be judged by. A snapshot writes
+ * it that way for the same reason — see `src/content/style-snapshot.ts`, which
+ * has the two computed sizes in hand and hands over the ratio rather than a pair
+ * of lengths the clone would have to find each other by.
+ *
+ * `%` is the same statement in the other spelling and is read too. `rem` is not:
+ * it resolves against the document root, which is a size the surrounding text
+ * need have nothing to do with.
+ */
+export function relativeSizeFrom(read: StyleReader): number | undefined {
+  const value = read('font-size');
+  if (value === undefined) return undefined;
+  const match = /^(\d*\.?\d+)(em|%)$/.exec(value.trim());
+  if (!match) return undefined;
+  const number = Number.parseFloat(match[1]!);
+  return match[2] === '%' ? number / 100 : number;
+}
+
 /** Whether this style declares a slant, and which way. */
 export function italicFrom(read: StyleReader): boolean | undefined {
   const value = read('font-style');
@@ -783,6 +819,46 @@ function inheritedFace(el: Element): Face {
   return parent === null ? PLAIN : ownFace(parent, inheritedFace(parent));
 }
 
+/**
+ * Whether this element was drawn as something other than the text around it —
+ * larger type, or heavier — and `undefined` where nothing said how it was drawn.
+ *
+ * The question a `<div>` claiming to be a heading has to answer. A tag carries
+ * its own drawing: the browser paints an `<h3>` large and bold whatever the page
+ * says, so the claim and the appearance cannot disagree. A `<div>` is painted
+ * like everything else, so the role is a statement about meaning and this is the
+ * only witness to what the reader met.
+ *
+ * Either spelling counts, and that is not a loophole: a page tells a heading
+ * apart by size *or* by weight — a sidebar title at 600 in body type, a card
+ * heading at 20px in body weight — and requiring both would lose half the
+ * interfaces there are. Weight comes through `weightFrom`, so `bolder` resolves
+ * against what was inherited rather than adding a fixed amount, and it is
+ * compared against the inherited weight for the reason `addedMarks` gives.
+ *
+ * The third answer is the important one. Silence in a snapshot is not a denial —
+ * that is the standing rule here — so a rule that wants to read silence as "no"
+ * has to know first that somebody was speaking. `style-snapshot.ts` states the
+ * relative size on every element carrying the role, whether or not it differs,
+ * for exactly this: a declaration is the evidence that the drawing was read at
+ * all, and its value is the answer. Without one — `server.ts`, every library
+ * caller, a capture whose snapshot faulted — the question was never put, and the
+ * caller keeps what it would have kept before.
+ *
+ * The known cost of measuring against the *inherited* size: `<div class="h3">
+ * <div role="heading">` has the size on the wrapper, so the element itself is
+ * drawn at `1em` and the heading is demoted to a paragraph. That direction loses
+ * structure and no words, which is the side to be wrong on.
+ */
+export function drawnApart(el: Element): boolean | undefined {
+  const read = elementStyle(el);
+  const relative = relativeSizeFrom(read);
+  const inherited = inheritedFace(el).weight;
+  const weight = weightFrom(read, inherited);
+  if (relative === undefined && weight === undefined) return undefined;
+  return (relative ?? 1) > 1 || (weight ?? inherited) > inherited;
+}
+
 export interface StyleMarks {
   bold: boolean;
   italic: boolean;
@@ -851,7 +927,17 @@ export function addedMarks(el: Element): StyleMarks {
  * One walk for all of the children, because the weight the mark has to beat is
  * the element's own and working it out costs an ancestor walk. `NO_MARKS` for a
  * child that wears nothing, whether it declined the mark itself or holds no text
- * to wear it: a `**` round an image or a blank is a claim about nothing.
+ * to wear it: a `**` round an image is a claim about nothing.
+ *
+ * A blank is not such a child, and reading it as one doubled the delimiters on
+ * every run a page had put a space in: `<div style="font-weight:700"><span>a
+ * </span> <span>b</span></div>` came out `**a** **b**` where one `**a b**` says
+ * the same thing, and a newline between the spans — which every formatter
+ * writes — did it too. The space is drawn, it is drawn bold, and it belongs to
+ * the run either side of it. It has no mark of its own to state, so it takes the
+ * one both its neighbours have and stays outside the delimiters wherever they
+ * differ — a `**` with a space after it is not a delimiter CommonMark renders,
+ * so a blank pulled inside the marks would show the asterisks instead.
  */
 export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
   const read = elementStyle(el);
@@ -863,11 +949,12 @@ export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
   const declinesItalic = (child: Element): boolean => italicFrom(elementStyle(child)) === false;
   const declinesStrike = (child: Element): boolean => struckFrom(elementStyle(child)) === false;
 
-  return Array.from(el.childNodes).map((node) => {
+  // `undefined` is a blank waiting to be told which run it fell in.
+  const own = Array.from(el.childNodes).map((node): StyleMarks | undefined => {
     if (node.nodeType === TEXT_NODE) {
-      return (node.textContent ?? '').trim() === '' ? NO_MARKS : marks;
+      return (node.textContent ?? '').trim() === '' ? undefined : marks;
     }
-    if (node.nodeType !== ELEMENT_NODE) return NO_MARKS;
+    if (node.nodeType !== ELEMENT_NODE) return undefined;
     const child = node as Element;
     return {
       bold: marks.bold && wears(child, declinesBold),
@@ -875,6 +962,34 @@ export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
       strike: marks.strike && wears(child, declinesStrike),
     };
   });
+
+  return own.map((child, i) => child ?? between(own, i, marks));
+}
+
+/**
+ * What a blank between two children wears: the element's marks where both sides
+ * have them, and nothing where either side is missing or declines.
+ *
+ * An edge counts as missing, so a run opening or closing on a space keeps the
+ * space outside its delimiters. Other blanks are stepped over — a comment and a
+ * whitespace text node in a row are one gap on screen — and so is anything that
+ * is neither text nor an element, which writes no character to stand between.
+ */
+function between(own: Array<StyleMarks | undefined>, at: number, marks: StyleMarks): StyleMarks {
+  const beside = (step: -1 | 1): StyleMarks | undefined => {
+    for (let i = at + step; i >= 0 && i < own.length; i += step) {
+      if (own[i] !== undefined) return own[i];
+    }
+    return undefined;
+  };
+  const before = beside(-1);
+  const after = beside(1);
+  const wearsAll = (side: StyleMarks | undefined): boolean =>
+    side !== undefined
+    && side.bold === marks.bold
+    && side.italic === marks.italic
+    && side.strike === marks.strike;
+  return wearsAll(before) && wearsAll(after) ? marks : NO_MARKS;
 }
 
 /** Whether this child keeps the mark and any of its text still carries it. */
@@ -1007,19 +1122,4 @@ export function hidingVerdict(el: Element): Hiding {
   const invisible = own === undefined ? invisibleAbove(el) : invisibleFrom(read);
   if (!invisible) return 'shown';
   return revealedBelow(el) ? 'invisible-but-kept' : 'removed';
-}
-
-/**
- * Whether this element is styled out of the render, or out of sight.
- *
- * `visibility` is the one property here that a descendant can take back, and
- * removing an element removes everything under it: a box that hid itself and
- * then let a child be seen again has to stay, or the text the reader was looking
- * at goes with the box. What is still hidden inside it says so for itself —
- * `visibility` inherits, so a child that declares nothing is invisible too. Every
- * child *element*, that is: a text node has no style to be asked about, which is
- * what `'invisible-but-kept'` above is for.
- */
-export function hiddenByStyle(el: Element): boolean {
-  return hidingVerdict(el) === 'removed';
 }

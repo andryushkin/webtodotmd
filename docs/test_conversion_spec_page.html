@@ -119,6 +119,19 @@
   .subject > :last-child { margin-bottom: 0; }
   .subject h1, .subject h2, .subject h3, .subject h4,
   .subject h5, .subject h6 { margin: .8rem 0 .35rem; }
+  /* B5: a role drawn as the heading it claims to be. A tag needs none of this —
+     the browser paints an `<h3>` large and bold whatever the page says — so a
+     `<div>` has to state it, and stating it is what makes the claim judgeable
+     against a screenshot. B6 is the same markup with this class left off. */
+  .subject .drawn { margin: .8rem 0 .35rem; font-weight: 700; }
+  .subject .drawn[aria-level="1"] { font-size: 2em; }
+  .subject .drawn[aria-level="2"] { font-size: 1.5em; }
+  .subject .drawn[aria-level="3"] { font-size: 1.17em; }
+  .subject .drawn[aria-level="4"] { font-size: 1em; }
+  .subject .drawn[aria-level="5"] { font-size: .83em; }
+  .subject .drawn[aria-level="6"] { font-size: .67em; }
+  /* No level stated is level 2, so it is drawn at one. */
+  .subject .drawn:not([aria-level]) { font-size: 1.5em; }
   .subject blockquote {
     margin: .75rem 0;
     padding: .2rem 1rem;
@@ -320,14 +333,24 @@
     </article>
 
     <article class="case">
-      <aside><strong>B5.</strong> A heading stated with a role rather than a tag. An interface built out of divs writes them this way and a screen reader announces them as headings, so they convert like the tags above: the level comes from <code>aria-level</code>, and one that is missing or outside 1…6 reads as 2. These count towards the level normalisation too — this group starts at <code>aria-level="3"</code>, so it lands where an <code>h3</code> would.</aside>
+      <aside><strong>B5.</strong> A heading stated with a role rather than a tag <em>and drawn as one</em>. An interface built out of divs writes them this way and a screen reader announces them as headings, so they convert like the tags above: the level comes from <code>aria-level</code>, one that is missing or unreadable reads as 2, and one past 6 is clamped — ARIA sets no ceiling, so <code>aria-level="9"</code> is a level the page really stated, and reading it as 2 put a subsection above its own parent. These count towards the level normalisation too — this group starts at <code>aria-level="3"</code>, so it lands where an <code>h3</code> would. Expect four headings.</aside>
       <div class="subject">
-        <div role="heading" aria-level="3">Section stated by role</div>
+        <div class="drawn" role="heading" aria-level="3">Section stated by role</div>
         <p>Body under a heading that has no heading tag.</p>
-        <div role="heading" aria-level="4">Subsection stated by role</div>
+        <div class="drawn" role="heading" aria-level="4">Subsection stated by role</div>
         <p>Body under the deeper one.</p>
-        <div role="heading">Level not stated, read as two</div>
-        <div role="heading" aria-level="9">Level nine is not a level Markdown can write</div>
+        <div class="drawn" role="heading">Level not stated, read as two</div>
+        <div class="drawn" role="heading" aria-level="9">Level nine is clamped to six</div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>B6.</strong> The same claim with nothing drawing it: one size, one weight, no hierarchy anywhere on screen. A tag cannot be in this position — the browser paints an <code>h3</code> large and bold whether the page asks or not — so for a <code>&lt;div&gt;</code> the role is a statement about meaning and the drawing is the only evidence for it. Expect paragraphs, and no <code>#</code> at all: a heading invented here is structure the reader never met, and every word survives either way. The last line is the other half of it — a role inside a sentence is a label, and a <code>##</code> would cut the sentence in two. <span class="known">Judged from a snapshot</span>: a library caller has no drawing written down, and there the role stands as it always did.</aside>
+      <div class="subject">
+        <div role="heading" aria-level="3">Section stated by role alone</div>
+        <p>Body under a claim the page drew nothing for.</p>
+        <div role="heading" aria-level="4">Subsection stated by role alone</div>
+        <p>The row above is <span role="heading" aria-level="2">a heading by role</span> in the middle of this sentence.</p>
       </div>
     </article>
   </section>

@@ -90,7 +90,14 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   direct child is that case. A child that *converted to nothing* is not a child at all here — it
   stands between no characters, so it can end no run, and counting it as one produced those four
   asterisks for real: `<!---->` is what `v-if` leaves mid-run, and
-  `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`.
+  `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`. A *blank* is not
+  such a child either, for the opposite reason — it is drawn, it is drawn bold, and it belongs to the
+  runs on both sides: `<span>a</span> <span>b</span>` under one weight came out `**a** **b**` where
+  one `**a b**` says the same, and a newline between the two, which every formatter writes, did it
+  too. Nothing renders differently, which is why nothing caught it; what it costs is doubled syntax
+  in the pane a person edits. Having no mark of its own to state, a blank takes the one both its
+  neighbours have and stays outside the delimiters wherever they differ — a `**` with a space behind
+  it is not an emphasis CommonMark renders, so a blank pulled inside would show the asterisks.
 - `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
   wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
   running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask
@@ -181,10 +188,13 @@ threshold sits where no layout lands by accident.
   hiding no style declares: Chrome draws the body away behind `::details-content`, so the markup and
   a computed style taken off live nodes both describe a visible box. MDN folds its whole sidebar
   that way, and a 2,655-word article arrived carrying 500 words the reader never saw.
-- `hiddenByStyle()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
+- `hidingVerdict()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
   inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
   `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
-  reader alone.
+  reader alone. It is the only spelling of the verdict: `hiddenByStyle()` was a second one, left
+  behind when the third answer arrived, and it answered in two values — so whoever reached for it
+  next would have got a `removed` for a box the sanitizer keeps for the sake of what is visible
+  inside it. Nothing called it, no test held it, and the package never exported it.
 - One thing is exempt from all of it, and only with `math: true`: an element a maths rule can read a
   formula out of — a `<math alttext>`, an `<annotation encoding="application/x-tex">`, a `<script
   type="math/tex">`. A rendered formula is two things at once, something drawn for the eye and an
@@ -240,6 +250,32 @@ threshold sits where no layout lands by accident.
 
 ## Blocks
 
+- A `role="heading"` is a claim a `<div>` cannot back up on its own, and the rule took it on its
+  word: the spec page showed six identical lines, one size, one weight, no hierarchy anywhere on
+  screen, and four headings went into the file. A tag is never in that position — the browser paints
+  an `<h3>` large and bold whatever the page says, so what it states and what the reader met cannot
+  come apart. Three things have to agree (`writtenAsHeading`): the element takes a line of its own,
+  it holds no block of its own, and it was drawn apart from the text around it. Each answers a way of
+  being wrong — a role on a label inside a sentence would be cut in two by a `##`, one on the wrapper
+  of a section would drag the section onto the heading's line, one on nothing visible would invent
+  structure. Strictness is affordable here and nowhere else: both errors cost a rank and no words, so
+  a demoted heading arrives as a paragraph with every character in it. `minHeadingLevel` asks the
+  same question, or a role written as a paragraph would still set the level every real heading is
+  then normalized against.
+- The third of those is the one place a rule reads *silence* in a snapshot as an answer, and it can
+  only do that because something positive says the drawing was read: `style-snapshot.ts` writes the
+  relative size on every element carrying the role, whether or not it differs, so `font-size:1em` is
+  the declaration meaning "looked at, and ordinary". A ratio rather than a length, because 24px is a
+  heading on one page and body text on another, and because the length it would be compared against
+  sits on the parent — which a selection starting at the heading leaves outside the fragment. The
+  two sides are one pair: anything further the criterion learns to ask has to be written there too.
+  Weight is the other spelling and either alone is enough — a page tells a heading apart by size or
+  by weight, and requiring both loses half the interfaces there are.
+- `aria-level` outside 1…6 is clamped, not defaulted. The default 2 is what a browser reports for a
+  heading that states *no* level; ARIA puts a floor of 1 on the attribute and no ceiling, so
+  `aria-level="9"` is a level the page really stated, and reading it as 2 wrote `## Child` under
+  `### Parent` — a heading above its own parent, which a tag never does. One such line also entered
+  `minHeadingLevel` as a 2 and held the whole page down.
 - The semantic containers are one set, `src/utils/blocks.ts`, read by the parser and by the rule
   that writes them. Two lists made separately disagreed: the escaper counted a `<figure>` and a
   `<form>` as the end of a line while nothing wrote a boundary there, so the reading model ended the

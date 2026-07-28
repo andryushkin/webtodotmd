@@ -511,11 +511,20 @@ async function captureSelection(silent = false) {
     ? 'CAPTURE_HIGHLIGHTS'
     : 'CAPTURE_SELECTION';
 
+  // The base belongs to the document in the panel, so it may only go out to the
+  // page that document came from. It was going out on every press and reset on
+  // the way back, after the Markdown had already been written: capture a page
+  // whose shallowest heading is an `<h3>`, move to another URL, capture a
+  // section starting at `<h5>`, and the content script was handed a base of 3,
+  // shifted the section by -1 and returned `####` — under nothing. The panel
+  // then set the base to 5, having lost the only text that could have used it.
+  const carries = rawMd.trim().length > 0 && lastMeta?.url === tab.url;
+
   let response: CaptureResponse;
   try {
     response = await sendMessageWithTimeout(
       tab.id,
-      { type: messageType, headingBase: headingBase ?? undefined },
+      { type: messageType, headingBase: carries ? (headingBase ?? undefined) : undefined },
       3000,
     );
   } catch (err) {
@@ -553,9 +562,14 @@ async function captureSelection(silent = false) {
   lastMeta = meta;
 
   // The base travels with the document: a capture of another page starts the
-  // levels again, and so does an empty panel.
+  // levels again, and so does an empty panel. Asked a second time against the
+  // URL the page reports for itself, which is the authority — the tab's was all
+  // there was to go on before the request, and a tab can navigate between the
+  // two. Where they disagree the base is dropped rather than kept: no shift is
+  // a heading at its own rank, while a shift against the wrong document is a
+  // rank nothing above it holds.
   const continues = rawMd.trim().length > 0 && prevUrl === meta.url;
-  headingBase = smallestLevel(continues ? headingBase : null, response.topLevel);
+  headingBase = smallestLevel(continues && carries ? headingBase : null, response.topLevel);
 
   if (rawMd.trim().length === 0) {
     const content = autoMetadata ? buildMetadata(meta) + '\n\n' + md : md;

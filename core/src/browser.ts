@@ -674,6 +674,11 @@ export function selectionToMarkdown(selection: Selection, options: MarkItDownOpt
   // Not `options.mode`: this function only ever gets a selection, so the answer
   // is not the caller's to give.
   sanitize(container, 'selection', options.math);
-  const raw = convertChildren(container, options);
+  // The same resolution `toMarkdown` does, and for the same reason: it is asked
+  // after `sanitize()`, so an `.sr-only` heading nobody saw cannot set the base.
+  // This entry point was skipping it, so `topHeadingLevel` was accepted and
+  // silently spent on nothing — a selection whose shallowest heading is an `<h4>`
+  // came back `####` while the other half of the public surface shifted it.
+  const raw = convertChildren(container, resolveHeadingOffset(container, options));
   return normalize(raw);
 }
