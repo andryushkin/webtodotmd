@@ -19,9 +19,17 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   bold run the same, which no reader can undo. The price is paid in full on both sides, or not at
   all: the page's own `x==y` is escaped (`escapeHighlightMarkers`, weighed for flanking exactly as
   the tildes are, since an unpaired `==` costs nothing), and the panel gets a `marked` extension of
-  its own, or a reader is shown four `=` characters that were just put in their file. A background
-  stated only in CSS is still not read — nothing here looks at `background-color`, so an editor's
-  yellow `<span>` arrives plain.
+  its own, or a reader is shown four `=` characters that were just put in their file.
+- A highlight is a *fill*, and the tag is only the older way of stating one: every editor with a
+  highlighter button writes a background on a `<span>` instead — Google Docs, Notion, Confluence,
+  anything built on a contenteditable — so a note whose marks all came from one of those arrived
+  with none of them. `paintedBackground()` is one spelling for both sides, since the snapshot
+  decides what to write down with it and this file reads what arrives: two readings would let a
+  fill be recorded and then declined, and the mark would be missing on exactly the pages the
+  snapshot exists for. What is *not* a highlight: an image or a gradient, which is a decoration
+  rather than a mark and cost `==` round the word `background: url(a;b)` sat behind; and a block,
+  whatever it is painted — a card, a callout, a striped row and a code block are backgrounds no
+  reader reads as a marked phrase, and `==` round a paragraph is a delimiter that does not close.
   One place still breaks this and is a debt: the emphasis fallback for content flanked by
   punctuation, where the alternative was losing the italics and leaving the delimiters on show.
   `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),

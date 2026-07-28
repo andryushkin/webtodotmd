@@ -755,7 +755,7 @@ const AFFECTS_TYPEFACE = /font-weight|font-style|text-decoration/i;
 // else a page writes inline — and `color`, `margin` and `padding` are most of it
 // — cannot change a character of the output, so an element carrying only those
 // must cost no more than an element carrying nothing.
-const AFFECTS_CONVERSION = /font-weight|font-style|text-decoration|display/i;
+const AFFECTS_CONVERSION = /font-weight|font-style|text-decoration|display|background/i;
 const AFFECTS_BOX = /display/i;
 
 // A regex over the raw attributes rather than a parse. That is the whole point:
@@ -1052,6 +1052,64 @@ export function suppressedMarks(el: Element): StyleMarks {
 }
 
 /** Whether this element's style puts its content on a line its tag would not. */
+// A colour that paints nothing. `transparent` and a zero alpha are the two ways
+// a page says "no background of my own", and both are what a computed style
+// reports for the overwhelming majority of elements — the snapshot never writes
+// one, but a page's own `style` attribute does.
+const BLANK_BACKGROUND = /^(?:transparent|rgba\([^)]*,\s*0(?:\.0*)?\s*\)|hsla\([^)]*,\s*0(?:\.0*)?\s*\))$/i;
+
+/**
+ * The colour this style fills its box with, or `undefined` where it fills it with
+ * nothing.
+ *
+ * One spelling for both sides: the content script asks it of a computed style to
+ * decide what to write down, and this file asks it of the snapshot that arrives.
+ * Two readings would let the snapshot record a fill the core then declines, and
+ * the mark would be silently missing on exactly the pages the snapshot is for.
+ *
+ * The longhand answers first, because the shorthand carries everything else a
+ * background can be. What marks a phrase is a fill: an image or a gradient behind
+ * a run is a decoration, a texture or a sprite — `background: url(a;b)` is one,
+ * and reading it as a highlight put `==` round the word it sat behind.
+ */
+export function paintedBackground(read: StyleReader): string | undefined {
+  const colour = read('background-color') ?? read('background');
+  if (colour === undefined) return undefined;
+  const value = colour.trim();
+  if (value === '' || /url\(|gradient/i.test(value)) return undefined;
+  if (BLANK_BACKGROUND.test(value) || CSS_WIDE.has(value.toLowerCase())) return undefined;
+  return value;
+}
+
+/**
+ * Whether this element is painted with a background of its own — a highlight.
+ *
+ * The tag `<mark>` is one way a page marks a phrase and the older way; every
+ * editor that grew a highlighter button writes the other, a background on a
+ * `<span>`, and a note whose marks all came from one of those arrived with none
+ * of them. Google Docs, Notion, Confluence and every CMS built on a contenteditable
+ * do it that way.
+ *
+ * The snapshot is what makes this answerable off live nodes: `background-color`
+ * does not inherit, so a computed style reports `rgba(0,0,0,0)` for almost
+ * everything and the *effective* background — the first painted ancestor — is
+ * what a colour has to differ from to be news. `style-snapshot.ts` does that
+ * comparison while it still has a layout engine and writes the colour only where
+ * it differs, so what arrives here is already "this run was painted differently
+ * from the ones around it". A page's own inline `style` is read as it stands,
+ * since a caller with no snapshot has nothing else to compare against.
+ *
+ * A block is never a highlight, whatever it is painted: a card, a callout, a
+ * zebra-striped row and a code block are all backgrounds a reader does not read
+ * as a marked phrase, and `==` round a paragraph is a delimiter that does not
+ * close — the same reason a style mark goes round a run and never round a block.
+ */
+export function isHighlighted(el: Element): boolean {
+  if (!states(el, /background/i)) return false;
+  if (BLOCK_TAGS.has(tagOf(el)) || displaysAsBlock(el)) return false;
+  return paintedBackground(elementStyle(el)) !== undefined;
+}
+
 export function displaysAsBlock(el: Element): boolean {
   if (BLOCK_TAGS.has(tagOf(el))) return false;
   return displayFrom(elementStyle(el)) === 'block';

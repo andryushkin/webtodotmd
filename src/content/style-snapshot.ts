@@ -68,6 +68,7 @@ import {
   isItalicTag,
   isStruckTag,
   italicFrom,
+  paintedBackground,
   removedFrom,
   revealsFrom,
   sizeFrom,
@@ -131,6 +132,7 @@ const DIAGNOSTIC_PROPERTIES = [
   'font-weight',
   'font-style',
   'text-decoration-line',
+  'background-color',
   'text-align',
   'clip',
   'clip-path',
@@ -352,6 +354,18 @@ interface Context {
    * detached fragment, where the container's computed style is not.
    */
   derivedBlock: boolean;
+  /**
+   * The colour actually painted behind this element — its nearest ancestor with a
+   * background of its own, or `''` where nothing up the tree paints one.
+   *
+   * Carried rather than read per element, because `background-color` does not
+   * inherit: a computed style reports `rgba(0, 0, 0, 0)` for almost everything on
+   * a page, so the property alone cannot say whether a run was *painted
+   * differently from the text around it*, which is the whole of what makes a
+   * highlight one. Only this side can answer it — the core sees a detached
+   * fragment where the ancestors' computed styles are not.
+   */
+  background: string;
 }
 
 const PLAIN: Context = {
@@ -361,6 +375,7 @@ const PLAIN: Context = {
   align: undefined,
   invisible: false,
   derivedBlock: false,
+  background: '',
 };
 
 interface Pending {
@@ -794,6 +809,22 @@ export function snapshotStyles(
     // `<th>`, which would put `:---:` under every header of every table nobody
     // aligned at all. The price is an explicitly centred header reading as one
     // the browser centred; the alternative is the whole page paying for it.
+    // The fill behind this element: its own where it paints one, and whatever the
+    // ancestry painted where it does not. A highlight is a run painted differently
+    // from the text around it — the tag `<mark>` says so outright and every
+    // editor's highlighter button says it this way instead, so a note whose marks
+    // all came from one of those arrived with none of them.
+    //
+    // Written only where it differs from the fill above it, and only on something
+    // that is not a block: a card, a callout, a striped row and a code block are
+    // all painted, and none of them is a marked phrase. Blocks are most of what a
+    // page paints, so this is also what keeps the attribute off most of the page.
+    const painted = paintedBackground(read);
+    const background = painted ?? context.background;
+    if (painted !== undefined && painted !== context.background && box !== 'block' && !isBlockTag(tag)) {
+      declarations.push(`background-color:${painted}`);
+    }
+
     const align = alignFrom(read) ?? context.align;
     if (align !== undefined && align !== context.align && !(isCentredTag(tag) && align === 'center')) {
       declarations.push(`text-align:${align}`);
@@ -833,6 +864,7 @@ export function snapshotStyles(
       align,
       invisible,
       derivedBlock: laysARow,
+      background,
     };
     const below: Pending[] = [];
     let seenBelow = false;

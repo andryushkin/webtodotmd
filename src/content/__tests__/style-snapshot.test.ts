@@ -50,6 +50,10 @@ const INITIAL: Declarations = {
   // which is how many columns wide it ended up.
   'flex-direction': 'row',
   'grid-template-columns': 'none',
+  // What a browser reports for everything that paints nothing, and the reason a
+  // background cannot be read off one element alone: the property does not
+  // inherit, so this is the answer over almost the whole of a page.
+  'background-color': 'rgba(0, 0, 0, 0)',
 };
 
 // The part of the UA stylesheet that touches anything read here.
@@ -973,5 +977,52 @@ describe('aria heading criteria: what the snapshot says about size', () => {
     // level is all there is to go on.
     const plain = '<div class="card"><div role="heading" aria-level="3">Title</div></div>';
     expect(convert(plain, SIZES).before).toBe('### Title');
+  });
+});
+
+// A highlighter's button writes a background on a `<span>`, not a `<mark>` — that
+// is Google Docs, Notion, Confluence and every editor built on a contenteditable.
+// The property does not inherit, so what makes one a highlight is that it differs
+// from the fill behind it, and only this side can see that: the core is handed a
+// detached fragment where the ancestors' computed styles are not.
+// A highlighter's button writes a background on a `<span>`, not a `<mark>` — that
+// is Google Docs, Notion, Confluence and every editor built on a contenteditable.
+// The property does not inherit, so what makes one a highlight is that it differs
+// from the fill behind it, and only this side can see that: the core is handed a
+// detached fragment where the ancestors' computed styles are not.
+describe('a highlight the page states with a background', () => {
+  const YELLOW = { 'background-color': 'rgb(255, 255, 0)' };
+  const GREY = { 'background-color': 'rgb(240, 240, 240)' };
+
+  it('a class-stated fill becomes ==', () => {
+    const { before, after } = convert('<p>a <span class="hl">m</span> b</p>', { hl: YELLOW });
+    // Without the snapshot there is nothing to read: the class is not a style.
+    expect(before).toBe('a m b');
+    expect(after).toBe('a ==m== b');
+  });
+
+  // The fill has to be news. A run painted the same colour as the box it sits in
+  // is not marked — it is the box, and every child of a themed card would take a
+  // marker otherwise.
+  it('the same fill as the box above it is not a highlight', () => {
+    const { after } = convert('<div class="card">a <span class="card">m</span> b</div>', {
+      card: GREY,
+    });
+    expect(after).toBe('a m b');
+  });
+
+  // Blocks are most of what a page paints, and none of it is a marked phrase.
+  it.each([
+    ['a card', '<div class="hl">card text</div>', 'card text'],
+    ['a code block', '<pre class="hl">x = 1</pre>', '```\nx = 1\n```'],
+  ])('a painted block is not a highlight: %s', (_name, html, expected) => {
+    expect(convert(html, { hl: GREY }).after).toBe(expected);
+  });
+
+  it('a fill inside a highlight is not marked twice', () => {
+    const { after } = convert('<p>a <span class="hl">m <span class="hl">n</span></span> b</p>', {
+      hl: YELLOW,
+    });
+    expect(after).toBe('a ==m n== b');
   });
 });

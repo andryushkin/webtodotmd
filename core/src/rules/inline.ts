@@ -12,6 +12,7 @@ import { isHtmlContext, lookAhead } from '../core/parser.js';
 import {
   addedMarks,
   elementStyle,
+  isHighlighted,
   marksPerChild,
   suppressedMarks,
   type StyleMarks,
@@ -1101,7 +1102,9 @@ export const INLINE_RULES: Rule[] = [
   // cannot be read back into either.
   {
     name: 'highlight',
-    filter: ['mark'],
+    // The tag is the older spelling and a background is the one every editor with
+    // a highlighter button writes — `isHighlighted` is where that is judged.
+    filter: (el) => el.tagName.toLowerCase() === 'mark' || isHighlighted(el),
     replacement: (el, childContent, options) => emphasis(el, childContent, ['=='], 'mark', options),
   },
   {

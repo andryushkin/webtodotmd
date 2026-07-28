@@ -1,4 +1,11 @@
-import { addedMarks, displaysAsBlock, laysARow, suppressedMarks, type StyleMarks } from './inline-style.js';
+import {
+  addedMarks,
+  displaysAsBlock,
+  isHighlighted,
+  laysARow,
+  suppressedMarks,
+  type StyleMarks,
+} from './inline-style.js';
 import { SEMANTIC_BLOCKS } from './blocks.js';
 
 export function extractFlankingWhitespace(content: string): {
@@ -204,7 +211,7 @@ export function emitsEmphasis(el: Element): boolean {
   // a style can state or take back: the property that would say it is a
   // background, which nothing here reads. So it is asked for by tag and by
   // nothing else — a `<mark style="font-weight:normal">` is still highlighted.
-  if (el.tagName.toLowerCase() === 'mark') return true;
+  if (el.tagName.toLowerCase() === 'mark' || isHighlighted(el)) return true;
   const mark = EMPHASIS_TAGS.get(el.tagName.toLowerCase());
   if (mark !== undefined && !suppressedMarks(el)[mark]) return true;
   const added = addedMarks(el);

@@ -127,6 +127,16 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   finds nothing and the whole box goes, visible text and all. Both are written
   where the state *changes*, so a revealed subtree costs one mark rather than one
   per element, and a page with no hidden boxes costs nothing.
+- A background is the one thing here that cannot be read off an element at all: `background-color`
+  does not inherit, so a computed style answers `rgba(0, 0, 0, 0)` over almost the whole of a page
+  and says nothing about what is painted *behind* the element. The walk carries the nearest painted
+  ancestor's colour as part of the inheritance and writes the element's own only where it differs —
+  which is exactly what makes a fill a highlight rather than the box a run happens to sit in. The
+  core cannot ask this: it is handed a detached fragment where the ancestors' computed styles are
+  not, and every child of a themed card would take a marker. Written only on something that is not a
+  block, which is also what keeps the attribute off most of a page — blocks are most of what a page
+  paints, and a card, a callout or a striped row is no marked phrase. The verdict itself is
+  `paintedBackground()` in the core, asked of the computed style here and of the snapshot there.
 - One property breaks the "only what is not already implied" rule on purpose, and it is the only
   one: an element carrying `role="heading"` gets its size written down whether or not it differs,
   as a ratio of the text it sits in (`font-size:1.5em`, `font-size:1em`). The core has to read
