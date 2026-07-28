@@ -1464,7 +1464,7 @@ Fourth line after an empty line</span></p>
     </article>
 
     <article class="case">
-      <aside><strong>K4.</strong> <span class="known">Decided, not implemented:</span> visible highlight should eventually become <code>==marked text==</code>, while literal <code>x==y</code> must stay plain.</aside>
+      <aside><strong>K4.</strong> <span class="setting">Highlight.</span> A visible highlight becomes <code>==marked text==</code>, and the literal comparisons beside it are escaped so that a renderer knowing the marker cannot pair them: <code>x\==y</code>. The marker is in no standard — neither CommonMark nor GFM has a highlight — and is written because the destination understands it, Obsidian and EditMD among them; the panel carries a <code>marked</code> extension of its own so the preview draws the highlight rather than showing the four <code>=</code> characters. <code>**</code> was the alternative and spells a highlight and a bold run the same.</aside>
       <div class="subject">
         <p>A <mark>marked phrase</mark> beside literal comparisons x==y and C==C++.</p>
       </div>

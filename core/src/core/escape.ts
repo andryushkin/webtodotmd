@@ -124,6 +124,72 @@ function escapeTildes(text: string, seam: Seam): string {
   return out + line.slice(cursor, end);
 }
 
+/**
+ * Escapes a `==` the page prints where a partner can pair with it.
+ *
+ * The mirror of the highlight rule: `<mark>` writes `==`, so a run of two or more
+ * `=` in the page's own text is now a delimiter wherever the file is read by
+ * something that knows the marker. `x==y and C==C++` is a sentence full of
+ * comparisons and no highlight at all, and unescaped it hands `y and C` to the
+ * reader in yellow.
+ *
+ * Weighed like the tildes above and for the same reason: a `=` at an edge pairs
+ * with nothing, and the page's `x = y` or a `====` rule under a heading costs
+ * nothing. Only a run of two counts — a single `=` is not the marker in any
+ * dialect that has one.
+ *
+ * Both halves pay, since a backslash on the opener does not stop the closer
+ * closing something further along, and neither node can see the other.
+ */
+function escapeHighlightMarkers(text: string, seam: Seam): string {
+  if (!text.includes('==')) return text;
+  const behind = seam.behind ?? '';
+  const line = `${behind}${text}${seam.ahead ?? ''}`;
+  const start = behind.length;
+  const end = start + text.length;
+
+  const runs = [...line.matchAll(/={2,}/g)].map((match) => {
+    const at = match.index;
+    const length = match[0].length;
+    const before = line[at - 1];
+    const after = line[at + length];
+    return {
+      at,
+      length,
+      pays: false,
+      opens: isLeftFlanking(before, after),
+      closes: isRightFlanking(before, after),
+    };
+  });
+
+  let openerBefore = false;
+  for (const run of runs) {
+    if (run.closes && openerBefore) run.pays = true;
+    if (run.opens) openerBefore = true;
+  }
+  let closerAfter = false;
+  for (let i = runs.length - 1; i >= 0; i -= 1) {
+    const run = runs[i]!;
+    if (run.opens && closerAfter) run.pays = true;
+    if (run.closes) closerAfter = true;
+  }
+
+  let out = '';
+  let cursor = start;
+  for (const run of runs) {
+    const from = Math.max(run.at, start);
+    const to = Math.min(run.at + run.length, end);
+    if (!run.pays || from >= to) continue;
+    // One backslash is enough to take the run apart — `\==` is a literal `=`
+    // followed by a single one, and no dialect reads that as a delimiter — but
+    // every `=` of the run is escaped so the run cannot re-form from what is left
+    // when the neighbour escapes its own half.
+    out += `${line.slice(cursor, from)}${'\\='.repeat(to - from)}`;
+    cursor = to;
+  }
+  return out + line.slice(cursor, end);
+}
+
 // Link and image syntax: an opener, a label with no `]` in it, and a `](`. Only a
 // bracket that reaches a paren is markup. A lone `[1]` — a footnote marker, and
 // Wikipedia is full of them — renders as itself, so escaping it would be noise in
@@ -184,7 +250,7 @@ export function escapeInlineMarkdown(text: string, seam: Seam = {}): string {
       ),
     seam,
   );
-  return escapeLinkSyntax(marks, seam.ahead ?? '');
+  return escapeLinkSyntax(escapeHighlightMarkers(marks, seam), seam.ahead ?? '');
 }
 
 /**

@@ -96,6 +96,7 @@ debts, not features.
 | `<b>` `<strong>` | `**text**` | |
 | `<i>` `<em>` `<cite>` `<dfn>` `<var>` | `_text_` | the last three via the browser's own italic |
 | `<del>` `<s>` `<strike>` | `~~text~~` | `strike` via the browser's own line-through |
+| `<mark>` | `==text==` | the one marker no standard defines — neither CommonMark nor GFM has a highlight — written because the destination understands it (Obsidian, EditMD). `**` was the alternative and spells a highlight and a bold run the same. Both halves of the price are paid: the page's own `x==y` is escaped, and the panel carries a `marked` extension (`src/sidepanel/marked-highlight.ts`) so a reader is not shown four `=` that were just put in their file. A highlight stated only as `background-color` is still not read |
 | `<code>` `<kbd>` `<samp>` | `` `text` `` | contents never escaped, and only the text: a `<strong>` inside writes no `**`. Two spans with nothing between them merge into one, since two backtick runs meeting cannot be told apart |
 | `<sub>` `<sup>` | Unicode: `H₂O`, `x²`; where Unicode cannot spell the run, `x^ABC` / `x_Прим` | see below |
 | `<ruby>` + `<rt>` | `漢字(かんじ)` | the reading beside the word rather than welded onto it — `漢字かんじ` is the word read twice and a search for either half then fails. `<rp>` is dropped: it holds the same two characters for a browser that cannot draw ruby, and keeping both gives `((かんじ))` |

@@ -48,6 +48,36 @@ describe('italic', () => {
   });
 });
 
+// Подсветку не несёт ни CommonMark, ни GFM: `==` пишется потому, что его
+// понимает то, куда файл попадает, — Obsidian, EditMD и редакторы, взявшие
+// расширение у них. Цена платится в экранировании: `x==y` со страницы теперь
+// разбирается, иначе рендерер, знающий маркер, подсветит текст между двумя
+// сравнениями, которых никто не выделял.
+describe('highlight', () => {
+  it('mark tag', () => {
+    expect(toMarkdown('<mark>text</mark>')).toBe('==text==\n');
+  });
+
+  it('пустой mark — не оборачивать', () => {
+    expect(toMarkdown('<mark></mark>')).toBe('\n');
+  });
+
+  it('пробелы внутри выносятся наружу', () => {
+    expect(toMarkdown('<p>a <mark> text </mark> b</p>')).toBe('a ==text== b\n');
+  });
+
+  // Фон не читается ниоткуда, кроме тега: свойство, которое сказало бы о
+  // подсветке, — background, а его ядро не смотрит. Поэтому и вес, объявленный
+  // на самом теге, марку не отменяет — это не жирность.
+  it('font-weight:normal на mark ничего не отменяет', () => {
+    expect(toMarkdown('<mark style="font-weight:normal">text</mark>')).toBe('==text==\n');
+  });
+
+  it('вложенная разметка сохраняется', () => {
+    expect(toMarkdown('<p><mark>a <strong>b</strong></mark></p>')).toBe('==a **b**==\n');
+  });
+});
+
 describe('strikethrough', () => {
   it('del tag', () => {
     expect(toMarkdown('<del>text</del>')).toBe('~~text~~\n');

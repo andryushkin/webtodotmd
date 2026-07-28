@@ -1089,6 +1089,21 @@ export const INLINE_RULES: Rule[] = [
         ? childContent
         : emphasis(el, childContent, ['_', '*'], 'em', options),
   },
+  // The one marker here that no standard defines: `==` is neither CommonMark nor
+  // GFM, and it is written because the file's destination understands it —
+  // Obsidian, EditMD and the editors that took the extension from them. The price
+  // is paid on the other side, in `escape.ts`: a page's own `x==y` has to be
+  // escaped now, or a renderer that knows the marker pairs it with the next one
+  // and highlights the text between two comparisons nobody marked.
+  //
+  // `**` was the alternative and loses the distinction the page drew — a
+  // highlight is not bold, and a note that came back with both spelled the same
+  // cannot be read back into either.
+  {
+    name: 'highlight',
+    filter: ['mark'],
+    replacement: (el, childContent, options) => emphasis(el, childContent, ['=='], 'mark', options),
+  },
   {
     name: 'strikethrough',
     filter: ['del', 's'],

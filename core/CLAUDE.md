@@ -12,9 +12,16 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 - The product converts HTML *into* Markdown, so live HTML in the output is unfinished work, not a
   feature. The only tags a file should hold are escaped ones the page itself displayed — `\<div\>`
   on a page about HTML, which the reader saw as characters and must go on seeing as characters.
-  Never a tag emitted to carry an appearance: a background becomes `**`, not a `<mark>`, and
-  `==` is not the answer either — it is neither CommonMark nor GFM, so the panel would show the
-  characters, and making it markup means escaping every `x==y` a page ever prints.
+  Never a tag emitted to carry an appearance: a `<mark>` becomes `==marked==`, not a `<mark>`.
+  That marker is the one thing here no standard defines — neither CommonMark nor GFM has a
+  highlight — and it is written because the destination understands it: Obsidian, EditMD and the
+  editors that took the extension from them. `**` was the alternative and spells a highlight and a
+  bold run the same, which no reader can undo. The price is paid in full on both sides, or not at
+  all: the page's own `x==y` is escaped (`escapeHighlightMarkers`, weighed for flanking exactly as
+  the tildes are, since an unpaired `==` costs nothing), and the panel gets a `marked` extension of
+  its own, or a reader is shown four `=` characters that were just put in their file. A background
+  stated only in CSS is still not read — nothing here looks at `background-color`, so an editor's
+  yellow `<span>` arrives plain.
   One place still breaks this and is a debt: the emphasis fallback for content flanked by
   punctuation, where the alternative was losing the italics and leaving the delimiters on show.
   `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),

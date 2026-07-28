@@ -114,6 +114,12 @@ describe('markup shown as text never becomes markup again', () => {
     // wraps text is exactly where a wrapper could be mistaken for a delimiter,
     // so both spellings are pinned here rather than assumed.
     ['quotation marks', `<p><q>${SHOWN}</q></p>`, `“${SHOWN_TEXT}”`],
+    // The highlight rule is the newest of them and the only marker here that no
+    // standard defines, so the page's text goes through the escaper against a
+    // delimiter a renderer only sometimes knows. Pinned for the same reason as
+    // the two above: a wrapper writing characters round page text is exactly
+    // where the page's own could be read as a delimiter.
+    ['highlight', `<p><mark>${SHOWN}</mark></p>`, `==${SHOWN_TEXT}==`],
     // Wikipedia's wrapper is the fourth element whose rule writes a formula out
     // of a subtree the sanitizer no longer removes. Its LaTeX reaches the file
     // between dollar signs, which is not inert — an annotation is page text like

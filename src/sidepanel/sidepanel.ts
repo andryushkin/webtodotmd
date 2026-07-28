@@ -11,6 +11,7 @@ import { trackEvent } from '../shared/telemetry';
 import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
 import { getRatingUrl } from '../shared/store-links';
+import { markedHighlight } from './marked-highlight';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -20,6 +21,10 @@ function isCaptureError(r: CaptureResponse): r is CaptureErrorResponse {
 }
 
 marked.setOptions({ breaks: true, gfm: true, html: true });
+// The core writes `==highlight==`, which no standard defines and `marked` does
+// not know: without this the panel showed the reader four `=` characters it had
+// just put in their file.
+marked.use({ extensions: [markedHighlight] });
 
 // ---- DOM refs ----
 
