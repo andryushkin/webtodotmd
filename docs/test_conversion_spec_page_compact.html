@@ -206,6 +206,12 @@
     border: 1px solid var(--line);
     border-radius: 8px;
   }
+  /* S8: `white-space: pre-wrap` is how a thread, a chat turn and a note beside
+     code keep the line breaks their author typed. */
+  .pre-wrap { white-space: pre-wrap; }
+  /* T10: a layout table draws no grid, which is the whole of what makes it
+     furniture — and the data table inside it is what must keep one. */
+  .layout-table, .layout-table > tbody > tr > td { padding: 0; border: 0; }
   .plain-semantics > * { margin-right: .4rem; }
   .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
   .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
@@ -420,6 +426,21 @@
 <div class="case" data-case="S6">
 
         <div class="line-row"><p>Andrej Karpathy</p><p>@karpathy</p><p>Jul 27</p></div>
+      
+</div>
+
+<div class="case" data-case="S7">
+
+        <div class="css-bold"><span>one</span> <span>two</span></div>
+        <div class="css-bold"><span>three</span>
+          <span>four</span></div>
+      
+</div>
+
+<div class="case" data-case="S8">
+
+        <div class="pre-wrap"><span>A caption line, then a picture.
+</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='24' height='24' fill='%23165dcc'/%3E%3C/svg%3E" alt="a blue square" width="24" height="24"></div>
       
 </div>
 
@@ -682,6 +703,22 @@ path\file | a &lt; b &amp; c
       
 </div>
 
+<div class="case" data-case="T10">
+
+        <table class="layout-table" border="0">
+          <tr><td>
+            <table class="layout-table" border="0"><tr><td>First comment, drawn as its own block.</td></tr></table>
+            <table class="layout-table" border="0"><tr><td>Second comment, drawn under it.</td></tr></table>
+            <table>
+              <tr><th>Name</th><th>Age</th></tr>
+              <tr><td>Ann</td><td>30</td></tr>
+              <tr><td>Bob</td><td>41</td></tr>
+            </table>
+          </td></tr>
+        </table>
+      
+</div>
+
 <div class="case" data-case="M1">
 
         <p><a href="https://example.com/docs?q=a&b=c#top">Absolute documentation</a>.</p>
@@ -800,6 +837,13 @@ path\file | a &lt; b &amp; c
       
 </div>
 
+<div class="case" data-case="E7">
+
+        <p><img alt="spacer" width="1" height="1"># not a heading, behind a picture nobody saw</p>
+        <p><img alt="spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1">- not a bullet, behind the same shape with an address</p>
+      
+</div>
+
 <div class="case" data-case="R1">
 
         <p>Visible start.</p>
@@ -842,6 +886,14 @@ path\file | a &lt; b &amp; c
         <template>TEMPLATE_PAYLOAD</template>
         <svg viewBox="0 0 10 10" aria-label="SVG_PAYLOAD"><text x="0" y="8">SVG_PAYLOAD</text></svg>
         <p>After removed elements.</p>
+      
+</div>
+
+<div class="case" data-case="R4">
+
+        <details><summary>Folded section</summary><p>FOLDED_BODY_PAYLOAD</p></details>
+        <details><summary>Folded section with a list</summary><ul><li>FOLDED_ITEM_PAYLOAD</li></ul></details>
+        <details open><summary>Open section</summary><p>An open body is on the screen and stays.</p></details>
       
 </div>
 

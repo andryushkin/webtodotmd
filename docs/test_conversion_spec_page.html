@@ -205,6 +205,12 @@
     border: 1px solid var(--line);
     border-radius: 8px;
   }
+  /* S8: `white-space: pre-wrap` is how a thread, a chat turn and a note beside
+     code keep the line breaks their author typed. */
+  .pre-wrap { white-space: pre-wrap; }
+  /* T10: a layout table draws no grid, which is the whole of what makes it
+     furniture — and the data table inside it is what must keep one. */
+  .layout-table, .layout-table > tbody > tr > td { padding: 0; border: 0; }
   .plain-semantics > * { margin-right: .4rem; }
   .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
   .product-card { padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
@@ -466,6 +472,23 @@
       <aside><strong>S6.</strong> Two paragraphs the page drew side by side stay two paragraphs. One line is what the reader met, but <code>p</code> is the one tag that means paragraph and nothing else, and the author's own word outweighs a measurement. The price is a byline written this way arriving one paragraph per column; the same byline built out of <code>div</code>s comes back as one line, as S4 does.</aside>
       <div class="subject">
         <div class="line-row"><p>Andrej Karpathy</p><p>@karpathy</p><p>Jul 27</p></div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S7.</strong> One weight over two spans with a blank between them is one bold run, not two. The blank is drawn, it is drawn bold, and it belongs to the runs on either side, so it can end neither — <code>**one** **two**</code> renders exactly as <code>**one two**</code> and spends four more characters saying it, in the pane a person edits. The second line is the same shape with a source newline instead of a space, which is what every formatter writes.</aside>
+      <div class="subject">
+        <div class="css-bold"><span>one</span> <span>two</span></div>
+        <div class="css-bold"><span>three</span>
+          <span>four</span></div>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>S8.</strong> Inside a <code>white-space: pre-wrap</code> box the breaks the author typed are the ones the reader met, and one with something drawn on both sides is kept. What is drawn need not be text: the picture below ends the first line as firmly as a word would, and answering from <code>textContent</code> alone trimmed the break and welded the caption onto whatever followed.</aside>
+      <div class="subject">
+        <div class="pre-wrap"><span>A caption line, then a picture.
+</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='24' height='24' fill='%23165dcc'/%3E%3C/svg%3E" alt="a blue square" width="24" height="24"></div>
       </div>
     </article>
   </section>
@@ -754,6 +777,23 @@ path\file | a &lt; b &amp; c
         </table>
       </div>
     </article>
+
+    <article class="case">
+      <aside><strong>T10.</strong> A <code>border="0"</code> table with no <code>th</code>, <code>thead</code> or <code>caption</code> is furniture: nothing on screen says its cells stand in columns, so they become blocks and the scaffolding goes. Hacker News is built this way throughout — the page a table, each comment a table inside it — and read as grids one such page became five times its size in pipes nobody saw. The nesting is <em>not</em> what says so: a table inside a cell is asked the same question on its own, and the one below answers no. Expect two paragraphs and one real grid, exactly as the screen shows — the whole of this case used to arrive as a single unsearchable word.</aside>
+      <div class="subject">
+        <table class="layout-table" border="0">
+          <tr><td>
+            <table class="layout-table" border="0"><tr><td>First comment, drawn as its own block.</td></tr></table>
+            <table class="layout-table" border="0"><tr><td>Second comment, drawn under it.</td></tr></table>
+            <table>
+              <tr><th>Name</th><th>Age</th></tr>
+              <tr><td>Ann</td><td>30</td></tr>
+              <tr><td>Bob</td><td>41</td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </div>
+    </article>
   </section>
 
   <section id="media">
@@ -894,6 +934,14 @@ path\file | a &lt; b &amp; c
         <p>after a break<br><em># inside emphasis, where a backslash would show</em></p>
       </div>
     </article>
+
+    <article class="case">
+      <aside><strong>E7.</strong> A line starts where nothing has been <em>written</em>, not where no element stands. A picture the page drew no pixels of — a spacer, a tracking pixel — writes nothing at all, so the text behind it is still at the head of its line and still needs its backslash. Both shapes below are the same nothing: one states no address, one states a real one and is still a single pixel. Expect a literal <code>#</code> and a literal <code>-</code>, and no heading and no bullet.</aside>
+      <div class="subject">
+        <p><img alt="spacer" width="1" height="1"># not a heading, behind a picture nobody saw</p>
+        <p><img alt="spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1">- not a bullet, behind the same shape with an address</p>
+      </div>
+    </article>
   </section>
 
   <section id="removal">
@@ -945,6 +993,15 @@ path\file | a &lt; b &amp; c
         <template>TEMPLATE_PAYLOAD</template>
         <svg viewBox="0 0 10 10" aria-label="SVG_PAYLOAD"><text x="0" y="8">SVG_PAYLOAD</text></svg>
         <p>After removed elements.</p>
+      </div>
+    </article>
+
+    <article class="case">
+      <aside><strong>R4.</strong> A <code>details</code> with no <code>open</code> shows its summary and nothing else. It is the one hiding no style declares — Chrome draws the body away behind <code>::details-content</code>, so the markup and a computed style both describe a visible box — and MDN folds its whole sidebar this way, which put 500 unread words into a 2,655-word article. Expect the two summaries and neither payload; the open one beside them keeps its body, as W-section cases do.</aside>
+      <div class="subject">
+        <details><summary>Folded section</summary><p>FOLDED_BODY_PAYLOAD</p></details>
+        <details><summary>Folded section with a list</summary><ul><li>FOLDED_ITEM_PAYLOAD</li></ul></details>
+        <details open><summary>Open section</summary><p>An open body is on the screen and stays.</p></details>
       </div>
     </article>
   </section>
