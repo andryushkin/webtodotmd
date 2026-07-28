@@ -29,6 +29,7 @@ import {
   type ContentRectsOf,
   type DrawnRect,
 } from '../style-snapshot';
+import { cloneRangeWithBr } from '../capture';
 
 type Declarations = Record<string, string>;
 
@@ -260,6 +261,29 @@ describe('content drawn on one band (theory C)', () => {
       };
       expect(marked(NOTHING_MEASURED)).toBe('display:block');
       expect(marked(statedRects)).toBe(null);
+    });
+
+    it('keeps the sentence whole when the drag ends inside the row', () => {
+      // The gesture, not the container: a drag across the sentence makes the row
+      // itself the common ancestor, so `cloneContents()` hands back its children
+      // and the mark stays on the page. Every test above selects the container,
+      // which is the one path that never lost it — and this is the shape the
+      // reader reported, three paragraphs from the sentence they dragged over.
+      //
+      // The capture's own clone, since that is where the repair sits. What it
+      // does not cover is the wrapper around it — shadow roots, the mirroring,
+      // `captureStyles` picking its own scope — which needs a browser.
+      const doc = page(MENTION);
+      const restore = snapshotStyles([doc.body], styleEngine(), false, statedRects);
+      const spans = doc.querySelectorAll('[data-s2md-row] > span');
+      const range = doc.createRange();
+      range.setStart(spans[0]!.firstChild!, 0);
+      range.setEnd(spans[1]!.firstChild!, spans[1]!.textContent!.length);
+      const md = toMarkdown(cloneRangeWithBr(range) as unknown as Node).trim();
+      restore();
+      expect(md).toBe(
+        'Wow even [@karpathy](https://x.com/karpathy) admits he is 80% agentic coding now.',
+      );
     });
 
     it('is what it was where nothing can be measured', () => {
