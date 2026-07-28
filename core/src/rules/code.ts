@@ -22,7 +22,14 @@ const LINE_NUMBER_CLASSES = new Set(['line-numbers-rows', 'linenumber', 'line-nu
 // opened the file's code block with `pythondef hello(name):`. Neither is code:
 // a caption labels the sample and a button is a control, and the caption is
 // usually the language, which the fence has a place for.
-const CHROME_TAGS = new Set(['figcaption', 'button']);
+//
+// A selector, like `CONTROLS` below, because a query is the only way this list
+// has ever been used. It was written twice — a `Set` and a selector naming the
+// same two tags — and the code re-tested each element the selector had already
+// chosen, a condition no element could fail. Two spellings of one list is the
+// shape a defect waits in: a third tag added to the `Set` would have removed
+// nothing at all until somebody noticed the selector.
+const CHROME_TAGS = 'figcaption, button';
 
 /**
  * What may follow the opening fence.
@@ -205,9 +212,7 @@ function removeLineNumbers(el: Element): void {
 
 /** Takes the caption bar and the controls out of a clone, at any depth. */
 function removeChrome(el: Element): void {
-  for (const child of Array.from(el.querySelectorAll('figcaption, button'))) {
-    if (CHROME_TAGS.has(child.tagName.toLowerCase())) child.remove();
-  }
+  for (const child of Array.from(el.querySelectorAll(CHROME_TAGS))) child.remove();
   removeControlsOutsideCode(el);
 }
 
