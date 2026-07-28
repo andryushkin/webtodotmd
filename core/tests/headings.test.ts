@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
+import { Window } from 'happy-dom';
 import { toMarkdown, setDOMAdapter } from '../src/server.js';
+import { selectionToMarkdown } from '../src/browser.js';
 
 beforeAll(() => {
   setDOMAdapter((html) => parseHTML(html).document as unknown as Document);
@@ -73,6 +75,45 @@ describe('topHeadingLevel', () => {
 
   it('an explicit offset wins — the caller stating the answer, not asking', () => {
     expect(toMarkdown('<h3>A</h3>', { topHeadingLevel: 2, headingOffset: 0 })).toBe('### A\n');
+  });
+});
+
+// `topHeadingLevel` is documented as an option of the conversion, not of one
+// entry point, and there are two. linkedom cannot build a `Range` the selection
+// path reads, so this one is driven through happy-dom like `selection-range`.
+describe('aria heading criteria: topHeadingLevel on the selection path', () => {
+  function selectionOf(range: Range): Selection {
+    return {
+      rangeCount: 1,
+      getRangeAt: () => range,
+      toString: () => range.toString() || 'x',
+    } as unknown as Selection;
+  }
+
+  function fromSelection(html: string, options: Record<string, unknown>): string {
+    const window = new Window();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML = `<div id="root">${html}</div>`;
+    const range = doc.createRange();
+    range.selectNodeContents(doc.getElementById('root')!);
+    return selectionToMarkdown(selectionOf(range), options);
+  }
+
+  it('shifts a selection the same way the whole-document path does', () => {
+    // It was accepted and spent on nothing: the option arrived, no offset was
+    // ever resolved from it, and the caller got `####` with no error to read.
+    expect(fromSelection('<h4>Deep</h4><p>Body</p>', { topHeadingLevel: 2 }))
+      .toBe('## Deep\n\nBody\n');
+  });
+
+  it('leaves a selection that already starts at h1 alone, upwards only', () => {
+    expect(fromSelection('<h1>A</h1><h3>B</h3>', { topHeadingLevel: 2 }))
+      .toBe('# A\n\n### B\n');
+  });
+
+  it('an explicit offset still wins over the level', () => {
+    expect(fromSelection('<h4>Deep</h4>', { topHeadingLevel: 2, headingOffset: 0 }))
+      .toBe('#### Deep\n');
   });
 });
 
