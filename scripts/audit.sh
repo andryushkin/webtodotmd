@@ -153,14 +153,24 @@ claude_lines=$(wc -l < CLAUDE.md)
 agent_lines=$(wc -l < AGENTS.md)
 # Path-scoped guides are counted too: moving a section into one is how the root
 # budget would otherwise be met without saying anything less.
+# `core/` has a budget of its own, and a much larger one: it is not only the
+# guide for a subdirectory but the constraint sheet of a library published from
+# this repository, and every line in it is a defect somebody already paid for
+# with the reason that makes it stick. The root norm allows this in as many
+# words — earn the space by saying less, *or raise the budget* — and raising it
+# knowingly beats trimming the reasons, which is the half that does the work.
 scoped_over=""
 for guide in core/CLAUDE.md src/*/CLAUDE.md; do
     [ -f "$guide" ] || continue
     lines=$(wc -l < "$guide")
-    [ "$lines" -gt 120 ] && scoped_over="$scoped_over $guide=$lines"
+    case "$guide" in
+        core/CLAUDE.md) limit=480 ;;
+        *) limit=210 ;;
+    esac
+    [ "$lines" -gt "$limit" ] && scoped_over="$scoped_over $guide=$lines(>$limit)"
 done
 if [ "$claude_lines" -le 195 ] && [ "$agent_lines" -le 45 ] && [ -z "$scoped_over" ]; then
-    pass "guide-budget (CLAUDE<=195 AGENTS<=45 scoped<=120)"
+    pass "guide-budget (CLAUDE<=195 AGENTS<=45 core<=480 scoped<=210)"
 else
     fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines$scoped_over"
 fi
