@@ -207,8 +207,8 @@ describe('экранирование через границу узлов', () =
   // «меньше». Правило для формул требует тег целиком в одной строке, поэтому там
   // разрывает вообще любой соседний узел.
   it.each([
-    ['оператор между операндами', '<p><math><mi>a</mi><mo>&lt;</mo><mi>b</mi><mo>&gt;</mo><mi>c</mi></math></p>', 'a&lt;b>c'],
-    ['тег по узлам', '<p><math><mo>&lt;</mo><mi>img</mi><mo>&gt;</mo></math></p>', '&lt;img>'],
+    ['оператор между операндами', '<p><math><mi>a</mi><mo>&lt;</mo><mi>b</mi><mo>&gt;</mo><mi>c</mi></math></p>', 'a\\lt b>c'],
+    ['тег по узлам', '<p><math><mo>&lt;</mo><mi>img</mi><mo>&gt;</mo></math></p>', '\\lt img>'],
   ])('формула не собирается в тег: %s', (_name, html, expected) => {
     expect(toMarkdown(html).trim()).toBe(expected);
   });

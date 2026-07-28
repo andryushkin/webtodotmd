@@ -268,8 +268,12 @@ the converter emits as markup must be the only markup there is.
 - **Nothing is escaped inside `pre`, `code`, `kbd`, `samp` or a math subtree** — a
   backslash there is corruption, not protection. Their contents are preserved
   literally, whitespace included. A math subtree has one exception, and it is not
-  a backslash: a `<` that would open a tag or a comment becomes `&lt;`, because
-  LaTeX between dollar signs is re-emitted into a document that carries raw HTML.
+  a backslash: a `<` that would open a tag or a comment becomes `\lt`, and its
+  `>` becomes `\gt`, because LaTeX between dollar signs is re-emitted into a
+  document that carries raw HTML. LaTeX's own names for the characters rather
+  than `&lt;`/`&gt;` — an entity is inert too but is not LaTeX, and KaTeX draws it
+  as an error in red, so the formula came out safe and unreadable. An inequality
+  has no name after its `<` and is never touched: `a < b`, `x <y`, `x <= y`.
 - **Whitespace collapses everywhere else**, as it does on screen — which means to
   nothing at a line's edge. A run standing after a block, at a container's start
   or in front of the next block is drawn nowhere by a browser and is written

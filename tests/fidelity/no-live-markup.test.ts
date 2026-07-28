@@ -75,6 +75,16 @@ function liveMarkup(html: string): string[] {
 // still there, and they are still only characters.
 const SHOWN_TEXT = PAYLOAD;
 
+// The same payload as a formula holds it. LaTeX is re-emitted verbatim, so the
+// one thing that can defuse a tag there is LaTeX's own name for the character:
+// `\lt` and `\gt` draw what the page drew and leave no `<` for a Markdown
+// renderer to open a tag with. An HTML entity would be inert here too and is not
+// used, because an entity is not LaTeX — KaTeX renders `&lt;` as an error, in
+// red, so the formula came out safe and unreadable. The trailing space is
+// LaTeX's delimiter and disappears when the formula is drawn; here, where no
+// maths renderer runs, it stays in the string.
+const SHOWN_MATH = PAYLOAD.replace(/</g, '\\lt ').replace(/>/g, '\\gt ');
+
 describe('markup shown as text never becomes markup again', () => {
   it.each([
     // input,                                          what the reader is left with
@@ -111,7 +121,7 @@ describe('markup shown as text never becomes markup again', () => {
     [
       'wikipedia maths wrapper',
       `<p><span class="mwe-math-element"><math alttext="${SHOWN}"><annotation encoding="application/x-tex">${SHOWN}</annotation></math><img class="mwe-math-fallback-image-inline" src="${OWN_IMAGE}" alt="${SHOWN}"></span></p>`,
-      `$${SHOWN_TEXT}$`,
+      `$${SHOWN_MATH}$`,
     ],
     ['ruby reading', `<p><ruby>word<rt>${SHOWN}</rt></ruby></p>`, `word(${SHOWN_TEXT})`],
     // The label of an embedded player comes out of an attribute, which no text
@@ -198,8 +208,14 @@ describe('markup shown as text never becomes markup again', () => {
     [
       'katex',
       `<p><span class="katex"><annotation encoding="application/x-tex">${SHOWN}</annotation></span></p>`,
-      `$${SHOWN_TEXT}$`,
+      `$${SHOWN_MATH}$`,
     ],
+    // MathJax v2 keeps its LaTeX in a `<script>`, which is a raw-text element:
+    // the parser does not decode entities inside one, so the payload arrives
+    // already written as `&lt;…` and there is no `<` for `escapeMathTags` to
+    // find. Left inert by the page's own spelling rather than by the escape,
+    // which is why this line reads `SHOWN_TEXT` where the other two read
+    // `SHOWN_MATH`.
     ['mathjax v2', `<p><script type="math/tex">${SHOWN}</script></p>`, `$${SHOWN_TEXT}$`],
   ])('%s', (_name, html, shown) => {
     const rendered = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));

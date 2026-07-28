@@ -297,16 +297,28 @@ export function escapeTagStarts(text: string): string {
  * overlay, taking the formula's text off the screen with it. Widening it does not
  * touch a single inequality — `a < b`, `x <y`, `x <= y` have no name to widen —
  * and it costs only `a <b-1> c`, which was already the price of `a <b> c`.
+ *
+ * `\lt` and `\gt`, not `&lt;` and `&gt;`. An entity is not LaTeX: KaTeX renders
+ * it as an error, in red, so a formula that had been made safe was also made
+ * unreadable — the reader met `x < x-foo…> y` on the page and the panel showed
+ * them `&lt;x-foo…&gt;` struck through in red. These two are LaTeX's own names
+ * for the characters, understood by KaTeX and MathJax alike; they draw the `<`
+ * and `>` the page drew, and the file holds no `<` for a Markdown renderer to
+ * open a tag with. Measured against the bundled KaTeX: `\lt`/`\gt` render clean,
+ * the entity errors.
+ *
+ * The trailing space is LaTeX's own delimiter and is eaten when the formula is
+ * drawn — without it `\ltx-foo` is one unknown command.
  */
 export function escapeMathTags(latex: string, continues = false): string {
   const escaped = latex.replace(
     /<(?:[a-zA-Z][\w-]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][\w-]*\s*>|!--)/g,
     // Both delimiters, not just the opener: leaving the `>` behind produced
-    // `&lt;b>` — half an entity, which KaTeX shows verbatim and no renderer
-    // reassembles. A comment opener has no `>` to pair with and keeps its text.
+    // `\lt b>`, whose `>` still closes the tag the `<` no longer opens. A comment
+    // opener has no `>` to pair with and keeps its text.
     (match) => {
       const inner = match.slice(1);
-      return `&lt;${inner.endsWith('>') ? `${inner.slice(0, -1)}&gt;` : inner}`;
+      return `\\lt ${inner.endsWith('>') ? `${inner.slice(0, -1)}\\gt ` : inner}`;
     },
   );
   if (!continues) return escaped;
@@ -315,6 +327,6 @@ export function escapeMathTags(latex: string, continues = false): string {
   // `<` — nothing appended after `=` can make that a tag.
   return escaped.replace(
     /<(?:\/?[a-zA-Z][\w-]*(?:\s[^<>]*)?|\/|!-?)?$/,
-    (match) => `&lt;${match.slice(1)}`,
+    (match) => `\\lt ${match.slice(1)}`,
   );
 }

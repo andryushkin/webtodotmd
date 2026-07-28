@@ -328,17 +328,19 @@ describe('дефисные теги в формуле', () => {
     ['одиночный самозакрывающийся', 'a <my-el/> b'],
   ])('обезвреживает: %s', (_name, latex) => {
     const md = asText(latex);
-    // Оба разделителя, иначе в файле остаётся половина сущности.
+    // Оба разделителя, иначе оставшийся `>` закрывает тег, который `<` уже не
+    // открывает.
     expect(md).not.toContain('<');
     expect(md).not.toContain('>');
-    // Текст формулы читатель всё равно видит — уходит только разметка.
-    expect(md).toContain('&lt;');
-    expect(md).toContain('&gt;');
+    // LaTeX'овы имена этих символов, а не HTML-сущности: сущность для KaTeX —
+    // ошибка, и формула, ставшая безопасной, становилась нечитаемой.
+    expect(md).toContain('\\lt');
+    expect(md).toContain('\\gt');
   });
 
   it('текст элемента остаётся на месте', () => {
     expect(asText('x <x-foo style="position:fixed">X</x-foo> y')).toBe(
-      '$x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y$',
+      '$x \\lt x-foo style="position:fixed"\\gt X\\lt /x-foo\\gt  y$',
     );
   });
 

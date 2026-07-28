@@ -1058,7 +1058,7 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text, while tag- or comment-shaped text is converted to <code>&amp;lt;</code> rather than becoming live HTML.</aside>
+      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text — <code>a &lt; b</code> is untouched — while tag- or comment-shaped text is defused with LaTeX's own names for the characters, <code>\lt</code> and <code>\gt</code>. Not an HTML entity: <code>&amp;lt;</code> is inert too, but it is not LaTeX, and KaTeX draws it as an error in red — the formula came out safe and unreadable. These two draw the <code>&lt;</code> and <code>&gt;</code> the page drew, and leave no <code>&lt;</code> for a Markdown renderer to open a tag with.</aside>
       <div class="subject">
         <p>
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">a &lt; b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">a &lt; b</span></span>

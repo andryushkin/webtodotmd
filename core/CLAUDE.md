@@ -33,7 +33,9 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   in the node that opens a block — a text node is not a line, and the parser splits text at every
   element boundary. Never escape inside `pre`, `code`, `kbd`, `samp` or a math subtree: a backslash
   there is corruption, and in a math subtree only a tag start (`<` before a letter or slash) is
-  neutralized, because that is what can close a fallback cell.
+  neutralized, because that is what can close a fallback cell. It becomes `\lt`/`\gt` and not
+  `&lt;`/`&gt;`: an entity is inert but is not LaTeX, and KaTeX draws it as an error in red — safe
+  and unreadable. Measured against the bundled KaTeX, both ways.
 - A `~` is escaped when a partner can reach it, never for standing at an edge. One tilde renders as
   itself, so the question is whether a second can pair with it: another in this node that flanking
   lets close what it opens (`1~5 and 7~9` pays, `~/src and ~/usr` does not — both open, neither
