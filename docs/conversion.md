@@ -83,7 +83,7 @@ debts, not features.
 | `<img alt="">` | dropped, when anything else in its parent carries text — an empty `alt` is HTML's own way of saying the image is not content, which is how a favicon in a citation pill, a spacer gif and an icon beside a label are written. Alone in its parent it is kept: it was all that was there |
 | `<img title>` | `![alt](src 'title')` |
 | `<img>` with no usable URL | the alt text alone, escaped |
-| `<img>` one pixel or less wide or tall | dropped: a spacer, which is how a table layout writes indentation and how a tracking pixel hides. Read from `width`/`height` or from the style. It states no `alt` at all — nothing called it decorative — so the size is what is left to read |
+| `<img>` one pixel or less wide or tall | dropped: a spacer, which is how a table layout writes indentation and how a tracking pixel hides. Read from `width`/`height` or from the style. It states no `alt` at all — nothing called it decorative — so the size is what is left to read. The size is read before the address, so one that does carry an `alt` writes neither the picture nor the alt; the escaper runs this rule rather than restating it, having read the two refusals in the other order and counted such a pixel as ink, which put the reader's literal `#` behind it at the head of a line |
 | `<picture>`, `srcset`, lazy-load attributes | the `<img>` inside, resolved to one URL — `data-src` and its spellings first, then the largest `srcset` candidate, then `src` unless it is a placeholder, then the URL rescued from a neighbouring `<noscript>` |
 | a relative URL | resolved against `baseUrl`. An empty or whitespace-only one is not a relative URL and is not resolved: for a link that would be the page's own address, which is what `href=""` means and what the reader clicked, but for an image it would invent a picture out of the page they were reading |
 | `//host/path` | resolved too — it is an address only inside a document that already has a scheme, and a `.md` file has none, so an editor reads it as a path on the reader's own disk. Left alone when the caller brings no base, since inventing `https:` would state a scheme the page never used |
@@ -128,6 +128,19 @@ survives copying, and is what the reader saw. Where a character does not exist
 the run stays plain: a half-mapped `x₂ab` states a different formula with the
 same confidence. A run the escaper had to touch stays plain too — a backslash has
 no raised spelling, so `x<sup>*</sup>` is `x\*`.
+
+A plain run keeps no boundary of its own, and that is decided rather than
+overlooked: `Brand<sup>TM</sup> here` is `BrandTM here`, the order the line is
+read in and the string a browser puts on the clipboard. Nothing is written
+between the two — a `^`, a `_`, or the tag back again would each be a character
+the reader never saw, and the fidelity oracle counts it as one, since it reads a
+raised run as its characters standing in the line. Measured: one marker per
+untranslatable run takes the survey from 70 defect classes to 80 (81 → 93 of 200
+seeds), `<sub>_</sub>` coming back as `__` among them, where the invented
+character also changed what the page's own escaped one rendered as. It is the
+answer `<small>`, `<big>` and `<u>` already get — an appearance Markdown cannot
+spell is dropped, never traded for a character. What is lost is the boundary, and
+Markdown has nowhere to put it.
 
 ## Styles the page states in CSS
 

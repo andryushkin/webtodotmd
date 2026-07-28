@@ -400,6 +400,49 @@ describe('an element that writes nothing does not open a line', () => {
   });
 });
 
+// The escaper's question about a picture is the picture rule's own question, and
+// for a while each side answered it in its own order: the rule refuses a spacer
+// before it looks for an address at all, while the check looked for an address
+// first and fell back to "does it carry an alt". Between the two orders sits the
+// tracking pixel that carries one — `<img alt="x" width="1">`, which converts to
+// nothing whatever — and the check called it ink, so the reader's literal `#`
+// behind it opened a heading and the character left the page. Both sides run
+// `imageOutput()` now, the way the player's two sides run `mediaLink()`.
+describe('what a picture writes is read off the rule that writes it', () => {
+  const markers = [
+    ['heading', '# x', '\\# x'],
+    ['bullet', '- x', '\\- x'],
+    ['numbering', '1. x', '1\\. x'],
+  ] as const;
+
+  const blank = [
+    // The order the two readings disagreed on, in both spellings of a size.
+    ['spacer carrying an alt, with no address', '<img alt="x" width="1">'],
+    ['the same size stated in the style', '<img alt="x" style="height:1px">'],
+    // And the shapes that already agreed, kept here so a later move of either
+    // side is caught wherever it lands.
+    ['spacer carrying an alt and an address', '<img alt="x" src="s.gif" width="1">'],
+    ['spacer with neither', '<img src="s.gif" width="1">'],
+  ] as const;
+
+  for (const [what, picture] of blank) {
+    it.each(markers)(`${what}, then %s`, (_name, text, expected) => {
+      expect(toMarkdown(`<p>${picture}${text}</p>`)).toContain(expected);
+    });
+  }
+
+  // The other half: a picture the page did draw leaves the text mid-line, where
+  // none of those markers is markup and a backslash would be visible noise.
+  it.each([
+    ['an alt with no address is text on the line', '<img alt="x">'],
+    ['an ordinary picture', '<img alt="x" src="photo.jpg">'],
+    ['an icon small enough to be a picture', '<img src="i.png" width="16" height="16">'],
+  ])('leaves it alone after %s', (_name, picture) => {
+    expect(toMarkdown(`<p>${picture}# x</p>`)).toContain('# x');
+    expect(toMarkdown(`<p>${picture}# x</p>`)).not.toContain('\\# x');
+  });
+});
+
 // Блоком делает не только тег. `convert()` пишет элемент с `display:block` между
 // пустыми строками — значит его текст открывает строку ровно как текст `<div>`, а
 // спрашивали только про тег: литеральный `# heading` со страницы становился

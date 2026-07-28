@@ -302,6 +302,17 @@ describe('a caption bar with a button in it', () => {
       '<code>x = 1</code></figure></pre>';
     expect(toMarkdown(html)).toBe('```python\nx = 1\n```\n');
   });
+
+  // "At any depth" is what the query says and what the label depends on: a site
+  // that wraps its copy button in a `<span>` — most of them do, for the icon —
+  // would otherwise name the fence `pythonCopy`, which is no language at all.
+  it('reads it whatever the button is wrapped in', () => {
+    const html =
+      '<pre><figure><figcaption>python<span class="tools">' +
+      '<button type="button">Copy</button></span></figcaption>' +
+      '<code>x = 1</code></figure></pre>';
+    expect(toMarkdown(html)).toBe('```python\nx = 1\n```\n');
+  });
 });
 
 // The same furniture, drawn beside the `<pre>` rather than inside it — which is

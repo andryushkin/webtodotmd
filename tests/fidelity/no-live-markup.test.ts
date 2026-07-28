@@ -276,6 +276,33 @@ describe('a player that writes nothing does not open a line', () => {
   });
 });
 
+// A picture is the other element written out of attributes alone, and it loses
+// the line the same way. The check read the rule's refusals in an order of its
+// own — an address before the size — so a spacer *carrying an alt* was called ink
+// although the rule writes nothing for it at all, and the reader's `#` behind it
+// opened a heading. One `imageOutput()` answers both sides now.
+describe('a picture that writes nothing does not open a line', () => {
+  it.each([
+    ['a spacer with an alt and no address', '<img alt="x" width="1">'],
+    ['the same size stated in the style', '<img alt="x" style="height:1px">'],
+    ['a spacer with an address', `<img alt="x" src="${OWN_IMAGE}" width="1">`],
+    ['one the markup calls decorative', `<img alt="" src="${OWN_IMAGE}">`],
+    ['one with neither address nor alt', '<img>'],
+  ])('%s', (_name, picture) => {
+    const out = render(toMarkdown(`<p>${picture}# x</p>`, { ...CONVERSION_OPTIONS }));
+    expect(visibleText(out)).toBe('# x');
+    expect(liveMarkup(out)).toEqual([]);
+  });
+
+  // And a picture the page did draw is ink, so the same `#` is mid-line prose
+  // there — the direction that costs a backslash rather than a character.
+  it('a picture the page drew leaves the text mid-line', () => {
+    const out = render(toMarkdown(`<p><img alt="x" src="${OWN_IMAGE}"># x</p>`, { ...CONVERSION_OPTIONS }));
+    expect(visibleText(out)).toBe('# x');
+    expect(liveMarkup(out)).toEqual([]);
+  });
+});
+
 // A child that wrote nothing cannot end a run of a mark, because it stands
 // between no characters. Counted as one, it split the run in two and the two
 // halves' delimiters met: `**Total****:**` renders as `Total` in bold followed by
