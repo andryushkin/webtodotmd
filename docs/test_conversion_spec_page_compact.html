@@ -122,6 +122,11 @@
   }
 
   .case > :first-child { margin-top: 0; }
+  /* K4: the shapes a highlighter really writes. A class rather than an inline
+     style on purpose — that is the path only the style snapshot can read. */
+  .hl-class { background-color: #fde68a; }
+  .hl-card { background-color: #eef2ff; padding: .4rem .6rem; }
+  .hl-image { background: url("data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==") repeat; }
   .case > :last-child { margin-bottom: 0; }
   .case h1, .case h2, .case h3, .case h4,
   .case h5, .case h6 { margin: .8rem 0 .35rem; }
@@ -1309,6 +1314,9 @@ Fourth line after an empty line</span></p>
 <div class="case" data-case="K4">
 
         <p>A <mark>marked phrase</mark> beside literal comparisons x==y and C==C++.</p>
+        <p>An <span style="background-color: #fde68a">inline fill</span> and a <span class="hl-class">class-stated fill</span>, which is what an editor's highlighter button writes.</p>
+        <p>A <span class="hl-image">textured run</span> is a decoration and no mark; so is a run filled <span style="background-color: transparent">with nothing at all</span>.</p>
+        <div class="hl-card">A painted block is a card, not a marked phrase.</div>
       
 </div>
 
