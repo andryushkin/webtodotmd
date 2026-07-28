@@ -263,6 +263,62 @@ describe('hard breaks: a newline at the edge of a node, not of a line', () => {
   });
 });
 
+// The same shape with a picture where the second span was. A replaced element
+// holds no text, so the side it stands on read as empty and the break the reader
+// saw between the caption and the photograph was trimmed away — the caption came
+// back welded to whatever followed it.
+describe('hard breaks: a replaced element is drawn beside the line too', () => {
+  it('a break ending a span is kept when an image follows it', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>caption line\n</span>' +
+        '<img src="photo.jpg" alt="photo"></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('caption line\\\n![photo](photo.jpg)');
+  });
+
+  it('and when the image comes first', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><img src="photo.jpg" alt="photo">' +
+        '<span>\ncaption line</span></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('![photo](photo.jpg)\\\ncaption line');
+  });
+
+  it('a picture inside a wrapper that holds no text of its own', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>caption line\n</span>' +
+        '<a href="https://example.com/p"><img src="photo.jpg" alt="photo"></a></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body')))
+      .toBe('caption line\\\n[![photo](photo.jpg)](https://example.com/p)');
+  });
+
+  it('a player counts as well', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>caption line\n</span>' +
+        '<video src="clip.mp4"></video></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('caption line\\\n[clip.mp4](clip.mp4)');
+  });
+
+  // A control the core writes nothing for still ends the line for the reader,
+  // and counting it costs no backslash: a hard break with nothing left after it
+  // is already dropped, so the file is the same either way.
+  it('a form control the file has no place for leaves no stray backslash', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>caption line\n</span><input value="v"></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('caption line');
+  });
+
+  it('an empty wrapper is still nothing drawn', () => {
+    const doc = page(
+      '<div style="white-space: pre-wrap"><span>first line\n</span><span></span></div>',
+    );
+    expect(capture(doc, contentsOf(doc, 'body'))).toBe('first line');
+  });
+});
+
 describe('hard breaks: what the rewrite must not touch', () => {
   it('a code block keeps its own newlines and gains no break', () => {
     const doc = page('<pre><code>const a = 1;\nconst b = 2;\n</code></pre>');

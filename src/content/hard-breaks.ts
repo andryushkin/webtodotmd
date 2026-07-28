@@ -234,6 +234,33 @@ const INLINE_WRAPPERS = new Set([
   'sub', 'sup', 'abbr', 'cite', 'q', 'time', 'label', 'bdi', 'bdo', 'font', 'font-face',
 ]);
 
+// What the reader saw where the markup holds no text at all. A replaced element
+// paints its own box — a picture, a player, a form control — and `textContent`
+// says nothing about any of them, so a caption ending in a newline beside one
+// read as "nothing drawn on that side" and lost the line the reader saw. Chrome
+// draws every one of these; the core emits several of them and drops the rest,
+// and a break with nothing left after it is already the blank line it was
+// drawing (`docs/conversion.md`, `<br>`), so counting one costs no backslash.
+const DRAWN_WITHOUT_TEXT = new Set([
+  'img', 'picture', 'svg', 'canvas', 'video', 'audio', 'iframe', 'embed', 'object',
+  'input', 'select', 'textarea', 'button', 'meter', 'progress', 'math', 'mjx-container',
+]);
+
+/** Whether this subtree painted anything, text or not. */
+function drawsAnything(node: Node): boolean {
+  if (node.nodeType !== ELEMENT_NODE) return (node.textContent ?? '').trim() !== '';
+  const el = node as Element;
+  // `br` is the line ending itself, and either way the question is answered.
+  if (tagOf(el) === 'br' || DRAWN_WITHOUT_TEXT.has(tagOf(el))) return true;
+  if ((el.textContent ?? '').trim() !== '') return true;
+  // Only a subtree with no text at all is walked, which is what bounds this: a
+  // wrapper is how a picture usually arrives — `<a><img></a>` is a linked one.
+  for (let child = el.firstChild; child; child = child.nextSibling) {
+    if (drawsAnything(child)) return true;
+  }
+  return false;
+}
+
 /**
  * Whether anything is drawn on that side of this node, within the run of text it
  * belongs to.
@@ -244,8 +271,7 @@ const INLINE_WRAPPERS = new Set([
 function drawsBeside(node: Node, side: 'previousSibling' | 'nextSibling'): boolean {
   for (let current: Node | null = node; current; current = current.parentNode) {
     for (let sibling = current[side]; sibling; sibling = sibling[side]) {
-      if ((sibling.textContent ?? '').trim() !== '') return true;
-      if (sibling.nodeType === ELEMENT_NODE && tagOf(sibling as Element) === 'br') return true;
+      if (drawsAnything(sibling)) return true;
     }
     const parent = current.parentNode;
     if (parent === null || parent.nodeType !== ELEMENT_NODE) return false;

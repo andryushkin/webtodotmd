@@ -3,7 +3,7 @@ import { parseHTML } from 'linkedom';
 import { toMarkdown } from '../../../core/src/browser.ts';
 import { CONVERSION_OPTIONS } from '../raw-mathml-rule.ts';
 import { Window as HappyWindow } from 'happy-dom';
-import { cloneRangeWithBr, highlightsToMd } from '../capture.ts';
+import { cloneRangeWithBr, expandRangeToWords, highlightsToMd } from '../capture.ts';
 
 function domAdapter(html: string): Document {
   return parseHTML(html).document as unknown as Document;
@@ -344,41 +344,58 @@ describe('heading levels the extension writes', () => {
     const window = new HappyWindow();
     const doc = window.document as unknown as Document;
     doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
-    const priorNode = (globalThis as { Node?: unknown }).Node;
-    (globalThis as { Node?: unknown }).Node = window.Node;
-    try {
-      const press = (id: string, headingBase?: number) =>
-        highlightsToMd([doc.getElementById(id)!], doc, { headingBase });
+    const press = (id: string, headingBase?: number) =>
+      highlightsToMd([doc.getElementById(id)!], doc, { headingBase });
 
-      const first = press('a');
-      expect(first.md.trim()).toBe('## Section');
-      expect(first.topLevel).toBe(2);
-      // On its own the second press answers `## Under it`; told where the first
-      // one started, it keeps the rank the reader saw.
-      expect(press('b').md.trim()).toBe('## Under it');
-      expect(press('b', first.topLevel).md.trim()).toBe('### Under it');
-    } finally {
-      (globalThis as { Node?: unknown }).Node = priorNode;
-    }
+    const first = press('a');
+    expect(first.md.trim()).toBe('## Section');
+    expect(first.topLevel).toBe(2);
+    // On its own the second press answers `## Under it`; told where the first
+    // one started, it keeps the rank the reader saw.
+    expect(press('b').md.trim()).toBe('## Under it');
+    expect(press('b', first.topLevel).md.trim()).toBe('### Under it');
   });
 
   test('one base for a capture of several fragments, so ranks stay apart', () => {
     const window = new HappyWindow();
     const doc = window.document as unknown as Document;
     doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
-    // The highlighter path sorts its elements with `Node.DOCUMENT_POSITION_*`,
-    // which a content script reads off the page's own window and a test has to
-    // lend it.
-    const priorNode = (globalThis as { Node?: unknown }).Node;
-    (globalThis as { Node?: unknown }).Node = window.Node;
-    try {
-      const md = highlightsToMd([doc.getElementById('a')!, doc.getElementById('b')!], doc).md;
-      // Converted fragment by fragment, each would put its own heading at `##`.
-      expect(md).toContain('## Section');
-      expect(md).toContain('### Under it');
-    } finally {
-      (globalThis as { Node?: unknown }).Node = priorNode;
-    }
+    const md = highlightsToMd([doc.getElementById('a')!, doc.getElementById('b')!], doc).md;
+    // Converted fragment by fragment, each would put its own heading at `##`.
+    expect(md).toContain('## Section');
+    expect(md).toContain('### Under it');
+  });
+});
+
+// The capture reads a page, and the only global it may count on is the one the
+// page hands it: a `document`. `Node` is not that — under happy-dom it does not
+// exist, and the two paths that named it threw a `ReferenceError` that the fault
+// handling around a capture swallows, so the failure arrived as an empty file
+// rather than as an error. The tests here had been lending the global back,
+// which hid the condition instead of removing it.
+describe('the capture names no global the page does not give it', () => {
+  test('the highlighter path runs with no Node global at all', () => {
+    expect((globalThis as { Node?: unknown }).Node).toBeUndefined();
+    const window = new HappyWindow();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML = '<p id="a">First.</p><p id="b">Second.</p>';
+    // Out of document order on purpose: this is the sort that read
+    // `Node.DOCUMENT_POSITION_FOLLOWING`.
+    const md = highlightsToMd([doc.getElementById('b')!, doc.getElementById('a')!], doc).md;
+    expect(md.indexOf('First.')).toBeLessThan(md.indexOf('Second.'));
+  });
+
+  test('a range that starts mid-word is still expanded', () => {
+    expect((globalThis as { Node?: unknown }).Node).toBeUndefined();
+    const window = new HappyWindow();
+    const doc = window.document as unknown as Document;
+    doc.body.innerHTML = '<p>alpha bravo charlie</p>';
+    const text = doc.querySelector('p')!.firstChild!;
+    const range = doc.createRange();
+    range.setStart(text, 8);
+    range.setEnd(text, 9);
+    const out = expandRangeToWords(range);
+    expect(out.toString()).toBe('bravo');
   });
 });
 
