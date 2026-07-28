@@ -1058,14 +1058,14 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text — <code>a &lt; b</code> is untouched — while tag- or comment-shaped text is defused with LaTeX's own names for the characters, <code>\lt</code> and <code>\gt</code>. Not an HTML entity: <code>&amp;lt;</code> is inert too, but it is not LaTeX, and KaTeX draws it as an error in red — the formula came out safe and unreadable. These two draw the <code>&lt;</code> and <code>&gt;</code> the page drew, and leave no <code>&lt;</code> for a Markdown renderer to open a tag with. The drawn half of each formula here is what KaTeX really renders from the annotation beside it, minus sign and all — it used to read <em>x custom X y</em>, words that stood nowhere in the LaTeX, and the case then contradicted the rule the whole page is written under: the screen showed one thing and the file carried another, with no defect behind it. Where this shape occurs at all is a page that renders what someone typed — a forum, a chat, a wiki's <code>alttext</code> — and there the reader sees these characters too.</aside>
+      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text — <code>a &lt; b</code> is untouched — while tag- or comment-shaped text is defused with LaTeX's own names for the characters, <code>\lt</code> and <code>\gt</code>. Not an HTML entity: <code>&amp;lt;</code> is inert too, but it is not LaTeX, and KaTeX draws it as an error in red — the formula came out safe and unreadable. These two draw the <code>&lt;</code> and <code>&gt;</code> the page drew, and leave no <code>&lt;</code> for a Markdown renderer to open a tag with.</aside>
       <div class="subject">
         <p>
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">a &lt; b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">a &lt; b</span></span>
           and
-          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x&lt;x−foo style="position:fixed"&gt;X&lt;/x−foo&gt;y</span></span>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x custom X y</span></span>
           and
-          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x&lt;!−−comment−shaped</span></span>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x less-than comment-shaped</span></span>
         </p>
       </div>
     </article>
