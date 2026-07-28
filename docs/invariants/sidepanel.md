@@ -98,6 +98,17 @@ file is given.
   `.btn-label`: the compact toolbar drops labels, and dropping this one would
   leave an empty button. Same shape as `#btn-txt-menu`, which keeps its `.txt`
   and drops its icon instead.
+- `attachStatusTooltip()` restores the base status only if that button actually
+  replaced it (`button-state.ts` keeps the flag). A disabled button shows nothing
+  on the way in, and while the way out cleared unconditionally, moving the pointer
+  across a disabled Undo — its resting state on an empty panel, which is exactly
+  when "no selection" has just been written — took the error off the screen
+  seconds early, with nothing to say it had been there.
+- The highlighter's state is `aria-pressed`, not its name. It announced itself by
+  changing the accessible name instead ("Highlighter on" → "off"), which reads as
+  a different button appearing rather than as this one being pressed; the visible
+  label still says on or off. `setToggleState()` writes both, after
+  `setButtonContent()` has put the state in `aria-label` — the order matters.
 - The hover names and the accessible names are written in `applyButtonLabels()`,
   never as attributes in `sidepanel.html`. Six of them lived there as English
   `title`s and stayed English in all 52 locales; anything set in the HTML also

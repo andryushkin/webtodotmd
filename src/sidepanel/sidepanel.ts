@@ -12,6 +12,7 @@ import { stripMarkdown } from '../shared/strip-markdown';
 import { truncateGraphemes } from '../shared/truncate';
 import { getRatingUrl } from '../shared/store-links';
 import { markedHighlight } from './marked-highlight';
+import { attachStatusTooltip as attachTooltip, setToggleState } from './button-state';
 
 type CaptureResponse = CaptureSelectionResponse | CaptureErrorResponse;
 type StatusType = 'default' | 'error' | 'success' | 'warning';
@@ -151,15 +152,11 @@ function clearTempStatus() {
 }
 
 function attachStatusTooltip(btn: HTMLButtonElement, i18nKey: string) {
-  btn.addEventListener('mouseenter', () => {
-    if (btn.disabled) return;
+  attachTooltip(btn, () => {
     if (revertTimer) clearTimeout(revertTimer);
     revertTimer = null;
     setStatus(t(i18nKey), 'default');
-  });
-  btn.addEventListener('mouseleave', () => {
-    clearTempStatus();
-  });
+  }, clearTempStatus);
 }
 
 // ---- Rating ----
@@ -451,6 +448,11 @@ async function updateHighlighterUI() {
   btnHighlighter.classList.toggle('btn-highlighter-active', highlighterEnabled);
   setButtonContent(btnHighlighter, 'highlighter',
     t(highlighterEnabled ? 'highlighterOn' : 'highlighterOff'));
+  // The visible label still says on or off; the accessible name does not change
+  // with it. `setButtonContent()` has just written the state into `aria-label`,
+  // which reads as a different button each time rather than as this one being
+  // pressed — the state belongs in `aria-pressed`.
+  setToggleState(btnHighlighter, highlighterEnabled, t('tooltipHighlighter'));
 
   if (highlighterEnabled && highlightCount > 0) {
     setBaseStatus(t('highlights', highlightCount), 'default', 'highlighter');
@@ -897,11 +899,11 @@ function applyButtonLabels() {
     [btnSettings, 'tooltipSettings'],
   ] as const) {
     btn.title = t(key);
-    // Not the highlighter: `updateHighlighterUI()` names it by its state
-    // ("Highlighter on"), which is what a screen reader needs from a toggle, and
-    // it would overwrite this anyway.
-    if (btn !== btnHighlighter) btn.setAttribute('aria-label', t(key));
+    btn.setAttribute('aria-label', t(key));
   }
+  // The highlighter is a toggle, so its name has to survive the toggling:
+  // `updateHighlighterUI()` writes the same one back after every press, and puts
+  // the state in `aria-pressed` where it belongs.
   previewRendered.setAttribute('aria-label', t('tooltipPreview'));
   updateToolbarDensity();
 }
