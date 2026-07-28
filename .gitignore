@@ -7,6 +7,11 @@ dist/
 
 # Local agent settings
 .claude/settings.local.json
+# MCP servers wired up for one machine. `.claude/settings.json` is committed
+# because the invariant hook belongs to the project; this is the other half —
+# which servers a person happens to run locally, and an offer every cloner
+# would otherwise be asked to accept.
+.mcp.json
 # Scratch checkouts for background agents; never part of the source tree.
 .claude/worktrees/
 
