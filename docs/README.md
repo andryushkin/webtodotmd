@@ -17,6 +17,20 @@ not be broken.
 | [audit.md](audit.md) | Public-repository gate: mechanical checks and reviewer judgment |
 | [website-welcome-changelog.md](website-welcome-changelog.md) | Contract with 2md.site for the install/update pages |
 
+## Invariants, one sheet per subsystem
+
+Rules that constrain a particular directory, kept out of the files above because
+they are addressed to whoever is about to change that code. Read the sheet before
+touching the directory it covers: every rule in them has already cost a bug, and
+the reason beside it is what keeps it from being undone.
+
+| Sheet | Constrains |
+| --- | --- |
+| [invariants/core.md](invariants/core.md) | `core/` — escaping, emphasis, reading a style, hiding, tables, maths, the package |
+| [invariants/content.md](invariants/content.md) | `src/content/` — isolation, selection, the style snapshot, entities and titles |
+| [invariants/sidepanel.md](invariants/sidepanel.md) | `src/sidepanel/` — `rawMd`, sanitizing, status layers, toolbar density |
+| [invariants/background.md](invariants/background.md) | `src/background/` — panel behavior on worker start, permissions |
+
 ## Other contents
 
 - `test_conversion_spec_page.html` — a case-by-case manual fixture for the full

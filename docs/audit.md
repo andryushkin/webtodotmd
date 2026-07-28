@@ -20,9 +20,11 @@ The script checks:
    manifest, and the content script's import of it.
 6. Local license texts for every vendored dependency and their inclusion in
    the packaged extension.
-7. Guide size budgets: `CLAUDE.md` at most 195 lines, `AGENTS.md` at most 45, and each
-   path-scoped `CLAUDE.md` (`core/`, `src/*/`) at most 120 — so a section cannot meet
-   the root budget by moving house.
+7. Guide size budgets: `CLAUDE.md` at most 195 lines, `AGENTS.md` at most 45, and
+   each invariant sheet in `docs/invariants/` at most 210 — `core.md` at most 480,
+   being the constraint sheet of a published library rather than only a
+   subdirectory guide. Counted so that a section cannot meet the root budget by
+   moving house.
 8. Tracked junk and whitespace errors in the worktree, index, and outgoing
    range. The base resolves from `AUDIT_BASE`, the branch upstream, or
    `origin/<branch>`; failure to resolve a base is an audit failure.

@@ -45,16 +45,17 @@ alter behavior it describes.
 
 ## Path-scoped invariants
 
-Each subsystem keeps its own, next to the code it constrains, and Claude Code
-loads it when you work in that directory. Read the one covering your change —
-every rule in them has cost a bug already, and the reason is what makes it stick.
+One file per subsystem, all of them in `docs/invariants/`. **Nothing loads them
+for you** — this is the only guide that arrives on its own, so open the one
+covering the directory you are about to change, before you change it. Every rule
+in them has cost a bug already, and the reason beside it is what makes it stick.
 
-| File | Covers |
-| --- | --- |
-| `core/CLAUDE.md` | Escaping, emphasis, reading a style, hiding, tables, the package |
-| `src/content/CLAUDE.md` | Isolation from the extension, selection, the style snapshot, entities and titles |
-| `src/sidepanel/CLAUDE.md` | `rawMd` as the source of truth, sanitizing, status layers, toolbar density |
-| `src/background/CLAUDE.md` | Panel behavior on worker start, permissions the store flags |
+| Read this | Before touching | Covers |
+| --- | --- | --- |
+| `docs/invariants/core.md` | `core/` | Escaping, emphasis, reading a style, hiding, tables, maths, the package |
+| `docs/invariants/content.md` | `src/content/` | Isolation from the extension, selection, the style snapshot, entities and titles |
+| `docs/invariants/sidepanel.md` | `src/sidepanel/` | `rawMd` as the source of truth, sanitizing, status layers, toolbar density |
+| `docs/invariants/background.md` | `src/background/` | Panel behavior on worker start, permissions the store flags |
 
 ## Build and test
 

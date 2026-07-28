@@ -56,7 +56,7 @@ export const ROW_ATTR = 'data-s2md-row';
  * layout engine behind it reads exactly as it did before.
  *
  * A value rather than a fifth attribute: the names are baked into this package's
- * public surface (see the note at the end of `core/CLAUDE.md`), and `laysARow`
+ * public surface (see the note at the end of `docs/invariants/core.md`), and `laysARow`
  * answers the same for both spellings — one line is still a row.
  */
 export const ONE_LINE_MARK = 'line';

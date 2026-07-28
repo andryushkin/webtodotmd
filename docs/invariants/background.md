@@ -12,4 +12,4 @@ the restart while some does not. Both of these are that.
 - The worker owns `contentI18n` in `chrome.storage.local` — the content script
   cannot fetch locale files itself, and `chrome.runtime.sendMessage` is not a
   route to it because the panel listens on the same channel. See
-  `src/content/CLAUDE.md`.
+  `docs/invariants/content.md`.

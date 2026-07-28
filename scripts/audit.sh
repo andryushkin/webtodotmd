@@ -160,17 +160,17 @@ agent_lines=$(wc -l < AGENTS.md)
 # words — earn the space by saying less, *or raise the budget* — and raising it
 # knowingly beats trimming the reasons, which is the half that does the work.
 scoped_over=""
-for guide in core/CLAUDE.md src/*/CLAUDE.md; do
+for guide in docs/invariants/*.md; do
     [ -f "$guide" ] || continue
     lines=$(wc -l < "$guide")
     case "$guide" in
-        core/CLAUDE.md) limit=480 ;;
+        docs/invariants/core.md) limit=480 ;;
         *) limit=210 ;;
     esac
     [ "$lines" -gt "$limit" ] && scoped_over="$scoped_over $guide=$lines(>$limit)"
 done
 if [ "$claude_lines" -le 195 ] && [ "$agent_lines" -le 45 ] && [ -z "$scoped_over" ]; then
-    pass "guide-budget (CLAUDE<=195 AGENTS<=45 core<=480 scoped<=210)"
+    pass "guide-budget (CLAUDE<=195 AGENTS<=45 core<=480 invariants<=210)"
 else
     fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines$scoped_over"
 fi
