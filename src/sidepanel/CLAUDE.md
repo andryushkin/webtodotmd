@@ -17,6 +17,14 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   written while the `<h1>` arrives as `#` — the ranks come closer together, in the right order.
   Rewriting the text above would mean rewriting lines the reader may have edited by hand, and the
   panel's own text is the one thing it must not lose. Decided with the user, 2026-07-27.
+  It has to be judged *before* the request, not after the answer. The reset was on the way back,
+  once the Markdown had been built: capture a page whose shallowest heading is an `<h3>`, move to
+  another URL, capture a section starting at `<h5>`, and the content script was handed a base of 3,
+  shifted by -1 and returned `####` with no `#`, `##` or `###` anywhere above it — after which the
+  panel set the base to 5, having lost the only text that could have spent it. The tab's URL is what
+  the panel has to go on at that moment; the page's own is asked again on the way back, because a
+  tab can navigate in between, and where the two disagree the base is dropped. No shift leaves a
+  heading at its own rank; a shift against the wrong document leaves it under nothing.
 - `DOMPurify.sanitize()` before any `innerHTML`. marked runs with `html: true`
   so injected KaTeX and metadata blocks render — literal tags in captured text
   are made inert by the core, not here. The panel had a second escaper that
