@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Arvioi laajennus"
   },
+  "sectionAbout": {
+    "message": "Tietoja",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Verkkosivusto",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Lähdekoodi GitHubissa",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Piilota"
   },

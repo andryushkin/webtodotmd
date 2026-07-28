@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "എക്‌സ്‌റ്റൻഷൻ റേറ്റ് ചെയ്യൂ"
   },
+  "sectionAbout": {
+    "message": "വിവരങ്ങൾ",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "വെബ്‌സൈറ്റ്",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub-ലെ സോഴ്‌സ് കോഡ്",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "മറക്കൂ"
   },

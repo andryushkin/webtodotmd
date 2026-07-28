@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Valorar l'extensió"
   },
+  "sectionAbout": {
+    "message": "Quant a",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Lloc web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Codi font a GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Amaga"
   },

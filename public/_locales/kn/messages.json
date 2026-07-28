@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "ವಿಸ್ತರಣೆಯನ್ನು ರೇಟ್ ಮಾಡಿ"
   },
+  "sectionAbout": {
+    "message": "ಕುರಿತು",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "ವೆಬ್‌ಸೈಟ್",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub ನಲ್ಲಿ ಮೂಲ ಕೋಡ್",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "ಮರೆಮಾಡಿ"
   },

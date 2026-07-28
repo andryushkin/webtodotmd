@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Oceni ovo proširenje"
   },
+  "sectionAbout": {
+    "message": "O proširenju",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Veb-sajt",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Izvorni kod na GitHubu",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Sakrij"
   },

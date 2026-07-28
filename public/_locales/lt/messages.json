@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Įvertinti plėtinį"
   },
+  "sectionAbout": {
+    "message": "Apie",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Svetainė",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Pirminis kodas GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Slėpti"
   },

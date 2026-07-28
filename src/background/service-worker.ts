@@ -2,34 +2,15 @@ import { ensureInstallId } from '../shared/identity';
 import { ensureContentScript } from '../shared/inject';
 import { t, initI18n } from '../shared/i18n';
 import { trackEvent } from '../shared/telemetry';
+import { siteUrl } from '../shared/site-links';
 
 // Set to true for releases where changelog page should open on update
 const SHOW_CHANGELOG_ON_UPDATE = false;
 
-const SUPPORTED_LOCALES = new Set([
-  'en','de','fr','es','it','nl','sv','da','no','fi',
-  'ar','he','fa','id','ru','pt-PT','pt-BR','ja','fil','vi','tr','th','ko',
-  'bg','cs','hr','pl','ro','sk','sl','sr','uk',
-  'zh-CN','zh-TW','el','hu','hi','ms','es-419',
-  'et','lt','lv','ca','bn','gu','kn','ml','mr','ta','te','am','sw',
-]);
-
-function getUrlLocale(): string {
-  const lang = chrome.i18n.getUILanguage();
-  const normalized = lang.replace('_', '-');
-  if (SUPPORTED_LOCALES.has(normalized)) return normalized;
-  const base = normalized.split('-')[0];
-  if (lang.startsWith('pt-PT') || lang === 'pt_PT') return 'pt-PT';
-  if (base === 'pt') return 'pt-BR';
-  if (base === 'zh') return 'zh-CN'; // zh-TW matched above via SUPPORTED_LOCALES
-  if (base === 'nb' || base === 'nn') return 'no';
-  if (SUPPORTED_LOCALES.has(base)) return base;
-  return 'en';
-}
-
 function openPage(path: string): void {
-  const locale = getUrlLocale();
-  chrome.tabs.create({ url: `https://2md.site/${locale}/${path}` });
+  // The locale mapping is shared with the options page's link to the same site;
+  // see `site-links.ts` for why it is not spelled twice.
+  chrome.tabs.create({ url: siteUrl(path, chrome.i18n.getUILanguage()) });
 }
 
 // Explicitly disable Chrome's built-in toggle so onClicked fires on every click

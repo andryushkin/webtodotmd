@@ -1,6 +1,7 @@
 import { getSettings, saveSettings } from '../shared/settings-store';
-import { initI18n, applyI18n, t } from '../shared/i18n';
+import { initI18n, applyI18n, t, getLocale } from '../shared/i18n';
 import { getRatingUrl } from '../shared/store-links';
+import { REPO_URL, siteUrl } from '../shared/site-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
@@ -11,6 +12,8 @@ const defaultView = document.getElementById('default-view') as HTMLSelectElement
 const highlighterColor = document.getElementById('highlighter-color') as HTMLInputElement;
 const uiLanguage = document.getElementById('ui-language') as HTMLSelectElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
+const linkWebsite = document.getElementById('link-website') as HTMLAnchorElement;
+const linkRepository = document.getElementById('link-repository') as HTMLAnchorElement;
 
 let saveTimer: ReturnType<typeof setTimeout>;
 
@@ -86,6 +89,11 @@ async function init() {
   await initI18n(s.uiLanguage);
   document.title = t('settingsTitle');
   applyI18n();
+  // After initI18n, so the language is the resolved one rather than 'auto', and
+  // the site is opened in the language the reader chose here — not the browser's,
+  // which is all the worker's install and update pages have to go on.
+  linkWebsite.href = siteUrl('', getLocale());
+  linkRepository.href = REPO_URL;
   load();
   initRatingStars();
 }

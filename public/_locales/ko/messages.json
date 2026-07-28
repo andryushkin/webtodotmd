@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "확장 프로그램 평가"
   },
+  "sectionAbout": {
+    "message": "정보",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "웹사이트",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub의 소스 코드",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "숨기기"
   },

@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Nilaikan sambungan ini"
   },
+  "sectionAbout": {
+    "message": "Perihal",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Laman web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Kod sumber di GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Sembunyikan"
   },

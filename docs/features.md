@@ -201,6 +201,10 @@ The UI itself ships in 52 locales; the dropdown offers explicit choices for 22
 of them plus "Auto (browser language)", and Chrome falls back to the browser
 locale for the rest. Arabic, Hebrew and Persian get a full RTL layout.
 
+Every on/off setting is a switch rather than a tick box. Below them, an **About**
+section links the website — in the language chosen on this page, not the
+browser's — and the public repository on GitHub.
+
 ## Where it works
 
 Any HTTP/HTTPS page. It cannot work on PDF files, `file://` pages, Chrome's own

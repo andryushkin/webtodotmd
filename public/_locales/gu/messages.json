@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "એક્સ્ટેન્શન રેટ કરો"
   },
+  "sectionAbout": {
+    "message": "વિશે",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "વેબસાઇટ",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub પર સોર્સ કોડ",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "છૂપાવો"
   },

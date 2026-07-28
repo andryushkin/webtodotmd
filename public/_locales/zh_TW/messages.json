@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "為擴充功能評分"
   },
+  "sectionAbout": {
+    "message": "關於",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "網站",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub 上的原始碼",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "隱藏"
   },

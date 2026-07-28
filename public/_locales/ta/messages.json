@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "நீட்டிப்பை மதிப்பிடு"
   },
+  "sectionAbout": {
+    "message": "தகவல்",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "இணையதளம்",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub-இல் மூலக் குறியீடு",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "மறை"
   },

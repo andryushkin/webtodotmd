@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Оцените расширение"
   },
+  "sectionAbout": {
+    "message": "О расширении",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Сайт",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Исходный код на GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Скрыть"
   },

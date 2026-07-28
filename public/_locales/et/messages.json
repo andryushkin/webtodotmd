@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Hinda laiendust"
   },
+  "sectionAbout": {
+    "message": "Teave",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Veebisait",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Lähtekood GitHubis",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Peida"
   },

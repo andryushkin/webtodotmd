@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "एक्सटेंशन को रेट करें"
   },
+  "sectionAbout": {
+    "message": "परिचय",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "वेबसाइट",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub पर सोर्स कोड",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "छिपाएँ"
   },

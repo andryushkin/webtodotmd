@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Erweiterung bewerten"
   },
+  "sectionAbout": {
+    "message": "Über",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Website",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Quellcode auf GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Ausblenden"
   },

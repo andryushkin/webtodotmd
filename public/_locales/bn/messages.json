@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "এক্সটেনশন রেট করুন"
   },
+  "sectionAbout": {
+    "message": "সম্পর্কে",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "ওয়েবসাইট",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub-এ সোর্স কোড",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "লুকান"
   },

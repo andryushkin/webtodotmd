@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "به افزونه امتیاز دهید"
   },
+  "sectionAbout": {
+    "message": "درباره",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "وب‌سایت",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "کد منبع در GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "پنهان کردن"
   },

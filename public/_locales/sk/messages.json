@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Ohodnoťte rozšírenie"
   },
+  "sectionAbout": {
+    "message": "O rozšírení",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Zdrojový kód na GitHube",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Skryť"
   },

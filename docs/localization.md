@@ -39,6 +39,7 @@
 | Any occurrence of `URL` | `URL` | Universal abbreviation. |
 | `✓` symbol in `toastCopied` | `✓` | Keep as-is. |
 | Any occurrence of `EditMD` | `EditMD` | Product name of a separate app. Never transliterate. |
+| Any occurrence of `GitHub` | `GitHub` | Product name. Never transliterate. |
 | Any occurrence of `Obsidian` | `Obsidian` | Product name of a separate app. Never transliterate, and never translate it as the stone. |
 
 ### 2.2 Placeholder `{1}`
@@ -692,7 +693,38 @@ its label is a whole sentence that the compact mode never drops.
 
 ---
 
-### 3.14 Rating Widget
+### 3.14 About Links
+
+A section at the foot of the settings page: the website, opened in the language
+chosen on that page, and the public source repository.
+
+#### `sectionAbout`
+| | |
+|---|---|
+| **EN** | `About` |
+| **Where** | Section heading above the two links |
+| **Constraint** | ≤ 15 chars. |
+| **Adaptation** | Whatever the target locale's browsers and OS use for an "About" pane. A single noun; not a sentence, and not "Information about the extension". |
+
+#### `linkWebsite`
+| | |
+|---|---|
+| **EN** | `Website` |
+| **Where** | Link to `https://2md.site/<locale>/` |
+| **Constraint** | ≤ 20 chars. |
+| **Adaptation** | The product's own site. One word if the language allows. |
+
+#### `linkRepository`
+| | |
+|---|---|
+| **EN** | `Source code on GitHub` |
+| **Where** | Link to the public repository |
+| **Constraint** | ≤ 30 chars. Keep `GitHub` untranslated. |
+| **Adaptation** | "Source code" as a developer in that locale would say it. The extension is open source and this is where a reader reports a bug, so name the destination rather than saying "read more". |
+
+---
+
+### 3.15 Rating Widget
 
 A row at the bottom of the side panel, shown after the user has captured a few
 times, asking for a Web Store review.
@@ -719,7 +751,7 @@ times, asking for a Web Store review.
 Before delivering a locale file, the translator (human or LLM) must verify:
 
 - [ ] `appName` is exactly `to .md` (not translated)
-- [ ] `Markdown`, `.md`, `PDF`, `URL`, `HTML`, `EditMD`, `Obsidian` are NOT translated
+- [ ] `Markdown`, `.md`, `PDF`, `URL`, `HTML`, `EditMD`, `Obsidian`, `GitHub` are NOT translated
 - [ ] `{1}` placeholder is present and correctly positioned
 - [ ] `✓` is present in `toastCopied`
 - [ ] No string exceeds its character constraint by more than 20%

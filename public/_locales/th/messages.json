@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "ให้คะแนนส่วนขยายนี้"
   },
+  "sectionAbout": {
+    "message": "เกี่ยวกับ",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "เว็บไซต์",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "ซอร์สโค้ดบน GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "ซ่อน"
   },

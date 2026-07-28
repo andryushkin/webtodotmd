@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Bu uzantıyı değerlendir"
   },
+  "sectionAbout": {
+    "message": "Hakkında",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Web sitesi",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub'daki kaynak kodu",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Gizle"
   },

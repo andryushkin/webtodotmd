@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "ఎక్స్‌టెన్షన్‌ను రేట్ చేయి"
   },
+  "sectionAbout": {
+    "message": "సమాచారం",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "వెబ్‌సైట్",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub లో సోర్స్ కోడ్",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "దాచు"
   },

@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "ተጨማሪ ፕሮግራሙን ግምት ይስጡ"
   },
+  "sectionAbout": {
+    "message": "ስለ",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "ድር ጣቢያ",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "በGitHub ላይ ያለው ኮድ",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "ደብቅ"
   },

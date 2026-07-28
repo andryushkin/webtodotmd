@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Évaluer cette extension"
   },
+  "sectionAbout": {
+    "message": "À propos",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Site web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Code source sur GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Masquer"
   },

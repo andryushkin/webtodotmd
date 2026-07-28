@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Kadiria ugani huu"
   },
+  "sectionAbout": {
+    "message": "Kuhusu",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Tovuti",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Msimbo wa chanzo kwenye GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Ficha"
   },

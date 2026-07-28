@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Valuta questa estensione"
   },
+  "sectionAbout": {
+    "message": "Informazioni",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Sito web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Codice sorgente su GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Nascondi"
   },

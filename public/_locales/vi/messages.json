@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Đánh giá tiện ích này"
   },
+  "sectionAbout": {
+    "message": "Giới thiệu",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Trang web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Mã nguồn trên GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Ẩn"
   },

@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Vurder utvidelsen"
   },
+  "sectionAbout": {
+    "message": "Om",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Nettsted",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Kildekode på GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Skjul"
   },

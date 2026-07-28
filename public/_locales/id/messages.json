@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "Beri nilai ekstensi ini"
   },
+  "sectionAbout": {
+    "message": "Tentang",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "Situs web",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "Kode sumber di GitHub",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "Sembunyikan"
   },

@@ -176,6 +176,18 @@
   "sectionRating": {
     "message": "拡張機能を評価する"
   },
+  "sectionAbout": {
+    "message": "情報",
+    "description": "Settings section heading above the links to the site and the repository"
+  },
+  "linkWebsite": {
+    "message": "ウェブサイト",
+    "description": "Link to the extension website, opened in the reader's language"
+  },
+  "linkRepository": {
+    "message": "GitHub のソースコード",
+    "description": "Link to the public source repository on GitHub"
+  },
   "ratingHide": {
     "message": "非表示"
   },
