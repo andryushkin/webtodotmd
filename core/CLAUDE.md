@@ -206,6 +206,16 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   would. Selecting the whole row was correct throughout, which is why it took a manual pass to find:
   the failing gesture is dragging across the sentence, and the sentence came back as three
   paragraphs again. Presence and not a value decides it, the same question `laysARow` asks.
+- A *style* on that container is lost the same way and was not covered: the wrap asked only about
+  `ROW_ATTR`, so `<div style="font-weight:700">` holding a run that takes the weight back — a card,
+  a paste from a word processor, every editor's wrapper — came back `not bold on screen and this
+  part is`, with no asterisk on the half the reader saw bold. It is the commoner gesture of the two,
+  since selecting the whole div was right all along. Only a box that writes nothing itself earns the
+  wrap (`div`, `span`, `p`): `highlightsToMd` selects the *contents* of what was clicked, so the
+  common ancestor there is the element, and a copy of an `<h3>` round its own content is a heading
+  inside a heading — `### ### Section`. And only where the style says something the conversion reads
+  (`statesConversion`), or a `color` would buy an extra block in the file for a property that
+  changes no character.
 - A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
   answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
   `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,

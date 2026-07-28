@@ -523,3 +523,42 @@ describe('a selection made inside a measured row', () => {
     expect(md).toBe('Wow even [@k](https://x.com/k) admits it.');
   });
 });
+
+// Дефект «выделение внутри элемента» с другой стороны: марка не на строке, а на
+// стиле. `<div style="font-weight:700">`, внутри которого прогон забирает вес
+// обратно, — форма, которую пишет всякий карточный компонент, и протаскивание по
+// предложению внутри неё оставляло жирность на странице: строка, вторую половину
+// которой читатель видел жирной, приходила без единой звёздочки. Выделение всего
+// блока работало всё это время, что и делает промах более частым жестом из двух.
+describe('коробка, оставшаяся за выделением', () => {
+  const CARD =
+    '<div class="card"><div style="font-weight:700">' +
+    '<span style="font-weight:400">not bold on screen</span> and this part is</div></div>';
+
+  it('вес коробки доживает до файла', () => {
+    const doc = setup(CARD);
+    const inner = doc.querySelector('div[style]')!;
+    expect(convert(doc, (range) => range.selectNodeContents(inner))).toBe(
+      'not bold on screen **and this part is**',
+    );
+  });
+
+  // Тот же ответ, что и при выделении коробки целиком, — в этом и смысл.
+  it('совпадает с выделением всей коробки', () => {
+    const doc = setup(CARD);
+    const inner = doc.querySelector('div[style]')!;
+    const whole = convert(setup(CARD), (range) =>
+      range.selectNode(setup(CARD).querySelector('div[style]')!),
+    );
+    expect(convert(doc, (range) => range.selectNodeContents(inner))).toBe(whole);
+  });
+
+  // Коробка, которая ничего не говорит конверсии, ничего и не возвращает: обёртка
+  // за `color` или `margin` — лишний блок в файле за свойство, не меняющее ни
+  // одного символа.
+  it('коробка без читаемого стиля не оборачивается', () => {
+    const doc = setup('<div><div style="color:#333">a <em>b</em></div></div>');
+    const inner = doc.querySelector('div[style]')!;
+    expect(convert(doc, (range) => range.selectNodeContents(inner))).toBe('a _b_');
+  });
+});

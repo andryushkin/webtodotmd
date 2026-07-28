@@ -5,7 +5,7 @@ import { normalize } from './core/normalizer.js';
 import { normalizeFragment } from './core/fragment.js';
 import { collectFootnoteDefs, buildFootnotesSection } from './core/footnotes.js';
 import { minHeadingLevel, resolveHeadingOffset } from './utils/headings.js';
-import { ROW_ATTR } from './utils/inline-style.js';
+import { ROW_ATTR, statesConversion } from './utils/inline-style.js';
 // The list rule's own question, asked here rather than spelled again: a second
 // reading of "whose checkbox is this" would drift the next time either moves.
 import { ownCheckbox } from './rules/lists.js';
@@ -663,7 +663,7 @@ function cloneWithContext(range: Range): DocumentFragment {
 }
 
 /**
- * Gives the fragment back the box its content was measured in.
+ * Gives the fragment back the box its content stood in.
  *
  * `ROW_ATTR` sits on the container, and a drag that starts and ends inside one
  * makes that container the common ancestor — so `cloneContents()` hands back its
@@ -684,7 +684,30 @@ function cloneWithContext(range: Range): DocumentFragment {
  */
 function wrapInRow(fragment: DocumentFragment, scope: ParentNode, doc: Document): DocumentFragment {
   const el = scope as Element;
-  if (el.nodeType !== 1 || el.getAttribute?.(ROW_ATTR) == null) return fragment;
+  if (el.nodeType !== 1) return fragment;
+  // A row's mark is one thing the box says and a style is the other, and both are
+  // lost the same way: `<div style="font-weight:700">` holding a run that takes
+  // the weight back is a shape every card component writes, and a drag across the
+  // sentence inside it left the bold on the page — `not bold on screen and this
+  // part is` for a line whose second half the reader saw bold. Selecting the whole
+  // div was correct throughout, which is what makes this the commoner gesture of
+  // the two going wrong.
+  if (el.getAttribute?.(ROW_ATTR) != null) return wrapIn(fragment, el, doc);
+  // A style is worth the box back only where the box writes nothing of its own.
+  // `highlightsToMd` selects the *contents* of whatever was clicked, so the
+  // common ancestor there is the element itself — and a copy of an `<h3>` round
+  // its own content is a heading inside a heading, which came out `### ### Section`.
+  // These three carry a style and nothing else, which is the shape a card, a
+  // paste from a word processor and every editor's wrapper write.
+  if (!STYLE_ONLY_BOXES.has(el.tagName?.toLowerCase()) || !statesConversion(el)) return fragment;
+  return wrapIn(fragment, el, doc);
+}
+
+// Tags whose whole contribution is the style on them: returning their content
+// unwrapped changes nothing, and returning it wrapped changes only the style.
+const STYLE_ONLY_BOXES = new Set(['div', 'span', 'p']);
+
+function wrapIn(fragment: DocumentFragment, el: Element, doc: Document): DocumentFragment {
   const box = el.cloneNode(false) as Element;
   box.appendChild(fragment);
   const wrapped = doc.createDocumentFragment();
