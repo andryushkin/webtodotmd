@@ -177,6 +177,13 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   word outweighs a measurement — the cost is a byline written in `<p>` staying a paragraph each,
   against welding two paragraphs the page drew side by side. `LINE_ITEM_TAGS` lives beside
   `ROW_ATTR` because the snapshot reads it too: it measures nothing the core could not spend.
+- The mark is on the container, so a selection made *inside* one leaves it behind: the row becomes
+  the range's common ancestor and `cloneContents()` returns its children. `cloneWithContext` wraps
+  the fragment in a shallow copy of that container for exactly this — a copy and not a fresh `<div>`,
+  since the rest of the container's attributes answer later questions the same way the page's box
+  would. Selecting the whole row was correct throughout, which is why it took a manual pass to find:
+  the failing gesture is dragging across the sentence, and the sentence came back as three
+  paragraphs again. `'header'` is refused there, the one name carrying two meanings.
 - A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
   answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
   `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,

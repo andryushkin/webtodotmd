@@ -316,3 +316,35 @@ describe('чужие атрибуты на странице', () => {
     expect(md).toContain('| a    |');
   });
 });
+
+// The mark that says a container's content was drawn on one line lives on the
+// container, so a drag *inside* it leaves the evidence on the page: the common
+// ancestor is the row itself and `cloneContents()` hands back only its children.
+// Selecting the whole row was correct throughout and hid this — the broken
+// gesture is the commoner one, dragging across the sentence itself.
+//
+// What the loss looks like differs by how much the caller knows: here the words
+// weld (`Wow even[@k]admits it.`), since the blank the mark buys is all there is
+// to lose. In the extension the snapshot has also written `display:block` onto
+// the items, so the same fragment arrives as three paragraphs — measured in
+// Chrome, and the reason the case was reported at all.
+describe('a selection made inside a measured row', () => {
+  const ROW = `<div class="wrap"><div data-s2md-row="line"
+><span>Wow even</span><div><a href="https://x.com/k">@k</a></div><span>admits it.</span></div></div>`;
+
+  it('keeps the line when the drag ends inside the row', () => {
+    const doc = setup(ROW);
+    const md = convert(doc, (range) => {
+      const spans = doc.querySelectorAll('[data-s2md-row] > span');
+      range.setStart(spans[0]!.firstChild!, 0);
+      range.setEnd(spans[1]!.firstChild!, spans[1]!.textContent!.length);
+    });
+    expect(md).toBe('Wow even [@k](https://x.com/k) admits it.');
+  });
+
+  it('keeps the line when the whole row is selected', () => {
+    const doc = setup(ROW);
+    const md = convert(doc, (range) => range.selectNode(doc.querySelector('[data-s2md-row]')!));
+    expect(md).toBe('Wow even [@k](https://x.com/k) admits it.');
+  });
+});

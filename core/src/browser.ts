@@ -5,6 +5,7 @@ import { normalize } from './core/normalizer.js';
 import { normalizeFragment } from './core/fragment.js';
 import { collectFootnoteDefs, buildFootnotesSection } from './core/footnotes.js';
 import { minHeadingLevel, resolveHeadingOffset } from './utils/headings.js';
+import { ROW_ATTR } from './utils/inline-style.js';
 
 export type { DOMAdapterFn, Rule, MarkItDownOptions } from './types.js';
 
@@ -560,10 +561,41 @@ function cloneWithContext(range: Range): DocumentFragment {
       for (const item of items) item.removeAttribute(ORIGIN_ATTR);
     }
 
-    return fragment;
+    return wrapInRow(fragment, scope, doc);
   } finally {
     marks.restore();
   }
+}
+
+/**
+ * Gives the fragment back the box its content was measured in.
+ *
+ * `ROW_ATTR` sits on the container, and a drag that starts and ends inside one
+ * makes that container the common ancestor — so `cloneContents()` hands back its
+ * children and leaves the mark behind. Selecting the whole of a row keeps it and
+ * converts correctly; dragging across the sentence *inside* the row is the same
+ * content with the evidence gone, and `<span>Wow even</span><div><a>@karpathy</a>
+ * </div><span>admits …</span>` came back as three paragraphs — the defect the
+ * measurement exists to repair, reappearing on the commoner gesture of the two.
+ *
+ * A shallow copy rather than a fresh `<div>`: what the mark means is settled
+ * beside the rest of the container's own attributes, and inventing a box with
+ * one attribute on it would answer a later question differently than the page's
+ * box would.
+ *
+ * `'header'` is refused because the name carries two meanings — a measured row
+ * and a marked table header (`ORIGIN_ROW_ATTR`) — and a `<tr>` is not a box
+ * anything was measured in.
+ */
+function wrapInRow(fragment: DocumentFragment, scope: ParentNode, doc: Document): DocumentFragment {
+  const el = scope as Element;
+  const mark = el.nodeType === 1 ? el.getAttribute?.(ROW_ATTR) : null;
+  if (mark === null || mark === undefined || mark === HEADER_ROW_MARK) return fragment;
+  const box = el.cloneNode(false) as Element;
+  box.appendChild(fragment);
+  const wrapped = doc.createDocumentFragment();
+  wrapped.appendChild(box);
+  return wrapped;
 }
 
 /**
