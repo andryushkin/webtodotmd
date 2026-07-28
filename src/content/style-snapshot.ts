@@ -682,6 +682,22 @@ export function snapshotStyles(
       // the whole reason that box is kept, and a kept box with nothing marked
       // visible under it is one the core removes whole.
       else if (claimsInvisible || context.invisible) declarations.push('visibility:visible');
+      // Which line it stands on is not a question about what is inside it. A
+      // `<math display="block">` is a block in every browser — MathML's own
+      // attribute, answered from the UA stylesheet as `display: block math` —
+      // and the reader met it on a band of its own, centred, 883px wide beside
+      // the sentence it followed. The file wrote it into that sentence, because
+      // this branch left before the `display` was recorded and the core then had
+      // nothing to read. The condition is the one below, spelled once: a block
+      // the *page* states, never one a flex or grid row derived.
+      if (
+        displayFrom(read) === 'block' &&
+        !isBlockTag(tag) &&
+        !context.derivedBlock &&
+        !invisible
+      ) {
+        declarations.push('display:block');
+      }
       record(el, declarations);
       return !invisible;
     }

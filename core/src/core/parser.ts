@@ -757,7 +757,18 @@ export function convert(node: Node, options: MarkItDownOptions): string {
       // The one blockness question a wrapper with no style of its own can have:
       // the container around it was measured as one line, and a block here would
       // break a sentence the reader read in one.
-      return inLine ? childContent : rule.replacement(el, childContent, options);
+      if (inLine) return childContent;
+      const plain = rule.replacement(el, childContent, options);
+      // A literal element states no marks — nothing inside it is emphasis — but
+      // it can still state which line it stands on, and that half was being
+      // dropped with the other. `<math display="block">` is the case: a block in
+      // every browser by MathML's own attribute, drawn on a band of its own, and
+      // written into the middle of the sentence it followed because this branch
+      // returned before the question was asked. Only where a style says so, so a
+      // `<pre>` or a `<code>` that states nothing is exactly what it was.
+      if (!displaysAsBlock(el)) return plain;
+      const line = plain.trim();
+      return line === '' ? plain : `\n\n${line}\n\n`;
     }
     // The parts as well as the string they were joined into: a mark this element
     // states may stop before its content does, and only the parts say where.

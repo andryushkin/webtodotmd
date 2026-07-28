@@ -217,8 +217,18 @@ beforeAll(() => {
 // behaviour anywhere sends the shrinker down a different path and a class that is
 // still broken stops being reached. Checked rather than assumed, which is the
 // whole reason the class list is recorded beside the count.
+//
+// Then 93 -> 91, and this fall *is* ground won. A literal element states no marks
+// — nothing inside a `<code>` is emphasis — and the branch that returns early for
+// that was dropping the other half with it: which line the element stands on. A
+// `<math display="block">` was written into the middle of the sentence it
+// followed, though MathML's own attribute makes it a block in every browser and
+// the reader met it on a band of its own. The two classes that went are the same
+// defect without the maths: `<code data-s2md-style="display:block">` and a
+// `<samp>` beside it, each welding the text after it onto its own line. Both were
+// handed to the oracle directly and pass.
 const SEEDS = 200;
-const CEILING = 93;
+const CEILING = 91;
 
 // The defect classes as they stand, keyed by the minimal input that still shows
 // each one — the survey's own output, recorded. This is the half a total cannot
@@ -239,10 +249,8 @@ const RECORDED_CLASSES: readonly string[] = [
   "<p>(https://example.com/i.png)<kbd>word</kbd></p>",
   "<p>(https://example.com/i.png)<strong>a</strong></p>",
   "<p>(https://example.com/i.png)_under_</p>",
-  "<p><code data-s2md-style=\"display:block\">``</code>&lt;/table&gt;</p>",
   "<p><img src=\"\" alt=\"a\"></p>",
   "<p><img src=\"\" alt=\"foo bar\"></p>",
-  "<p><samp data-s2md-style=\"display:block\">x</samp>x](https://example.com)</p>",
   "<p><span data-s2md-style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"font-weight:700;text-decoration-line:line-through\">a &lt;</span>!-- swallowed --&gt; b</p>",
   "<p><span style=\"text-decoration-line:line-through\">~~</span></p>",
