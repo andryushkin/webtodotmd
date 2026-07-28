@@ -3,17 +3,15 @@
 ## Startup
 
 1. Read `CLAUDE.md` in full — the compressed working guide: project map,
-   build/test commands, non-negotiable invariants.
-2. Check `git status --short`. Preserve anything already dirty in the
+   build/test commands, the pairs that must not drift apart, and the authority
+   order when sources disagree.
+2. Read the sheet in `docs/invariants/` covering the directory you are about to
+   change, before you change it. Nothing loads it for you, and every rule in it
+   is a defect somebody already shipped.
+3. Check `git status --short`. Preserve anything already dirty in the
    worktree; never include someone else's changes in your commits.
-3. Open `docs/README.md` and read only the domain doc matching your task
+4. Open `docs/README.md` and read only the domain doc matching your task
    (architecture, features, localization, releasing).
-
-## Authority order
-
-When sources disagree: the user's request → current code and tests →
-`CLAUDE.md` → domain docs. A doc that contradicts the code is a bug in the
-doc — fix it in the same change.
 
 ## Execution
 
@@ -33,4 +31,5 @@ doc — fix it in the same change.
 - Keep commits narrow and single-purpose; the message style is `feat`, `fix`,
   `refactor`, `docs`, `chore`.
 - When you change behavior a domain doc describes, update that doc in the same
-  change; add durable new rules briefly to `CLAUDE.md`.
+  change; a durable new rule about one directory goes in its sheet under
+  `docs/invariants/`, with the failure that motivated it beside it.
