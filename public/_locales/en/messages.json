@@ -201,6 +201,30 @@
     "message": "Clear the panel",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "Undo the last change",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "Redo the last change",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "Open settings",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "Highlight elements on the page",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "Rendered preview",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Markdown source",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "Opening in EditMD…",
     "description": "Status after the handoff to the EditMD app was started — Chrome does not report whether the editmd:// scheme has a handler, so this must not claim delivery"

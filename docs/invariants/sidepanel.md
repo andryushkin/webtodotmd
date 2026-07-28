@@ -78,11 +78,22 @@ file is given.
 - `setButtonContent()` always sets `aria-label`: in compact mode the visible
   label is gone. `updateToolbarDensity()` measures in the non-compact state,
   which is what stops it oscillating.
-- Every toolbar button gets `attachStatusTooltip()`. In compact mode the labels
-  are dropped and the icon is all a mouse user has — Copy HTML and Clear shipped
-  without one and were an ambiguous glyph in exactly the narrow panel the compact
-  mode exists for. The tooltip names the action rather than repeating the label:
-  `tooltipClear` says which thing is emptied, `tooltipCopyHtml` says which HTML.
+- Every button gets `attachStatusTooltip()` bar the capture one. In compact mode
+  the labels are dropped and the icon is all a mouse user has — Copy HTML and
+  Clear shipped without one and were an ambiguous glyph in exactly the narrow
+  panel the compact mode exists for, and the gear, undo and redo have no visible
+  label in any mode. The tooltip names the action rather than repeating the label:
+  `tooltipClear` says which thing is emptied, `tooltipCopyHtml` says which HTML,
+  `tooltipPreview` and `tooltipSource` say what each pane holds. Capture is the
+  exception on purpose: the base status is *about* that button — readiness, the
+  restricted tab, the highlight count — so a tooltip there trades more useful text
+  for less.
+- The hover names and the accessible names are written in `applyButtonLabels()`,
+  never as attributes in `sidepanel.html`. Six of them lived there as English
+  `title`s and stayed English in all 52 locales; anything set in the HTML also
+  cannot follow a language change, which the panel applies without reloading.
+  The highlighter is named by its state instead (`updateHighlighterUI()` sets
+  `aria-label` to `Highlighter on`/`off`), so only its `title` is set here.
 
 ## The captured HTML
 

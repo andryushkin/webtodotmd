@@ -200,6 +200,30 @@
     "message": "Limpar o painel",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "Desfazer a última alteração",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "Refazer a última alteração",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "Abrir as definições",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "Destacar elementos na página",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "Pré-visualização renderizada",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Código Markdown",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "A abrir o EditMD…"
   }

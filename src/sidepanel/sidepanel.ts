@@ -845,6 +845,24 @@ function applyButtonLabels() {
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
   btnSourceTab.innerHTML = icon('code', 12) + `<span class="btn-label">${escHtml(t('source'))}</span>`;
+  // The hover names, in the locale. These sat in the HTML as English `title`
+  // attributes, which is what a reader of every other locale got. Written here
+  // so they follow a language change like the rest of the panel.
+  for (const [btn, key] of [
+    [btnHighlighter, 'tooltipHighlighter'],
+    [btnPreviewTab, 'tooltipPreview'],
+    [btnSourceTab, 'tooltipSource'],
+    [btnUndo, 'tooltipUndo'],
+    [btnRedo, 'tooltipRedo'],
+    [btnSettings, 'tooltipSettings'],
+  ] as const) {
+    btn.title = t(key);
+    // Not the highlighter: `updateHighlighterUI()` names it by its state
+    // ("Highlighter on"), which is what a screen reader needs from a toggle, and
+    // it would overwrite this anyway.
+    if (btn !== btnHighlighter) btn.setAttribute('aria-label', t(key));
+  }
+  previewRendered.setAttribute('aria-label', t('tooltipPreview'));
   updateToolbarDensity();
 }
 
@@ -885,6 +903,16 @@ async function init() {
   attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
   attachStatusTooltip(btnCopyHtml, 'tooltipCopyHtml');
   attachStatusTooltip(btnClear, 'tooltipClear');
+  attachStatusTooltip(btnHighlighter, 'tooltipHighlighter');
+  attachStatusTooltip(btnPreviewTab, 'tooltipPreview');
+  attachStatusTooltip(btnSourceTab, 'tooltipSource');
+  attachStatusTooltip(btnUndo, 'tooltipUndo');
+  attachStatusTooltip(btnRedo, 'tooltipRedo');
+  attachStatusTooltip(btnSettings, 'tooltipSettings');
+  // The capture buttons are deliberately not here. The status bar's own message
+  // is about them — readiness, the restricted tab, the count of highlights — and
+  // their label is a whole sentence that is never dropped, so a tooltip would
+  // overwrite the more useful text with less.
 
   autoMetadata = settings.autoMetadata;
   showCopyHtmlButton(settings.copyHtmlButton);

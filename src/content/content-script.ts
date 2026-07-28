@@ -147,7 +147,6 @@ function showBubble(sel: Selection) {
   if (!bubble) {
     bubble = document.createElement('div');
     bubble.id = 'tomd-bubble';
-    bubble.title = 'add to .md';
     bubble.style.cssText = [
       'position:fixed',
       'z-index:2147483647',
@@ -183,7 +182,12 @@ function showBubble(sel: Selection) {
     });
     document.body.appendChild(bubble);
   }
-  bubble.innerHTML = icon('crosshair', 12) + ' ' + i18n('bubbleText', 'add to .md');
+  // Set here rather than once at creation: the translations arrive after the
+  // bubble may already exist, and the title was left in English for every locale
+  // by being written at creation from a literal.
+  const label = i18n('bubbleText', 'add to .md');
+  bubble.innerHTML = icon('crosshair', 12) + ' ' + label;
+  bubble.title = label;
   const range = sel.getRangeAt(sel.rangeCount - 1);
   const rects = range.getClientRects();
   const rect = rects.length > 0 ? rects[rects.length - 1] : range.getBoundingClientRect();

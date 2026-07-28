@@ -200,6 +200,30 @@
     "message": "Neteja el tauler",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "Desfés l'últim canvi",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "Refés l'últim canvi",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "Obre la configuració",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "Ressalta elements de la pàgina",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "Previsualització renderitzada",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Codi Markdown",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "S'està obrint EditMD…"
   }

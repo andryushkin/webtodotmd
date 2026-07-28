@@ -200,6 +200,30 @@
     "message": "清除面板",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "復原上一個變更",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "重做上一個變更",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "開啟設定",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "標示頁面元素",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "算繪後的預覽",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Markdown 原始碼",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "正在開啟 EditMD…"
   }

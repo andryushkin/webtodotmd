@@ -200,6 +200,30 @@
     "message": "ፓነሉን አጽዳ",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "የመጨረሻውን ለውጥ ቀልብስ",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "የመጨረሻውን ለውጥ መልስ",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "ቅንብሮችን ክፈት",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "በገጹ ላይ ያሉ አካላትን አድምቅ",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "የተዘጋጀ ቅድመ እይታ",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "የMarkdown ምንጭ",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "EditMD በመክፈት ላይ…"
   }

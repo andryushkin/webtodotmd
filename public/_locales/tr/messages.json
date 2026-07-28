@@ -200,6 +200,30 @@
     "message": "Paneli temizle",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "Son değişikliği geri al",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "Son değişikliği yinele",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "Ayarları aç",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "Sayfadaki öğeleri vurgula",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "Biçimlendirilmiş önizleme",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Markdown kaynağı",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "EditMD açılıyor…"
   }

@@ -200,6 +200,30 @@
     "message": "প্যানেল মুছুন",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "শেষ পরিবর্তন ফিরিয়ে নিন",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "শেষ পরিবর্তন আবার করুন",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "সেটিংস খুলুন",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "পৃষ্ঠার উপাদান হাইলাইট করুন",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "রেন্ডার করা প্রিভিউ",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Markdown সোর্স",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "EditMD খোলা হচ্ছে…"
   }

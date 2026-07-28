@@ -200,6 +200,30 @@
     "message": "પેનલ સાફ કરો",
     "description": "Tooltip for the Clear toolbar button, shown in the status bar on hover"
   },
+  "tooltipUndo": {
+    "message": "છેલ્લો ફેરફાર પાછો લો",
+    "description": "Tooltip for the Undo icon button, shown in the status bar on hover"
+  },
+  "tooltipRedo": {
+    "message": "છેલ્લો ફેરફાર ફરી કરો",
+    "description": "Tooltip for the Redo icon button, shown in the status bar on hover"
+  },
+  "tooltipSettings": {
+    "message": "સેટિંગ્સ ખોલો",
+    "description": "Tooltip for the Settings icon button, shown in the status bar on hover"
+  },
+  "tooltipHighlighter": {
+    "message": "પેજના તત્વો હાઇલાઇટ કરો",
+    "description": "Tooltip for the highlighter-mode button, shown in the status bar on hover"
+  },
+  "tooltipPreview": {
+    "message": "રેન્ડર કરેલ પ્રીવ્યૂ",
+    "description": "Tooltip for the Preview view toggle, and the accessible name of the rendered pane"
+  },
+  "tooltipSource": {
+    "message": "Markdown સ્રોત",
+    "description": "Tooltip for the Source view toggle"
+  },
   "openingEditmd": {
     "message": "EditMD ખૂલી રહ્યું છે…"
   }

@@ -601,6 +601,63 @@ So they must say what the button *does*, never repeat the icon.
 | **Constraint** | ≤ 30 chars. |
 | **Adaptation** | Verb matches `clear`. Name what is emptied — the side panel — so it cannot read as clearing the page or the selection. |
 
+The six below name buttons outside the export row: the view toggles, the two
+history buttons, the settings gear and the highlighter. They are also the `title`
+attribute, and for the three icon-only buttons the accessible name as well — they
+were English in every locale until 1.4.9, hard-coded in the panel's HTML.
+
+#### `tooltipPreview`
+| | |
+|---|---|
+| **EN** | `Rendered preview` |
+| **Where** | The Preview toggle, and the accessible name of the rendered pane itself |
+| **Constraint** | ≤ 30 chars. |
+| **Adaptation** | Says what the pane shows — the Markdown drawn as it will look — against `tooltipSource`, which is the same text unformatted. Do not reuse the bare `preview` label. |
+
+#### `tooltipSource`
+| | |
+|---|---|
+| **EN** | `Markdown source` |
+| **Where** | The Source toggle, the editable text of the note |
+| **Constraint** | ≤ 30 chars. Keep `Markdown` untranslated. |
+| **Adaptation** | "Source" = the characters the file will hold, the pane the reader can type in. |
+
+#### `tooltipUndo`
+| | |
+|---|---|
+| **EN** | `Undo the last change` |
+| **Where** | Icon-only button; this is its only name |
+| **Constraint** | ≤ 35 chars. |
+| **Adaptation** | Match the OS/browser wording for undo in this locale. |
+
+#### `tooltipRedo`
+| | |
+|---|---|
+| **EN** | `Redo the last change` |
+| **Where** | Icon-only button; this is its only name |
+| **Constraint** | ≤ 35 chars. |
+| **Adaptation** | Match the OS/browser wording for redo, and pair with `tooltipUndo`. |
+
+#### `tooltipSettings`
+| | |
+|---|---|
+| **EN** | `Open settings` |
+| **Where** | The gear, icon-only; this is its only name |
+| **Constraint** | ≤ 25 chars. |
+| **Adaptation** | Same word for "settings" as `settingsTitle` and `sectionDisplay`'s page use in this locale. |
+
+#### `tooltipHighlighter`
+| | |
+|---|---|
+| **EN** | `Highlight elements on the page` |
+| **Where** | The highlighter-mode button, whose visible label is its state (`highlighterOn` / `highlighterOff`) |
+| **Constraint** | ≤ 35 chars. |
+| **Adaptation** | Describes what the mode does — click parts of the page to mark them for capture — since the label only says whether it is on. |
+
+Not tooltipped, deliberately: the capture button. The status bar already carries
+what applies to it — readiness, a restricted tab, the number of highlights — and
+its label is a whole sentence that the compact mode never drops.
+
 ---
 
 ### 3.14 Rating Widget
