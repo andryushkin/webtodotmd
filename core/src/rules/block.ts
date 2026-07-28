@@ -1,7 +1,7 @@
 import type { Rule, MarkItDownOptions } from '../types.js';
 import { convert } from '../core/parser.js';
 import { SEMANTIC_BLOCKS } from '../utils/blocks.js';
-import { ARIA_DEFAULT_LEVEL } from '../utils/headings.js';
+import { ariaLevel } from '../utils/headings.js';
 
 const ELEMENT_NODE = 1;
 const ANCHOR_CLASSES = new Set(['anchor', 'heading-link', 'headerlink']);
@@ -52,17 +52,15 @@ export const BLOCK_RULES: Rule[] = [
   //
   // The level comes from `aria-level`, which the role requires; a missing or
   // unreadable one is read as 2, the level a browser reports for a heading that
-  // does not say. Anything outside 1…6 is not a level Markdown can write.
+  // does not say, and a level deeper than Markdown writes lands on the deepest
+  // one it has. `ariaLevel` says why, and `minHeadingLevel` reads the same answer.
   {
     name: 'aria-heading',
     filter: (el) => el.getAttribute('role') === 'heading',
     replacement(el, _childContent, options) {
       const text = getHeadingText(el, options);
       if (!text) return '';
-      const stated = Number(el.getAttribute('aria-level'));
-      const rawLevel =
-        Number.isInteger(stated) && stated >= 1 && stated <= 6 ? stated : ARIA_DEFAULT_LEVEL;
-      const level = Math.min(Math.max(rawLevel + (options.headingOffset ?? 0), 1), 6);
+      const level = Math.min(Math.max(ariaLevel(el) + (options.headingOffset ?? 0), 1), 6);
       return `\n\n${'#'.repeat(level)} ${text}\n\n`;
     },
   },

@@ -320,7 +320,7 @@
     </article>
 
     <article class="case">
-      <aside><strong>B5.</strong> A heading stated with a role rather than a tag. An interface built out of divs writes them this way and a screen reader announces them as headings, so they convert like the tags above: the level comes from <code>aria-level</code>, and one that is missing or outside 1…6 reads as 2. These count towards the level normalisation too — this group starts at <code>aria-level="3"</code>, so it lands where an <code>h3</code> would.</aside>
+      <aside><strong>B5.</strong> A heading stated with a role rather than a tag. An interface built out of divs writes them this way and a screen reader announces them as headings, so they convert like the tags above: the level comes from <code>aria-level</code>, one that is missing or unreadable reads as 2, and one past 6 is clamped — ARIA sets no ceiling, so <code>aria-level="9"</code> is a level the page really stated and reading it as 2 put a subsection above its own parent. These count towards the level normalisation too — this group starts at <code>aria-level="3"</code>, so it lands where an <code>h3</code> would.</aside>
       <div class="subject">
         <div role="heading" aria-level="3">Section stated by role</div>
         <p>Body under a heading that has no heading tag.</p>

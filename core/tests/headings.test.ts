@@ -88,9 +88,10 @@ describe('role="heading"', () => {
     expect(toMarkdown('<div role="heading">Title</div>')).toBe('## Title\n');
   });
 
-  it('a level Markdown cannot write falls back to the same default', () => {
-    expect(toMarkdown('<div role="heading" aria-level="9">Title</div>')).toBe('## Title\n');
+  it('a level nobody can read falls back to the same default', () => {
     expect(toMarkdown('<div role="heading" aria-level="x">Title</div>')).toBe('## Title\n');
+    // Not a level: ARIA's floor is 1, so this states nothing rather than a rank.
+    expect(toMarkdown('<div role="heading" aria-level="0">Title</div>')).toBe('## Title\n');
   });
 
   it('counts for the normalisation, like a heading tag does', () => {
@@ -100,5 +101,31 @@ describe('role="heading"', () => {
 
   it('empty is skipped, like a heading tag is', () => {
     expect(toMarkdown('<div role="heading" aria-level="3"></div>')).toBe('\n');
+  });
+});
+
+// ARIA puts no ceiling on `aria-level`, so a 9 is a level the page really stated
+// and a browser really reports. Read as the "unstated" default it wrote the child
+// above its own parent, and one such line pulled every heading on the page.
+describe('aria heading criteria: a level deeper than Markdown writes', () => {
+  it('lands on the deepest level there is, as a shifted tag does', () => {
+    expect(toMarkdown('<div role="heading" aria-level="6">L6</div>')).toBe('###### L6\n');
+    expect(toMarkdown('<div role="heading" aria-level="7">L7</div>')).toBe('###### L7\n');
+    expect(toMarkdown('<div role="heading" aria-level="99">L99</div>')).toBe('###### L99\n');
+  });
+
+  it('never rises above the heading it sits under', () => {
+    const html = '<div role="heading" aria-level="3">Parent</div>'
+      + '<div role="heading" aria-level="7">Child</div>';
+    expect(toMarkdown(html)).toBe('### Parent\n\n###### Child\n');
+  });
+
+  it('does not drag the whole page up with it', () => {
+    // `levelOf` shared the rule's fallback, so one such line read as a 2 and
+    // became the shallowest heading of the document: every real heading beside
+    // it was then normalized against a level nothing on the page was written at.
+    const deep = '<h4>Real</h4><div role="heading" aria-level="9">Deep</div>';
+    expect(toMarkdown(deep, { topHeadingLevel: 2 })).toBe('## Real\n\n#### Deep\n');
+    expect(toMarkdown('<h4>Real</h4>', { topHeadingLevel: 2 })).toBe('## Real\n');
   });
 });

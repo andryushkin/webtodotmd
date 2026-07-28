@@ -21,7 +21,7 @@ backslash: a `>` on its own opens nothing.
 | HTML | Markdown |
 | --- | --- |
 | `<h1>`…`<h6>` | `#`…`######`, shifted by `headingOffset` or by `topHeadingLevel` — **neither in the library, `topHeadingLevel: 2` in the extension** — and clamped to 1…6 |
-| `role="heading"` with `aria-level` | the same, at the level stated — an interface built out of divs writes its headings this way, and a missing or unwritable level reads as 2, which is what a browser reports. Counts for `topHeadingLevel` like a heading tag |
+| `role="heading"` with `aria-level` | the same, at the level stated — an interface built out of divs writes its headings this way. A missing or unreadable level reads as 2, which is what a browser reports for a heading that does not say; a level below ARIA's floor of 1 is unreadable too, while one past 6 is a level the page really stated and is clamped, like a tag shifted past the bottom. Counts for `topHeadingLevel` like a heading tag |
 | a heading's own anchor link | dropped, when its class is `anchor`, `heading-link` or `headerlink` — the `¶` a docs generator hangs off every heading |
 | `<p>` | paragraph, blank line either side |
 | `<div>` | paragraph, blank line either side |
