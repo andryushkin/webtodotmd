@@ -1058,9 +1058,11 @@ path\file | a &lt; b &amp; c
     </article>
 
     <article class="case">
-      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> A less-than operator remains LaTeX text — <code>a &lt; b</code> is untouched — while tag- or comment-shaped text is defused with LaTeX's own names for the characters, <code>\lt</code> and <code>\gt</code>. Not an HTML entity: <code>&amp;lt;</code> is inert too, but it is not LaTeX, and KaTeX draws it as an error in red — the formula came out safe and unreadable. These two draw the <code>&lt;</code> and <code>&gt;</code> the page drew, and leave no <code>&lt;</code> for a Markdown renderer to open a tag with.</aside>
+      <aside><strong>F3.</strong> <span class="setting">Math setting.</span> The annotation is read where it states a formula and disbelieved where it does not. <code>E = mc^2</code> uses the language, so it comes back <code>$E = mc^2$</code>. The other three do not: <code>a &lt; b</code> writes no command, script or group, and the two tag- or comment-shaped strings say outright that they are not what the reader met — the page drew <em>x custom X y</em>, words standing nowhere in the LaTeX. There the drawn half wins, so the file carries what was on screen and not an <code>x-foo</code> element with a <code>position:fixed</code> nobody saw. Where nothing is drawn the annotation is the only witness there is and the formula is written anyway — tag-shaped text defused with LaTeX's own names for the characters, <code>\lt</code> and <code>\gt</code>, never an HTML entity: <code>&amp;lt;</code> is inert too, but it is not LaTeX, and KaTeX draws it as an error in red.</aside>
       <div class="subject">
         <p>
+          <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">E = mc²</span></span>
+          and
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">a &lt; b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">a &lt; b</span></span>
           and
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt; y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x custom X y</span></span>
