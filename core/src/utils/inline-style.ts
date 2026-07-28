@@ -1072,6 +1072,27 @@ const BLANK_BACKGROUND = /^(?:transparent|rgba\([^)]*,\s*0(?:\.0*)?\s*\)|hsla\([
  * a run is a decoration, a texture or a sprite — `background: url(a;b)` is one,
  * and reading it as a highlight put `==` round the word it sat behind.
  */
+// Painted by the browser rather than by a person marking something. Every one of
+// these carries a fill from the UA stylesheet with nothing in the page having
+// said so.
+const CONTROL_TAGS = new Set(['button', 'input', 'select', 'textarea', 'option', 'progress', 'meter']);
+
+/**
+ * Whether this style sets monospaced type.
+ *
+ * Asked beside a fill and only there: the two together are a code chip, the shape
+ * a page writes where it means `<code>` and reaches for a class instead. The
+ * generic family is the reliable half — a stack ends in `monospace` whatever
+ * names come first — and the named ones are the stacks that reach a computed
+ * style before the generic, which happens where a page names fonts and nothing
+ * else.
+ */
+export function isMonospaced(read: StyleReader): boolean {
+  const family = read('font-family') ?? read('font');
+  if (family === undefined) return false;
+  return /\bmonospace\b|\bui-monospace\b|\bmenlo\b|\bconsolas\b|\bcourier\b|\bsfmono/i.test(family);
+}
+
 export function paintedBackground(read: StyleReader): string | undefined {
   const colour = read('background-color') ?? read('background');
   if (colour === undefined) return undefined;
@@ -1106,8 +1127,19 @@ export function paintedBackground(read: StyleReader): string | undefined {
  */
 export function isHighlighted(el: Element): boolean {
   if (!states(el, /background/i)) return false;
-  if (BLOCK_TAGS.has(tagOf(el)) || displaysAsBlock(el)) return false;
-  return paintedBackground(elementStyle(el)) !== undefined;
+  const tag = tagOf(el);
+  // A control is painted by the browser, not by anybody marking a phrase: every
+  // `<button>` carries a fill from the UA stylesheet alone, and a form's `Pay
+  // now` came back `==Pay now==`.
+  if (CONTROL_TAGS.has(tag)) return false;
+  if (BLOCK_TAGS.has(tag) || displaysAsBlock(el)) return false;
+  const read = elementStyle(el);
+  // A fill behind monospaced text is a code chip, which is what a page writes
+  // where it means `<code>` and reaches for a class instead — Grok's
+  // `Markdown.pl`, and the shape K7 is about. Reading it as a highlight does not
+  // repair that case, it only states the wrong thing about it confidently.
+  if (isMonospaced(read)) return false;
+  return paintedBackground(read) !== undefined;
 }
 
 export function displaysAsBlock(el: Element): boolean {

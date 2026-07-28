@@ -29,7 +29,14 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   snapshot exists for. What is *not* a highlight: an image or a gradient, which is a decoration
   rather than a mark and cost `==` round the word `background: url(a;b)` sat behind; and a block,
   whatever it is painted — a card, a callout, a striped row and a code block are backgrounds no
-  reader reads as a marked phrase, and `==` round a paragraph is a delimiter that does not close.
+  reader reads as a marked phrase, and `==` round a paragraph is a delimiter that does not close; a
+  control, which the browser paints and nobody marked — a form's `Pay now` came back `==Pay now==`;
+  and a fill under monospaced type, which is a *code chip*, the shape a page writes where it means
+  `<code>` and reaches for a class instead (K7). Reading that one as a highlight repairs nothing and
+  states the wrong thing confidently, so `isMonospaced()` is asked beside the fill on both sides —
+  the snapshot declines to record it, rather than carrying a dozen font names across for the core to
+  ask the same question of. All three were found by running the whole spec page through the
+  extension, which is the only place the class-stated fill is readable at all.
   One place still breaks this and is a debt: the emphasis fallback for content flanked by
   punctuation, where the alternative was losing the italics and leaving the delimiters on show.
   `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),

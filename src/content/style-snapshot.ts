@@ -67,6 +67,7 @@ import {
   isBoldTag,
   isItalicTag,
   isStruckTag,
+  isMonospaced,
   italicFrom,
   paintedBackground,
   removedFrom,
@@ -133,6 +134,7 @@ const DIAGNOSTIC_PROPERTIES = [
   'font-style',
   'text-decoration-line',
   'background-color',
+  'font-family',
   'text-align',
   'clip',
   'clip-path',
@@ -821,7 +823,18 @@ export function snapshotStyles(
     // page paints, so this is also what keeps the attribute off most of the page.
     const painted = paintedBackground(read);
     const background = painted ?? context.background;
-    if (painted !== undefined && painted !== context.background && box !== 'block' && !isBlockTag(tag)) {
+    // A fill under monospaced type is a code chip and not a mark — the shape a
+    // page writes where it means `<code>` and reaches for a class instead. Asked
+    // here as well as in the core, through the core's own `isMonospaced`, because
+    // a computed `font-family` is a list of a dozen names no snapshot should carry
+    // across just so the other side can ask the same question of it.
+    if (
+      painted !== undefined &&
+      painted !== context.background &&
+      box !== 'block' &&
+      !isBlockTag(tag) &&
+      !isMonospaced(read)
+    ) {
       declarations.push(`background-color:${painted}`);
     }
 

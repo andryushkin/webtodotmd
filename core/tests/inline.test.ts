@@ -73,6 +73,25 @@ describe('highlight', () => {
     expect(toMarkdown('<mark style="font-weight:normal">text</mark>')).toBe('==text==\n');
   });
 
+  // Найдено прогоном всей спека-страницы через расширение: обе формы приехали
+  // подсвеченными, и ни одну из них никто не выделял.
+  it.each([
+    ['кнопка', '<p><button style="background:#eee">Pay now</button></p>'],
+    ['поле ввода', '<p><input style="background:#eee" value="pay"></p>'],
+  ])('контрол красит браузер, а не человек: %s', (_name, html) => {
+    expect(toMarkdown(html)).not.toContain('==');
+  });
+
+  // Заливка под моноширинным шрифтом — код-чип: так пишет страница, которая
+  // имеет в виду `<code>`, а тянется к классу (K7). Прочитать её подсветкой
+  // значит не починить тот случай, а уверенно сказать о нём неправду.
+  it('моноширинный чип — не пометка', () => {
+    const chip =
+      '<p>the original <span style="background:#fff1e7;font:.9em ui-monospace, Menlo, monospace">' +
+      'Markdown.pl</span> here</p>';
+    expect(toMarkdown(chip).trim()).toBe('the original Markdown.pl here');
+  });
+
   it('вложенная разметка сохраняется', () => {
     expect(toMarkdown('<p><mark>a <strong>b</strong></mark></p>')).toBe('==a **b**==\n');
   });
