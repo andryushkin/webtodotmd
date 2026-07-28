@@ -6,6 +6,9 @@ import { normalizeFragment } from './core/fragment.js';
 import { collectFootnoteDefs, buildFootnotesSection } from './core/footnotes.js';
 import { minHeadingLevel, resolveHeadingOffset } from './utils/headings.js';
 import { ROW_ATTR } from './utils/inline-style.js';
+// The list rule's own question, asked here rather than spelled again: a second
+// reading of "whose checkbox is this" would drift the next time either moves.
+import { ownCheckbox } from './rules/lists.js';
 
 export type { DOMAdapterFn, Rule, MarkItDownOptions } from './types.js';
 
@@ -506,6 +509,16 @@ function buildListFragment(range: Range, ancestor: Element): DocumentFragment | 
   if (ordinal !== null && ordinal !== 1) listEl.setAttribute('start', String(ordinal));
   if (isItem) {
     const li = doc.createElement('li');
+    // The task box the same way the ordinal came: off the original, because it
+    // is part of what the item *is* and not of what it says. A drag over the
+    // text of a task starts after the `<input>`, so the clone holds none — and
+    // `- [x] done thing` came back `- done thing`, a task the reader saw ticked
+    // arriving as an ordinary bullet. Only where the clone has no box of its
+    // own, or a selection that did take the box would get a second one.
+    const box = ownCheckbox(ancestor);
+    if (box && !content.querySelector?.('input[type="checkbox"]')) {
+      li.appendChild(box.cloneNode(false));
+    }
     li.appendChild(content);
     listEl.appendChild(li);
   } else {
@@ -632,10 +645,44 @@ function wrapInRow(fragment: DocumentFragment, scope: ParentNode, doc: Document)
  * Обобщённый диспетчер: определяет семантический контекст range
  * и возвращает обогащённый фрагмент, или null если контекст неизвестен.
  */
+/**
+ * The quotation marks a nearer context hid.
+ *
+ * The dispatcher picks one ancestor, the nearest, and stops. That is right for
+ * the element it picks and silent about everything above it: a drag inside a
+ * list *in a quotation* takes the list branch, because `<li>` is nearer than
+ * `<blockquote>`, and the quotation went out of the file — `> - inner item`
+ * came back `- inner item`, the words kept and the fact that someone else said
+ * them gone. Dragging through the quotation's own paragraph was always right,
+ * which is what hid it: there the nearest ancestor *is* the quotation.
+ *
+ * Every quotation above the chosen ancestor, innermost first, so a quotation
+ * inside a quotation keeps both levels. Only quotations: a list inside a list is
+ * already answered by the numbering, a heading holds no blocks to lose, and a
+ * table cut into is restored by `cloneWithContext` wherever the fragment sits.
+ */
+function wrapInQuotes(fragment: DocumentFragment, from: Element): DocumentFragment {
+  const doc = from.ownerDocument!;
+  let out = fragment;
+  for (let up = from.parentElement; up; up = up.parentElement) {
+    if (up.tagName.toLowerCase() !== 'blockquote') continue;
+    const quote = up.cloneNode(false) as Element;
+    quote.appendChild(out);
+    out = doc.createDocumentFragment();
+    out.appendChild(quote);
+  }
+  return out;
+}
+
 function tryEnrichFragment(range: Range): DocumentFragment | null {
   const ancestor = findNearestSemanticAncestor(range.commonAncestorContainer);
   if (!ancestor) return null;
 
+  const built = buildFor(range, ancestor);
+  return built === null ? null : wrapInQuotes(built, ancestor);
+}
+
+function buildFor(range: Range, ancestor: Element): DocumentFragment | null {
   const tag = ancestor.tagName.toLowerCase();
 
   if (tag === 'pre') return buildPreFragment(range, ancestor);

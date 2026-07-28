@@ -341,6 +341,80 @@ describe('чужие атрибуты на странице', () => {
 // to lose. In the extension the snapshot has also written `display:block` onto
 // the items, so the same fragment arrives as three paragraphs — measured in
 // Chrome, and the reason the case was reported at all.
+// What a nearer context hides. The dispatcher picks one ancestor and stops, so
+// a quotation above the element it picked went out of the file — the words kept
+// and the fact that someone else said them gone.
+describe('a selection made inside a quotation', () => {
+  const item = (doc: Document, range: Range, sel: string, n: number): void => {
+    const t = doc.querySelector(sel)!.firstChild!;
+    range.setStart(t, 0);
+    range.setEnd(t, n);
+  };
+
+  it('keeps the quotation around a list dragged inside it', () => {
+    const doc = setup('<div><blockquote><p>lead</p><ul><li>inner item</li></ul></blockquote></div>');
+    expect(convert(doc, (r) => item(doc, r, 'li', 10))).toBe('> - inner item');
+  });
+
+  it('keeps both levels of a quotation inside a quotation', () => {
+    const doc = setup(
+      '<div><blockquote><blockquote><ul><li>deep item</li></ul></blockquote></blockquote></div>',
+    );
+    expect(convert(doc, (r) => item(doc, r, 'li', 9))).toBe('> > - deep item');
+  });
+
+  it('keeps the quotation around a heading and a code block', () => {
+    const heading = setup('<div><blockquote><h2>Quoted heading</h2></blockquote></div>');
+    expect(convert(heading, (r) => item(heading, r, 'h2', 14))).toBe('> ## Quoted heading');
+    const code = setup('<div><blockquote><pre><code>parse(x)</code></pre></blockquote></div>');
+    expect(convert(code, (r) => item(code, r, 'code', 8))).toBe('> ```\n> parse(x)\n> ```');
+  });
+
+  it('quotes nothing that stood in no quotation', () => {
+    const doc = setup('<div><ul><li>plain item</li></ul></div>');
+    expect(convert(doc, (r) => item(doc, r, 'li', 10))).toBe('- plain item');
+  });
+});
+
+// The task box is part of what an item *is*, like the ordinal beside it: a drag
+// over the text of a task starts after the `<input>`, so the clone holds none.
+describe('a selection made inside a task item', () => {
+  const TASKS =
+    '<div><ul><li><input type="checkbox" checked>done thing</li>' +
+    '<li><input type="checkbox">open thing</li></ul></div>';
+
+  it('keeps the box the drag started after', () => {
+    const ticked = setup(TASKS);
+    expect(
+      convert(ticked, (r) => {
+        const t = ticked.querySelectorAll('li')[0]!.lastChild!;
+        r.setStart(t, 0);
+        r.setEnd(t, 10);
+      }),
+    ).toBe('- [x] done thing');
+
+    const open = setup(TASKS);
+    expect(
+      convert(open, (r) => {
+        const t = open.querySelectorAll('li')[1]!.lastChild!;
+        r.setStart(t, 0);
+        r.setEnd(t, 10);
+      }),
+    ).toBe('- [ ] open thing');
+  });
+
+  it('writes one box where the drag took the box too', () => {
+    const doc = setup(TASKS);
+    expect(
+      convert(doc, (r) => {
+        const li = doc.querySelectorAll('li')[0]!;
+        r.setStart(li, 0);
+        r.setEnd(li.lastChild!, 10);
+      }),
+    ).toBe('- [x] done thing');
+  });
+});
+
 // A code block whose furniture is drawn *inside* the `<pre>` — Perplexity's
 // shape, and C5 on the spec page. Selecting the block from within the `<pre>`
 // makes it the range's semantic ancestor, and the fragment used to be flattened

@@ -9,7 +9,7 @@ import type { Rule } from '../types.js';
  * answers about all of them, and the nearest enclosing one is what says whose a
  * part is.
  */
-function ownCheckbox(item: Element): Element | null {
+export function ownCheckbox(item: Element): Element | null {
   for (const box of Array.from(item.querySelectorAll('input[type="checkbox"]'))) {
     if (box.closest('li') === item) return box;
   }
