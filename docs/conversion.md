@@ -128,6 +128,19 @@ the run stays plain: a half-mapped `x₂ab` states a different formula with the
 same confidence. A run the escaper had to touch stays plain too — a backslash has
 no raised spelling, so `x<sup>*</sup>` is `x\*`.
 
+A plain run keeps no boundary of its own, and that is decided rather than
+overlooked: `Brand<sup>TM</sup> here` is `BrandTM here`, the order the line is
+read in and the string a browser puts on the clipboard. Nothing is written
+between the two — a `^`, a `_`, or the tag back again would each be a character
+the reader never saw, and the fidelity oracle counts it as one, since it reads a
+raised run as its characters standing in the line. Measured: one marker per
+untranslatable run takes the survey from 70 defect classes to 80 (81 → 93 of 200
+seeds), `<sub>_</sub>` coming back as `__` among them, where the invented
+character also changed what the page's own escaped one rendered as. It is the
+answer `<small>`, `<big>` and `<u>` already get — an appearance Markdown cannot
+spell is dropped, never traded for a character. What is lost is the boundary, and
+Markdown has nowhere to put it.
+
 ## Styles the page states in CSS
 
 Read from the `style` attribute and from `data-s2md-style`, the computed style

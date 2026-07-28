@@ -761,6 +761,36 @@ describe('надстрочный и подстрочный', () => {
   });
 });
 
+// And such a run keeps no boundary of its own, which is a decision rather than
+// an oversight: `Brand<sup>TM</sup> here` is `BrandTM here`, the order the line
+// is read in and the string a browser puts on the clipboard. Nothing is written
+// between the two — a `^`, a `_` or the tag back again would each be a character
+// the reader never saw, and the round-trip oracle counts it as one: `visibleText`
+// reads a raised run as its characters standing in the line, so one marker per
+// untranslatable run took the survey from 70 defect classes to 80, `<sub>_</sub>`
+// among them, where the invented character also changed what the page's own
+// escaped one rendered as. `<small>`, `<big>` and `<u>` are answered the same way
+// — an appearance Markdown cannot spell is dropped, never traded for a character
+// — and what is lost here is the boundary, which Markdown has nowhere to put.
+describe('a raised run Unicode cannot spell stands in the line as it was read', () => {
+  it.each([
+    ['a trademark', '<p>Brand<sup>TM</sup> here</p>', 'BrandTM here'],
+    ["an author's mark", '<p>Note<sup>a,b</sup> next</p>', 'Notea,b next'],
+    ['a lowered run in another script', '<p>x<sub>Прим</sub> next</p>', 'xПрим next'],
+    // The shapes that part themselves: brackets the page wrote, and a run
+    // Unicode does spell, which needs no boundary because it carries one.
+    ['a reference the page bracketed', '<p>Fact<sup>[12]</sup> next</p>', 'Fact[12] next'],
+    ['a formula, which is raised on its own', '<p>H<sub>2</sub>O next</p>', 'H₂O next'],
+  ])('%s', (_name, html, expected) => {
+    const out = toMarkdown(html).trim();
+    expect(out).toBe(expected);
+    // Neither the tag nor a marker invented in its place.
+    expect(out).not.toContain('<sup>');
+    expect(out).not.toContain('<sub>');
+    expect(out).not.toContain('^');
+  });
+});
+
 // A `<q>` shows its marks from the UA stylesheet's `q::before { content:
 // open-quote }`, so no node in the document holds them and the element used to
 // convert to its text alone: a sentence that had quoted something arrived saying
