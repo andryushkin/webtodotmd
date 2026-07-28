@@ -8,6 +8,9 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    // `capture.ts` imports the core with its `.ts` extension, which is what bun
+    // resolves and what keeps the extension building with no bundler at all.
+    "allowImportingTsExtensions": true,
     "typeRoots": ["./types"]
   },
   "include": ["src", "core/src", "vendor", "types"],

@@ -175,6 +175,26 @@ else
     fail "guide-budget" "CLAUDE.md=$claude_lines AGENTS.md=$agent_lines$scoped_over"
 fi
 
+# 8. Types. `bun` is a transpiler and checks nothing, so without this the only
+# type checking that happens is whatever an editor did while somebody watched.
+# Two runs because the core is its own package with stricter options of its own
+# (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) and is published
+# from here — a caller compiles it against their settings, not ours.
+#
+# It earns its place: on the day it was added it had already caught two defects
+# the 1839 tests did not see — an object literal missing a field its own type
+# required, which reached the runtime and marked text nobody had highlighted,
+# and a `NodeList` iterated where an isomorphic caller's DOM lib does not say it
+# is iterable.
+type_errors=""
+bunx tsc --noEmit >/dev/null 2>&1 || type_errors="root"
+(cd core && bunx tsc --noEmit >/dev/null 2>&1) || type_errors="$type_errors core"
+if [ -z "$type_errors" ]; then
+    pass "typecheck (root + core)"
+else
+    fail "typecheck" "errors in:$type_errors — run \`bunx tsc --noEmit\`"
+fi
+
 # 8. No generated junk is tracked.
 junk=$(git ls-files | grep -E '(^|/)\.DS_Store$|(^|/)node_modules/|(^|/)dist/|\.log$|\.smotr|\.zip$')
 if [ -z "$junk" ]; then pass "no-junk-tracked"; else fail "no-junk-tracked" "$junk"; fi

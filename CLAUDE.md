@@ -75,6 +75,7 @@ in that same change instead of writing around it.
 bash build.sh     # → dist/, bun and nothing else, no node_modules needed
 bun install       # once: linkedom and happy-dom for tests, plus core's toolchain
 bun test          # extension and core, one runner
+bunx tsc --noEmit # bun checks no types; the audit runs this and the core's own
 scripts/audit.sh  # public-repo gate, before pushing (docs/audit.md)
 ```
 

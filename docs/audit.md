@@ -25,7 +25,18 @@ The script checks:
    being the constraint sheet of a published library rather than only a
    subdirectory guide. Counted so that a section cannot meet the root budget by
    moving house.
-8. Tracked junk and whitespace errors in the worktree, index, and outgoing
+8. Type checking, `tsc --noEmit`, twice: the root project and `core/`, which is
+   its own package with stricter options and is compiled by whoever consumes it.
+   `bun` is a transpiler and checks nothing, so without this nothing does. It
+   caught two defects on the day it was added, neither visible to the tests: an
+   object literal missing a field its own type required — which reached the
+   runtime and highlighted text nobody had marked — and a `NodeList` iterated
+   where an isomorphic caller's DOM lib does not call it iterable. The vendored
+   builds are declared in `types/vendor.d.ts` as `any`: modelling somebody
+   else's API by hand would be a second definition free to drift from the build
+   beside it, and the value is in checking everything that stops being checked
+   when one import fails to resolve.
+9. Tracked junk and whitespace errors in the worktree, index, and outgoing
    range. The base resolves from `AUDIT_BASE`, the branch upstream, or
    `origin/<branch>`; failure to resolve a base is an audit failure.
 
