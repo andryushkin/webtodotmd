@@ -4,6 +4,47 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.9 — 2026-07-29
+
+A pass over the panel and the settings page, from the reader's side of them.
+
+### Sending a note somewhere
+
+- **A note can be sent to Obsidian.** A button beside the others hands it over the
+  same way the Obsidian Web Clipper does — the text travels in the clipboard, the
+  URL carries only the file name, so length is not a limit. On by default, and it
+  can be switched off in Settings for anyone who does not use Obsidian.
+- **The EditMD button is now the word `.md`.** It said "EditMD", which in the
+  longer locales cost the toolbar a whole row; the file this extension writes is
+  what the hand-off is about, and the app's name is in the tooltip.
+
+### Naming things
+
+- **Every button names itself, in your language.** Hovering any of them says what
+  it does in the status bar. Six — the gear, undo, redo, the highlighter and the
+  two view toggles — had an English name hard-coded regardless of the interface
+  language, and the three icon-only ones had no name at all, on screen or to a
+  screen reader.
+- **A message in the status bar is no longer swallowed.** Moving the pointer over a
+  button could clear an error or a confirmation the moment it appeared — including
+  the one the button you just pressed had put there.
+- **The highlighter reports being on the way assistive technology expects.**
+
+### The settings page
+
+- **Every on/off setting is a switch** rather than a tick box.
+- **A link to the site and to the source.** Both at the foot of the page; the
+  extension is open source, and that is where a bug can be reported.
+- **The captured HTML is a button, not a third view.** It was a tab beside the
+  preview and the source, which is a lot of room for a debugging aid; the setting
+  now adds a button that copies that markup, and the tab is gone. The setting's
+  name changed with it, so it needs switching on again if you had it on.
+
+### Conversion
+
+- **A fix for tables whose carrier rows were swept in a library caller**, where a
+  node list is not iterable the way it is in a browser.
+
 ## 1.4.8 — 2026-07-28
 
 One entry for one submission: 1.4.1 through 1.4.7 were built, tested and never
