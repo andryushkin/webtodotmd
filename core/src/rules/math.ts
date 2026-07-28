@@ -135,7 +135,10 @@ function drawnText(el: Element): string {
   // straight off the wrapper where a page writes no `<math>` around it, and leaving
   // it in made the drawn half read back as the LaTeX itself.
   const carriers = 'math, annotation, mjx-assistive-mml, .katex-mathml, script[type^="math/tex"]';
-  for (const carrier of clone.querySelectorAll(carriers)) {
+  // `Array.from` rather than iterating the NodeList: this package is isomorphic,
+  // and a `NodeListOf` is only iterable where the DOM lib says so — linkedom and
+  // a server caller answer differently, which is what `tsc --noEmit` reports here.
+  for (const carrier of Array.from(clone.querySelectorAll(carriers))) {
     carrier.remove();
   }
   return (clone.textContent ?? '').replace(/\s+/g, ' ').trim();
