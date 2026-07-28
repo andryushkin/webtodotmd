@@ -90,7 +90,14 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   direct child is that case. A child that *converted to nothing* is not a child at all here — it
   stands between no characters, so it can end no run, and counting it as one produced those four
   asterisks for real: `<!---->` is what `v-if` leaves mid-run, and
-  `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`.
+  `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`. A *blank* is not
+  such a child either, for the opposite reason — it is drawn, it is drawn bold, and it belongs to the
+  runs on both sides: `<span>a</span> <span>b</span>` under one weight came out `**a** **b**` where
+  one `**a b**` says the same, and a newline between the two, which every formatter writes, did it
+  too. Nothing renders differently, which is why nothing caught it; what it costs is doubled syntax
+  in the pane a person edits. Having no mark of its own to state, a blank takes the one both its
+  neighbours have and stays outside the delimiters wherever they differ — a `**` with a space behind
+  it is not an emphasis CommonMark renders, so a blank pulled inside would show the asterisks.
 - `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
   wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
   running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask

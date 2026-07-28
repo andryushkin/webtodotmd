@@ -927,7 +927,17 @@ export function addedMarks(el: Element): StyleMarks {
  * One walk for all of the children, because the weight the mark has to beat is
  * the element's own and working it out costs an ancestor walk. `NO_MARKS` for a
  * child that wears nothing, whether it declined the mark itself or holds no text
- * to wear it: a `**` round an image or a blank is a claim about nothing.
+ * to wear it: a `**` round an image is a claim about nothing.
+ *
+ * A blank is not such a child, and reading it as one doubled the delimiters on
+ * every run a page had put a space in: `<div style="font-weight:700"><span>a
+ * </span> <span>b</span></div>` came out `**a** **b**` where one `**a b**` says
+ * the same thing, and a newline between the spans — which every formatter
+ * writes — did it too. The space is drawn, it is drawn bold, and it belongs to
+ * the run either side of it. It has no mark of its own to state, so it takes the
+ * one both its neighbours have and stays outside the delimiters wherever they
+ * differ — a `**` with a space after it is not a delimiter CommonMark renders,
+ * so a blank pulled inside the marks would show the asterisks instead.
  */
 export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
   const read = elementStyle(el);
@@ -939,11 +949,12 @@ export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
   const declinesItalic = (child: Element): boolean => italicFrom(elementStyle(child)) === false;
   const declinesStrike = (child: Element): boolean => struckFrom(elementStyle(child)) === false;
 
-  return Array.from(el.childNodes).map((node) => {
+  // `undefined` is a blank waiting to be told which run it fell in.
+  const own = Array.from(el.childNodes).map((node): StyleMarks | undefined => {
     if (node.nodeType === TEXT_NODE) {
-      return (node.textContent ?? '').trim() === '' ? NO_MARKS : marks;
+      return (node.textContent ?? '').trim() === '' ? undefined : marks;
     }
-    if (node.nodeType !== ELEMENT_NODE) return NO_MARKS;
+    if (node.nodeType !== ELEMENT_NODE) return undefined;
     const child = node as Element;
     return {
       bold: marks.bold && wears(child, declinesBold),
@@ -951,6 +962,34 @@ export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
       strike: marks.strike && wears(child, declinesStrike),
     };
   });
+
+  return own.map((child, i) => child ?? between(own, i, marks));
+}
+
+/**
+ * What a blank between two children wears: the element's marks where both sides
+ * have them, and nothing where either side is missing or declines.
+ *
+ * An edge counts as missing, so a run opening or closing on a space keeps the
+ * space outside its delimiters. Other blanks are stepped over — a comment and a
+ * whitespace text node in a row are one gap on screen — and so is anything that
+ * is neither text nor an element, which writes no character to stand between.
+ */
+function between(own: Array<StyleMarks | undefined>, at: number, marks: StyleMarks): StyleMarks {
+  const beside = (step: -1 | 1): StyleMarks | undefined => {
+    for (let i = at + step; i >= 0 && i < own.length; i += step) {
+      if (own[i] !== undefined) return own[i];
+    }
+    return undefined;
+  };
+  const before = beside(-1);
+  const after = beside(1);
+  const wearsAll = (side: StyleMarks | undefined): boolean =>
+    side !== undefined
+    && side.bold === marks.bold
+    && side.italic === marks.italic
+    && side.strike === marks.strike;
+  return wearsAll(before) && wearsAll(after) ? marks : NO_MARKS;
 }
 
 /** Whether this child keeps the mark and any of its text still carries it. */

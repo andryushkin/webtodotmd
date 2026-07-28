@@ -868,3 +868,56 @@ describe('a mark nothing wears', () => {
     expect(toMarkdown(html).trim()).toBe('upright');
   });
 });
+
+// A blank between two marked children is not a child that declined the mark
+// either — it is drawn, it is drawn bold, and it belongs to the run either side.
+// Read as a decline it split every run a page had put a space in, and the
+// doubled delimiters render identically, so nothing caught it: what a reader
+// edits in the Source pane was `**a** **b**` where `**a b**` says the same.
+describe('aria heading criteria: a blank does not end a marked run', () => {
+  it.each([
+    ['a space', '<div STYLE="font-weight:700"><span>a</span> <span>b</span></div>', '**a b**'],
+    // What every formatter writes between two elements, and it arrives as the
+    // same collapsed space on screen.
+    ['a newline', '<div STYLE="font-weight:700"><span>a</span>\n<span>b</span></div>', '**a b**'],
+    [
+      'blanks around something that wrote nothing',
+      '<div STYLE="font-weight:700"><span>a</span> <!--c--> <span>b</span></div>',
+      '**a b**',
+    ],
+    [
+      'italics, the same shape',
+      '<div STYLE="font-style:italic"><span>a</span> <span>b</span></div>',
+      '_a b_',
+    ],
+  ])('%s', (_name, html, expected) => {
+    for (const attribute of ['style', 'data-s2md-style']) {
+      expect(toMarkdown(html.replace(/STYLE/g, attribute)).trim()).toBe(expected);
+    }
+  });
+
+  // And it stays outside the delimiters wherever the runs really differ: `** b**`
+  // is not an emphasis CommonMark renders, so a blank pulled in would put the
+  // asterisks on screen instead of the bold.
+  it.each([
+    [
+      'a declining run on the left',
+      '<div STYLE="font-weight:700"><span STYLE="font-weight:400">a</span> <span>b</span></div>',
+      'a **b**',
+    ],
+    [
+      'a declining run on the right',
+      '<div STYLE="font-weight:700"><span>a</span> <span STYLE="font-weight:400">b</span></div>',
+      '**a** b',
+    ],
+    [
+      'nothing on the far side of it',
+      '<div STYLE="font-weight:700"> <span>a</span><span STYLE="font-weight:400">b</span></div>',
+      '**a**b',
+    ],
+  ])('%s', (_name, html, expected) => {
+    for (const attribute of ['style', 'data-s2md-style']) {
+      expect(toMarkdown(html.replace(/STYLE/g, attribute)).trim()).toBe(expected);
+    }
+  });
+});
