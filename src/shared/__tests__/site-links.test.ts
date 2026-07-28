@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { siteLocale, siteUrl, REPO_URL } from '../site-links';
+import { siteLocale, siteUrl, REPO_URL, EXTENSION_PAGE_URL } from '../site-links';
 
 describe('siteLocale', () => {
   test('a locale the site has is kept, in either spelling', () => {
@@ -37,13 +37,19 @@ describe('siteLocale', () => {
 });
 
 describe('siteUrl', () => {
-  test('a page, and the home page for an empty path', () => {
+  // The two pages the worker opens, and the only two the old site localizes:
+  // `/welcome` and `/changelog` answer 200 in all 52, `/<locale>/` answers 404.
+  test('the localized pages the worker opens', () => {
     expect(siteUrl('welcome', 'de')).toBe('https://2md.site/de/welcome');
     expect(siteUrl('changelog', 'zh_TW')).toBe('https://2md.site/zh-TW/changelog');
-    expect(siteUrl('', 'ru')).toBe('https://2md.site/ru/');
+    expect(siteUrl('welcome', 'ru')).toBe('https://2md.site/ru/welcome');
   });
 });
 
-test('the repository is the public one', () => {
+// Both were wrong once: the options page linked `2md.site/<locale>/`, a 404 in
+// every language, and the product moved to a new domain. They are constants in one
+// module so that a move is one edit, and asserted here so it is a deliberate one.
+test('the outward links are the current ones', () => {
+  expect(EXTENSION_PAGE_URL).toBe('https://dotmd.tools/html-to-md');
   expect(REPO_URL).toBe('https://github.com/andryushkin/webtodotmd');
 });

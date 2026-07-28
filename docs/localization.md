@@ -710,9 +710,9 @@ chosen on that page, and the public source repository.
 | | |
 |---|---|
 | **EN** | `Website` |
-| **Where** | Link to `https://2md.site/<locale>/` |
+| **Where** | Link to `https://dotmd.tools/html-to-md`, the product's page |
 | **Constraint** | ≤ 20 chars. |
-| **Adaptation** | The product's own site. One word if the language allows. |
+| **Adaptation** | The product's own site. One word if the language allows. The page itself is English-only, so do not promise the reader their language. |
 
 #### `linkRepository`
 | | |

@@ -1,7 +1,7 @@
 import { getSettings, saveSettings } from '../shared/settings-store';
-import { initI18n, applyI18n, t, getLocale } from '../shared/i18n';
+import { initI18n, applyI18n, t } from '../shared/i18n';
 import { getRatingUrl } from '../shared/store-links';
-import { REPO_URL, siteUrl } from '../shared/site-links';
+import { REPO_URL, EXTENSION_PAGE_URL } from '../shared/site-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
@@ -89,10 +89,9 @@ async function init() {
   await initI18n(s.uiLanguage);
   document.title = t('settingsTitle');
   applyI18n();
-  // After initI18n, so the language is the resolved one rather than 'auto', and
-  // the site is opened in the language the reader chose here — not the browser's,
-  // which is all the worker's install and update pages have to go on.
-  linkWebsite.href = siteUrl('', getLocale());
+  // Not locale-prefixed, unlike the pages the worker opens: the product's page is
+  // on the new site, which is English-only — see `site-links.ts`.
+  linkWebsite.href = EXTENSION_PAGE_URL;
   linkRepository.href = REPO_URL;
   load();
   initRatingStars();

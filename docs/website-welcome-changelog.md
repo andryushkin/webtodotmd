@@ -4,13 +4,21 @@ The contract between the extension and the site it opens after install and
 update. The extension side is implemented; this file is what the site has to
 honor.
 
+**Two domains, for now.** The product's own page moved to `dotmd.tools`
+(`/html-to-md`, linked from the options page), which is English-only: measured
+2026-07-29, `/html-to-md/<locale>` is a 404 in all 52. These two pages stay on
+`2md.site`, where all 52 locales of `/welcome` and `/changelog` answer 200. They
+move when the new site can answer them — and not before, because the URL is
+compiled into a released extension and a 404 is the first thing a new install
+would see. There is no localized home page on either domain: `2md.site/<locale>/`
+is a 404 in all 52, which is what the options page pointed at for one commit.
+
 ## URLs
 
 | Event | URL |
 | --- | --- |
 | First install | `https://2md.site/<locale>/welcome` |
 | Extension update | `https://2md.site/<locale>/changelog` |
-| **Website** link on the options page | `https://2md.site/<locale>/` |
 
 Updates only open a page when `SHOW_CHANGELOG_ON_UPDATE` is `true` in
 `src/background/service-worker.ts`; it is off by default and turned on by hand
@@ -46,8 +54,7 @@ the special cases below, then the base language, then `en`.
 
 ## What the site must provide
 
-**Every locale in the set must return a page, not a 404** — including the home
-page `/<locale>/`, which the options page now links. Untranslated locales
+**Every locale in the set must return a page, not a 404.** Untranslated locales
 should serve the English content rather than fail.
 
 - `/<locale>/welcome` — thank the user for installing, show the three capture

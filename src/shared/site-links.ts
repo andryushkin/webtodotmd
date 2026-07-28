@@ -1,18 +1,29 @@
 /**
- * Where the extension points outside itself: the site and the repository.
+ * Where the extension points outside itself.
  *
- * The site is localized per `docs/website-welcome-changelog.md` — the URL locale
- * is part of a contract with it, and every locale in the set below must answer
- * with a page rather than a 404. The spelling is the site's, with hyphens, not
- * the extension's `_locales` directory names.
+ * Two domains, on purpose and for now. The product's page lives on the new site,
+ * `dotmd.tools`, which is one language and has no locale prefixes: measured
+ * 2026-07-29, `/html-to-md` answers 200 and `/html-to-md/<locale>` answers 404 for
+ * all 52. The install and update pages still live on `2md.site`, where all 52
+ * locales of `/welcome` and `/changelog` answer 200 — moving them before the new
+ * site has those pages would greet every install with a 404.
  *
- * One module because there were two callers about to hold two copies: the worker
- * opens the welcome and changelog pages, the options page links the home page,
- * and a second spelling of this mapping would drift silently — the only symptom
- * being a reader sent to a page in the wrong language.
+ * The locale mapping is one module because two callers need it — the worker opens
+ * those pages, and anything else linking the localized site would otherwise hold
+ * a second copy that drifts, the only symptom being a reader sent to the wrong
+ * language. The spelling is the site's, with hyphens, not the extension's
+ * `_locales` directory names.
  */
 
 export const REPO_URL = 'https://github.com/andryushkin/webtodotmd';
+
+/**
+ * The extension's own page. Not locale-prefixed: the new site is English-only,
+ * and `/html-to-md/<locale>` is a 404 in every one of the 52 — which is what the
+ * options page linked at `2md.site/<locale>/` was, in every language, for the one
+ * commit that shipped it.
+ */
+export const EXTENSION_PAGE_URL = 'https://dotmd.tools/html-to-md';
 
 const SITE_LOCALES = new Set([
   'en', 'de', 'fr', 'es', 'it', 'nl', 'sv', 'da', 'no', 'fi',
@@ -43,7 +54,11 @@ export function siteLocale(lang: string): string {
   return 'en';
 }
 
-/** A page on the site, in the reader's language. `path` may be empty for home. */
+/**
+ * A localized page on the old site: `welcome` and `changelog`, the two the worker
+ * opens. There is no localized home page — `2md.site/<locale>/` is a 404 — so
+ * `path` is never empty; link `EXTENSION_PAGE_URL` instead.
+ */
 export function siteUrl(path: string, lang: string): string {
   return `https://2md.site/${siteLocale(lang)}/${path}`;
 }
