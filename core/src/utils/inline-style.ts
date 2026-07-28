@@ -1123,18 +1123,3 @@ export function hidingVerdict(el: Element): Hiding {
   if (!invisible) return 'shown';
   return revealedBelow(el) ? 'invisible-but-kept' : 'removed';
 }
-
-/**
- * Whether this element is styled out of the render, or out of sight.
- *
- * `visibility` is the one property here that a descendant can take back, and
- * removing an element removes everything under it: a box that hid itself and
- * then let a child be seen again has to stay, or the text the reader was looking
- * at goes with the box. What is still hidden inside it says so for itself —
- * `visibility` inherits, so a child that declares nothing is invisible too. Every
- * child *element*, that is: a text node has no style to be asked about, which is
- * what `'invisible-but-kept'` above is for.
- */
-export function hiddenByStyle(el: Element): boolean {
-  return hidingVerdict(el) === 'removed';
-}

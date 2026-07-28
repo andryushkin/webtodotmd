@@ -188,10 +188,13 @@ threshold sits where no layout lands by accident.
   hiding no style declares: Chrome draws the body away behind `::details-content`, so the markup and
   a computed style taken off live nodes both describe a visible box. MDN folds its whole sidebar
   that way, and a 2,655-word article arrived carrying 500 words the reader never saw.
-- `hiddenByStyle()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
+- `hidingVerdict()` also drops what is drawn where nobody can look: a zero `clip` rect, `clip-path:
   inset(≥50%)`, a four-digit negative `text-indent` or offset, a 1×1 box that clips. That is how
   `.sr-only` and `.visually-hidden` are written, and the text under them was meant for a screen
-  reader alone.
+  reader alone. It is the only spelling of the verdict: `hiddenByStyle()` was a second one, left
+  behind when the third answer arrived, and it answered in two values — so whoever reached for it
+  next would have got a `removed` for a box the sanitizer keeps for the sake of what is visible
+  inside it. Nothing called it, no test held it, and the package never exported it.
 - One thing is exempt from all of it, and only with `math: true`: an element a maths rule can read a
   formula out of — a `<math alttext>`, an `<annotation encoding="application/x-tex">`, a `<script
   type="math/tex">`. A rendered formula is two things at once, something drawn for the eye and an
