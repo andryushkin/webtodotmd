@@ -1,5 +1,10 @@
 import type { Rule } from '../types.js';
-import { escapeMathTags, escapeHtmlSyntax, escapeInlineMarkdown } from '../core/escape.js';
+import {
+  escapeMathTags,
+  escapeHtmlSyntax,
+  escapeInlineMarkdown,
+  MATH_TAG_SHAPED,
+} from '../core/escape.js';
 
 // Two attributes are spelled `display` and mean different things, so each question
 // has to be put to the element that answers it. On `<math>` it is MathML's own,
@@ -157,7 +162,12 @@ function drawnText(el: Element): string {
 function wrapperOutput(el: Element): string {
   const result = extractMath(el);
   if (!result) return '';
-  if (!LATEX_SYNTAX.test(result.latex)) {
+  // Markup is the second way an annotation states it is not what the page drew,
+  // and it is the one that survives a formula around it: `\frac{a}{b} <x-foo
+  // style="position:fixed">X</x-foo>` uses the language on its first half, so the
+  // syntax test alone answered "formula" and the attribute rode into the file
+  // again, defused but never on screen. One `^` was the whole of what it took.
+  if (!LATEX_SYNTAX.test(result.latex) || MATH_TAG_SHAPED.test(result.latex)) {
     const drawn = drawnText(el);
     // Nothing drawn leaves the annotation as the only witness there is, and a
     // formula on show beats a formula deleted.

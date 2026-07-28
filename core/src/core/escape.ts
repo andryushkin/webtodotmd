@@ -310,9 +310,18 @@ export function escapeTagStarts(text: string): string {
  * The trailing space is LaTeX's own delimiter and is eaten when the formula is
  * drawn — without it `\ltx-foo` is one unknown command.
  */
+/**
+ * Markup inside a formula: an opening tag, a closing one, or a comment opener.
+ *
+ * One spelling, because two readers ask about it — this file defuses it, and the
+ * maths rules read it as the sign that the annotation is not what the page drew.
+ * A second copy would answer differently the first time either moved.
+ */
+export const MATH_TAG_SHAPED = /<(?:[a-zA-Z][\w-]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][\w-]*\s*>|!--)/;
+
 export function escapeMathTags(latex: string, continues = false): string {
   const escaped = latex.replace(
-    /<(?:[a-zA-Z][\w-]*(?:\s[^<>]*)?\/?>|\/[a-zA-Z][\w-]*\s*>|!--)/g,
+    new RegExp(MATH_TAG_SHAPED.source, 'g'),
     // Both delimiters, not just the opener: leaving the `>` behind produced
     // `\lt b>`, whose `>` still closes the tag the `<` no longer opens. A comment
     // opener has no `>` to pair with and keeps its text.

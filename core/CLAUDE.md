@@ -277,7 +277,13 @@ threshold sits where no layout lands by accident.
   an attribute nobody saw plus `\lt`/`\gt` spent defusing markup that was never the reader's. The
   drawn half is the wrapper minus every carrier shape — `<math>`, a bare `<annotation>`, `<mjx-assistive-mml>`,
   `.katex-mathml`, the `math/tex` script — and where there is none the annotation stays the only
-  witness, so the formula is written rather than deleted. The cost is real and knowingly paid: on a
+  witness, so the formula is written rather than deleted. Markup in the annotation says the same
+  thing a second way and is the half that survives a formula around it: `\frac{a}{b} <x-foo
+  style="position:fixed">X</x-foo>` uses the language on its first half, so the syntax test alone
+  answered "formula" and the attribute rode in again, defused and still on nobody's screen — one
+  `^` was the whole of what it took. `MATH_TAG_SHAPED` is one spelling in `escape.ts` for both
+  readers, since the escaper defuses exactly what this reads as evidence. The cost is real and
+  knowingly paid: on a
   page KaTeX really rendered, `a < b` and `x + y` now arrive as the glyphs `a\<b` and `x+y`, spacing
   and italics gone, because glyph spans carry no spaces. It buys the rule that the file says what
   the screen said.

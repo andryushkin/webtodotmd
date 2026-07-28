@@ -570,6 +570,17 @@ describe('носитель без синтаксиса LaTeX', () => {
     expect(md(wrap(latex, drawn))).toBe(`$${latex}$`);
   });
 
+  // Разметка — второй способ, которым annotation заявляет, что она не то, что
+  // нарисовано, и единственный, переживающий формулу вокруг себя: одной `^`
+  // хватало, чтобы `style="position:fixed"` снова уехал в файл.
+  it.each([
+    ['дробь и тег', '\\frac{a}{b} &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt;'],
+    ['степень и тег', 'E = mc^2 &lt;x-foo style="position:fixed"&gt;X&lt;/x-foo&gt;'],
+    ['команда и комментарий', '\\alpha &lt;!--comment-shaped'],
+  ])('разметка перевешивает синтаксис: %s', (_name, latex) => {
+    expect(md(wrap(latex, 'x custom X y'))).toBe('x custom X y');
+  });
+
   // Нарисованного может не быть вовсе — тогда annotation единственный свидетель,
   // и формула на виду лучше удалённой.
   it('без нарисованной половины остаётся формулой', () => {
