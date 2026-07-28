@@ -114,6 +114,15 @@ let baseStatusMsg = '';
 let baseStatusType: 'default' | 'warning' = 'default';
 let baseStatusIcon: string | undefined;
 let revertTimer: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Which message is on the status bar, as an identity rather than as text.
+ *
+ * Bumped by every `setStatus()`. A hover tooltip records it and compares on the
+ * way out: pressing a button without moving the pointer leaves that button's own
+ * message on screen, and clearing it because the pointer left would take a
+ * confirmation or an error away the moment it arrived.
+ */
+let statusToken = 0;
 
 // ---- Utilities ----
 
@@ -121,6 +130,9 @@ function setStatus(msg: string, type: StatusType = 'default', iconName?: string)
   const iconHtml = iconName ? icon(iconName, 12) : '';
   statusEl.innerHTML = iconHtml + (msg ? `<span>${escHtml(msg)}</span>` : '');
   statusEl.className = `status${type !== 'default' ? ` ${type}` : ''}`;
+  // Every write goes through here, which is what makes this a usable identity for
+  // "the message currently on screen" — see `attachStatusTooltip()`.
+  statusToken++;
 }
 
 function escHtml(s: string): string {
@@ -152,11 +164,16 @@ function clearTempStatus() {
 }
 
 function attachStatusTooltip(btn: HTMLButtonElement, i18nKey: string) {
-  attachTooltip(btn, () => {
-    if (revertTimer) clearTimeout(revertTimer);
-    revertTimer = null;
-    setStatus(t(i18nKey), 'default');
-  }, clearTempStatus);
+  attachTooltip(btn, {
+    show: () => {
+      if (revertTimer) clearTimeout(revertTimer);
+      revertTimer = null;
+      setStatus(t(i18nKey), 'default');
+      return statusToken;
+    },
+    restore: clearTempStatus,
+    token: () => statusToken,
+  });
 }
 
 // ---- Rating ----

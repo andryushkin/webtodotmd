@@ -5,33 +5,47 @@
  */
 
 /**
+ * The status bar, as much of it as a tooltip needs: the panel passes this in
+ * rather than being reached for, which is the whole reason this is testable.
+ *
+ * `token()` is what makes the ownership question answerable — every write to the
+ * status bar takes a new one, so comparing tells the tooltip whether what is on
+ * screen is still its own text or somebody else's.
+ */
+export interface StatusBar {
+  /** Write the tooltip, and return the token it was written with. */
+  show(): number;
+  /** Put the base status back. */
+  restore(): void;
+  /** The token of whatever is on the status bar right now. */
+  token(): number;
+}
+
+/**
  * Name a button in the status bar while the pointer is on it.
  *
- * `show` and `hide` are the panel's status layers, passed in rather than reached
- * for, which is the whole reason this is testable.
+ * Two rules, both paid for. A disabled button shows nothing on the way in and so
+ * must clear nothing on the way out: while `mouseleave` cleared unconditionally,
+ * moving the pointer across a disabled Undo — its resting state on an empty
+ * panel — wiped the "no selection" error the reader had just been given.
  *
- * The flag is the rule: `mouseleave` may only restore the base status if *this*
- * button actually replaced it. A disabled button shows nothing on `mouseenter`,
- * and while `mouseleave` cleared unconditionally, moving the pointer across a
- * disabled Undo — disabled is its resting state on an empty panel — wiped the
- * "no selection" error the reader had just been given, seconds early and with no
- * way to see what had happened.
+ * And the way out may only clear what is still *this* tooltip. Hover Copy, press
+ * it without moving the pointer, and the click writes its own message — "Opening
+ * in Obsidian…", or a clipboard error; moving the pointer away then cleared that,
+ * instantly and along with its timer, because the tooltip believed the status bar
+ * was still showing what it had put there.
  */
-export function attachStatusTooltip(
-  btn: HTMLButtonElement,
-  show: () => void,
-  hide: () => void,
-): void {
-  let shown = false;
+export function attachStatusTooltip(btn: HTMLButtonElement, status: StatusBar): void {
+  let mine: number | null = null;
   btn.addEventListener('mouseenter', () => {
     if (btn.disabled) return;
-    shown = true;
-    show();
+    mine = status.show();
   });
   btn.addEventListener('mouseleave', () => {
-    if (!shown) return;
-    shown = false;
-    hide();
+    if (mine === null) return;
+    const stillMine = status.token() === mine;
+    mine = null;
+    if (stillMine) status.restore();
   });
 }
 

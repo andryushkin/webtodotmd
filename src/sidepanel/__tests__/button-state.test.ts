@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
 import { Window } from 'happy-dom';
-import { attachStatusTooltip, setToggleState } from '../button-state';
+import { attachStatusTooltip, setToggleState, type StatusBar } from '../button-state';
 
 let win: Window;
 
@@ -19,20 +19,34 @@ function unhover(btn: HTMLButtonElement) {
   btn.dispatchEvent(new win.Event('mouseleave') as unknown as Event);
 }
 
+/** The panel's status bar, down to what the tooltip can see of it. */
+function statusBar() {
+  const calls: string[] = [];
+  let token = 0;
+  const bar: StatusBar = {
+    show: () => { calls.push('show'); return ++token; },
+    restore: () => { calls.push('restore'); token++; },
+    token: () => token,
+  };
+  /** Something else writes the status bar — a click's own confirmation or error. */
+  const write = () => { token++; };
+  return { bar, calls, write };
+}
+
 beforeEach(() => {
   win = new Window();
 });
 
 describe('attachStatusTooltip', () => {
   test('an enabled button shows the name and puts the status back', () => {
-    const calls: string[] = [];
+    const { bar, calls } = statusBar();
     const btn = button();
-    attachStatusTooltip(btn, () => calls.push('show'), () => calls.push('hide'));
+    attachStatusTooltip(btn, bar);
 
     hover(btn);
     unhover(btn);
 
-    expect(calls).toEqual(['show', 'hide']);
+    expect(calls).toEqual(['show', 'restore']);
   });
 
   // The status bar is where errors and confirmations are read, and Undo is
@@ -40,9 +54,9 @@ describe('attachStatusTooltip', () => {
   // has just been written. Clearing on the way out of a button that showed
   // nothing took that message away seconds early.
   test('a disabled button neither shows nor clears', () => {
-    const calls: string[] = [];
+    const { bar, calls } = statusBar();
     const btn = button(true);
-    attachStatusTooltip(btn, () => calls.push('show'), () => calls.push('hide'));
+    attachStatusTooltip(btn, bar);
 
     hover(btn);
     unhover(btn);
@@ -51,30 +65,58 @@ describe('attachStatusTooltip', () => {
   });
 
   test('a button disabled between enter and leave still clears its own tooltip', () => {
-    const calls: string[] = [];
+    const { bar, calls } = statusBar();
     const btn = button();
-    attachStatusTooltip(btn, () => calls.push('show'), () => calls.push('hide'));
+    attachStatusTooltip(btn, bar);
 
     hover(btn);
     btn.disabled = true;
     unhover(btn);
 
-    expect(calls).toEqual(['show', 'hide']);
+    expect(calls).toEqual(['show', 'restore']);
   });
 
   test('each button tracks its own hover', () => {
-    const calls: string[] = [];
+    const { bar, calls } = statusBar();
     const enabled = button();
     const disabled = button(true);
-    attachStatusTooltip(enabled, () => calls.push('show'), () => calls.push('hide'));
-    attachStatusTooltip(disabled, () => calls.push('show'), () => calls.push('hide'));
+    attachStatusTooltip(enabled, bar);
+    attachStatusTooltip(disabled, bar);
 
     hover(disabled);
     unhover(disabled);
     hover(enabled);
     unhover(enabled);
 
-    expect(calls).toEqual(['show', 'hide']);
+    expect(calls).toEqual(['show', 'restore']);
+  });
+
+  // Press Copy, or the Obsidian hand-off, without moving the pointer: the click
+  // writes its own message, and the pointer leaving must not take it away.
+  test('a message written while hovering survives the pointer leaving', () => {
+    const { bar, calls, write } = statusBar();
+    const btn = button();
+    attachStatusTooltip(btn, bar);
+
+    hover(btn);
+    write();
+    unhover(btn);
+
+    expect(calls).toEqual(['show']);
+  });
+
+  test('and the hover after that one still works', () => {
+    const { bar, calls, write } = statusBar();
+    const btn = button();
+    attachStatusTooltip(btn, bar);
+
+    hover(btn);
+    write();
+    unhover(btn);
+    hover(btn);
+    unhover(btn);
+
+    expect(calls).toEqual(['show', 'show', 'restore']);
   });
 });
 

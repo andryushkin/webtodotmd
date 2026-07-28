@@ -98,12 +98,16 @@ file is given.
   `.btn-label`: the compact toolbar drops labels, and dropping this one would
   leave an empty button. Same shape as `#btn-txt-menu`, which keeps its `.txt`
   and drops its icon instead.
-- `attachStatusTooltip()` restores the base status only if that button actually
-  replaced it (`button-state.ts` keeps the flag). A disabled button shows nothing
-  on the way in, and while the way out cleared unconditionally, moving the pointer
-  across a disabled Undo — its resting state on an empty panel, which is exactly
-  when "no selection" has just been written — took the error off the screen
-  seconds early, with nothing to say it had been there.
+- `attachStatusTooltip()` restores the base status only if what is on the status
+  bar is still the tooltip it wrote. Two ways it was not: a disabled button shows
+  nothing on the way in, so moving the pointer across a disabled Undo — its
+  resting state on an empty panel, which is exactly when "no selection" has just
+  been written — cleared an error the reader had barely seen; and pressing a
+  button *without moving the pointer* leaves that click's own message on screen,
+  so the pointer leaving wiped "Opening in Obsidian…" the instant it appeared.
+  `setStatus()` bumps `statusToken` on every write and `button-state.ts` compares
+  it, which is why the identity of the message is a counter rather than its text —
+  the same text can be written twice.
 - The highlighter's state is `aria-pressed`, not its name. It announced itself by
   changing the accessible name instead ("Highlighter on" → "off"), which reads as
   a different button appearing rather than as this one being pressed; the visible
@@ -113,8 +117,9 @@ file is given.
   never as attributes in `sidepanel.html`. Six of them lived there as English
   `title`s and stayed English in all 52 locales; anything set in the HTML also
   cannot follow a language change, which the panel applies without reloading.
-  The highlighter is named by its state instead (`updateHighlighterUI()` sets
-  `aria-label` to `Highlighter on`/`off`), so only its `title` is set here.
+  The highlighter is named here like the rest, and `updateHighlighterUI()` writes
+  that same name back after every press — only the visible label and
+  `aria-pressed` move with the state.
 
 ## The captured HTML
 
