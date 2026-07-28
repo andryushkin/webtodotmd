@@ -35,17 +35,48 @@ cp vendor/licenses/* dist/licenses/
 # character arrives from a source file that spelled it as an ASCII escape, which
 # the transpiler expands. Only the content script is scanned; the panel has
 # carried a U+FFFF out of `vendor/` through every shipped version.
-python3 - <<'PY' || exit 1
-import sys
-path = 'dist/src/content/content-script.js'
-text = open(path, encoding='utf-8').read()
-bad = [(i, hex(ord(c))) for i, c in enumerate(text)
-       if 0xfdd0 <= ord(c) <= 0xfdef or (ord(c) & 0xfffe) == 0xfffe or 0xd800 <= ord(c) <= 0xdfff]
-if bad:
-    print(f'{path}: Chrome will refuse this content script', file=sys.stderr)
-    for offset, code in bad[:5]:
-        print(f'  {code} at offset {offset}: {text[max(0, offset - 40):offset + 40]!r}', file=sys.stderr)
-    sys.exit(1)
-PY
+#
+# Bun, not a second interpreter: it bundled the four files above, so it is on
+# every machine that reaches this line. python3 is not — and because the check
+# reads what the build wrote, its `command not found` arrived *after* `dist/` was
+# complete, reporting a good build as a broken one. That is also why a real
+# failure takes `dist/` with it: this is the last word on whether the directory
+# can be loaded, and half of it loading is worse than none of it being there.
+if ! bun run - dist/src/content/content-script.js <<'JS'
+const path = process.argv[2];
+const bytes = require('fs').readFileSync(path);
+let text;
+try {
+  // Decoded strictly, from the bytes, which is the whole of the lone-surrogate
+  // half of the question: one is ill-formed UTF-8 and never survives as a
+  // character, so reading the file as text would put U+FFFD in its place and
+  // ship it, and no scan of the result could tell. The check this replaces asked
+  // it of the decoded string, where the answer could only ever be a traceback.
+  text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+} catch {
+  console.error(`${path}: not valid UTF-8 — Chrome will refuse this content script`);
+  process.exit(1);
+}
+// The noncharacters: U+FDD0..U+FDEF, and the last two of every plane.
+const bad = [];
+let offset = 0;
+for (const ch of text) {
+  const code = ch.codePointAt(0);
+  if ((code & 0xfffe) === 0xfffe || (code >= 0xfdd0 && code <= 0xfdef)) bad.push([offset, code]);
+  offset += ch.length;
+}
+if (bad.length > 0) {
+  console.error(`${path}: Chrome will refuse this content script`);
+  for (const [at, code] of bad.slice(0, 5)) {
+    const around = JSON.stringify(text.slice(Math.max(0, at - 40), at + 40));
+    console.error(`  0x${code.toString(16)} at offset ${at}: ${around}`);
+  }
+  process.exit(1);
+}
+JS
+then
+  rm -rf dist
+  exit 1
+fi
 
 echo "Build OK → dist/"

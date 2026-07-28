@@ -59,7 +59,7 @@ every rule in them has cost a bug already, and the reason is what makes it stick
 ## Build and test
 
 ```bash
-bash build.sh     # → dist/, no node_modules needed
+bash build.sh     # → dist/, bun and nothing else, no node_modules needed
 bun install       # once: linkedom for tests, plus the core package's toolchain
 bun test          # extension and core, one runner
 scripts/audit.sh  # public-repo gate, before pushing (docs/audit.md)
