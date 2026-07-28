@@ -438,6 +438,33 @@ describe('a selection made inside a pre', () => {
     expect(md).toBe('```\ndef hello(name):\n    print(f"Hello, {name}!")\n```');
   });
 
+  // The same bar drawn *beside* the block — Google's AI answers, Grok, the chat
+  // interfaces. `liftCodeHeaders` moves it in when it converts the wrapper, and
+  // a drag inside the `<pre>` leaves it outside the clone entirely.
+  it('takes the language from a bar drawn beside the block', () => {
+    const doc = setup(
+      `<div class="code-block"><div class="code-head"><span>python</span>` +
+        `<button type="button">Копировать</button></div>` +
+        `<pre><code>print("label lives outside")</code></pre></div>`,
+    );
+    const md = convert(doc, (range) => range.selectNodeContents(doc.querySelector('pre')!));
+    expect(md).toBe('```python\nprint("label lives outside")\n```');
+  });
+
+  // Each of these is a refusal `liftCodeHeaders` already makes, asked here of
+  // the page as it stands rather than re-read. Pulling the previous sibling in
+  // unconditionally would put an author's own line inside a code fence.
+  it.each([
+    ["an author's heading above the block", `<div><h3>python</h3><pre><code>print("x")</code></pre></div>`],
+    ['a bar naming no language', `<div><div>Example 3</div><pre><code>print("x")</code></pre></div>`],
+    ['a wrapper holding text of its own', `<div>Intro <div>python</div><pre><code>print("x")</code></pre></div>`],
+    ['a heading one wrapper deep', `<div><div><h3>python</h3></div><pre><code>print("x")</code></pre></div>`],
+  ])('takes nothing from %s', (_name, html) => {
+    const doc = setup(html);
+    const md = convert(doc, (range) => range.selectNodeContents(doc.querySelector('pre')!));
+    expect(md).toBe('```\nprint("x")\n```');
+  });
+
   it('keeps a caption that names no language above the fence', () => {
     const doc = setup(
       `<div><pre><figure><figcaption>Listing 1</figcaption><code>parse(document)</code></figure></pre></div>`,

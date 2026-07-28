@@ -9,6 +9,7 @@ import { ROW_ATTR } from './utils/inline-style.js';
 // The list rule's own question, asked here rather than spelled again: a second
 // reading of "whose checkbox is this" would drift the next time either moves.
 import { ownCheckbox } from './rules/lists.js';
+import { liftCodeHeaders } from './rules/code.js';
 
 export type { DOMAdapterFn, Rule, MarkItDownOptions } from './types.js';
 
@@ -394,6 +395,7 @@ function buildPreFragment(range: Range, ancestorPre: Element): DocumentFragment 
   if (rawFragment.querySelector?.('code, figcaption')) {
     const kept = ancestorPre.cloneNode(false) as Element;
     kept.appendChild(rawFragment);
+    addSiblingCaption(kept, ancestorPre);
     const wrapped = doc.createDocumentFragment();
     wrapped.appendChild(kept);
     return wrapped;
@@ -417,10 +419,41 @@ function buildPreFragment(range: Range, ancestorPre: Element): DocumentFragment 
 
   code.textContent = selectedText;
   pre.appendChild(code);
+  addSiblingCaption(pre, ancestorPre);
 
   const frag = doc.createDocumentFragment();
   frag.appendChild(pre);
   return frag;
+}
+
+/**
+ * The language bar drawn *beside* the block, for a selection that took only what
+ * is inside it.
+ *
+ * `liftCodeHeaders` moves such a bar into the `<pre>` as a `<figcaption>`, and it
+ * runs over whatever the fragment holds — so a drag inside the `<pre>` left the
+ * bar outside the clone and the fence came back with no language, while the
+ * whole block converted correctly. Google's AI answers, Grok and the chat
+ * interfaces all draw it this way, which makes the losing gesture the one a
+ * person uses to take a single sample out of an answer.
+ *
+ * The bar is *not* pulled in by looking at the previous sibling: an author's own
+ * heading stands in exactly that place, and taking it would put a line of theirs
+ * inside a code fence. The question is asked of the page as it stands, by the one
+ * recogniser that already knows how to refuse — a deep copy of the wrapper is
+ * lifted and the caption is taken only if the lift produced one. Every condition
+ * it enforces (the wrapper holds these two and nothing else, the bar's remains
+ * name a language a highlighter ships, no heading anywhere in it) therefore holds
+ * for the fragment too, and there is no second reading of the shape to drift.
+ */
+function addSiblingCaption(target: Element, ancestorPre: Element): void {
+  if (target.querySelector?.('figcaption')) return;
+  const parent = ancestorPre.parentElement;
+  if (!parent) return;
+  const probe = parent.cloneNode(true) as Element;
+  liftCodeHeaders(probe);
+  const caption = probe.querySelector('pre > figcaption');
+  if (caption) target.insertBefore(caption.cloneNode(true), target.firstChild);
 }
 
 function buildBlockquoteFragment(range: Range, ancestorBq: Element): DocumentFragment | null {
