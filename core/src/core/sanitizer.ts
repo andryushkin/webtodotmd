@@ -434,6 +434,26 @@ function removeEmptyWrappers(root: SanitizeRoot): void {
       }
       const doc = el.ownerDocument;
       if (!doc) continue;
+      // Collapsed against what stands beside it, which is the one thing
+      // `collapseWhitespace` cannot do: it reads each text node on its own and
+      // `normalize()` merges them only afterwards, so a blank arriving here as
+      // its own node never met its neighbours. `<p>one <span> </span> two</p>`
+      // reached the file as three spaces — one rendered space, and three in the
+      // pane a person edits.
+      const previous = el.previousSibling;
+      const next = el.nextSibling;
+      const padded = (node: Node | null, side: 'end' | 'start'): boolean => {
+        if (node?.nodeType !== 3 /* TEXT_NODE */) return false;
+        const value = node.nodeValue ?? '';
+        return side === 'end' ? /[\t\n\v\f\r ]$/.test(value) : /^[\t\n\v\f\r ]/.test(value);
+      };
+      // Never inside preserved whitespace: there the blank is the indentation a
+      // highlighter wrapped, and dropping it flushed a YAML sample left.
+      const blankOnly = text.trim() === '' && !isInsidePreserved(el);
+      if (blankOnly && (padded(previous, 'end') || padded(next, 'start'))) {
+        el.parentNode?.removeChild(el);
+        continue;
+      }
       el.parentNode?.replaceChild(doc.createTextNode(text), el);
     }
   }

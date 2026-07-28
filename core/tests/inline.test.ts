@@ -1015,3 +1015,21 @@ describe('a list the page laid along a line', () => {
       .toBe('[**java**](/tagged/java) [**c++**](/tagged/c++)');
   });
 });
+
+// Марка, разбитая по детям, склеивалась через `''`, а не через переданный
+// joiner — и один блank, который ряд тратит между items, пропадал: markup не
+// несёт ни одного символа между `</span><span>`. Тот самый `c#python`, только
+// проявляющийся там, где ребёнок отказался от марки контейнера.
+describe('ряд и разбитая марка', () => {
+  it('пробел между items переживает разбиение', () => {
+    const html =
+      '<div data-s2md-row="1" style="font-weight:700">' +
+      '<span>alpha</span><span style="font-weight:400">beta</span></div>';
+    expect(toMarkdown(html).trim()).toBe('**alpha** beta');
+  });
+
+  it('без марки ряд ведёт себя так же', () => {
+    const html = '<div data-s2md-row="1"><span>alpha</span><span>beta</span></div>';
+    expect(toMarkdown(html).trim()).toBe('alpha beta');
+  });
+});

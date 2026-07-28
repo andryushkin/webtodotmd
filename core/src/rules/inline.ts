@@ -134,7 +134,12 @@ export function applyStyleEmphasis(
   if (!marks.italic && !marks.strike && !marks.bold) return content;
   const runs = pieces && wornRuns(el, marks, pieces, options);
   if (!runs) return markRun(el, content, marks, options);
-  return runs.map((run) => run.text).join('');
+  // The joiner, not `''`: inside a row container it is what spends the one blank
+  // the reader saw between the items, and markup has none to give. Merging
+  // *within* a run already used it, so a `<div data-s2md-row>` whose child
+  // declined the element's weight came back `**alpha**beta` — the same welding
+  // the row mark exists to prevent, reappearing wherever a mark is split.
+  return pieces.join(runs.map((run) => run.text));
 }
 
 /**

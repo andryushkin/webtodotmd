@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import { parseHTML } from 'linkedom';
 import { sanitize } from '../src/core/sanitizer.js';
+import { toMarkdown } from '../src/server.js';
 
 function makeDoc(html: string): Document {
   return parseHTML(`<html><body>${html}</body></html>`).document as unknown as Document;
@@ -466,5 +467,28 @@ describe('a closed <details> shows its summary and nothing else', () => {
       '<details><summary>A</summary><details open><summary>B</summary><p>x</p></details></details>',
     );
     expect(bodyText(doc)).toBe('A');
+  });
+});
+
+// Пустая инлайновая обёртка становится текстовым узлом, и схлопнуть его по шву
+// `collapseWhitespace` уже не может: он читает каждый узел отдельно, а
+// `normalize()` сливает их позже. `<p>one <span> </span> two</p>` приезжало
+// тремя пробелами — на экране один, а в панели исходника три, и правит человек
+// именно её.
+describe('пустая обёртка на шве', () => {
+  const md = (html: string) => toMarkdown(html).trim();
+
+  it('не добавляет второго пробела к соседскому', () => {
+    expect(md('<p>one <span> </span> two</p>')).toBe('one  two');
+  });
+
+  it('без соседского пробела остаётся сам', () => {
+    expect(md('<p>one<span> </span>two</p>')).toBe('one two');
+  });
+
+  // Внутри сохранённых пробелов ничего не схлопывается: там пустая обёртка —
+  // это отступ, который подсветка синтаксиса завернула в span.
+  it('отступ в коде цел', () => {
+    expect(md('<pre><code>a:<br><span class="w">  </span>b: 1</code></pre>')).toContain('  b: 1');
   });
 });
