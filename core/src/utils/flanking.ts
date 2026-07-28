@@ -211,11 +211,11 @@ export function emitsEmphasis(el: Element): boolean {
   // a style can state or take back: the property that would say it is a
   // background, which nothing here reads. So it is asked for by tag and by
   // nothing else — a `<mark style="font-weight:normal">` is still highlighted.
-  if (el.tagName.toLowerCase() === 'mark' || isHighlighted(el)) return true;
+  if (el.tagName.toLowerCase() === 'mark') return true;
   const mark = EMPHASIS_TAGS.get(el.tagName.toLowerCase());
   if (mark !== undefined && !suppressedMarks(el)[mark]) return true;
   const added = addedMarks(el);
-  return added.bold || added.italic || added.strike;
+  return added.bold || added.italic || added.strike || added.highlight;
 }
 
 /**

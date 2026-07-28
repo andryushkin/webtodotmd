@@ -1,6 +1,11 @@
 import type { MarkItDownOptions } from '../types.js';
 import { findRule } from './rules.js';
-import { applyStyleEmphasis, attributeOutput, emitsCodeSpan } from '../rules/inline.js';
+import {
+  applyHighlight,
+  applyStyleEmphasis,
+  attributeOutput,
+  emitsCodeSpan,
+} from '../rules/inline.js';
 import {
   displaysAsBlock,
   displaysInline,
@@ -778,8 +783,8 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // question and only `<div>` was answering it, while the snapshot records the
     // declaration for all of them: two `<p style="display:inline">` were two
     // paragraphs in the file and one sentence on the page.
-    if (declinesBlock(el, tag) || inLine) return content;
-    const out = rule.replacement(el, content, options);
+    if (declinesBlock(el, tag) || inLine) return applyHighlight(el, content, options);
+    const out = applyHighlight(el, rule.replacement(el, content, options), options);
     if (!displaysAsBlock(el)) return out;
     const trimmed = out.trim();
     return trimmed === '' ? out : `\n\n${trimmed}\n\n`;

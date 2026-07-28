@@ -1035,6 +1035,11 @@ function contextOf(
     size: sizeFrom(read),
     italic: italicFrom(read) ?? isItalicTag(tag),
     align: alignFrom(read),
+    // The fill the root is compared against. Left unwritten it was `undefined`,
+    // which no colour equals — so the root painted anything at all read as
+    // painted *differently*, and a `<span class="badge">` inside a tinted card
+    // came back `==badge==` with nothing highlighted.
+    background: paintedBackground(read) ?? '',
     // Visible whatever the parent computes, unlike everything above. The parent
     // is not in the fragment the core reads, so its hiding cannot reach the root
     // from there and the root's own claim would go unstated — the one place

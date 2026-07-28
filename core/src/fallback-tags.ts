@@ -28,7 +28,7 @@ export const FALLBACK_TAGS = ['table', 'caption', 'tr', 'th', 'td', 'pre', 'code
  * library's output from the page's, so it would keep a `<sup>` the page itself
  * displayed alive rather than escaping it back into the characters a reader saw.
  */
-export const FALLBACK_INLINE_TAGS = ['br', 'em', 'strong', 'del', 'a', 'code'] as const;
+export const FALLBACK_INLINE_TAGS = ['br', 'em', 'strong', 'del', 'a', 'code', 'mark'] as const;
 
 /** Of the above, the ones that never close. */
 export const FALLBACK_VOID_TAGS = ['br'] as const;

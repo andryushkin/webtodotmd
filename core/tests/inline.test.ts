@@ -92,6 +92,29 @@ describe('highlight', () => {
     expect(toMarkdown(chip).trim()).toBe('the original Markdown.pl here');
   });
 
+  // Заливка садится на элементы, у которых уже есть своё правило, поэтому она —
+  // марка поверх него, а не правило вместо него. Заявленная правилом, она бежала
+  // раньше `image`, `link` и `inline-code` — и картинка уходила со страницы
+  // молча, без единого символа за собой.
+  it.each([
+    ['картинка', '<p>a <img src="https://x/a.png" alt="pic" style="background:#ff0"> b</p>', 'a ==![pic](https://x/a.png)== b'],
+    ['ссылка', '<p><a href="https://e.com" style="background:#ff0">t</a></p>', '==[t](https://e.com)=='],
+    ['код', '<p>run <code style="background:#eee">npm i</code> now</p>', 'run `npm i` now'],
+    // Маркер снаружи правила, а не внутри: `<sup>` сдвигает то, что ему подали,
+    // у `=` есть надстрочная форма, и `==2==` приезжало как `⁼⁼²⁼⁼` — четыре
+    // знака бессмыслицы там, где страница показала сноску.
+    ['степень', '<p>x<sup style="background:#ff0">2</sup></p>', 'x==²=='],
+    ['цитата', '<p><q style="background:#ff0">hi</q></p>', '==“hi”=='],
+  ])('заливка не съедает собственное правило: %s', (_name, html, expected) => {
+    expect(toMarkdown(html).trim()).toBe(expected);
+  });
+
+  // Та же форма, что и у веса: марка ложится вокруг текста внутри правила.
+  it('марка ведёт себя как **', () => {
+    const bold = toMarkdown('<p><a href="https://e.com" style="font-weight:700">t</a></p>').trim();
+    expect(bold).toBe('[**t**](https://e.com)');
+  });
+
   it('вложенная разметка сохраняется', () => {
     expect(toMarkdown('<p><mark>a <strong>b</strong></mark></p>')).toBe('==a **b**==\n');
   });

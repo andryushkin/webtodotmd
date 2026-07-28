@@ -37,6 +37,19 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   the snapshot declines to record it, rather than carrying a dozen font names across for the core to
   ask the same question of. All three were found by running the whole spec page through the
   extension, which is the only place the class-stated fill is readable at all.
+- A fill is a *mark*, not a rule, and the tag is the only thing with a rule of its own. Claimed as a
+  rule it ran **instead** of whatever the element already had: `<a style="background:#ff0">` lost
+  its href, a `<code>` its backticks, a `<sup>` its Unicode and an `<img>` everything — the picture
+  left the page with not even alt text behind it, since `emphasis()` hands empty content straight
+  back. The mark goes on *outside* the rule (`applyHighlight` in `parser.ts`), unlike the other
+  three, which apply to the child content before the rule sees it: a fill is drawn behind everything
+  the element drew, and, more sharply, `<sup>` shifts what it is handed into Unicode where `=` has a
+  superscript form — `==2==` came back `⁼⁼²⁼⁼`, the marker mapped along with the digit. The other
+  three survive that position only because `*` and `~` have no shifted form, so the rule refuses the
+  run and writes `x^**2**`.
+- `<mark>` is in `FALLBACK_INLINE_TAGS`, because `emphasis()` falls back to it where `==` cannot
+  render and inside the HTML table fallback. A consumer tells this library's output from page text
+  by that list, so an emitted tag missing from it is a highlighted run they will strip.
   One place still breaks this and is a debt: the emphasis fallback for content flanked by
   punctuation, where the alternative was losing the italics and leaving the delimiters on show.
   `<sub>`/`<sup>` used to be a second and are not any more — they shift into Unicode (`H₂O`, `x²`),

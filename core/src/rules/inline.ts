@@ -106,6 +106,24 @@ function emphasis(
  * Italic inside strikethrough inside bold, so the delimiters nest the way a page
  * that used tags would have nested them.
  */
+/**
+ * The fill an element paints, written round what its rule produced.
+ *
+ * Outside the rule and not inside it, which is where the other three marks go.
+ * A fill is drawn behind everything the element drew, so the marker belongs round
+ * the whole of it — and, more sharply, `applyStyleEmphasis` runs on the *child
+ * content*, before the rule ever sees it. `<sup>` shifts what it is handed into
+ * Unicode, `=` has a superscript form, and `==2==` came out `⁼⁼²⁼⁼`: the marker
+ * mapped along with the digit and the reader got four characters of nonsense
+ * where the page had a footnote. The other three survive there only because `*`
+ * and `~` have no shifted form, so the rule refuses the run and falls back to
+ * `x^**2**`.
+ */
+export function applyHighlight(el: Element, out: string, options: MarkItDownOptions): string {
+  if (!addedMarks(el).highlight) return out;
+  return emphasis(el, out, ['=='], 'mark', options);
+}
+
 export function applyStyleEmphasis(
   el: Element,
   content: string,
@@ -201,11 +219,16 @@ function wornRuns(
 }
 
 function sameMarks(a: StyleMarks, b: StyleMarks): boolean {
-  return a.bold === b.bold && a.italic === b.italic && a.strike === b.strike;
+  return (
+    a.bold === b.bold &&
+    a.italic === b.italic &&
+    a.strike === b.strike &&
+    a.highlight === b.highlight
+  );
 }
 
 function anyMark(marks: StyleMarks): boolean {
-  return marks.bold || marks.italic || marks.strike;
+  return marks.bold || marks.italic || marks.strike || marks.highlight;
 }
 
 /** One run of the line, which is the whole of it unless a mark stopped early. */
@@ -1102,9 +1125,13 @@ export const INLINE_RULES: Rule[] = [
   // cannot be read back into either.
   {
     name: 'highlight',
-    // The tag is the older spelling and a background is the one every editor with
-    // a highlighter button writes — `isHighlighted` is where that is judged.
-    filter: (el) => el.tagName.toLowerCase() === 'mark' || isHighlighted(el),
+    // The tag only. A fill is a *mark* rather than a rule, applied over whatever
+    // the element's own rule wrote (`marked`), because a background lands on
+    // elements that already convert to something: claimed as a rule this ran
+    // instead of theirs, and `<a style="background:#ff0">` lost its href, a
+    // `<code>` its backticks, and an `<img>` everything it had — the picture left
+    // the page with no alt text behind it.
+    filter: ['mark'],
     replacement: (el, childContent, options) => emphasis(el, childContent, ['=='], 'mark', options),
   },
   {

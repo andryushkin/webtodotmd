@@ -748,7 +748,7 @@ function tagOf(el: Element): string {
 // is also the only expensive thing in this file. It runs for an element whose own
 // style mentions one of these three properties and for no other, which is why the
 // test is a regex over the raw attribute rather than a parse.
-const AFFECTS_TYPEFACE = /font-weight|font-style|text-decoration/i;
+const AFFECTS_TYPEFACE = /font-weight|font-style|text-decoration|background/i;
 
 // Everything `convert()` acts on: the three properties above and the one that
 // moves the element's content onto a line of its own or back off it. Anything
@@ -863,9 +863,19 @@ export interface StyleMarks {
   bold: boolean;
   italic: boolean;
   strike: boolean;
+  /**
+   * A fill behind the run — a highlight the page states with a background rather
+   * than with `<mark>`.
+   *
+   * A mark and not a rule of its own, which the tag can afford to be and this
+   * cannot: a background lands on elements that already convert to something.
+   * Claimed as a rule it ran *instead* of theirs, and `<a style="background:#ff0">`
+   * lost its href, `<code>` its backticks and an `<img>` everything it had.
+   */
+  highlight: boolean;
 }
 
-const NO_MARKS: StyleMarks = { bold: false, italic: false, strike: false };
+const NO_MARKS: StyleMarks = { bold: false, italic: false, strike: false, highlight: false };
 
 function silent(el: Element): boolean {
   return !states(el, AFFECTS_TYPEFACE);
@@ -908,6 +918,11 @@ export function addedMarks(el: Element): StyleMarks {
       reachesText(el, (child) => (weightFrom(elementStyle(child), weight) ?? weight) < BOLD_THRESHOLD),
     italic: italic && !baseItalic && reachesText(el, (child) => italicFrom(elementStyle(child)) === false),
     strike: struck && !baseStruck && reachesText(el, (child) => struckFrom(elementStyle(child)) === false),
+    // No `reachesText` walk and no comparison with the context: the snapshot has
+    // already compared the fill against what is painted behind it, and an inline
+    // `style` has nothing to compare against. What is left is the element's own
+    // answer, which `isHighlighted` is.
+    highlight: isHighlighted(el),
   };
 }
 
@@ -960,6 +975,9 @@ export function marksPerChild(el: Element, marks: StyleMarks): StyleMarks[] {
       bold: marks.bold && wears(child, declinesBold),
       italic: marks.italic && wears(child, declinesItalic),
       strike: marks.strike && wears(child, declinesStrike),
+      // Nothing takes a fill back the way a weight is taken back: a child painting
+      // its own colour paints over this one, and both runs were still highlighted.
+      highlight: marks.highlight,
     };
   });
 
@@ -1048,6 +1066,9 @@ export function suppressedMarks(el: Element): StyleMarks {
     bold: (weightFrom(read, inheritedFace(el).weight) ?? BOLD_WEIGHT) < BOLD_THRESHOLD,
     italic: italicFrom(read) === false,
     strike: struckFrom(read) === false,
+    // A `<mark>` has no property that would decline it — the one that states a
+    // highlight is a background, and stating another colour is still a highlight.
+    highlight: false,
   };
 }
 

@@ -1019,6 +1019,23 @@ describe('a highlight the page states with a background', () => {
     expect(convert(html, { hl: GREY }).after).toBe(expected);
   });
 
+  // The root of the walk is compared against a fill too, and its context field was
+  // left unwritten: `undefined` equals no colour, so the root painting anything at
+  // all read as painting something *new*. A drag inside a tinted card then wrote a
+  // fill onto the run it started from, and `==badge==` came back for a run nobody
+  // highlighted. Asserted on the attribute rather than on the output, because that
+  // is where the wrong answer is: the context is built from the scope's parent.
+  it('a fill the scope was taken out of is not news', () => {
+    const window = new Window();
+    window.document.body.innerHTML =
+      '<div class="card">before <span class="card" id="scope">badge</span> after</div>';
+    const scope = window.document.getElementById('scope') as unknown as Element;
+    const restore = snapshotStyles([scope], styleEngine({ card: GREY }));
+    const written = scope.getAttribute(SNAPSHOT_ATTR);
+    restore();
+    expect(written).toBe(null);
+  });
+
   it('a fill inside a highlight is not marked twice', () => {
     const { after } = convert('<p>a <span class="hl">m <span class="hl">n</span></span> b</p>', {
       hl: YELLOW,
