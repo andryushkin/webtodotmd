@@ -115,7 +115,13 @@ export const MATH_RULES: Rule[] = [
     // The LaTeX comes from the element, so converting the rendered subtree —
     // hundreds of nodes on a Wikipedia or arXiv page — is work thrown away.
     ignoresChildContent: true,
-    filter: (el) => el.classList.contains('katex'),
+    // And the filter asks for that LaTeX, for the reason `mwe-math-element`
+    // below does: claiming the wrapper with nothing to read returns the empty
+    // string, and `ignoresChildContent` then deletes the drawing as well. KaTeX
+    // with `output: "html"` builds no MathML at all, so the class is there and
+    // the annotation is not — `E=mc²` left the page altogether, and with `math`
+    // off the same capture kept it.
+    filter: (el) => el.classList.contains('katex') && extractMath(el) !== null,
     replacement: (el) => {
       const result = extractMath(el);
       if (!result) return '';
@@ -125,7 +131,10 @@ export const MATH_RULES: Rule[] = [
   {
     name: 'mjx-container',
     ignoresChildContent: true,
-    filter: (el) => el.tagName.toLowerCase() === 'mjx-container',
+    // Same question, and MathJax v3 answers it no more reliably: the assistive
+    // MathML the annotation lives in comes from the a11y extension, and a page
+    // loading `tex-chtml` without it draws `<mjx-math>` and nothing else.
+    filter: (el) => el.tagName.toLowerCase() === 'mjx-container' && extractMath(el) !== null,
     replacement: (el) => {
       const result = extractMath(el);
       if (!result) return '';

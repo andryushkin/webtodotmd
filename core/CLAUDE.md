@@ -269,6 +269,17 @@ threshold sits where no layout lands by accident.
   *wrapper* — `.katex`, `<mjx-container>`, `.mwe-math-element` each have a rule that ignores its
   children — because the wrapper is the only element that knows the two are one formula. A rule that
   merely refused the `<img>` would have to be taught every further fallback the renderer adds.
+- Every one of those three claims its wrapper only where it can *read* a formula there, and the
+  class alone is never enough. Claiming it with nothing to read returns the empty string, and
+  ignoring the children then takes the drawing with it — so the wrapper of a formula whose LaTeX
+  the page never carried deleted what the reader saw. Both renderers really ship that shape: KaTeX
+  with `output: "html"` builds no MathML at all, and MathJax v3 emits assistive MathML only with
+  the accessibility extension loaded. `math: true` was returning less than `math: false` on both,
+  which is the one direction the setting must never take. What the page drew is then converted as
+  the glyphs it is — `E=mc2` for `E=mc^2`, a level lost and no character missing — because a
+  rendered formula read back off the screen is the *only* thing left, and it is not a formula: a
+  `\frac{a}{b}` measures as `ba`, the denominator standing first in the DOM with CSS putting the
+  numerator above it. Which is why this is a fallback and never the source.
 
 ## Blocks
 

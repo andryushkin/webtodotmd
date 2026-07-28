@@ -488,3 +488,51 @@ describe('math carrier: a hidden twin reaches the file', () => {
     expect(md(html, {})).toBe(expected);
   });
 });
+
+// Обёртка говорит, докуда простирается формула, а прочесть её содержимое можно
+// только из LaTeX рядом. Правило висело на одном классе и при непрочитанной
+// формуле возвращало пустую строку, а `ignoresChildContent` не давал нарисованной
+// половине пройти следом — так со страницы уходило и то, что читатель видел.
+// Единственный дефект этого класса, который стоит текста, а не символов.
+describe('обёртка без читаемого LaTeX', () => {
+  const md = (html: string, options: MarkItDownOptions = { math: true }) =>
+    toMarkdown(`<p>see ${html} here</p>`, options);
+
+  // KaTeX с `output: "html"` не строит MathML вовсе, MathJax v3 отдаёт assistive
+  // MathML только с расширением доступности — в обоих случаях класс на месте,
+  // а annotation нет.
+  const katexHtmlOnly =
+    '<span class="katex"><span class="katex-html" aria-hidden="true">' +
+    '<span class="mord mathnormal">E</span><span class="mrel">=</span>' +
+    '<span class="mord mathnormal">m</span></span></span>';
+  const mjxNoAssistive =
+    '<mjx-container class="MathJax" jax="CHTML"><mjx-math>' +
+    '<mjx-mi>E</mjx-mi><mjx-mo>=</mjx-mo><mjx-mi>m</mjx-mi></mjx-math></mjx-container>';
+
+  it.each([
+    ['KaTeX output:"html"', katexHtmlOnly],
+    ['MathJax v3 без assistive MathML', mjxNoAssistive],
+  ])('нарисованное доходит до файла: %s', (_name, html) => {
+    expect(md(html)).toBe('see E=m here\n');
+  });
+
+  // Гарантия того же размена с другой стороны: включённая математика не имеет
+  // права отдать меньше выключенной.
+  it.each([
+    ['KaTeX output:"html"', katexHtmlOnly],
+    ['MathJax v3 без assistive MathML', mjxNoAssistive],
+  ])('с math: false ровно то же: %s', (_name, html) => {
+    expect(md(html, {})).toBe(md(html));
+  });
+
+  // А там, где LaTeX есть, обёртка по-прежнему съедает нарисованную половину
+  // целиком — иначе рядом с формулой встанет её же картинка словами.
+  it('читаемая формула не пускает глифы в файл', () => {
+    const html =
+      '<span class="katex">' +
+      '<span class="katex-mathml"><math><semantics>' +
+      '<annotation encoding="application/x-tex">E = m</annotation></semantics></math></span>' +
+      '<span class="katex-html" aria-hidden="true">E=m</span></span>';
+    expect(md(html)).toBe('see $E = m$ here\n');
+  });
+});
