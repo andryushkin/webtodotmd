@@ -91,15 +91,29 @@ const LANGUAGE_CLASSES = new Set([
  * has an answer for — `captionOf` reads it, `removeChrome` keeps it out of the
  * code, and `readLang` makes it the info string. One shape, one answer.
  *
- * Every condition here is a refusal to guess. The wrapper holds these two
+ * Every condition here is a refusal to guess, and each is asked of what the
+ * reader saw rather than of the tags around it. The wrapper holds these two
  * elements and nothing else, so a toolbar belonging to a whole article is not
  * claimed by the first `<pre>` under it; what is left of the bar once its controls
  * are gone must be a language a highlighter really ships, so a `<div>` reading
  * `Example 3` keeps its place as text; and a heading is never taken, because a
  * `<h3>` above a sample is the author's, not the widget's.
+ *
+ * The last two were read too narrowly and the lift took text with it, which is
+ * the expensive direction — a bar wrongly kept is a word of furniture in the
+ * file, a heading wrongly lifted is a line the reader cannot see is missing.
+ * "Nothing else" was counted over the wrapper's *elements*, so `<div>Intro
+ * <div>python</div><pre>…` still matched and the page's `python` left with the
+ * bar; the wrapper's own text nodes count too. And "a heading" was read as the
+ * bar's own tag, which `HEADER_TAGS` already refuses — one wrapper deeper,
+ * `<div><div><h3>python</h3></div><pre>…`, is the same `<h3>` and it was taken,
+ * while the same heading written as a direct sibling was not. A documentation
+ * page whose section is named for its language — `<h3>HTTP</h3>` over a request
+ * — is that shape, so the heading is refused wherever in the bar it stands.
  */
 const HEADER_TAGS = new Set(['div', 'span', 'p', 'header']);
 const CONTROLS = 'button, [role="button"], a[href], svg, input, select';
+const HEADINGS = 'h1, h2, h3, h4, h5, h6, [role="heading"]';
 
 export function liftCodeHeaders(root: ParentNode): void {
   for (const pre of Array.from(root.querySelectorAll?.('pre') ?? [])) {
@@ -109,6 +123,10 @@ export function liftCodeHeaders(root: ParentNode): void {
     if (siblings.length !== 2 || siblings[1] !== pre) continue;
     const bar = siblings[0]!;
     if (!HEADER_TAGS.has(bar.tagName.toLowerCase())) continue;
+    if (!wrapsNothingBut(parent, bar, pre)) continue;
+    // `role="heading"` on the bar itself is the same claim as the tag, made the
+    // way a `<div>` has to make it — and `HEADER_TAGS` lets a `<div>` through.
+    if (bar.getAttribute('role') === 'heading' || bar.querySelector(HEADINGS)) continue;
     const label = bar.cloneNode(true) as Element;
     for (const control of Array.from(label.querySelectorAll(CONTROLS))) control.remove();
     const name = (label.textContent ?? '').trim();
@@ -231,6 +249,26 @@ function textWithLineBreaks(el: Element): string {
 }
 
 const TEXT_NODE = 3;
+const COMMENT_NODE = 8;
+
+/**
+ * True when the bar and the `<pre>` are everything their wrapper drew.
+ *
+ * `parent.children` answers about elements, and the text a wrapper holds directly
+ * is text the reader saw just as much: `<div>Intro <div>python</div><pre>…` reads
+ * as two elements and a word, and lifting the bar out of it deleted the word.
+ * A comment draws nothing and a blank between the two is the page's indentation,
+ * so neither counts against the shape — same reading as `holdsNothingBut` below.
+ */
+function wrapsNothingBut(wrapper: Element, bar: Element, pre: Element): boolean {
+  return Array.from(wrapper.childNodes).every(
+    (child) =>
+      child === bar ||
+      child === pre ||
+      child.nodeType === COMMENT_NODE ||
+      (child.nodeType === TEXT_NODE && (child.textContent ?? '').trim() === ''),
+  );
+}
 
 /**
  * True when the `<code>` is everything the `<pre>` holds.

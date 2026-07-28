@@ -152,6 +152,14 @@ interface Run {
  *
  * The nesting inside a run is `marked`'s, so a run of the line reads exactly as
  * an element wearing the same marks would.
+ *
+ * A child that wrote nothing is not one of them. It stands between no characters,
+ * so it can neither wear a mark nor end a run — and counted as a child declining
+ * one it split a run in two that nothing on the page separated. A DOM comment is
+ * how that arrives: `v-if` leaves `<!---->` behind in the middle of a run, and
+ * `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`,
+ * which renders as four asterisks the reader never saw. An element the rules
+ * dropped — a spacer image, a wrapper with nothing in it — is the same shape.
  */
 function wornRuns(
   el: Element,
@@ -160,14 +168,20 @@ function wornRuns(
   options: MarkItDownOptions,
 ): Run[] | undefined {
   const worn = marksPerChild(el, marks);
-  const wears = worn.map((child) => sameMarks(child, marks));
+  // Index-aligned with `pieces.parts` by construction: both are the element's own
+  // child nodes in order, `marksPerChild` reading them and `convert()` writing
+  // them. Paired here so dropping the silent ones keeps the two halves together.
+  const written = worn
+    .map((child, i) => ({ child, part: pieces.parts[i] ?? '' }))
+    .filter(({ part }) => part !== '');
+  const wears = written.map(({ child }) => sameMarks(child, marks));
   // Nothing takes a mark back: the line wears it whole, as it always did.
   if (wears.every((full) => full)) return undefined;
   // A child wearing some marks and not others has no spelling; see above.
-  if (worn.some((child, i) => !wears[i] && anyMark(child))) return undefined;
+  if (written.some(({ child }, i) => !wears[i] && anyMark(child))) return undefined;
 
   const runs: Run[] = [];
-  pieces.parts.forEach((part, i) => {
+  written.forEach(({ part }, i) => {
     const last = runs[runs.length - 1];
     if (last !== undefined && last.marked === wears[i]) last.text = pieces.join([last.text, part]);
     else runs.push({ text: part, marked: wears[i]! });
@@ -639,12 +653,13 @@ function accompaniedByText(el: Element): boolean {
  *
  * Each of the two has its own way of coming to nothing — an image the page drew
  * no pixels of, one marked decorative beside text, one with neither address nor
- * alt; a player with no address to point at — and the rules below are the
- * authority for all of them, so this asks them rather than restating them.
+ * alt; a player with no address to point at, or none it can point at — and the
+ * rules below are the authority for all of them, so this asks them rather than
+ * restating them.
  */
-export function emitsWithoutText(el: Element): boolean {
+export function emitsWithoutText(el: Element, options: MarkItDownOptions): boolean {
   const tag = el.tagName.toLowerCase();
-  if (EMBEDS_MEDIA.has(tag)) return mediaUrl(el) !== '';
+  if (EMBEDS_MEDIA.has(tag)) return mediaLink(el, options) !== '';
   if (tag !== 'img') return false;
   const alt = (el.getAttribute('alt') ?? '').trim();
   if (el.hasAttribute('alt') && alt === '' && accompaniedByText(el)) return false;
@@ -792,6 +807,32 @@ const EMBEDS_MEDIA = new Set(['video', 'audio', 'iframe']);
  * first, which is the one it wanted played. An `<iframe>` has only `src`; a
  * `srcdoc` one carries its document inline and there is nothing to link to.
  */
+/**
+ * The address the player's rule really writes, or `''` where it writes nothing.
+ *
+ * Having an address and being able to link to it are two questions, and asking
+ * only the first is what let a player the rule then dropped count as ink: the
+ * text behind it was read as mid-line and went unescaped, so `<p><iframe
+ * src="about:blank"></iframe># x</p>` reached the file as a `#` opening a line
+ * and the reader's `#` became an H1. That is the `writesSomething` class in its
+ * costly direction — a character deleted rather than a backslash added — and the
+ * same defect the unusable link scheme had. `about:blank` and `data:` are what a
+ * lazily loaded embed holds before its real address arrives, so this is not only
+ * the hostile case.
+ *
+ * One function rather than two readings of one rule: the escaper's question is
+ * exactly "what does the rule write here", and a second spelling of the answer
+ * drifts from the first the next time either moves.
+ */
+function mediaLink(el: Element, options: MarkItDownOptions): string {
+  const url = mediaUrl(el);
+  if (!url) return '';
+  const src = resolveUrl(url, options.baseUrl);
+  // Same answer a link gives an unusable scheme, for the same reason — except
+  // that here nothing is wrapped, so an unusable one leaves nothing at all.
+  return isRenderableUrl(src) ? src : '';
+}
+
 function mediaUrl(el: Element): string {
   const own = (el.getAttribute('src') ?? '').trim();
   if (own) return own;
@@ -1144,12 +1185,8 @@ export const INLINE_RULES: Rule[] = [
     // again: markup that is there and was never on screen.
     ignoresChildContent: true,
     replacement: (el, _childContent, options: MarkItDownOptions) => {
-      const url = mediaUrl(el);
-      if (!url) return '';
-      const src = resolveUrl(url, options.baseUrl);
-      // Same answer a link gives an unusable scheme, for the same reason — except
-      // that here nothing is wrapped, so an unusable one leaves nothing at all.
-      if (!isRenderableUrl(src)) return '';
+      const src = mediaLink(el, options);
+      if (!src) return '';
       const label = mediaLabel(el, src);
       if (isHtmlContext(options)) {
         return `<a href="${htmlAttr(encodeUrl(src))}">${htmlAttr(label)}</a>`;

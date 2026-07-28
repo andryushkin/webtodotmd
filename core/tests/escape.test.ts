@@ -337,6 +337,15 @@ describe('an element that writes nothing does not open a line', () => {
     ['decorative image beside text', '<img src="icon.png" alt="">'],
     ['image with neither source nor alt', '<img src="">'],
     ['comment', '<!-- note -->'],
+    // A player is the second element written out of attributes alone, and having
+    // an address is not the same as being able to link to it. Asked only whether
+    // a `src` was there, the rule then dropped these and the `#` behind them
+    // opened a line: the unsafe-link defect again, one tag over.
+    ['player with an unusable scheme', '<iframe src="javascript:alert(1)"></iframe>'],
+    // What a lazily loaded embed holds until its real address arrives, which is
+    // why this class is not only the hostile one.
+    ['player still waiting for its address', '<iframe src="about:blank"></iframe>'],
+    ['player carrying its document inline', '<iframe src="data:text/html,x"></iframe>'],
   ] as const;
 
   const markers = [

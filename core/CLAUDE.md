@@ -47,6 +47,11 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   an empty heading — the one defect of this class that costs a character instead of adding one.
   `writesSomething` asks what the rules really write; wrong the other way it costs a backslash that
   renders as nothing, the text being mid-line after all. Gated on a node that begins with a marker.
+  A player is the other element written out of attributes alone, and *having* an address is not
+  being able to link to one — `<iframe src="about:blank">`, which is a lazily loaded embed before
+  its real address arrives, was read as ink and the `#` behind it opened a heading. The rule and the
+  check share one `mediaLink()` for that reason: the escaper's question is exactly "what does the
+  rule write here", so a second reading of the same rule drifts the next time either moves.
 
 ## Emphasis and style
 
@@ -77,7 +82,10 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   into, since only the parts say where a mark stopped. Every child wears all the marks or none, or
   the line takes them whole as before: two runs wearing different subsets meet with no character
   between them, and `**a****_b_**` is one emphasis around four asterisks. A decline deeper than a
-  direct child is that case.
+  direct child is that case. A child that *converted to nothing* is not a child at all here — it
+  stands between no characters, so it can end no run, and counting it as one produced those four
+  asterisks for real: `<!---->` is what `v-if` leaves mid-run, and
+  `<span style="font-weight:600">Total<!---->:</span>` came out `**Total****:**`.
 - `display` is decided in `convert()` and nowhere else, both ways round: `block` on an inline tag
   wraps the rule's output in blank lines, `inline` on a block tag returns the content instead of
   running the rule. A styled block *opens a line*, so `opensBlock()` and every lookahead must ask
@@ -253,6 +261,15 @@ threshold sits where no layout lands by accident.
   nothing else, what survives the bar's controls is a language a highlighter really ships, and a
   heading is never taken. Nor is such a caption ever printed as a label line, whichever language the
   fence ends up with — `Python` beside a `language-python` class is no disagreement.
+  Two of those conditions were read off the tags and the lift took text with it, which is the
+  expensive direction: a bar wrongly kept is a word of furniture, a heading wrongly lifted is a line
+  nobody can see is missing. "Nothing else" counted the wrapper's *elements*, so `<div>Intro
+  <div>python</div><pre>…` matched and the page's `python` left with the bar — its text nodes count
+  too, blanks and comments aside. And "a heading" meant the bar's own tag, which `HEADER_TAGS`
+  already refuses; one wrapper down, `<div><div><h3>python</h3></div><pre>…` is the same `<h3>` and
+  it was taken, while a direct sibling was kept. A section named for its language — `<h3>HTTP</h3>`
+  over a request — is that shape, so a heading is refused wherever in the bar it stands, `role=
+  "heading"` included.
 - What a `<pre>` holds besides its `<code>` is read too — `lost<br><code>kept</code>` is a real
   shape and losing the first half is silent — but a *control* in that space is furniture, not code.
   A `<figcaption>`, a `<button>`, and any link or `role="button"` outside the `<code>`: Habr ends

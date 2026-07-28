@@ -341,10 +341,12 @@ function writesFirst(el: Element): boolean {
  * text really was mid-line and `\#` and `#` are the same `#` there.
  *
  * So the walk is over what the rules really write: text the reader saw, plus the
- * two elements that write a construct out of attributes alone.
+ * two elements that write a construct out of attributes alone. Both are asked
+ * with the options in hand, because one of them — a player's address — is only
+ * writable once resolved against the base the caller supplied.
  */
-function writesSomething(el: Element): boolean {
-  if (emitsWithoutText(el)) return true;
+function writesSomething(el: Element, options: MarkItDownOptions): boolean {
+  if (emitsWithoutText(el, options)) return true;
   for (const child of Array.from(el.childNodes)) {
     if (child.nodeType === TEXT_NODE) {
       const text = child.textContent ?? '';
@@ -354,12 +356,12 @@ function writesSomething(el: Element): boolean {
     if (child.nodeType !== ELEMENT_NODE) continue;
     const inner = child as Element;
     if (ENDS_THE_LINE.has(inner.tagName.toLowerCase()) || styledBlock(inner)) return true;
-    if (writesSomething(inner)) return true;
+    if (writesSomething(inner, options)) return true;
   }
   return false;
 }
 
-function opensBlock(node: Node): boolean {
+function opensBlock(node: Node, options: MarkItDownOptions): boolean {
   // Up through the inline wrappers, not just to the parent: an inline tag draws
   // no line of its own, so a text node first inside one opens whatever line the
   // wrapper opens. ChatGPT writes every run of an answer as its own `<span>`, and
@@ -383,7 +385,7 @@ function opensBlock(node: Node): boolean {
         // — a link dropped for its scheme — put the page's literal `#` at the
         // head of a line, where it became an empty H1 and took the character
         // with it. A spacer image and an empty wrapper are the same shape.
-        if (writesSomething(el)) return false;
+        if (writesSomething(el, options)) return false;
         continue;
       }
       // A comment draws nothing either, and is stepped over for the same reason
@@ -707,7 +709,7 @@ export function convert(node: Node, options: MarkItDownOptions): string {
     // HTML escaping comes after the Markdown pass, which doubles backslashes: run
     // the other way round and the `\<` this adds would be doubled into a literal.
     const escaped = escapeHtmlSyntax(escapeInlineMarkdown(own, seam), ahead.continues);
-    return MAY_OPEN_MARKUP.test(escaped) && opensBlock(node)
+    return MAY_OPEN_MARKUP.test(escaped) && opensBlock(node, options)
       ? escapeBlockStarts(escaped)
       : escaped;
   }

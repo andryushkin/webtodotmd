@@ -246,6 +246,42 @@ describe('a style that opens a line', () => {
   });
 });
 
+// A player the rule cannot link to writes nothing, and the text behind it is
+// therefore still at the head of its line. Read as ink — the check asked only
+// whether a `src` was there — the reader's `#` opened a heading and the character
+// left the page, which is this class in the direction that costs content.
+describe('a player that writes nothing does not open a line', () => {
+  it.each([
+    ['an unusable scheme', 'javascript:alert(1)'],
+    ['an address not yet loaded', 'about:blank'],
+    ['a document carried inline', 'data:text/html,x'],
+  ])('%s', (_name, src) => {
+    const out = render(toMarkdown(`<p><iframe src="${src}"></iframe># x</p>`, { ...CONVERSION_OPTIONS }));
+    expect(visibleText(out)).toBe('# x');
+    expect(liveMarkup(out)).toEqual([]);
+  });
+});
+
+// A child that wrote nothing cannot end a run of a mark, because it stands
+// between no characters. Counted as one, it split the run in two and the two
+// halves' delimiters met: `**Total****:**` renders as `Total` in bold followed by
+// four asterisks the reader never saw. `<!---->` is what `v-if` leaves behind, so
+// this arrives from any page a framework rendered.
+describe('a comment inside a marked run', () => {
+  it.each([
+    ['bold, from a weight', 'font-weight:600', 'Total<!---->:'],
+    ['italics', 'font-style:italic', 'a<!--c-->b'],
+    ['strikethrough', 'text-decoration-line:line-through', 'a<!--c-->b'],
+  ])('%s', (_name, style, content) => {
+    for (const attribute of ['style', 'data-s2md-style']) {
+      const html = `<p><span ${attribute}="${style}">${content}</span></p>`;
+      const out = render(toMarkdown(html, { ...CONVERSION_OPTIONS }));
+      expect(visibleText(out)).toBe(visibleText(html));
+      expect(out).not.toContain('****');
+    }
+  });
+});
+
 // Escaping a formula costs the formula, so the rule that neutralizes tags in
 // LaTeX has to leave ordinary mathematics alone.
 describe('math escaping does not damage formulas', () => {

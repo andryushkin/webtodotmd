@@ -350,8 +350,39 @@ describe('a language bar drawn beside the <pre>', () => {
       '<div class="w"><pre><code>x</code></pre><div>python</div></div>',
       '```\nx\n```\n\npython\n',
     ],
+    // The heading refusal was read off the bar's own tag, so one wrapper deeper
+    // it stopped applying and the same `<h3>` was taken — while written as a
+    // direct sibling it was kept. A documentation section named for its language
+    // is that shape, and the heading left the file without a word.
+    [
+      'a heading one wrapper down is still the author\'s',
+      '<div class="w"><div><h3>python</h3></div><pre><code>x</code></pre></div>',
+      '### python\n\n```\nx\n```\n',
+    ],
+    [
+      'a heading claimed by a role rather than a tag',
+      '<div class="w"><div role="heading" aria-level="3">python</div><pre><code>x</code></pre></div>',
+      '### python\n\n```\nx\n```\n',
+    ],
+    // "The wrapper holds these two and nothing else" was counted over its
+    // elements, and the text it held directly was not one — so this matched and
+    // the page's own `python` left with the bar.
+    [
+      'text of the wrapper\'s own means the bar is not alone with the block',
+      '<div class="w">Intro <div>python</div><pre><code>x</code></pre></div>',
+      'Intro\n\npython\n\n```\nx\n```\n',
+    ],
   ])('%s', (_name, html, expected) => {
     expect(toMarkdown(html)).toBe(expected);
+  });
+
+  // What the wrapper is allowed to hold besides the two: the page's indentation
+  // and what a template engine left behind, neither of which the reader saw.
+  it.each([
+    ['a blank between them', '<div class="w">\n  <div>python</div>\n  <pre><code>x</code></pre>\n</div>'],
+    ['a comment between them', '<div class="w"><div>python</div><!--c--><pre><code>x</code></pre></div>'],
+  ])('lifts the bar anyway: %s', (_name, html) => {
+    expect(toMarkdown(html)).toBe('```python\nx\n```\n');
   });
 
   // The page's own class still wins: it is the highlighter's word, and the bar

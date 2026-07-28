@@ -180,6 +180,18 @@ beforeAll(() => {
 // element and applied it to the whole subtree exactly as the converter did. The
 // language bar is a deliberate loss of characters, like the `<details>` fold: a
 // control's caption and a label the fence now carries as its info string.
+//
+// Then 81 -> 81, and the class list is identical: three conversion changes that
+// this generator cannot reach. A player dropped for its scheme or its address
+// (`about:blank`, `data:`) now writes nothing on the line, as the link dropped
+// for its scheme already did; a child that converted to nothing no longer ends a
+// run of a style mark, which is a DOM comment mid-run; and a language bar is
+// refused where the wrapper holds text of its own or the bar holds a heading at
+// any depth. The generator writes none of the three — it emits no `<iframe>`, no
+// comment inside a styled run, and no code block with a bar beside it — so the
+// measurement records that nothing moved rather than that nothing was fixed.
+// Each has its own test: two in `no-live-markup.test.ts`, which is where the
+// reader's characters are checked after a render, and the third in the core.
 const SEEDS = 200;
 const CEILING = 81;
 

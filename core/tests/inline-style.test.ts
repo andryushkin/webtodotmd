@@ -825,7 +825,32 @@ describe('a mark nothing wears', () => {
     ],
   ])('%s', (_name, html, expected) => {
     for (const attribute of ['style', 'data-s2md-style']) {
-      expect(toMarkdown(html.replaceAll('STYLE', attribute)).trim()).toBe(expected);
+      expect(toMarkdown(html.replace(/STYLE/g, attribute)).trim()).toBe(expected);
+    }
+  });
+
+  // A child that wrote nothing is not a child that declined the mark. It stands
+  // between no characters, so it can end no run — counted as one it split the run
+  // in two, and the halves' delimiters met as `**a****b**`, which marked reads as
+  // a bold `a` followed by four asterisks the reader never saw. A DOM comment is
+  // how this arrives: `v-if` leaves `<!---->` in the middle of a run, so any page
+  // a framework rendered can hold one.
+  it.each([
+    ['a comment', '<div STYLE="font-weight:700">a<!--c-->b</div>', '**ab**'],
+    ['a comment against the edge', '<div STYLE="font-weight:700"><!--c-->ab</div>', '**ab**'],
+    ['an empty wrapper', '<div STYLE="font-weight:700">a<span></span>b</div>', '**ab**'],
+    ['a spacer image', '<div STYLE="font-weight:700">a<img src="s.gif" width="1">b</div>', '**ab**'],
+    ['italics, the same shape', '<div STYLE="font-style:italic">a<!--c-->b</div>', '_ab_'],
+    // The run really declining the mark still ends it: what changed is only what
+    // counts as a child, not what a mark goes round.
+    [
+      'a run that declines it beside a comment',
+      '<div STYLE="font-weight:700">a<!--c--><span STYLE="font-weight:400">b</span></div>',
+      '**a**b',
+    ],
+  ])('%s', (_name, html, expected) => {
+    for (const attribute of ['style', 'data-s2md-style']) {
+      expect(toMarkdown(html.replace(/STYLE/g, attribute)).trim()).toBe(expected);
     }
   });
 
