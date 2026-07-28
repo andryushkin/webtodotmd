@@ -183,7 +183,7 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   since the rest of the container's attributes answer later questions the same way the page's box
   would. Selecting the whole row was correct throughout, which is why it took a manual pass to find:
   the failing gesture is dragging across the sentence, and the sentence came back as three
-  paragraphs again. `'header'` is refused there, the one name carrying two meanings.
+  paragraphs again. Presence and not a value decides it, the same question `laysARow` asks.
 - A list whose items are `display:inline` is the same loss with no mark to spend, and `laysARow`
   answers for it too. The container is a plain `<ul>` that blockifies nothing, the gap is a
   `margin` no snapshot records, and `</li><li>` carries not one character — so the same tag list,
@@ -365,6 +365,14 @@ threshold sits where no layout lands by accident.
 extension only, so the version in `package.json` currently numbers nothing. Four `data-s2md-*`
 attribute names are baked into its public surface (`SNAPSHOT_ATTR` and `ROW_ATTR` here,
 `ORIGIN_ATTR` and `ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library
-means making those a parameter first. A new observation buys a *value* of an existing name where it
-can — `ONE_LINE_MARK` is why `ROW_ATTR` has two — since a fifth name is a fifth thing to parametrise
-and `laysARow` answers the same for both.
+means making those a parameter first.
+
+A new observation buys a *value* of an existing name where the name already means that thing —
+`ONE_LINE_MARK` is why `ROW_ATTR` has two, one line being a kind of row — and a name of its own
+where it does not. `ORIGIN_ROW_ATTR` was `data-s2md-row` until a header row and a measured line
+were found sharing it: `laysARow` asks whether the attribute is *present*, so a marked `<tr>`
+answered a question about layout, and the wrap restoring a measured row had to name the header
+value to refuse it. Both readers had to know about the other's fact, and the only thing keeping
+that harmless was the mark coming off in a `finally`. Counting parameters is the wrong economy
+while nothing imports this package: an unpublished name costs a rename, a conflated one costs
+whoever reads either half.

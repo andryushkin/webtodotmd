@@ -46,7 +46,15 @@ function findAncestorElement(node: Node, tagName: string): Element | null {
 // session is paired with a `finally` — touching the page's DOM is only safe when
 // the cleanup cannot be skipped.
 const ORIGIN_ATTR = 'data-s2md-origin';
-const ORIGIN_ROW_ATTR = 'data-s2md-row';
+// A name of its own, not a second value under `ROW_ATTR`. The two say unrelated
+// things — one that a header row was found, one that a container's content was
+// drawn on a single line — and sharing a name meant every reader of either had
+// to know about the other: `laysARow` asks whether the attribute is *there*, so
+// a marked `<tr>` answered yes to a question about layout, and the wrap that
+// restores a measured row had to name the header value to refuse it. Nothing
+// was wrong while the marks came off in time; what was wrong is that the
+// distance between two unrelated facts was one `finally`.
+const ORIGIN_ROW_ATTR = 'data-s2md-origin-row';
 const HEADER_ROW_MARK = 'header';
 
 interface MarkSession {
@@ -583,14 +591,13 @@ function cloneWithContext(range: Range): DocumentFragment {
  * one attribute on it would answer a later question differently than the page's
  * box would.
  *
- * `'header'` is refused because the name carries two meanings — a measured row
- * and a marked table header (`ORIGIN_ROW_ATTR`) — and a `<tr>` is not a box
- * anything was measured in.
+ * Presence and not a value, which is the question `laysARow` asks: whatever the
+ * mark says, selecting the container whole would have carried it, so a drag
+ * inside must carry the same thing.
  */
 function wrapInRow(fragment: DocumentFragment, scope: ParentNode, doc: Document): DocumentFragment {
   const el = scope as Element;
-  const mark = el.nodeType === 1 ? el.getAttribute?.(ROW_ATTR) : null;
-  if (mark === null || mark === undefined || mark === HEADER_ROW_MARK) return fragment;
+  if (el.nodeType !== 1 || el.getAttribute?.(ROW_ATTR) == null) return fragment;
   const box = el.cloneNode(false) as Element;
   box.appendChild(fragment);
   const wrapped = doc.createDocumentFragment();

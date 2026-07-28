@@ -291,8 +291,8 @@ describe('чужие атрибуты на странице', () => {
   // The page uses the attribute names the capture marks with — its own values,
   // for its own purposes.
   const OCCUPIED = `<div><table data-s2md-origin="page">
-<thead><tr data-s2md-row="head"><th>Name</th></tr></thead>
-<tbody><tr data-s2md-row="header"><td>a</td></tr><tr><td>b</td></tr></tbody>
+<thead><tr data-s2md-origin-row="head"><th>Name</th></tr></thead>
+<tbody><tr data-s2md-origin-row="header"><td>a</td></tr><tr><td>b</td></tr></tbody>
 </table><p>after</p></div>`;
 
   it('gives the page its own attribute values back', () => {
@@ -303,8 +303,8 @@ describe('чужие атрибуты на странице', () => {
     });
     // The cleanup was `removeAttribute`, so a capture deleted what it found.
     expect(doc.querySelector('table')!.getAttribute('data-s2md-origin')).toBe('page');
-    expect(doc.querySelector('thead tr')!.getAttribute('data-s2md-row')).toBe('head');
-    expect(doc.querySelectorAll('tbody tr')[0]!.getAttribute('data-s2md-row')).toBe('header');
+    expect(doc.querySelector('thead tr')!.getAttribute('data-s2md-origin-row')).toBe('head');
+    expect(doc.querySelectorAll('tbody tr')[0]!.getAttribute('data-s2md-origin-row')).toBe('header');
   });
 
   it('does not read a value the page set as the header mark', () => {
@@ -314,6 +314,19 @@ describe('чужие атрибуты на странице', () => {
     // was treated as the header already selected, and `Name` was dropped.
     expect(md).toContain('| Name |');
     expect(md).toContain('| a    |');
+  });
+
+  // The two names were one until the header mark moved to `ORIGIN_ROW_ATTR`.
+  // While they were shared, a `<tr>` the capture had marked answered yes to
+  // `laysARow`, which asks a question about layout and only about that — and the
+  // whole of what kept it harmless was the mark coming off before conversion.
+  it('does not read a marked header row as a row of content', () => {
+    const doc = setup(`<div><table><thead><tr><th>Name</th></tr></thead>
+<tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table></div>`);
+    const md = convert(doc, (range) => range.selectNode(doc.querySelectorAll('tbody tr')[1]!));
+    expect(md).toContain('| Name |');
+    expect(md).toContain('| b    |');
+    expect(doc.querySelector('thead tr')!.hasAttribute('data-s2md-row')).toBe(false);
   });
 });
 
