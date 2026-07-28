@@ -373,6 +373,29 @@ function buildPreFragment(range: Range, ancestorPre: Element): DocumentFragment 
   if (!selectedText.trim()) return null;
 
   const doc = ancestorPre.ownerDocument!;
+
+  // A block whose structure survived the cut keeps it. Flattening to text is
+  // right for a drag through the code itself — there is nothing left to read —
+  // and wrong for a selection that took the block whole from inside the `<pre>`,
+  // which is what selecting one code block on a page is: Perplexity draws the
+  // language and a copy button in a `<figcaption>` *inside* the `<pre>`, and
+  // `textContent` reads furniture and code alike. The first block of C5 came
+  // back as ```` ```pythonCopydef hello(name): ```` — the language lost from the
+  // info string and both words of chrome welded onto the first line of the
+  // sample, which is the defect the caption rule exists to repair, reappearing
+  // one gesture over.
+  //
+  // A shallow copy of the original `<pre>`, so the class that may name the
+  // language travels with it, and then the ordinary code rule reads the caption
+  // and drops the controls exactly as it does for the whole block.
+  if (rawFragment.querySelector?.('code, figcaption')) {
+    const kept = ancestorPre.cloneNode(false) as Element;
+    kept.appendChild(rawFragment);
+    const wrapped = doc.createDocumentFragment();
+    wrapped.appendChild(kept);
+    return wrapped;
+  }
+
   const codeEl = ancestorPre.querySelector('code');
   const pre = doc.createElement('pre');
   const code = doc.createElement('code');

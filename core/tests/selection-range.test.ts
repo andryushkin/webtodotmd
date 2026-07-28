@@ -341,6 +341,38 @@ describe('чужие атрибуты на странице', () => {
 // to lose. In the extension the snapshot has also written `display:block` onto
 // the items, so the same fragment arrives as three paragraphs — measured in
 // Chrome, and the reason the case was reported at all.
+// A code block whose furniture is drawn *inside* the `<pre>` — Perplexity's
+// shape, and C5 on the spec page. Selecting the block from within the `<pre>`
+// makes it the range's semantic ancestor, and the fragment used to be flattened
+// to `textContent`: the caption naming the language and the copy button became
+// the first line of the sample.
+describe('a selection made inside a pre', () => {
+  const BLOCK = `<div><pre><figure><figcaption>python<button type="button">Copy</button></figcaption><code>def hello(name):
+    print(f"Hello, {name}!")</code></figure></pre></div>`;
+
+  it('keeps the caption and the button out of the code', () => {
+    const doc = setup(BLOCK);
+    const md = convert(doc, (range) => range.selectNodeContents(doc.querySelector('pre')!));
+    expect(md).toBe('```python\ndef hello(name):\n    print(f"Hello, {name}!")\n```');
+  });
+
+  it('still flattens a drag through the code itself', () => {
+    // The branch the flattening is for: nothing structural survived the cut, so
+    // there is nothing to read a language or a control out of.
+    const doc = setup(BLOCK);
+    const md = convert(doc, (range) => range.selectNodeContents(doc.querySelector('code')!));
+    expect(md).toBe('```\ndef hello(name):\n    print(f"Hello, {name}!")\n```');
+  });
+
+  it('keeps a caption that names no language above the fence', () => {
+    const doc = setup(
+      `<div><pre><figure><figcaption>Listing 1</figcaption><code>parse(document)</code></figure></pre></div>`,
+    );
+    const md = convert(doc, (range) => range.selectNodeContents(doc.querySelector('pre')!));
+    expect(md).toBe('Listing 1\n\n```\nparse(document)\n```');
+  });
+});
+
 describe('a selection made inside a measured row', () => {
   const ROW = `<div class="wrap"><div data-s2md-row="line"
 ><span>Wow even</span><div><a href="https://x.com/k">@k</a></div><span>admits it.</span></div></div>`;
