@@ -192,6 +192,17 @@
     display: inline;
     font-family: "Times New Roman", serif;
   }
+  /* B1: a docs generator hangs its `¶` off every heading and keeps it hidden
+     until the heading is hovered — Sphinx, MkDocs and MDN all write it this way.
+     The capture drops the glyph, so the page has to hide it too: one the reader
+     never met is the only one that can go without the screen and the file
+     disagreeing. No transition, deliberately — that is what tells a style read
+     the glyph is hidden rather than arriving, and `.transitioning-in` above is
+     the case that means the other thing. */
+  .headerlink { opacity: 0; }
+  h1:hover .headerlink,
+  h2:hover .headerlink,
+  h3:hover .headerlink { opacity: 1; }
   /* S4: an inline thing given a box of its own inside a flex row — a mention, a
      tag, a badge. The row is the only reason the words share a line, and the
      column holding one item stacks nothing. */
@@ -275,7 +286,7 @@
     <p class="section-lead">Ordinary document structure, followed by less tidy combinations.</p>
 
     <article class="case">
-      <aside><strong>B1.</strong> Headings keep the ranks the page gave them, and clamp at level six. The shift is only ever <em>upwards</em>: a capture whose shallowest heading is already an <code>h1</code> — this one — is not pushed down to keep <code>#</code> free, because an H1 is the rank the page chose for its title and spending it on the note's own formatting costs the reader their structure. Deeper input is still pulled up, which is what the shift is for, and B5 is where that shows. The permalink glyph is dropped. Paragraphs stay separated, one <code>br</code> is a hard break, two become a paragraph break, and <code>hr</code> becomes <code>---</code>.</aside>
+      <aside><strong>B1.</strong> Headings keep the ranks the page gave them, and clamp at level six. The shift is only ever <em>upwards</em>: a capture whose shallowest heading is already an <code>h1</code> — this one — is not pushed down to keep <code>#</code> free, because an H1 is the rank the page chose for its title and spending it on the note's own formatting costs the reader their structure. Deeper input is still pulled up, which is what the shift is for, and B5 is where that shows. The permalink glyph is dropped, and the heading here hides it until hovered the way a docs generator does — so nothing the reader met has gone. Paragraphs stay separated, one <code>br</code> is a hard break, two become a paragraph break, and <code>hr</code> becomes <code>---</code>.</aside>
       <div class="subject">
         <h1>Page title</h1>
         <h2>Section title <a class="headerlink" href="#blocks" aria-label="Permalink">¶</a></h2>
