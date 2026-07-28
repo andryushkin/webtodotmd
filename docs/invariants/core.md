@@ -7,6 +7,21 @@ layout engine belongs in `src/content/`, not here.
 
 Each rule below has cost a bug already; the reason is what makes it stick.
 
+A file name below is written from the repository root: this library's own source
+is `core/src/…`, the extension's is `src/…`. This sheet is the binding statement
+of the rules; `docs/conversion.md` is the map of what converts into what and is
+where a construct's *result* is recorded. A rule stated in both is a rule that
+will drift — state it here, and let the map say what the reader gets.
+
+Where a case is answered may not be where it is looked for. A highlight, and a
+background read as one, are under *Output language*, because the question is what
+this library may emit. Everything about `role="heading"` is under *Blocks*, next
+to the semantic containers. Flex and grid rows have a section of their own —
+*Rows drawn side by side*, covering the gap between the items, the measurement
+that says they stood on one line, and what a selection made inside such a
+container leaves behind; the half that measures is
+`docs/invariants/content.md`.
+
 ## Output language
 
 - The product converts HTML *into* Markdown, so live HTML in the output is unfinished work, not a
@@ -41,7 +56,7 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   rule it ran **instead** of whatever the element already had: `<a style="background:#ff0">` lost
   its href, a `<code>` its backticks, a `<sup>` its Unicode and an `<img>` everything — the picture
   left the page with not even alt text behind it, since `emphasis()` hands empty content straight
-  back. The mark goes on *outside* the rule (`applyHighlight` in `parser.ts`), unlike the other
+  back. The mark goes on *outside* the rule (`applyHighlight` in `core/src/core/parser.ts`), unlike the other
   three, which apply to the child content before the rule sees it: a fill is drawn behind everything
   the element drew, and, more sharply, `<sup>` shifts what it is handed into Unicode where `=` has a
   superscript form — `==2==` came back `⁼⁼²⁼⁼`, the marker mapped along with the digit. The other
@@ -103,10 +118,10 @@ Each rule below has cost a bug already; the reason is what makes it stick.
 ## Emphasis and style
 
 - Emphasis picks the first marker CommonMark's flanking rules let render: `_`/`**`, then `*`/`__`,
-  then an HTML tag (`src/utils/flanking.ts`). Content starting or ending in punctuation, pressed
+  then an HTML tag (`core/src/utils/flanking.ts`). Content starting or ending in punctuation, pressed
   against a word, has no marker that works — emitting one lost the italics and left the characters.
 - A style mark is what is *heavier than its context*, never a large `font-weight`
-  (`src/utils/inline-style.ts`): a heading, a `<th>` and a `<strong>` are already bold and are
+  (`core/src/utils/inline-style.ts`): a heading, a `<th>` and a `<strong>` are already bold and are
   routinely handed the weight they have, so `**` inside a `##` is what the naive rule writes. It runs
   both ways — a style declining its tag's mark drops it — and emits through `emphasis()` like every
   other mark.
@@ -162,7 +177,7 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   one parser and one set of property readers answer both, so neither side can invent a spelling the
   other has to be taught. Every question about a style goes through it: `getAlignment` had a regex of
   its own and a column aligned by a class lost its `---:`. No snapshot is the ordinary case:
-  `server.ts` and every library caller convert without one, and behavior must survive its absence.
+  `core/src/server.ts` and every library caller convert without one, and behavior must survive its absence.
   Gate on what a style *says*, not that there is one — `color` and `margin` are most of what a page
   writes inline and change no character of the output, so `statesConversion()`/`statesDisplay()` come
   before any parse or ancestor walk.
@@ -197,6 +212,8 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   tag goes and the text stays; whether it survives as a space or collapses is `collapseWhitespace`'s
   question, already asked of every other text node. A *block* wrapper is removed as before —
   `<div> </div>` between two paragraphs is a line the reader saw, never a space.
+## Rows drawn side by side
+
 - A flex or grid row is the one place markup has no separator at all: `<a>c#</a><a>python</a>` is
   what a tag list is, and the snapshot deliberately keeps quiet about the `block` such a container
   derives onto its items. `ROW_ATTR` on the container is what is left to say the items stood apart,
@@ -326,7 +343,7 @@ threshold sits where no layout lands by accident.
   thing a second way and is the half that survives a formula around it: `\frac{a}{b} <x-foo
   style="position:fixed">X</x-foo>` uses the language on its first half, so the syntax test alone
   answered "formula" and the attribute rode in again, defused and still on nobody's screen — one
-  `^` was the whole of what it took. `MATH_TAG_SHAPED` is one spelling in `escape.ts` for both
+  `^` was the whole of what it took. `MATH_TAG_SHAPED` is one spelling in `core/src/core/escape.ts` for both
   readers, since the escaper defuses exactly what this reads as evidence. The cost is real and
   knowingly paid: on a
   page KaTeX really rendered, `a < b` and `x + y` now arrive as the glyphs `a\<b` and `x+y`, spacing
@@ -359,7 +376,7 @@ threshold sits where no layout lands by accident.
   same question, or a role written as a paragraph would still set the level every real heading is
   then normalized against.
 - The third of those is the one place a rule reads *silence* in a snapshot as an answer, and it can
-  only do that because something positive says the drawing was read: `style-snapshot.ts` writes the
+  only do that because something positive says the drawing was read: `src/content/style-snapshot.ts` writes the
   relative size on every element carrying the role, whether or not it differs, so `font-size:1em` is
   the declaration meaning "looked at, and ordinary". A ratio rather than a length, because 24px is a
   heading on one page and body text on another, and because the length it would be compared against
@@ -372,7 +389,7 @@ threshold sits where no layout lands by accident.
   `aria-level="9"` is a level the page really stated, and reading it as 2 wrote `## Child` under
   `### Parent` — a heading above its own parent, which a tag never does. One such line also entered
   `minHeadingLevel` as a 2 and held the whole page down.
-- The semantic containers are one set, `src/utils/blocks.ts`, read by the parser and by the rule
+- The semantic containers are one set, `core/src/utils/blocks.ts`, read by the parser and by the rule
   that writes them. Two lists made separately disagreed: the escaper counted a `<figure>` and a
   `<form>` as the end of a line while nothing wrote a boundary there, so the reading model ended the
   line and the writing model welded it to the next — a picture ran into its caption, a `<summary>`
@@ -445,7 +462,7 @@ threshold sits where no layout lands by accident.
 `exports`. It has never been published — there is no npm release and `docs/releasing.md` covers the
 extension only, so the version in `package.json` currently numbers nothing. Four `data-s2md-*`
 attribute names are baked into its public surface (`SNAPSHOT_ATTR` and `ROW_ATTR` here,
-`ORIGIN_ATTR` and `ORIGIN_ROW_ATTR` in `src/browser.ts`); publishing this as a general library
+`ORIGIN_ATTR` and `ORIGIN_ROW_ATTR` in `core/src/browser.ts`); publishing this as a general library
 means making those a parameter first.
 
 A new observation buys a *value* of an existing name where the name already means that thing —

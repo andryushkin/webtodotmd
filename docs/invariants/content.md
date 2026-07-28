@@ -6,6 +6,10 @@ differently than it does in the worker or the panel.
 
 Each rule below has cost a bug already; the reason is what makes it stick.
 
+An unqualified file name below is in `src/content/`; anything else is written
+from the repository root. These rules are about the capture — what the
+conversion does with what it records is `docs/invariants/core.md`.
+
 ## Isolation
 
 - Never import `src/shared/i18n.ts` here — fetching locale files is unreliable
@@ -42,7 +46,6 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   live `Range` cannot hold two trees, so a selection that crosses out of a
   component lifts its deeper end to the host: over-capturing the component to its
   end costs a sentence, losing the range costs the capture.
-
 - A host's light children are drawn only where a `<slot>` calls for them, so a component with no
   matching slot renders none of them — which is exactly how a no-JavaScript fallback is written.
   GitHub's `<relative-time>` holds `Jul 24, 2026` in the light DOM and shows `3 days ago` from its
@@ -149,6 +152,15 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   and an attribute per element is what a page-sized budget cannot pay. Both sizes or neither — a
   caller whose computed style answers nothing about `font-size` has not read the drawing, and a `1em`
   written there would claim it had.
+- The verdicts themselves live in `core/` and are asked of it, never spelled
+  again here: the two sides disagreeing is how a snapshot marks what the core
+  keeps.
+
+## Rows and lines
+
+The other half of this pair is under *Rows drawn side by side* in
+`docs/invariants/core.md`: what is measured here is spent there.
+
 - Silence about a derived block leaves the *gap* between the items unsaid, and markup has none:
   `<a>c#</a><a>python</a>` is what a tag list is. The container — not the item — gets
   `data-s2md-row`, once, and the core turns it into the one blank the reader saw. Recording it per
@@ -168,9 +180,6 @@ Each rule below has cost a bug already; the reason is what makes it stick.
   flex boxes on four real pages; the rest cost 0.4–9.7 ms over the whole `<body>`. No measurement is
   the ordinary case: linkedom, a server and a detached tree answer nothing, and there the capture is
   exactly what it was.
-- The verdicts themselves live in `core/` and are asked of it, never spelled
-  again here: the two sides disagreeing is how a snapshot marks what the core
-  keeps.
 
 ## Highlighter
 
