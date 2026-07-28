@@ -139,6 +139,9 @@ function describe(hunk: Hunk, width = 14): string {
 }
 
 if (import.meta.main) {
+  // Relative to the repository, not to whoever wrote it: the default used to be
+  // one machine's absolute path, which the public-repo gate reads as internal
+  // material and which nobody else could run.
   const dir = process.argv[2] ?? 'store/research/real-pages';
   const scratch = process.argv[3] ?? '/private/tmp';
   const only = new Set(process.argv.slice(4));

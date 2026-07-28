@@ -115,10 +115,13 @@ then pass "version-and-locales"; else fail "version-and-locales"; fi
 
 # 5. The conversion core must be present, licensed, and reachable from the
 # content script — it is a package in this repository, not a submodule.
+# Reached from anywhere in the content script's own directory, not from
+# `content-script.ts` alone: the import moved into `capture.ts` — which that file
+# imports — and the check went on naming the older shape.
 if [ -f core/src/browser.ts ] \
     && [ -f core/LICENSE ] \
     && [ -f core/package.json ] \
-    && grep -q "core/src/browser" src/content/content-script.ts; then
+    && git grep -q "core/src/browser" -- src/content; then
     pass "conversion-core"
 else
     fail "conversion-core" "core/src/browser.ts, core/LICENSE, core/package.json or the import"

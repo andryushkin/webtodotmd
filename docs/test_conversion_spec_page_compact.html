@@ -287,7 +287,7 @@
         <p>Second paragraph after a real paragraph boundary.</p>
         <hr>
         <h6>The deepest heading clamps at level six</h6>
-      
+
 </div>
 
 <div class="case" data-case="B2">
@@ -299,7 +299,7 @@
             <p>A reply nested inside the quotation.</p>
           </blockquote>
         </blockquote>
-      
+
 </div>
 
 <div class="case" data-case="B3">
@@ -317,7 +317,7 @@
             </ul>
           </dd>
         </dl>
-      
+
 </div>
 
 <div class="case plain-semantics" data-case="B4">
@@ -334,7 +334,7 @@
         <bdo dir="rtl">visible order</bdo>
         <tt>terminal</tt>
         <font color="red">legacy</font>
-      
+
 </div>
 
 <div class="case" data-case="B5">
@@ -345,7 +345,7 @@
         <p>Body under the deeper one.</p>
         <div class="drawn" role="heading">Level not stated, read as two</div>
         <div class="drawn" role="heading" aria-level="9">Level nine is clamped to six</div>
-      
+
 </div>
 
 <div class="case" data-case="B6">
@@ -354,7 +354,7 @@
         <p>Body under a claim the page drew nothing for.</p>
         <div role="heading" aria-level="4">Subsection stated by role alone</div>
         <p>The row above is <span role="heading" aria-level="2">a heading by role</span> in the middle of this sentence.</p>
-      
+
 </div>
 
 <div class="case" data-case="I1">
@@ -364,7 +364,7 @@
         <p>Press <kbd>Ctrl</kbd> + <kbd>C</kbd>; output is <samp>&lt;div onclick=alert(1)&gt;copied&lt;/div&gt;</samp>.</p>
         <p><strong><em>bold italic</em></strong>, <em><code>code in emphasis</code></em>, and <strong><del>bold deletion</del></strong>.</p>
         <p>Leading:<strong> padded </strong>:trailing and adjacent <em>one</em><em>two</em>.</p>
-      
+
 </div>
 
 <div class="case" data-case="I2">
@@ -373,14 +373,14 @@
         <p>Nested tags stay code text: <code>press <strong>Save</strong> then <em>wait</em></code>.</p>
         <p>Adjacent code spans with nothing between them merge: <code>left</code><code>right</code>.</p>
         <p>Longer run: <code>before `` middle ` after</code>.</p>
-      
+
 </div>
 
 <div class="case" data-case="I3">
 
         <p>(<em>inside parentheses</em>),/<strong>after slash</strong>/—<em>beside dash</em>—and snake_case.</p>
         <p>Mixed punctuation: a_<em>b</em>_c and x*<strong>y</strong>*z.</p>
-      
+
 </div>
 
 <div class="case" data-case="I4">
@@ -391,7 +391,7 @@
         <p lang="ja">彼は<q>画面と一致するべきだ</q>と言った。</p>
         <p>Nested: <q>she quoted <q>a source</q> at me</q>.</p>
         <p>Empty: <q></q> and a mark right against the close: <q>ends in *</q>.</p>
-      
+
 </div>
 
 <div class="case" data-case="I5">
@@ -401,21 +401,21 @@
         <p>With the older base tag: <ruby><rb>東京</rb><rt>とうきょう</rt></ruby>.</p>
         <p>With fallback parentheses: <ruby>京都<rp>(</rp><rt>きょうと</rt><rp>)</rp></ruby>.</p>
         <p>Empty annotation: <ruby>大阪<rt></rt></ruby>. Marked-up annotation: <ruby>奈良<rt><em>なら</em></rt></ruby>.</p>
-      
+
 </div>
 
 <div class="case" data-case="S1">
 
         <p>A <span class="css-bold">CSS-bold run</span>, a <span class="css-italic">CSS-italic run</span>, and a <span class="css-struck">CSS-struck run</span>.</p>
         <h3>A bold heading with a <span class="css-bold">same-weight run</span> and <em>actual emphasis</em></h3>
-      
+
 </div>
 
 <div class="case" data-case="S2">
 
         <p><strong class="decline-bold">Visually normal strong text</strong>.</p>
         <p><b class="decline-bold">Visually normal bold tag with <em>real italic inside</em></b>.</p>
-      
+
 </div>
 
 <div class="case" data-case="S3">
@@ -423,7 +423,7 @@
         <p>Before the styled span.<span class="block-span">This span is visibly a block.</span>After the styled span.</p>
         <div class="inline-div">First inline div,</div>
         <div class="inline-div"> second inline div.</div>
-      
+
 </div>
 
 <div class="case" data-case="S4">
@@ -433,7 +433,7 @@
           <div class="line-column"><a href="https://x.com/karpathy">@karpathy</a></div>
           <span>admits it.</span>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="S5">
@@ -442,13 +442,13 @@
           <div><p>First card heading</p><p>First card body</p></div>
           <div><p>Second card heading</p><p>Second card body</p></div>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="S6">
 
         <div class="line-row"><p>Andrej Karpathy</p><p>@karpathy</p><p>Jul 27</p></div>
-      
+
 </div>
 
 <div class="case" data-case="S7">
@@ -456,14 +456,14 @@
         <div class="css-bold"><span>one</span> <span>two</span></div>
         <div class="css-bold"><span>three</span>
           <span>four</span></div>
-      
+
 </div>
 
 <div class="case" data-case="S8">
 
         <div class="pre-wrap"><span>A caption line, then a picture.
 </span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='24' height='24' fill='%23165dcc'/%3E%3C/svg%3E" alt="a blue square" width="24" height="24"></div>
-      
+
 </div>
 
 <div class="case" data-case="L1">
@@ -488,7 +488,7 @@
             <p>And another paragraph in the same item.</p>
           </li>
         </ol>
-      
+
 </div>
 
 <div class="case" data-case="L2">
@@ -510,7 +510,7 @@
             <p>still a paragraph, not a listing</p>
           </li>
         </ul>
-      
+
 </div>
 
 <div class="case" data-case="C1">
@@ -521,13 +521,13 @@
 <span class="line-number">4</span>  return `${value}
 <span class="line-number">5</span>    stays indented`;
 <span class="line-number">6</span>}</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="C2">
 
         <pre><code data-lang="text">first	line<br>  second line<br><br>fourth after a blank line</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="C3">
@@ -537,7 +537,7 @@
   <span class="pl-c1">value</span><span class="pl-kos">:</span> <span class="pl-smi">T</span><span class="pl-kos">;</span>
 <span class="pl-kos">}</span></pre>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="C4">
@@ -548,7 +548,7 @@
         <pre><code class="language-js"></code><clipboard-copy value="const copied = true;">const copied = true;</clipboard-copy></pre>
         <pre><code data-lang="js
 ```">safe content, unsafe language hint</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="C5">
@@ -556,7 +556,7 @@
         <pre><figure><figcaption>python<button type="button">Copy</button></figcaption><code>def hello(name):
     print(f"Hello, {name}!")</code></figure></pre>
         <pre><figure><figcaption>Listing 1: the parser entry point</figcaption><code>parse(document)</code></figure></pre>
-      
+
 </div>
 
 <div class="case" data-case="C6">
@@ -565,7 +565,7 @@
 
 
 print(tf.__version__)</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="C7">
@@ -574,7 +574,7 @@ print(tf.__version__)</code></pre>
           <div class="code-head"><span>python</span><button type="button">Копировать</button></div>
           <pre><code>print("the language label is in the sibling div")</code></pre>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="T1">
@@ -596,7 +596,7 @@ print(tf.__version__)</code></pre>
             <tr><td><a href="/projects/gamma">Gamma</a></td><td><code>blocked</code></td><td>$900</td></tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T2">
@@ -609,7 +609,7 @@ print(tf.__version__)</code></pre>
           <tr><td></td><td style="text-align:center">Sam</td><td></td><td>Overflow column survives</td></tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T3">
@@ -624,7 +624,7 @@ print(tf.__version__)</code></pre>
             <tr><td>WebKit</td><td colspan="2">Partial in both</td></tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T4">
@@ -648,7 +648,7 @@ print(tf.__version__)</code></pre>
             </tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T5">
@@ -676,7 +676,7 @@ path\file | a &lt; b &amp; c
             </tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T6">
@@ -688,13 +688,13 @@ path\file | a &lt; b &amp; c
           <tr><td>&lt;button autofocus&gt;Pay&lt;/button&gt;</td><td>Displayed HTML tutorial text</td></tr>
           <tr><td><span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">P(A|B)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">P(A|B)</span></span></td><td>Conditional probability</td></tr>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T7">
 
         <table><caption>Maintenance window for &lt;table class="jobs"&gt;: Sunday 02:00 UTC</caption></table>
-      
+
 </div>
 
 <div class="case" data-case="T8">
@@ -703,7 +703,7 @@ path\file | a &lt; b &amp; c
           <tr><th>Address</th><th>Hours</th></tr>
           <tr><td>42 Example Street<br>Second floor</td><td>09:00<br>17:00</td></tr>
         </table>
-      
+
 </div>
 
 <div class="case holds-fixed" data-case="T9">
@@ -722,7 +722,7 @@ path\file | a &lt; b &amp; c
             <td><a href="https://example.com/account">Safe link</a> and <img src="avatar.png" alt="avatar image"></td>
           </tr>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="T10">
@@ -738,7 +738,7 @@ path\file | a &lt; b &amp; c
             </table>
           </td></tr>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="M1">
@@ -749,7 +749,7 @@ path\file | a &lt; b &amp; c
         <p><a href="tel:+15551234">telephone</a>, <a href="callto:reader">call app</a>, <a href="sms:+15551234">SMS</a>, and <a href="cid:part1@example.com">CID</a>.</p>
         <p><a href="xmpp:reader@example.com">XMPP</a> and <a href="matrix:u/reader:example.com">Matrix</a>.</p>
         <p><a>Anchor without a destination</a>, <a href="javascript:alert(1)">JavaScript target</a>, and <a href="data:text/html,<script>alert(1)</script>">data document</a>.</p>
-      
+
 </div>
 
 <div class="case" data-case="M2">
@@ -760,7 +760,7 @@ path\file | a &lt; b &amp; c
             <img src="images/hero.jpg" alt="Mountain lake at dawn" title="Open the gallery">
           </picture>
         </a>
-      
+
 </div>
 
 <div class="case" data-case="M3">
@@ -769,14 +769,14 @@ path\file | a &lt; b &amp; c
         <p><img srcset="photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w" alt="Responsive photograph"></p>
         <p><img src="data:image/png;base64,iVBORw0KGgo=" alt="Inline data image is valid for an image source"></p>
         <p><img alt="Fallback *alt* [text] <tag>"></p>
-      
+
 </div>
 
 <div class="case" data-case="M4">
 
         <img src="data:image/gif;base64,R0lGODlh" alt="News photograph">
         <noscript><img src="https://images.example.com/news/real.jpg" alt=""></noscript>
-      
+
 </div>
 
 <div class="case" data-case="M5">
@@ -786,7 +786,7 @@ path\file | a &lt; b &amp; c
         <p><img src="" alt="Empty source"></p>
         <p><img src=" " alt="Whitespace source"></p>
         <p><img data-src=" " src="images/hero.jpg" alt="Lazy attribute is blank, the real src wins"></p>
-      
+
 </div>
 
 <div class="case" data-case="M6">
@@ -795,7 +795,7 @@ path\file | a &lt; b &amp; c
         <p><a href="https://commonmark.org/"><img alt="" src="images/favicon.svg" width="12" height="12"><span>CommonMark</span></a></p>
         <p><img alt="" src="images/diagram.svg" width="180" height="72"></p>
         <p>An author who simply forgot: <img src="images/photo.jpg"></p>
-      
+
 </div>
 
 <div class="case" data-case="E1">
@@ -807,7 +807,7 @@ path\file | a &lt; b &amp; c
         <p>---</p>
         <p>*not emphasis* and _not emphasis_ and ~~not deleted~~.</p>
         <p>[not a link](https://example.com) and ![not an image](x.png).</p>
-      
+
 </div>
 
 <div class="case" data-case="E2">
@@ -816,7 +816,7 @@ path\file | a &lt; b &amp; c
         <p>&lt;form&gt;&lt;input autofocus&gt;&lt;button&gt;Pay&lt;/button&gt;&lt;/form&gt;</p>
         <p>Use &lt;!-- a comment --&gt; here, and this clause after it must survive.</p>
         <p>Entities as text: &amp;amp; &amp;copy; &amp;lt;div&amp;gt;.</p>
-      
+
 </div>
 
 <div class="case" data-case="E3">
@@ -825,7 +825,7 @@ path\file | a &lt; b &amp; c
         <p><span>[assembled</span><span> link]</span><span>(https://example.com)</span></p>
         <p><span>**assembled</span><span> bold**</span></p>
         <p><span>!</span><span>[assembled image]</span><span>(tracker.png)</span></p>
-      
+
 </div>
 
 <div class="case" data-case="E4">
@@ -835,7 +835,7 @@ path\file | a &lt; b &amp; c
           and source newlines collapse to visible spaces.</p>
         <p>Non-breaking&#160;space becomes an ordinary space.</p>
         <p>Comparisons need no backslash noise: a &lt; b, x &lt;= y, and Tom &amp; Jerry.</p>
-      
+
 </div>
 
 <div class="case" data-case="E5">
@@ -848,7 +848,7 @@ path\file | a &lt; b &amp; c
           <span> must still make one space.</span></p>
         <p><span>Neither side offers one</span><span>and they stay welded.</span></p>
         <p>A non-breaking&#160; space beside an ordinary one keeps both characters.</p>
-      
+
 </div>
 
 <div class="case" data-case="E6">
@@ -856,14 +856,14 @@ path\file | a &lt; b &amp; c
         <p><span>**two asterisks**</span><br><span># a hash at the start of a line</span><br><span>`backticks`</span></p>
         <p>plain text<br>&gt; a quote marker<br>- a bullet<br>1. numbering</p>
         <p>after a break<br><em># inside emphasis, where a backslash would show</em></p>
-      
+
 </div>
 
 <div class="case" data-case="E7">
 
         <p><img alt="spacer" width="1" height="1"># not a heading, behind a picture nobody saw</p>
         <p><img alt="spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1">- not a bullet, behind the same shape with an address</p>
-      
+
 </div>
 
 <div class="case" data-case="R1">
@@ -880,7 +880,7 @@ path\file | a &lt; b &amp; c
         <p style="text-indent:-10000px">TEXT_INDENT_PAYLOAD</p>
         <p class="standby-overlay">STANDBY_OVERLAY_PAYLOAD</p>
         <p>Visible end.</p>
-      
+
 </div>
 
 <div class="case" data-case="R2">
@@ -894,7 +894,7 @@ path\file | a &lt; b &amp; c
           <span>Visible descendant survives.</span>
           HIDDEN_SIBLING_TEXT
         </p>
-      
+
 </div>
 
 <div class="case" data-case="R3">
@@ -908,7 +908,7 @@ path\file | a &lt; b &amp; c
         <template>TEMPLATE_PAYLOAD</template>
         <svg width="150" height="24" viewBox="0 0 150 24" aria-label="SVG_PAYLOAD"><text x="0" y="17">SVG_PAYLOAD</text></svg>
         <p>After removed elements.</p>
-      
+
 </div>
 
 <div class="case" data-case="R4">
@@ -916,13 +916,13 @@ path\file | a &lt; b &amp; c
         <details><summary>Folded section</summary><p>FOLDED_BODY_PAYLOAD</p></details>
         <details><summary>Folded section with a list</summary><ul><li>FOLDED_ITEM_PAYLOAD</li></ul></details>
         <details open><summary>Open section</summary><p>An open body is on the screen and stays.</p></details>
-      
+
 </div>
 
 <div class="case" data-case="F1">
 
         <p>H<sub>2</sub>O; x<sup>n+1</sup>; a<sup>(i)</sup>; x<sup>ABC</sup>; x<sup>2q</sup>; x<sup>*</sup>.</p>
-      
+
 </div>
 
 <div class="case" data-case="F2">
@@ -944,7 +944,7 @@ path\file | a &lt; b &amp; c
             <span aria-hidden="true">∫₀∞ e⁻ˣ dx</span>
           </span>
         </span>
-      
+
 </div>
 
 <div class="case" data-case="F3">
@@ -958,7 +958,7 @@ path\file | a &lt; b &amp; c
           and
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x&lt;!--comment-shaped</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x less-than comment-shaped</span></span>
         </p>
-      
+
 </div>
 
 <div class="case" data-case="F4">
@@ -986,7 +986,7 @@ path\file | a &lt; b &amp; c
           Wikipedia, display:
           <math display="block" alttext="{\displaystyle \int_0^\infty e^{-x}\,dx=1}"><mi>∫</mi></math>
         </p>
-      
+
 </div>
 
 <div class="case" data-case="F5">
@@ -998,7 +998,7 @@ path\file | a &lt; b &amp; c
         <math display="block">
           <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow>
         </math>
-      
+
 </div>
 
 <div class="case" data-case="F6">
@@ -1015,7 +1015,7 @@ path\file | a &lt; b &amp; c
           A formula the page hid outright:
           <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">HIDDEN_FORMULA_PAYLOAD</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">hidden</span></span>
         </p>
-      
+
 </div>
 
 <div class="case" data-case="W1">
@@ -1032,7 +1032,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
             <li>a selector containing <code>[data-id="a|b"]</code>.</li>
           </ul>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="W2">
@@ -1048,7 +1048,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
           </tbody>
         </table>
         <p id="source-1">Sources differ on how typing disciplines are classified.</p>
-      
+
 </div>
 
 <div class="case" data-case="W3">
@@ -1066,7 +1066,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
             <dt>SKU</dt><dd><code>RUN-42-BLU</code></dd>
           </dl>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="W4">
@@ -1085,7 +1085,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
             </li>
           </ol>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="W5">
@@ -1101,7 +1101,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
         </div>
         <p>And the level below it keeps its distance.</p>
         <div>A heading truly inside a sentence is the other case: x<h2 style="display:inline">not a heading</h2>y stays one line. A parser closes a <code>p</code> before an <code>h2</code>, so this one is a <code>div</code>.</div>
-      
+
 </div>
 
 <div class="case" data-case="W6">
@@ -1121,7 +1121,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
           <p>Second bolded paragraph.</p>
           <h3>A heading inside is bold already</h3>
         </div>
-      
+
 </div>
 
 <div class="case" data-case="W7">
@@ -1139,7 +1139,7 @@ const values = Array.from(elements, el =&gt; el.textContent);</code></pre>
             <tr><td>0.80</td><td>1.28</td><td></td><td>0.999</td><td>3.29</td></tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="W8">
@@ -1149,7 +1149,7 @@ public class Seat {
     private Long id;
 }</code><div class="code-explainer"><a href="https://example.com/explain" class="tm-button">Explain with<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="60" height="12"></a></div></pre>
         <pre><code>see <a href="https://example.com/docs">the docs</a> for the flags</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="Q1">
@@ -1162,7 +1162,7 @@ public class Seat {
         </article>
         <aside><p>ARTICLE_ASIDE_CHROME</p></aside>
         <footer><p>ARTICLE_FOOTER_CHROME</p></footer>
-      
+
 </div>
 
 <div class="case" data-case="Q2">
@@ -1176,7 +1176,7 @@ public class Seat {
           </tbody>
         </table>
         <p>This paragraph is the selection endpoint after the table.</p>
-      
+
 </div>
 
 <div class="case" data-case="Q3">
@@ -1186,7 +1186,7 @@ public class Seat {
   for (const item of items) result += item.price;
   return result;
 }</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="Q4">
@@ -1196,7 +1196,7 @@ public class Seat {
           <li>Eighth item is where the selection begins.</li>
           <li>Ninth item is where the selection ends.</li>
         </ol>
-      
+
 </div>
 
 <div class="case" data-case="Q5">
@@ -1207,13 +1207,13 @@ Second caption line
 Fourth line after an empty line</span></p>
         <pre><code>shell-command \
   --continuation</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="Q6">
 
         <test-conversion-shadow></test-conversion-shadow>
-      
+
 </div>
 
 <div class="case" data-case="Q7">
@@ -1221,7 +1221,7 @@ Fourth line after an empty line</span></p>
         <p><strong>[Range A]</strong> First disconnected paragraph.</p>
         <p><strong>[Range B]</strong> This paragraph should remain unselected.</p>
         <p><strong>[Range C]</strong> Third disconnected paragraph.</p>
-      
+
 </div>
 
 <div class="case" data-case="Q8">
@@ -1236,14 +1236,14 @@ Fourth line after an empty line</span></p>
           <tr><td>mode</td><td>highlighter</td></tr>
         </table>
         <pre><code class="language-bash">echo "highlighter target"</code></pre>
-      
+
 </div>
 
 <div class="case" data-case="Q9">
 
         <p>The first paragraph contains several ordinary words before the selection endpoint.</p>
         <p>The second paragraph contains several ordinary words after the selection endpoint.</p>
-      
+
 </div>
 
 <div class="case" data-case="Q10">
@@ -1257,7 +1257,7 @@ Fourth line after an empty line</span></p>
           <tr><th>One cell target</th><th>Neighbor</th></tr>
           <tr><td>Select only these words</td><td>Do not include this cell</td></tr>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="Q11">
@@ -1277,14 +1277,14 @@ Fourth line after an empty line</span></p>
             <tr><td>Emacs</td><td>chords</td></tr>
           </tbody>
         </table>
-      
+
 </div>
 
 <div class="case" data-case="Q12">
 
         <p class="css-bold">Cleanup sentinel with captured CSS formatting.</p>
         <p>Second sentinel with literal &lt;span&gt; text.</p>
-      
+
 </div>
 
 <div class="case" data-case="K1">
@@ -1293,14 +1293,14 @@ Fourth line after an empty line</span></p>
           <img src="diagram.png" alt="Architecture diagram">
           <figcaption>Services and message flow.</figcaption>
         </figure>
-      
+
 </div>
 
 <div class="case" data-case="K2">
 
         <details open><summary>Deployment notes</summary>Restart the worker after changing secrets.</details>
         <address>One</address><address>Two</address>
-      
+
 </div>
 
 <div class="case" data-case="K3">
@@ -1308,7 +1308,7 @@ Fourth line after an empty line</span></p>
         <p>a_<em>b</em>_c and a*<strong>b</strong>*c</p>
         <p>word<i>**</i>tail</p>
         <p>adjacent <em>one</em><em>two</em> emphasis</p>
-      
+
 </div>
 
 <div class="case" data-case="K4">
@@ -1317,38 +1317,38 @@ Fourth line after an empty line</span></p>
         <p>An <span style="background-color: #fde68a">inline fill</span> and a <span class="hl-class">class-stated fill</span>, which is what an editor's highlighter button writes.</p>
         <p>A <span class="hl-image">textured run</span> is a decoration and no mark; so is a run filled <span style="background-color: transparent">with nothing at all</span>.</p>
         <div class="hl-card">A painted block is a card, not a marked phrase.</div>
-      
+
 </div>
 
 <div class="case" data-case="K5">
 
         <p>A factual claim.<sup><a href="#note-7">[7]</a></sup></p>
         <p id="note-7">7. Example source.</p>
-      
+
 </div>
 
 <div class="case" data-case="K6">
 
         <section>Section</section><article>Article</article><form>Form</form><fieldset><legend>Legend</legend>Field</fieldset>
-      
+
 </div>
 
 <div class="case" data-case="K7">
 
         <p>Developers followed the original <span class="mono-chip">Markdown.pl</span>, and <span class="mono-chip">commonmark.py</span> is deprecated.</p>
-      
+
 </div>
 
 <div class="case" data-case="K8">
 
         <p>It also includes a conformance test suite.<span class="drawn-gap"></span><a href="https://commonmark.org/">commonmark</a></p>
-      
+
 </div>
 
 <div class="case" data-case="K9">
 
         <div style="font-weight:700"><span style="font-weight:400">not bold on screen</span> and this part is</div>
-      
+
 </div>
 </main>
 <script>void "SCRIPT_PAYLOAD";</script>

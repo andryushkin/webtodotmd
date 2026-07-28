@@ -42,7 +42,11 @@ const cases = Array.from(document.querySelectorAll('article.case')).map((article
   const subject = article.querySelector('.subject');
   const holdsFixed = subject?.classList.contains('holds-fixed') ? ' holds-fixed' : '';
   const plain = subject?.classList.contains('plain-semantics') ? ' plain-semantics' : '';
-  return `<div class="case${holdsFixed}${plain}" data-case="${label}">\n${subject?.innerHTML ?? ''}\n</div>`;
+  // The subject's markup is indented inside the spec page, so its last line ends
+  // in the indentation of the closing tag — trailing whitespace the audit's
+  // `git diff --check` reads as a defect in every regenerated fixture.
+  const inner = (subject?.innerHTML ?? '').replace(/[ \t]+$/gm, '');
+  return `<div class="case${holdsFixed}${plain}" data-case="${label}">\n${inner}\n</div>`;
 });
 
 const page = `<!doctype html>
