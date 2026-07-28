@@ -34,7 +34,12 @@
   }
   body > header h1 { margin: 0 0 .5rem; font-size: clamp(1.8rem, 4vw, 3rem); }
   body > header p { max-width: 72ch; margin: 0; color: #d8e4fa; }
-  nav {
+  /* `body >`, because a bare `nav` is chrome styling a subject: Q1 holds a
+     `<nav>` of its own, and the sticky flex row this rule draws is not the plain
+     block that case means to convert. The compact page copies these styles and
+     has no navigation at all, so there the bare selector reached nothing but the
+     subject. Every wrapper rule here is anchored for that reason. */
+  body > nav {
     position: sticky;
     z-index: 2;
     top: 0;
@@ -45,7 +50,7 @@
     background: rgba(255, 255, 255, .96);
     border-bottom: 1px solid var(--line);
   }
-  nav a {
+  body > nav a {
     flex: none;
     padding: .35rem .65rem;
     color: var(--blue);
@@ -203,7 +208,8 @@
   .headerlink { opacity: 0; }
   h1:hover .headerlink,
   h2:hover .headerlink,
-  h3:hover .headerlink { opacity: 1; }
+  h3:hover .headerlink,
+  .headerlink:focus-visible { opacity: 1; }
   /* S4: an inline thing given a box of its own inside a flex row — a mention, a
      tag, a badge. The row is the only reason the words share a line, and the
      column holding one item stacks nothing. */
