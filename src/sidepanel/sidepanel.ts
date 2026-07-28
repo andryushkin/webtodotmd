@@ -39,6 +39,7 @@ const txtMenu = document.getElementById('txt-menu') as HTMLDivElement;
 const btnCopyTxt = document.getElementById('btn-copy-txt') as HTMLButtonElement;
 const btnDownloadTxt = document.getElementById('btn-download-txt') as HTMLButtonElement;
 const btnEditmd = document.getElementById('btn-editmd') as HTMLButtonElement;
+const btnObsidian = document.getElementById('btn-obsidian') as HTMLButtonElement;
 const btnCopyHtml = document.getElementById('btn-copy-html') as HTMLButtonElement;
 const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
 const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
@@ -389,6 +390,19 @@ function showCopyHtmlButton(on: boolean) {
   updateToolbarDensity();
 }
 
+/**
+ * Whether the Obsidian hand-off is offered.
+ *
+ * On by default, unlike Copy HTML: Obsidian is where a lot of these notes are
+ * going. It is a setting all the same, because a reader who does not have it
+ * installed gets nothing from a button that opens a scheme nothing handles — and
+ * `obsidian://` cannot be probed, so only they can say.
+ */
+function showObsidianButton(on: boolean) {
+  btnObsidian.hidden = !on;
+  updateToolbarDensity();
+}
+
 function updateUndoRedoButtons() {
   btnUndo.disabled = undoStack.length === 0;
   btnRedo.disabled = redoStack.length === 0;
@@ -401,6 +415,7 @@ function updateButtonStates() {
   btnTxtMenu.disabled = !hasContent;
   if (!hasContent) closeTxtMenu();
   btnEditmd.disabled = !hasContent;
+  btnObsidian.disabled = !hasContent;
   // Its own content, not the note's: hand-typed Markdown has no markup behind
   // it, and a capture made before the setting was turned on has none either.
   const hasReport = rawHtml.length > 0;
@@ -774,32 +789,51 @@ btnDownloadTxt.addEventListener('click', async () => {
 // Send to EditMD: clipboard carries the body (URL length is capped),
 // the editmd://new URL carries only the file name — same handoff as
 // the Obsidian Web Clipper's obsidian://new?...&clipboard.
-btnEditmd.addEventListener('click', async () => {
+/**
+ * One hand-off, for both editors: the note goes to the clipboard and the scheme
+ * URL carries only the file name.
+ *
+ * Both apps read `&clipboard` the same way, so the two buttons differ in the
+ * scheme, the event and the two messages, and nothing else. Written once because
+ * the failure handling below is the part that is easy to get wrong.
+ */
+async function handOffToEditor(
+  scheme: string,
+  event: string,
+  openingKey: string,
+  errorKey: string,
+) {
   if (!rawMd) return;
   // The clipboard carries the note, so a refused write is a failed hand-off:
-  // stop before opening EditMD on an empty clipboard.
+  // stop before opening the editor on an empty clipboard.
   if (!await copyToClipboard(rawMd)) return;
-  const url = `editmd://new?file=${encodeURIComponent(safeFilename(''))}&clipboard`;
+  const url = `${scheme}://new?file=${encodeURIComponent(safeFilename(''))}&clipboard`;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) throw new Error('NO_TAB');
     await chrome.tabs.update(tab.id, { url });
   } catch {
     // A non-null return only means a browsing context was created — the URL is
-    // loaded asynchronously, so it says nothing about whether editmd:// has a
+    // loaded asynchronously, so it says nothing about whether the scheme has a
     // handler. null mostly means the window was blocked outright; report that,
     // but don't read the other branch as "it arrived".
     if (!window.open(url)) {
-      setTempStatus(t('errEditmdOpen'), 'error', 'x');
+      setTempStatus(t(errorKey), 'error', 'x');
       return;
     }
   }
-  trackEvent('send_editmd');
+  trackEvent(event);
   incrementActionCount();
   // Chrome never tells us whether the scheme was handled, so the status claims
   // only what we know: the handoff was started.
-  setTempStatus(t('openingEditmd'), 'default', 'send', 2000);
-});
+  setTempStatus(t(openingKey), 'default', 'send', 2000);
+}
+
+btnEditmd.addEventListener('click', () =>
+  handOffToEditor('editmd', 'send_editmd', 'openingEditmd', 'errEditmdOpen'));
+
+btnObsidian.addEventListener('click', () =>
+  handOffToEditor('obsidian', 'send_obsidian', 'openingObsidian', 'errObsidianOpen'));
 
 // A debugging aid: the markup behind the last capture, for a bug report that can
 // be reproduced without the page. No telemetry and no action count — it is not
@@ -838,9 +872,15 @@ function applyButtonLabels() {
   btnTxtMenu.setAttribute('aria-label', t('tooltipTxtMenu'));
   btnCopyTxt.innerHTML = icon('copy', 14) + `<span class="btn-label">${escHtml(t('tooltipCopyTxt'))}</span>`;
   btnDownloadTxt.innerHTML = icon('download', 14) + `<span class="btn-label">${escHtml(t('tooltipDownloadTxt'))}</span>`;
-  setButtonContent(btnEditmd, 'send', 'EditMD');
-  // The visible label is the brand alone; name the action for assistive tech.
+  // The whole button is the word `.md` — the file this extension writes, which is
+  // what the hand-off is about, and short enough that the toolbar keeps a row it
+  // used to lose to "EditMD" in the longer locales. The brand is in the tooltip
+  // and the accessible name instead.
+  btnEditmd.innerHTML = '<span class="btn-glyph">.md</span>';
   btnEditmd.setAttribute('aria-label', t('tooltipSendEditmd'));
+  setButtonContent(btnObsidian, 'obsidian', 'Obsidian');
+  // The visible label is the brand alone; name the action for assistive tech.
+  btnObsidian.setAttribute('aria-label', t('tooltipSendObsidian'));
   setButtonContent(btnCopyHtml, 'fileText', t('copyHtml'));
   setButtonContent(btnClear, 'trash', t('clear'));
   btnPreviewTab.innerHTML = icon('eye', 12) + `<span class="btn-label">${escHtml(t('preview'))}</span>`;
@@ -901,6 +941,7 @@ async function init() {
   attachStatusTooltip(btnDownload, 'tooltipDownloadMd');
   attachStatusTooltip(btnTxtMenu, 'tooltipTxtMenu');
   attachStatusTooltip(btnEditmd, 'tooltipSendEditmd');
+  attachStatusTooltip(btnObsidian, 'tooltipSendObsidian');
   attachStatusTooltip(btnCopyHtml, 'tooltipCopyHtml');
   attachStatusTooltip(btnClear, 'tooltipClear');
   attachStatusTooltip(btnHighlighter, 'tooltipHighlighter');
@@ -916,6 +957,7 @@ async function init() {
 
   autoMetadata = settings.autoMetadata;
   showCopyHtmlButton(settings.copyHtmlButton);
+  showObsidianButton(settings.obsidianButton);
   setViewMode(settings.defaultViewMode);
   updateButtonStates();
   updateUndoRedoButtons();
@@ -939,6 +981,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     if (s) {
       autoMetadata = s.autoMetadata ?? false;
       showCopyHtmlButton(s.copyHtmlButton === true);
+      showObsidianButton(s.obsidianButton !== false);
       const newLang = s.uiLanguage ?? 'en';
       const oldLang = changes.settings.oldValue?.uiLanguage ?? 'en';
       if (newLang !== oldLang) {

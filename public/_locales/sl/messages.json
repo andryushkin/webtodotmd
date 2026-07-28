@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD ni bilo mogoče odpreti."
   },
+  "errObsidianOpen": {
+    "message": "Obsidiana ni bilo mogoče odpreti.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Kopiranje v odložišče ni uspelo."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Ohrani zapletene tabele kot HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Pokaži gumb Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Dodaj gumb za kopiranje zajetega HTML-ja",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Pošlji v EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Pošlji v Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Kopiraj zajeti HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Odpiranje EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Odpiranje v Obsidianu…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD:tä ei voitu avata."
   },
+  "errObsidianOpen": {
+    "message": "Obsidiania ei voitu avata.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Leikepöydälle kopiointi epäonnistui."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Säilytä monimutkaiset taulukot HTML-muodossa"
+  },
+  "labelObsidianButton": {
+    "message": "Näytä Obsidian-painike",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Lisää painike siepatun HTML:n kopioimiseen",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Lähetä EditMD:hen"
   },
+  "tooltipSendObsidian": {
+    "message": "Lähetä Obsidianiin",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Kopioi siepattu HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Avataan EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Avataan Obsidianissa…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

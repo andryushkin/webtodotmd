@@ -303,6 +303,13 @@ after the toolbar is already on screen. The node always exists, so no call site
 needs a guard, and `updateToolbarDensity()` skips children with no
 `offsetParent` so a hidden button cannot be mistaken for the top row.
 
+Two more are settings-conditional in the same way — **Obsidian**, on by default,
+and **Copy HTML**, off — and revealing or hiding either re-measures the toolbar,
+because a button arriving in a row that already fitted wraps it. Both editor
+hand-offs go through one `handOffToEditor()`: the note to the clipboard, then
+`scheme://new?file=…&clipboard`, and the same reading of what Chrome does and
+does not tell us about whether the scheme had a handler.
+
 ## i18n
 
 `public/_locales/` holds 52 locale directories, and the manifest name and

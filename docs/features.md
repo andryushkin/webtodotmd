@@ -52,7 +52,9 @@ with undo/redo history.
 | Copy | Copies the raw Markdown to the clipboard |
 | Download | Saves a `.md` file, named after the page title |
 | `.txt` menu | Copy or download the same content with Markdown syntax stripped |
-| EditMD | Hands the note to the EditMD editor via the `editmd://` scheme — macOS only, the button is hidden elsewhere |
+| `.md` | Hands the note to the EditMD editor via the `editmd://` scheme — macOS only, the button is hidden elsewhere. Its whole label is `.md`; the app's name is in the tooltip |
+| Obsidian | Hands the note to Obsidian via `obsidian://new?…&clipboard` — the note travels in the clipboard, the URL carries only the file name. On by default, switched off in Settings |
+| Copy HTML | Copies the markup the last capture was handed, for a bug report. Off by default (Settings) |
 | Clear | Empties the panel and resets history |
 | Undo / Redo | Step through edit history |
 
@@ -187,6 +189,7 @@ the text.
 | Show floating bubble | toggle | on | Show the "add to .md" button near selections |
 | Keep complex tables as HTML | toggle | off | Emit an HTML table for merged cells, nested tables and preformatted cells instead of flattening them into the pipe form |
 | Default view mode | Preview / Source | Preview | View mode when the panel opens |
+| Show the Obsidian button | toggle | on | Offer the Obsidian hand-off in the toolbar. A setting rather than a probe: `obsidian://` cannot be tested for a handler, so a reader without the app is the only one who can say |
 | Add a button to copy the captured HTML | toggle | off | Add a toolbar button that copies the markup the conversion was given — the selection with its style snapshot. It is a debugging aid, not part of the document: it copies the last capture alone, and while the setting is off the capture does not build the markup at all |
 | Highlight color | color | `#0066cc` | Highlighter mode outline and fill |
 | Language | 22 choices + Auto | English | Interface language |
@@ -210,7 +213,7 @@ button is disabled and the status bar explains why.
 Page content is converted in the content script and never leaves the browser —
 there is no backend to receive it. The one network call is an anonymous usage
 counter: a random install ID and an event name (`copy`, `download_md`,
-`send_editmd`, a rating value) sent to `2md.site`. No URLs, no page content, no
+`send_editmd`, `send_obsidian`, a rating value) sent to `2md.site`. No URLs, no page content, no
 personal data. See [privacy-policy.html](../privacy-policy.html).
 
 The rendered preview is sanitized with DOMPurify, and HTML tags found in captured

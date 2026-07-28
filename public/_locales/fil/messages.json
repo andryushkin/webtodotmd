@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Hindi mabuksan ang EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Hindi mabuksan ang Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Hindi makopya sa clipboard."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Panatilihin ang mga kumplikadong talahanayan bilang HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Ipakita ang button ng Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Magdagdag ng button para kopyahin ang nakuhang HTML",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Ipadala sa EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Ipadala sa Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Kopyahin ang nakuhang HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Binubuksan ang EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Binubuksan sa Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

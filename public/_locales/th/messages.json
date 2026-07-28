@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "ไม่สามารถเปิด EditMD ได้"
   },
+  "errObsidianOpen": {
+    "message": "เปิด Obsidian ไม่ได้",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "คัดลอกไปยังคลิปบอร์ดไม่สำเร็จ"
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "คงตารางที่ซับซ้อนไว้เป็น HTML"
+  },
+  "labelObsidianButton": {
+    "message": "แสดงปุ่ม Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "เพิ่มปุ่มสำหรับคัดลอก HTML ที่จับได้",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "ส่งไปยัง EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "ส่งไปยัง Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "คัดลอก HTML ที่จับได้",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "กำลังเปิด EditMD…"
+  },
+  "openingObsidian": {
+    "message": "กำลังเปิดใน Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

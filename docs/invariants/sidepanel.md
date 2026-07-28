@@ -88,6 +88,16 @@ file is given.
   exception on purpose: the base status is *about* that button — readiness, the
   restricted tab, the highlight count — so a tooltip there trades more useful text
   for less.
+- The two editor hand-offs go through one `handOffToEditor()`, differing only in
+  the scheme, the event and two messages. The note travels in the clipboard and
+  the URL carries the file name alone, so a refused clipboard write has to stop
+  the hand-off *before* the scheme is opened — the editor would otherwise open on
+  whatever was in the clipboard before. Chrome never says whether a scheme had a
+  handler, so the status claims only that the hand-off was started.
+- EditMD's whole button is the word `.md`, in a `.btn-glyph` rather than a
+  `.btn-label`: the compact toolbar drops labels, and dropping this one would
+  leave an empty button. Same shape as `#btn-txt-menu`, which keeps its `.txt`
+  and drops its icon instead.
 - The hover names and the accessible names are written in `applyButtonLabels()`,
   never as attributes in `sidepanel.html`. Six of them lived there as English
   `title`s and stayed English in all 52 locales; anything set in the HTML also

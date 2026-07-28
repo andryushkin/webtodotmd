@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD തുറക്കാനായില്ല."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian തുറക്കാനായില്ല.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്താനായില്ല."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "സങ്കീർണ്ണ പട്ടികകൾ HTML ആയി നിലനിർത്തുക"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian ബട്ടൺ കാണിക്കുക",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "പകർത്തിയ HTML കോപ്പി ചെയ്യാൻ ബട്ടൺ ചേർക്കുക",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD-ലേക്ക് അയയ്ക്കുക"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian-ലേക്ക് അയയ്ക്കൂ",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "പകർത്തിയ HTML കോപ്പി ചെയ്യൂ",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD തുറക്കുന്നു…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian-ൽ തുറക്കുന്നു…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

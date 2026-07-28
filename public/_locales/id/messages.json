@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Tidak dapat membuka EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Tidak dapat membuka Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Tidak dapat menyalin ke papan klip."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Pertahankan tabel kompleks sebagai HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Tampilkan tombol Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Tambahkan tombol untuk menyalin HTML yang diambil",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Kirim ke EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Kirim ke Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Salin HTML yang diambil",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Membuka EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Membuka di Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

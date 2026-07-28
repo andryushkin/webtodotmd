@@ -14,18 +14,18 @@
       <h2 data-i18n="sectionCapture">Capture</h2>
 
       <label class="setting">
-        <input type="checkbox" id="auto-metadata">
         <span data-i18n="labelAutoMetadata">Auto-add metadata on capture</span>
+        <input type="checkbox" class="switch" id="auto-metadata">
       </label>
 
       <label class="setting">
-        <input type="checkbox" id="show-bubble">
         <span data-i18n="labelShowBubble">Show floating bubble on selection</span>
+        <input type="checkbox" class="switch" id="show-bubble">
       </label>
 
       <label class="setting">
-        <input type="checkbox" id="html-tables">
         <span data-i18n="labelHtmlTables">Keep complex tables as HTML</span>
+        <input type="checkbox" class="switch" id="html-tables">
       </label>
     </section>
 
@@ -33,8 +33,13 @@
       <h2 data-i18n="sectionDisplay">Display</h2>
 
       <label class="setting">
-        <input type="checkbox" id="copy-html">
+        <span data-i18n="labelObsidianButton">Show the Obsidian button</span>
+        <input type="checkbox" class="switch" id="obsidian-button">
+      </label>
+
+      <label class="setting">
         <span data-i18n="labelCopyHtml">Add a button to copy the captured HTML</span>
+        <input type="checkbox" class="switch" id="copy-html">
       </label>
 
       <div class="setting">

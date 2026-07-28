@@ -478,12 +478,21 @@ span[data-display='1'] {
   display: none;
 }
 
+/* A button whose whole content is a word: `.md` for the EditMD hand-off. Not a
+   `.btn-label`, deliberately — the compact toolbar drops those, and this one is
+   the button, the way `#btn-txt-menu` keeps its `.txt` and drops its icon. */
+.btn-glyph {
+  font-weight: 600;
+  font-size: 12px;
+}
+
 /* The EditMD button is hidden off macOS, and the Copy HTML button until the
    debugging setting asks for it (both in sidepanel.ts). `.btn` sets
    display: inline-flex, which beats the UA [hidden] rule — so state it here,
    the way .txt-menu[hidden] below does. The same trap already made a hidden
    view tab stay on screen, with the setting that reveals it looking dead. */
 #btn-editmd[hidden],
+#btn-obsidian[hidden],
 #btn-copy-html[hidden] {
   display: none;
 }

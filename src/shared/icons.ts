@@ -96,6 +96,15 @@ const PATHS: Record<string, string> = {
     '<path d="m22 2-7 20-4-9-9-4Z"/>' +
     '<path d="M22 2 11 13"/>',
 
+  // A faceted crystal — the shape of the Obsidian mark, drawn in the same
+  // stroke-only style as every other icon here rather than copied from the
+  // brand's artwork, which is theirs and is not monochrome.
+  obsidian:
+    '<path d="M13.5 2.2 6.5 6.6v10.8l6.2 4.4 4.8-4.4V7.6z"/>' +
+    '<path d="M13.5 2.2 11.4 9.4l6-1.8"/>' +
+    '<path d="M11.4 9.4 6.5 6.6"/>' +
+    '<path d="M11.4 9.4v12.4"/>',
+
   calendar:
     '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>' +
     '<line x1="16" y1="2" x2="16" y2="6"/>' +

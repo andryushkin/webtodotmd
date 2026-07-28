@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD ஐத் திறக்க முடியவில்லை."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian-ஐத் திறக்க முடியவில்லை.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "கிளிப்போர்டுக்கு நகலெடுக்க முடியவில்லை."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "சிக்கலான அட்டவணைகளை HTML ஆக வைத்திரு"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian பொத்தானைக் காட்டு",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "பிடிக்கப்பட்ட HTML-ஐ நகலெடுக்க பொத்தானைச் சேர்",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD-க்கு அனுப்பு"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian-க்கு அனுப்பு",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "பிடிக்கப்பட்ட HTML-ஐ நகலெடு",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD திறக்கப்படுகிறது…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian-ல் திறக்கிறது…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

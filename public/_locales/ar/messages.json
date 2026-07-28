@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "تعذّر فتح EditMD."
   },
+  "errObsidianOpen": {
+    "message": "تعذّر فتح Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "تعذّر النسخ إلى الحافظة."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "الإبقاء على الجداول المعقّدة بصيغة HTML"
+  },
+  "labelObsidianButton": {
+    "message": "إظهار زر Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "إضافة زر لنسخ HTML الملتقط",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "إرسال إلى EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "إرسال إلى Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "نسخ HTML الملتقط",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "جارٍ فتح EditMD…"
+  },
+  "openingObsidian": {
+    "message": "جارٍ الفتح في Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

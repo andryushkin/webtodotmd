@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Kunne ikke åpne EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Kunne ikke åpne Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Kunne ikke kopiere til utklippstavlen."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Behold komplekse tabeller som HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Vis Obsidian-knappen",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Legg til en knapp for å kopiere den fangede HTML-en",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Send til EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Send til Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Kopier den fangede HTML-en",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Åpner EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Åpner i Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

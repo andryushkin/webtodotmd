@@ -39,6 +39,7 @@
 | Any occurrence of `URL` | `URL` | Universal abbreviation. |
 | `✓` symbol in `toastCopied` | `✓` | Keep as-is. |
 | Any occurrence of `EditMD` | `EditMD` | Product name of a separate app. Never transliterate. |
+| Any occurrence of `Obsidian` | `Obsidian` | Product name of a separate app. Never transliterate, and never translate it as the stone. |
 
 ### 2.2 Placeholder `{1}`
 The token `{1}` is a runtime substitution (a number). It MUST remain exactly as `{1}` in every locale. Position it where natural for the target language's word order.
@@ -364,6 +365,13 @@ Errors are shown in the status bar or as inline messages. They should be:
 | **Cause** | The `editmd://` hand-off was refused by the browser; usually EditMD is not installed. |
 | **Adaptation** | Keep `EditMD` untranslated. Calm and factual — do not add "install it first", the extension cannot tell whether it is installed. |
 
+#### `errObsidianOpen`
+| | |
+|---|---|
+| **EN** | `Could not open Obsidian.` |
+| **Constraint** | ≤ 35 chars. Keep `Obsidian` untranslated. |
+| **Adaptation** | Same wording as `errEditmdOpen`. The extension cannot tell whether Obsidian is installed, so do not say it is not. |
+
 ---
 
 ### 3.8 Success Messages
@@ -391,6 +399,13 @@ Errors are shown in the status bar or as inline messages. They should be:
 | **Where** | Status bar, right after Send to EditMD |
 | **Constraint** | ≤ 25 chars. Keep the trailing `…` (U+2026). |
 | **Adaptation** | Keep `EditMD` untranslated. Present progressive: the hand-off was started, and the extension never learns whether it arrived, so do not phrase it as completed ("Opened"). |
+
+#### `openingObsidian`
+| | |
+|---|---|
+| **EN** | `Opening in Obsidian…` |
+| **Constraint** | ≤ 30 chars. Keep `Obsidian` untranslated. Keep the `…`. |
+| **Adaptation** | Same tense and shape as `openingEditmd` — started, not finished. |
 
 ---
 
@@ -495,6 +510,15 @@ Settings appear on a dedicated `options.html` page. Labels can be longer. Use na
 | **Constraint** | ≤ 45 chars. Keep `HTML` untranslated. |
 | **Adaptation** | Says a button appears, not that a view opens — it was a third panel view until 1.4.9 and the wording is what tells the two apart. Use the same copy verb as `copyHtml`. |
 
+#### `labelObsidianButton`
+| | |
+|---|---|
+| **EN** | `Show the Obsidian button` |
+| **Where** | Checkbox/toggle label, Display section |
+| **Function** | Reveals the toolbar button that hands the note to Obsidian. On by default |
+| **Constraint** | ≤ 40 chars. Keep `Obsidian` untranslated. |
+| **Adaptation** | Plain "show the … button". The reader turns it off because they do not use Obsidian, not because of what it does. |
+
 #### `labelDefaultView`
 | | |
 |---|---|
@@ -584,6 +608,14 @@ So they must say what the button *does*, never repeat the icon.
 | **Where** | The EditMD button, whose visible label is the bare brand name |
 | **Constraint** | ≤ 30 chars. Keep `EditMD` untranslated. |
 | **Adaptation** | Names the action the brand alone does not. macOS-only button, absent on other platforms — still translate it. |
+
+#### `tooltipSendObsidian`
+| | |
+|---|---|
+| **EN** | `Send to Obsidian` |
+| **Where** | The Obsidian button, whose visible label is the bare brand name |
+| **Constraint** | ≤ 30 chars. Keep `Obsidian` untranslated. |
+| **Adaptation** | Same verb as `tooltipSendEditmd` in this locale — the two buttons do the same thing to two apps. |
 
 #### `tooltipCopyHtml`
 | | |
@@ -687,7 +719,7 @@ times, asking for a Web Store review.
 Before delivering a locale file, the translator (human or LLM) must verify:
 
 - [ ] `appName` is exactly `to .md` (not translated)
-- [ ] `Markdown`, `.md`, `PDF`, `URL`, `HTML`, `EditMD` are NOT translated
+- [ ] `Markdown`, `.md`, `PDF`, `URL`, `HTML`, `EditMD`, `Obsidian` are NOT translated
 - [ ] `{1}` placeholder is present and correctly positioned
 - [ ] `✓` is present in `toastCopied`
 - [ ] No string exceeds its character constraint by more than 20%

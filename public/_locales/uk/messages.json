@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Не вдалося відкрити EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Не вдалося відкрити Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Не вдалося скопіювати в буфер обміну."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Зберігати складні таблиці як HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Показувати кнопку Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Додати кнопку для копіювання вихідного HTML",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Надіслати в EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Надіслати в Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Копіювати вихідний HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Відкриваємо EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Відкриваємо в Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

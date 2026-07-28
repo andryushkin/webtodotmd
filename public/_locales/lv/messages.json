@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Neizdevās atvērt EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Nevarēja atvērt Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Neizdevās nokopēt starpliktuvē."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Saglabāt sarežģītas tabulas kā HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Rādīt Obsidian pogu",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Pievienot pogu tvertā HTML kopēšanai",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Sūtīt uz EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Sūtīt uz Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Kopēt tverto HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Tiek atvērts EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Atver Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

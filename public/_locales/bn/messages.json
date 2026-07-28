@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD খোলা যায়নি।"
   },
+  "errObsidianOpen": {
+    "message": "Obsidian খোলা যায়নি।",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "ক্লিপবোর্ডে কপি করা যায়নি।"
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "জটিল টেবিল HTML হিসেবে রাখুন"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian বোতাম দেখান",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "ক্যাপচার করা HTML কপি করার বোতাম যোগ করুন",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD-তে পাঠান"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian-এ পাঠান",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "ক্যাপচার করা HTML কপি করুন",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD খোলা হচ্ছে…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian-এ খোলা হচ্ছে…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

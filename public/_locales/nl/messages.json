@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Kan EditMD niet openen."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian kon niet worden geopend.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Kopiëren naar het klembord is mislukt."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Complexe tabellen als HTML behouden"
+  },
+  "labelObsidianButton": {
+    "message": "De Obsidian-knop tonen",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Een knop toevoegen om de vastgelegde HTML te kopiëren",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Verzenden naar EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Naar Obsidian sturen",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Vastgelegde HTML kopiëren",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD wordt geopend…"
+  },
+  "openingObsidian": {
+    "message": "Wordt geopend in Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

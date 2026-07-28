@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD를 열 수 없습니다."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian을 열 수 없습니다.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "클립보드에 복사하지 못했습니다."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "복잡한 표를 HTML로 유지"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian 버튼 표시",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "캡처한 HTML을 복사하는 버튼 추가",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD로 보내기"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian으로 보내기",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "캡처한 HTML 복사",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD 여는 중…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian에서 여는 중…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

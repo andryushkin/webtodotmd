@@ -23,6 +23,15 @@ export interface Settings {
    * not earn a tab beside the preview and the source.
    */
   copyHtmlButton: boolean;
+  /**
+   * Offer the Obsidian hand-off in the toolbar.
+   *
+   * On by default — it is where a lot of these notes are going, and the hand-off
+   * is the same clipboard-plus-scheme one EditMD gets. A setting all the same:
+   * `obsidian://` cannot be probed for a handler, so a reader without the app
+   * would have a button that does nothing and no way to remove it.
+   */
+  obsidianButton: boolean;
   uiLanguage: string;
 }
 
@@ -33,6 +42,7 @@ const DEFAULTS: Settings = {
   showBubble: true,
   htmlTables: false,
   copyHtmlButton: false,
+  obsidianButton: true,
   uiLanguage: 'en',
 };
 

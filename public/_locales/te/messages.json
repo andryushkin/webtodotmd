@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMDని తెరవడం సాధ్యం కాలేదు."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian తెరవడం సాధ్యం కాలేదు.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "క్లిప్‌బోర్డ్‌కు కాపీ చేయలేకపోయాం."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "సంక్లిష్ట పట్టికలను HTML గా ఉంచు"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian బటన్ చూపించు",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "క్యాప్చర్ చేసిన HTML కాపీ చేయడానికి బటన్ జోడించు",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD కి పంపండి"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian కు పంపు",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "క్యాప్చర్ చేసిన HTML కాపీ చేయి",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD తెరవబడుతోంది…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian లో తెరుస్తోంది…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

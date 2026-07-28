@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD не можа да се отвори."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian не можа да се отвори.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Копирането в клипборда не бе успешно."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Запазване на сложните таблици като HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Показване на бутона Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Добавяне на бутон за копиране на прихванатия HTML",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Изпращане в EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Изпращане към Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Копиране на прихванатия HTML",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Отваряне на EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Отваряне в Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

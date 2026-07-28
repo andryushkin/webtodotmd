@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Không thể mở EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Không thể mở Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Không thể sao chép vào bảng nhớ tạm."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Giữ bảng phức tạp ở dạng HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Hiện nút Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Thêm nút để sao chép HTML đã ghi",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Gửi tới EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Gửi tới Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Sao chép HTML đã ghi",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Đang mở EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Đang mở trong Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

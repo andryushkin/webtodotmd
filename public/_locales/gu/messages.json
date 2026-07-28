@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "EditMD ખોલી શકાયું નથી."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian ખોલી શકાયું નહીં.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "ક્લિપબોર્ડ પર કૉપિ કરી શકાયું નથી."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "જટિલ કોષ્ટકોને HTML તરીકે રાખો"
+  },
+  "labelObsidianButton": {
+    "message": "Obsidian બટન બતાવો",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "કૅપ્ચર કરેલ HTML કૉપી કરવા માટે બટન ઉમેરો",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "EditMD માં મોકલો"
   },
+  "tooltipSendObsidian": {
+    "message": "Obsidian પર મોકલો",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "કૅપ્ચર કરેલ HTML કૉપી કરો",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "EditMD ખૂલી રહ્યું છે…"
+  },
+  "openingObsidian": {
+    "message": "Obsidian માં ખોલી રહ્યાં છે…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

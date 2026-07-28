@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "Imeshindwa kufungua EditMD."
   },
+  "errObsidianOpen": {
+    "message": "Obsidian haikuweza kufunguliwa.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "Imeshindwa kunakili kwenye ubao wa kunakili."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "Weka majedwali changamano kama HTML"
+  },
+  "labelObsidianButton": {
+    "message": "Onyesha kitufe cha Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "Ongeza kitufe cha kunakili HTML iliyonaswa",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "Tuma kwa EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "Tuma kwa Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "Nakili HTML iliyonaswa",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "Inafungua EditMD…"
+  },
+  "openingObsidian": {
+    "message": "Inafungua katika Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }

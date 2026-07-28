@@ -86,6 +86,10 @@
   "errEditmdOpen": {
     "message": "לא ניתן לפתוח את EditMD."
   },
+  "errObsidianOpen": {
+    "message": "לא ניתן לפתוח את Obsidian.",
+    "description": "Error when the obsidian:// scheme could not be opened"
+  },
   "errClipboard": {
     "message": "ההעתקה ללוח לא הצליחה."
   },
@@ -121,6 +125,10 @@
   },
   "labelHtmlTables": {
     "message": "לשמור טבלאות מורכבות כ‑HTML"
+  },
+  "labelObsidianButton": {
+    "message": "הצגת הלחצן של Obsidian",
+    "description": "Settings checkbox: show the Obsidian hand-off button in the toolbar"
   },
   "labelCopyHtml": {
     "message": "הוספת לחצן להעתקת ה-HTML שנלכד",
@@ -192,6 +200,10 @@
   "tooltipSendEditmd": {
     "message": "שליחה אל EditMD"
   },
+  "tooltipSendObsidian": {
+    "message": "שליחה ל-Obsidian",
+    "description": "Tooltip for the Obsidian toolbar button, shown in the status bar on hover"
+  },
   "tooltipCopyHtml": {
     "message": "העתקת ה-HTML שנלכד",
     "description": "Tooltip for the Copy HTML toolbar button, shown in the status bar on hover"
@@ -226,5 +238,9 @@
   },
   "openingEditmd": {
     "message": "פותח את EditMD…"
+  },
+  "openingObsidian": {
+    "message": "נפתח ב-Obsidian…",
+    "description": "Status after the Obsidian hand-off was started"
   }
 }
