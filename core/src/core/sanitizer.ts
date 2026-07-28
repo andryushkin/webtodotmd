@@ -58,23 +58,41 @@ export function sanitize(
  * bare list of property names.
  */
 function foldCollapsedDetails(root: SanitizeRoot): void {
-  const collapsed: Element[] = [];
+  const folded: [Element, Node[]][] = [];
   walkElements(root, (el) => {
-    if (el.tagName.toLowerCase() === 'details' && !el.hasAttribute('open')) collapsed.push(el);
+    const shown = foldedDetailsContent(el);
+    if (shown) folded.push([el, shown as Node[]]);
   });
-  for (const el of collapsed) {
-    // The first `<summary>` is the one the browser draws; a second is body text
-    // like any other, and goes with the rest.
-    let summary: Element | null = null;
-    for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
-      if (child.tagName.toLowerCase() === 'summary') { summary = child; break; }
-    }
+  for (const [el, shown] of folded) {
     for (let child = el.firstChild; child; ) {
       const next = child.nextSibling;
-      if (child !== summary) el.removeChild(child);
+      if (!shown.includes(child)) el.removeChild(child);
       child = next;
     }
   }
+}
+
+/**
+ * What a `<details>` puts on the screen, or `null` where the question does not
+ * arise — an element that is not a `<details>`, or one the page opened and whose
+ * content is therefore all visible.
+ *
+ * A folded one shows its first `<summary>`: a second `<summary>` is body text like
+ * any other, and one with no `<summary>` at all shows nothing, which is an empty
+ * list rather than a `null`.
+ *
+ * Exported because the fidelity oracle has to read a document the way this pass
+ * writes it. `visibleText()` knows `hidingVerdict()` and nothing else, so the body
+ * of a closed `<details>` still counted as text the reader saw and the oracle would
+ * have reported this deliberate fold as content the file lost. One spelling, for
+ * the same reason the CSS value readers are one: a second desynchronises silently.
+ */
+export function foldedDetailsContent(el: Element): Element[] | null {
+  if (el.tagName.toLowerCase() !== 'details' || el.hasAttribute('open')) return null;
+  for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+    if (child.tagName.toLowerCase() === 'summary') return [child];
+  }
+  return [];
 }
 
 function removeScripts(root: SanitizeRoot, preserveMath: boolean): void {
@@ -310,18 +328,31 @@ function unwrapLayoutTables(root: SanitizeRoot): void {
   for (const table of tables) flattenLayoutTable(table);
 }
 
-function laysOutRatherThanTabulates(table: Element): boolean {
+/**
+ * Whether this table is furniture — see `unwrapLayoutTables` for what says so.
+ *
+ * Exported for the fidelity oracle, which has to read a table the way this pass
+ * writes it: a layout table's cells are blocks by the time any rule sees them, so
+ * an oracle asking `tableFacts` about one claims a grid the file no longer writes.
+ *
+ * Every question here is about *this* table. `th` was scoped and `thead, caption`
+ * was not, so a header belonging to a data table nested inside a layout one
+ * answered for the layout table and kept its grid — the one thing standing between
+ * such a page and the defect `flattenLayoutTable` describes, and standing there by
+ * accident.
+ */
+export function laysOutRatherThanTabulates(table: Element): boolean {
   const role = (table.getAttribute('role') ?? '').toLowerCase();
   if (role === 'presentation' || role === 'none') return true;
   if (role === 'table' || role === 'grid') return false;
   if (ownParts(table, 'th').length > 0) return false;
-  if (table.querySelector('thead, caption')) return false;
+  if (ownParts(table, 'thead, caption').length > 0) return false;
   return table.getAttribute('border') === '0';
 }
 
-/** The rows and cells of this table, never those of a table inside it. */
-function ownParts(table: Element, tag: 'tr' | 'td' | 'th'): Element[] {
-  return Array.from(table.querySelectorAll(tag)).filter((el) => ancestorTable(el) === table);
+/** The parts of this table, never those of a table inside it. */
+function ownParts(table: Element, selector: string): Element[] {
+  return Array.from(table.querySelectorAll(selector)).filter((el) => ancestorTable(el) === table);
 }
 
 function ancestorTable(el: Element): Element | null {
@@ -333,7 +364,11 @@ function ancestorTable(el: Element): Element | null {
   return null;
 }
 
-const TABLE_SCAFFOLDING = new Set(['table', 'thead', 'tbody', 'tfoot', 'tr', 'colgroup', 'col']);
+// `<table>` is deliberately absent, and its presence here was the defect above:
+// `ancestorTable` answers with the *nearest* table, which for a table inside a
+// cell is the outer one, so every nested table matched this set and was unwrapped
+// along with the outer table's own scaffolding.
+const TABLE_SCAFFOLDING = ['thead', 'tbody', 'tfoot', 'tr', 'colgroup', 'col'].join(',');
 
 function flattenLayoutTable(table: Element): void {
   const doc = table.ownerDocument;
@@ -347,9 +382,14 @@ function flattenLayoutTable(table: Element): void {
     while (cell.firstChild) box.appendChild(cell.firstChild);
     cell.parentNode?.replaceChild(box, cell);
   }
-  const scaffolding = Array.from(table.querySelectorAll('*')).filter(
-    (el) => TABLE_SCAFFOLDING.has(el.tagName.toLowerCase()) && ancestorTable(el) === table,
-  );
+  // A table inside a cell stands. Unwrapped with the rest, it left its rows and
+  // cells with no element to give them meaning and no rule to write them: a real
+  // data table inside a layout cell came back `NameAgeAnn30`, one word nobody can
+  // search, and the two Hacker News comments a cell holds came back as one line.
+  // The page under it is the page the feature was written for. Left standing, an
+  // inner layout table is flattened when its own turn comes — every table is asked
+  // separately — and an inner data table keeps the grid the reader saw.
+  const scaffolding = ownParts(table, TABLE_SCAFFOLDING);
   for (const el of [...scaffolding.reverse(), table]) unwrapElement(el);
 }
 

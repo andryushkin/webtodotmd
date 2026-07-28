@@ -204,6 +204,88 @@ describe('таблица-раскладка', () => {
   });
 });
 
+// Nesting is not a signal, though every layout is nested: each table is asked
+// separately, and a table inside a layout cell has an answer of its own. Flatten
+// it with the outer one and that answer is thrown away — which is exactly what
+// happened, because a nested table's *nearest* table ancestor is the outer table,
+// so it matched the outer table's own scaffolding and was unwrapped with it.
+describe('nested layout table: what an inner table keeps', () => {
+  it('a data table inside a layout cell keeps its grid', () => {
+    const html =
+      '<table border="0"><tr><td>' +
+      '<table><tr><th>Name</th><th>Age</th></tr><tr><td>Ann</td><td>30</td></tr></table>' +
+      '</td></tr></table>';
+    // Came back `NameAgeAnn30`: a real table boiled down to one word nobody can
+    // search, with every column and every row gone.
+    expect(toMarkdown(html).trim()).toBe('| Name | Age |\n| ---- | --- |\n| Ann  | 30  |');
+  });
+
+  // Hacker News: the page is a table and each comment is a table inside it. Both
+  // are furniture, so both are flattened — but one at a time, or the cells of the
+  // inner tables never become the boxes that keep two comments apart.
+  it('two layout tables in one cell stay two blocks', () => {
+    const html =
+      '<table border="0"><tr><td>' +
+      '<table border="0"><tr><td>First comment.</td></tr></table>' +
+      '<table border="0"><tr><td>Second comment.</td></tr></table>' +
+      '</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('First comment.\n\nSecond comment.');
+  });
+
+  it('cells of a layout table inside a layout table do not weld', () => {
+    const html =
+      '<table border="0"><tr><td>' +
+      '<table border="0"><tr><td>alpha</td><td>beta</td></tr></table>' +
+      '</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('alpha\n\nbeta');
+  });
+
+  // The header questions are about *this* table. `thead` and `caption` were asked
+  // of the whole subtree, so a nested data table's header answered for the layout
+  // table and left its grid standing — the only thing keeping the inner table
+  // whole, and keeping it whole by accident: the outer grid folded the inner rows
+  // into one cell.
+  it('a nested <thead> does not make the outer table data', () => {
+    const html =
+      '<table border="0"><tr><td>' +
+      '<table><thead><tr><td>Name</td></tr></thead><tr><td>Ann</td></tr></table>' +
+      '</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('| Name |\n| ---- |\n| Ann  |');
+  });
+
+  it('a nested <caption> does not make the outer table data', () => {
+    const html =
+      '<table border="0"><tr><td>outer</td></tr><tr><td>' +
+      '<table><caption>C</caption><tr><td>Ann</td></tr></table>' +
+      '</td></tr></table>';
+    expect(toMarkdown(html).trim()).toBe('outer\n\nC\n\n| Ann |\n| --- |');
+  });
+
+  it('a nested <th> does not make the outer table data', () => {
+    const html =
+      '<table border="0"><tr><td>' +
+      '<table><tr><th>H</th></tr><tr><td>v</td></tr></table>' +
+      '</td></tr></table>';
+    // The `th` question was already scoped, so this table was flattened as it
+    // should be — and took the inner grid with it, arriving as `Hv`.
+    expect(toMarkdown(html).trim()).toBe('| H   |\n| --- |\n| v   |');
+  });
+
+  // The other direction, which must not change: a layout table inside a *data*
+  // table is still furniture, and the data table around it is still a grid.
+  it('a layout table inside a data cell is still flattened', () => {
+    const html =
+      '<table><tr><th>H</th></tr><tr><td>' +
+      '<table border="0"><tr><td>a</td><td>b</td></tr></table>' +
+      '</td></tr></table>';
+    const result = toMarkdown(html).trim();
+    expect(result.split('\n')[0]).toBe('| H      |');
+    expect(result).toContain('a');
+    expect(result).toContain('b');
+    expect(result).not.toContain('| a   | b   |');
+  });
+});
+
 describe('строки, колонки и подпись в pipe-таблице', () => {
   it('colspan="1" и нечисловой span не уводят таблицу в HTML', () => {
     // Wikipedia, Word and Confluence exports write colspan="1"; the gate and the
