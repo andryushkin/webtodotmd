@@ -39,7 +39,16 @@ export const CONVERSION_OPTIONS: MarkItDownOptions = {
   // topmost heading there is. The lift only ever goes up: an article's `<h1>`
   // is the rank the page gave its title, and moving it to `##` to keep `#` free
   // spends the reader's hierarchy on the note's own formatting.
-  topHeadingLevel: 2,
+  //
+  // Three rather than two, because a clip is read where it lands. A note of
+  // one's own is titled by the front matter and not by a heading, so nothing in
+  // the file competes for `#` — but a clip pasted under a section of an existing
+  // note does compete, and at `##` it arrives level with that note's own
+  // sections instead of under the one it was put in. `###` nests either way, and
+  // the rank of a capture with no top of its own was never the page's word to
+  // begin with: what the page said was `h3`, and it said it under two levels
+  // that no capture carries.
+  topHeadingLevel: 3,
   math: true,
   // Neither capture path is ever handed a page: one converts what a drag
   // selected, the other what a click highlighted, and both are a person pointing

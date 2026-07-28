@@ -6,6 +6,14 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
 ## 1.4.7 — 2026-07-28
 
+- **A capture with no top heading of its own now lands at `###`.** It landed at
+  `##` before, which reads correctly in a note of its own — the title is in the
+  front matter, so nothing competes for `#` — and wrongly in the far commoner
+  case of a clip pasted into a note that already exists: it arrived level with
+  that note's own sections instead of under the one it was put in. A capture
+  that starts at `<h1>` or `<h2>` is untouched, as it always was; the lift only
+  ever goes up.
+
 - **A mention no longer breaks the sentence it stands in.** An inline thing given
   a box of its own — a mention, a tag, a badge — sat in a flex row, and the row
   was the only reason the words shared a line. The file held three paragraphs

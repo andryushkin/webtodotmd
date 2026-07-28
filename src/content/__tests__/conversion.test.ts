@@ -327,8 +327,18 @@ describe('heading levels the extension writes', () => {
   const withExtensionOptions = (html: string): string =>
     toMarkdown(`<body>${html}</body>`, { domAdapter, ...CONVERSION_OPTIONS }).trim();
 
-  test('a page that starts at h3 comes back starting at ##', () => {
-    expect(withExtensionOptions('<h3>Answer</h3><h4>Detail</h4>')).toBe('## Answer\n\n### Detail');
+  test('a page that starts at h3 comes back starting at ###', () => {
+    expect(withExtensionOptions('<h3>Answer</h3><h4>Detail</h4>')).toBe(
+      '### Answer\n\n#### Detail',
+    );
+  });
+
+  // Deeper than the target is still pulled up to it; only the direction is
+  // fixed, not the distance.
+  test('a page that starts at h5 comes back starting at ###', () => {
+    expect(withExtensionOptions('<h5>Answer</h5><h6>Detail</h6>')).toBe(
+      '### Answer\n\n#### Detail',
+    );
   });
 
   test('a page that starts at h1 keeps it', () => {
@@ -339,31 +349,36 @@ describe('heading levels the extension writes', () => {
 
   // A page captured in several goes: each press is its own conversion, so the
   // second one is told where the first started. Without it, capture a section's
-  // `<h2>` and then the `<h3>` under it and both arrive as `##`.
+  // `<h3>` and then the `<h5>` under it and both arrive as `###`.
+  //
+  // The ranks are two apart because the target is the shallower of them: a pair
+  // that straddles it — an `<h2>` and the `<h3>` under it — is one the lift
+  // leaves alone on either path, and a test written on that pair would pass
+  // whether or not the base was carried at all.
   test('a second press keeps its distance from the first', () => {
     const window = new HappyWindow();
     const doc = window.document as unknown as Document;
-    doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
+    doc.body.innerHTML = '<h3 id="a">Section</h3><h5 id="b">Under it</h5>';
     const press = (id: string, headingBase?: number) =>
       highlightsToMd([doc.getElementById(id)!], doc, { headingBase });
 
     const first = press('a');
-    expect(first.md.trim()).toBe('## Section');
-    expect(first.topLevel).toBe(2);
-    // On its own the second press answers `## Under it`; told where the first
+    expect(first.md.trim()).toBe('### Section');
+    expect(first.topLevel).toBe(3);
+    // On its own the second press answers `### Under it`; told where the first
     // one started, it keeps the rank the reader saw.
-    expect(press('b').md.trim()).toBe('## Under it');
-    expect(press('b', first.topLevel).md.trim()).toBe('### Under it');
+    expect(press('b').md.trim()).toBe('### Under it');
+    expect(press('b', first.topLevel).md.trim()).toBe('##### Under it');
   });
 
   test('one base for a capture of several fragments, so ranks stay apart', () => {
     const window = new HappyWindow();
     const doc = window.document as unknown as Document;
-    doc.body.innerHTML = '<h2 id="a">Section</h2><h3 id="b">Under it</h3>';
+    doc.body.innerHTML = '<h3 id="a">Section</h3><h5 id="b">Under it</h5>';
     const md = highlightsToMd([doc.getElementById('a')!, doc.getElementById('b')!], doc).md;
-    // Converted fragment by fragment, each would put its own heading at `##`.
-    expect(md).toContain('## Section');
-    expect(md).toContain('### Under it');
+    // Converted fragment by fragment, each would put its own heading at `###`.
+    expect(md).toContain('### Section');
+    expect(md).toContain('##### Under it');
   });
 });
 
