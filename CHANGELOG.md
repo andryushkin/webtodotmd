@@ -4,15 +4,38 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
-## 1.4.7 — 2026-07-28
+## 1.4.8 — 2026-07-28
 
-- **A capture with no top heading of its own now lands at `###`.** It landed at
-  `##` before, which reads correctly in a note of its own — the title is in the
-  front matter, so nothing competes for `#` — and wrongly in the far commoner
-  case of a clip pasted into a note that already exists: it arrived level with
-  that note's own sections instead of under the one it was put in. A capture
-  that starts at `<h1>` or `<h2>` is untouched, as it always was; the lift only
-  ever goes up.
+One entry for one submission: 1.4.1 through 1.4.7 were built, tested and never
+published, so everything below reaches a reader of the store at once. Most of it
+was found the same way — capturing a page written case by case against the
+conversion contract, then looking at that page in a browser beside the file it
+produced — and the rest by capturing real sites and reading what came back.
+
+### Styling a page states in CSS
+
+- **Bold and italic written in CSS are no longer lost.** Notion, Medium,
+  Substack, Confluence and anything built with Tailwind mark emphasis with a
+  class rather than a `<b>` or an `<em>`, and so does text pasted out of Google
+  Docs or Word. All of it used to arrive as plain text. It now converts, and a
+  heading or a table header stays as it was — the mark is written where a run is
+  heavier than the text around it, not wherever the page happens to state a
+  weight.
+- **A highlighted phrase survives, as `==marked text==`.** It used to arrive as
+  plain text with nothing to say the reader had seen it marked. Both spellings
+  are read: the `<mark>` tag, and the background every editor with a highlighter
+  button writes instead. Markdown has no standard highlight, so the marker is
+  written for the editors that understand it, Obsidian and EditMD among them;
+  elsewhere it shows as four `=` characters. A page printing `x==y` is escaped so
+  nothing it wrote acquires a highlight, and what is painted without being marked
+  stays plain — a card, a callout, a striped row, a button, and the monospaced
+  chip a page uses when it means code.
+- **Column alignment survives.** A table that aligns a column with a class kept
+  its columns but lost the alignment.
+- **A page showing Markdown as text stays text.** A styled block holding
+  `# heading` or `---` turned it into a real heading or a horizontal rule.
+
+### What the page drew on one line
 
 - **A mention no longer breaks the sentence it stands in.** An inline thing given
   a box of its own — a mention, a tag, a badge — sat in a flex row, and the row
@@ -20,58 +43,22 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
   where the page showed one sentence, the last opening on a stray space. The
   lines are now counted rather than read off `flex-direction`: what the reader
   met on one line arrives on one line. A row of cards is the same markup carrying
-  paragraphs and keeps its blocks, a heading keeps its level, and a list keeps
-  its bullets.
-
-## 1.4.6 — 2026-07-27
-
-- **The extension no longer captures itself.** A full-page capture ended with
-  the words `add to .md` — the floating bubble is an element on the page like
-  any other, and a Cmd+A selection covered it.
-
-## 1.4.5 — 2026-07-27
-
-- **Indented code stays indented.** Every syntax highlighter puts the blank
-  between two tokens in a tag of its own, and those blanks were being dropped
-  with the tag: a YAML sample came back flush left with `anchor_linenums:true`,
-  and a Python one as `importtensorflowastf`. Off a code block the same removal
-  ran two ordinary words together.
-- **A row of tags reads as a row.** Items laid side by side by CSS had nothing
-  between them in the markup, so a list of tags arrived as `c#pythonjava`. The
-  blank the reader saw is written, and with it emphasis can be spelled the way
-  Markdown spells it — 47 tags in one capture had been falling back to raw
-  `<strong>`.
-- **A collapsed section stays collapsed.** The body of a `<details>` nobody
-  opened was being captured: one documentation page carried 500 words of folded
-  sidebar the reader never saw.
-- **A web component's fallback text no longer doubles.** A date shown as
-  `3 days ago` was arriving as `3 days agoJul 24, 2026`, the second half being
-  the text the component replaces for readers without JavaScript.
-- **New setting: show the captured HTML view.** Off by default. It adds a third
-  view holding the markup the conversion was given, so a conversion defect can
-  be reported — and reproduced — without anyone having to guess what was on the
-  page.
-
-## 1.4.4 — 2026-07-27
-
+  paragraphs and keeps its blocks, a heading keeps its level, a list keeps its
+  bullets.
+- **A row of links, tags or chips is a row.** A navigation bar, a toolbar, a tag
+  list: CSS put their items on one line and each came back as its own paragraph,
+  or with nothing between them at all — `c#pythonjava`. The blank the reader saw
+  is written, and with it emphasis can be spelled the way Markdown spells it;
+  47 tags in one capture had been falling back to raw `<strong>`.
 - **A paragraph is a paragraph again.** Every line of an ordinary indented page
   was arriving with a hard break after it: the newlines HTML source is written
   with were read as line breaks the author drew. They are now read the way a
   browser reads them — as spaces — while a caption that really does break its
   lines inside one element keeps them.
-- **A row of links is a row.** A navigation bar, a chip row, a toolbar: CSS puts
-  their items on one line, and each one was coming back as its own paragraph.
-- **A selection made inside a web component is captured.** It used to come back
-  empty — a browser hides a component's own nodes from an ordinary selection.
 - **Two spaces where the page drew one.** Between two inline elements the
   indentation of the markup and a space inside the second one were both kept.
 
-## 1.4.3 — 2026-07-27
-
-Everything below was found by capturing one page — a fixture written case by
-case against the conversion contract — and then by looking at that page in a
-browser beside the file it produced. 1.4.2 was never published; its entries are
-folded in here, since one release is one entry.
+### Formulas
 
 - **A formula on Wikipedia is a formula again.** Every renderer draws a formula
   twice: a picture for the eye, and an invisible twin that carries the meaning.
@@ -84,61 +71,95 @@ folded in here, since one release is one entry.
   as "this is a display block", so a paragraph carrying three of them came back
   as three centred blocks. The wrapper itself no longer travels into the file,
   where it used to follow the formula into whatever it was pasted into.
-- **A selected navigation bar, header, footer or sidebar is captured.** They were
-  dropped as page furniture even when the selection was made of them — and the
-  same rule ate the headline and byline of a highlighted article, because a news
-  site keeps both in a `<header>` inside it.
+- **A formula whose page carries no LaTeX no longer vanishes.** KaTeX configured
+  for HTML output builds no MathML at all, and MathJax without its accessibility
+  extension emits none either. With maths on, both left an empty space where the
+  formula had been — less than the same capture produced with maths off. The
+  drawing now reaches the file when nothing better is there.
+- **A formula that says one thing and shows another follows the screen.** Some
+  pages run ordinary text through a maths renderer; the hidden half then holds
+  something the reader never saw, once including markup that reached the file as
+  an attribute nobody had on screen. Where the hidden half uses none of LaTeX, or
+  carries a tag, what was drawn wins. Real formulas are untouched.
+
+### What is on screen, and what only looks as if it is
+
 - **Text hidden only from screen readers is kept.** `aria-hidden` takes a node
   out of the accessibility tree and leaves every pixel on the screen: a star
   rating, the arrow in a "read more" link, a number beside a chart. All of it was
   being deleted.
-- **More text meant for screen readers alone stays out.** The commonest spelling
-  of the `.sr-only` idiom, `clip: rect(0, 0, 0, 0)` without units, was not
-  recognised. Nor was the text a page hides in a box it keeps open for one
-  visible line.
+- **Text meant for screen readers alone stays out of the file.** "Skip to main
+  content", "(opens in a new tab)" and the rest of the `.sr-only` idiom was
+  copied out as if it had been on the page — including its commonest spelling,
+  `clip: rect(0, 0, 0, 0)` without units, and the text a page hides in a box it
+  keeps open for one visible line.
+- **A collapsed section stays collapsed.** The body of a `<details>` nobody
+  opened was being captured: one documentation page carried 500 words of folded
+  sidebar the reader never saw.
 - **A section a page fades in on scroll is captured.** One written with a
   transition on `visibility` was read as a dropdown standing by and dropped.
+- **The extension no longer captures itself.** A full-page capture ended with the
+  words `add to .md` — the floating bubble is an element on the page like any
+  other, and a Cmd+A selection covered it.
+
+### Selecting part of a page
+
+- **A selection made inside a web component is captured.** It used to come back
+  empty — a browser hides a component's own nodes from an ordinary selection.
+- **A web component's fallback text no longer doubles.** A date shown as
+  `3 days ago` was arriving as `3 days agoJul 24, 2026`, the second half being
+  the text the component replaces for readers without JavaScript.
+- **Dragging across a sentence inside a bold box keeps the bold.** Selecting the
+  whole box was always right; dragging *within* it — the commoner gesture — left
+  the weight behind, so a line whose second half the reader saw in bold arrived
+  with no emphasis at all.
+- **A selected navigation bar, header, footer or sidebar is captured.** They were
+  dropped as page furniture even when the selection was made of them — and the
+  same rule ate the headline and byline of a highlighted article, because a news
+  site keeps both in a `<header>` inside it.
+- **Two selections dragged at once are separated by one blank line, not two.**
+
+### Code, lists, tables and the rest
+
+- **Indented code stays indented.** Every syntax highlighter puts the blank
+  between two tokens in a tag of its own, and those blanks were being dropped
+  with the tag: a YAML sample came back flush left with `anchor_linenums:true`,
+  and a Python one as `importtensorflowastf`. Off a code block the same removal
+  ran two ordinary words together.
+- **Blank space no longer opens a code block.** Whitespace between two blocks is
+  drawn nowhere by a browser and was written into the file; four such gaps in a
+  row turned the paragraph after them into a listing.
+- **A nested list under a task item is still a list.** `- [x] ` was counted as
+  part of the marker, which pushed everything under it four columns too far: the
+  nested list arrived as literal text, and a second paragraph arrived in a
+  monospace box.
 - **Quotation marks are written where the page drew them.** A `<q>` showed
   `“quoted”` and the file said `quoted`. The pair follows the page's language —
   `«…»`, `„…“`, `「…」`.
 - **A ruby reading no longer welds itself to the word.** `漢字` with `かんじ` above
   it arrived as `漢字かんじ`, one word read twice; it is now `漢字(かんじ)`.
-- **A nested list under a task item is still a list.** `- [x] ` was counted as
-  part of the marker, which pushed everything under it four columns too far: the
-  nested list arrived as literal text, and a second paragraph arrived in a
-  monospace box.
+- **Text no longer disappears next to a tilde.** A `~` standing beside struck-
+  through text formed a code fence, and everything it enclosed vanished from the
+  file. A tilde in ordinary prose — `~/src`, `~5 min` — is untouched.
 - **An image with no address no longer becomes a broken one.** It reached the
   file pointing at the page being captured, instead of leaving the description
   the reader would have seen.
-- **Blank space no longer opens a code block.** Whitespace between two blocks is
-  drawn nowhere by a browser and was written into the file; four such gaps in a
-  row turned the paragraph after them into a listing.
-- **Two selections dragged at once are separated by one blank line, not two.**
 - **Code folded into a table cell keeps its indentation.**
 - Lists numbered `NaN.` when the page wrote a `start` no number could be read out
   of.
 
-## 1.4.1 — 2026-07-27
+### Where a capture lands, and what you can see of it
 
-- **Bold and italic written in CSS are no longer lost.** Notion, Medium,
-  Substack, Confluence and anything built with Tailwind mark emphasis with a
-  class rather than a `<b>` or an `<em>`, and so does text pasted out of Google
-  Docs or Word. All of it used to arrive as plain text. It now converts, and a
-  heading or a table header stays as it was — the mark is written where a run is
-  heavier than the text around it, not wherever the page happens to state a
-  weight.
-- **Text meant for screen readers stays out of the file.** "Skip to main
-  content", "(opens in a new tab)" and other content hidden with `.sr-only` or
-  `.visually-hidden` was copied out as if it had been on the page. A section a
-  page is about to fade in is kept, because it is not withheld — only not shown
-  yet.
-- **Column alignment survives.** A table that aligns a column with a class kept
-  its columns but lost the alignment.
-- **Text no longer disappears next to a tilde.** A `~` standing beside struck-
-  through text formed a code fence, and everything it enclosed vanished from the
-  file. A tilde in ordinary prose — `~/src`, `~5 min` — is untouched.
-- **A page showing Markdown as text stays text.** A styled block holding
-  `# heading` or `---` turned it into a real heading or a horizontal rule.
+- **A capture with no top heading of its own now lands at `###`.** It landed at
+  `##` before, which reads correctly in a note of its own — the title is in the
+  front matter, so nothing competes for `#` — and wrongly in the far commoner
+  case of a clip pasted into a note that already exists: it arrived level with
+  that note's own sections instead of under the one it was put in. A capture
+  that starts at `<h1>` or `<h2>` is untouched; the lift only ever goes up.
+- **New setting: show the captured HTML view.** Off by default. It adds a third
+  view holding the markup the conversion was given, so a conversion defect can be
+  reported — and reproduced — without anyone having to guess what was on the
+  page.
 
 ## 1.4.0 — 2026-07-26
 

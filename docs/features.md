@@ -116,6 +116,16 @@ bold text, so it keeps its text and loses the mark. Inside code, preformatted
 text and formulas no mark is written at all — a `**` there would be two
 characters of the sample.
 
+A highlight is read the same way and written as `==marked text==`. The tag
+`<mark>` is one way a page states one and the rarer way; every editor with a
+highlighter button writes a background on a run instead — Google Docs, Notion,
+Confluence — and both arrive. Markdown has no standard highlight, so this marker
+is written for the editors that do understand it, Obsidian and EditMD among them;
+a renderer that does not will show the four `=` characters. The page's own `x==y`
+is escaped so that nothing it printed acquires a highlight. What is painted but
+not marked stays plain: a card, a callout, a striped row, a button, and a
+monospaced chip, which is a page's way of writing code without a `<code>` tag.
+
 The same goes for the alignment of a table column: a header aligned right in a
 stylesheet reaches the file as `---:`, exactly as one aligned right in its own
 `style` attribute does.
