@@ -93,6 +93,12 @@ Two rules:
 The tag has to exist and be pushed first, which means the release comes after
 the submission, not before it — see [Release commit](#release-commit).
 
+Nothing here needs updating in `README.md`: the two badges at the top of it read
+the store and the releases page live. What they are for is the gap between them
+— a build submitted and still in review shows as one, a submission that was
+never made shows as a gap that does not close, which is how a store copy sat
+several minor versions behind the tags without anyone noticing.
+
 ## Chrome Web Store submission
 
 Listing material is **not in this repository**. It lives in a gitignored

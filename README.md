@@ -1,8 +1,17 @@
 # Text to .md
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/gkplehkbkofmdjhafgbclcmfcficoego?label=chrome%20web%20store)](https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego)
+[![GitHub release](https://img.shields.io/github/v/release/andryushkin/webtodotmd?label=github%20release)](https://github.com/andryushkin/webtodotmd/releases/latest)
+
 Chrome extension that turns what you selected on a page into clean Markdown.
 The conversion runs inside the browser — the page content is never uploaded
 anywhere, and there is no account to create.
+
+The two badges are read live and are meant to be compared: the first is the
+build the store is actually serving, the second is the build published here.
+They drift whenever something is submitted and still in review, or a submission
+was never made — which has happened, and was invisible until the numbers stood
+side by side.
 
 ## Install
 
