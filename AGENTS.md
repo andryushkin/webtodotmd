@@ -1,4 +1,4 @@
-# Text to .md agent instructions
+# HTML Text to .md agent instructions
 
 ## Startup
 

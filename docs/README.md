@@ -1,4 +1,4 @@
-# Text to .md documentation
+# HTML Text to .md documentation
 
 Project documentation written for two audiences at once: people reading the
 repository and AI agents working in it. Each file describes **stable facts**

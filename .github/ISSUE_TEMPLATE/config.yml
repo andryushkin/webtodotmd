@@ -5,7 +5,7 @@ contact_links:
     about: Features start as a conversation, not an issue — share the problem and the idea here.
   - name: ❓ Question
     url: https://github.com/andryushkin/webtodotmd/discussions/categories/q-a
-    about: Ask anything about using or building Text to .md.
+    about: Ask anything about using or building HTML Text to .md.
   - name: 🔤 Wrong Markdown for correct HTML
     url: https://github.com/andryushkin/htmltodotmd/issues
     about: Conversion bugs belong in htmltodotmd, the library that does the converting.

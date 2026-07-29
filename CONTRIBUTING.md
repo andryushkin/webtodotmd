@@ -1,6 +1,6 @@
 # Contributing
 
-Text to .md is a personal project with a single maintainer, developed largely
+HTML Text to .md is a personal project with a single maintainer, developed largely
 with AI agents. It is intentionally opinionated: whether a change fits the way
 the extension works matters as much as whether the code is good. This page is
 short — please read it before opening anything.

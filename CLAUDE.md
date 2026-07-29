@@ -1,4 +1,4 @@
-# Text to .md — project notes
+# HTML Text to .md — project notes
 
 Manifest V3 Chrome extension that converts a page selection to Markdown. The
 conversion core lives in `core/` — the `htmltodotmd` library, developed in this

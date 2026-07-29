@@ -37,6 +37,6 @@ body:
     id: versions
     attributes:
       label: Extension and Chrome versions
-      placeholder: "Text to .md 1.2.2, Chrome 138, macOS 15.5"
+      placeholder: "HTML Text to .md 1.4.10, Chrome 138, macOS 15.5"
     validations:
       required: true

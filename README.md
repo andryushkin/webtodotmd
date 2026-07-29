@@ -1,4 +1,4 @@
-# Text to .md
+# HTML Text to .md
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/gkplehkbkofmdjhafgbclcmfcficoego?label=chrome%20web%20store)](https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego)
 [![GitHub release](https://img.shields.io/github/v/release/andryushkin/webtodotmd?label=github%20release)](https://github.com/andryushkin/webtodotmd/releases/latest)
@@ -16,7 +16,7 @@ side by side.
 ## Install
 
 **From the Chrome Web Store** —
-[Text to .md](https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego),
+[HTML Text to .md — Local Markdown Web Clipper](https://chromewebstore.google.com/detail/gkplehkbkofmdjhafgbclcmfcficoego),
 the reviewed build, updated automatically. Works in Chrome and other
 Chromium browsers that use the store (Edge, Brave, Opera, Vivaldi, Arc).
 
@@ -103,8 +103,11 @@ Captured content stays on the device: conversion happens in the content script,
 and the extension has no server to send it to. The only network call is an
 anonymous usage counter (a random install ID plus an event name such as `copy`
 or `download_md`) sent to `2md.site` — no URLs, no page content, no personal
-data. [privacy-policy.html](privacy-policy.html) is the published policy; every
-manifest permission and what it is used for is listed there in section 5.
+data. The published policy is
+[dotmd.tools/html-to-md-privacy](https://dotmd.tools/html-to-md-privacy): it
+names every event the counter can carry, every permission and what it is for,
+and the feedback form on the removal page, which is the only other thing that
+leaves the device — and only if you type into it.
 
 ## Repository notes
 

@@ -1,11 +1,11 @@
 # Localization spec
 
 > **Purpose**: This document is a prompt for an LLM agent to produce
-> culturally-adapted localizations of the Text to .md Chrome extension.
+> culturally-adapted localizations of the HTML Text to .md Chrome extension.
 > It is NOT a translation brief — it is a specification that ensures every string is adapted to feel native in the target language.
 >
 > **Naming note**: the store listing title is currently
-> `HTML Text to .md — Online Markdown Web Clipper` (SEO-driven), while the
+> `HTML Text to .md — Local Markdown Web Clipper` (SEO-driven), while the
 > in-product brand remains `to .md`. Where this spec says `appName`, it means
 > the store title; the strings inside the UI still use `to .md`.
 
