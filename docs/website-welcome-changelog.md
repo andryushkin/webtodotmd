@@ -61,7 +61,9 @@ should serve the English content rather than fail.
   modes (selection, highlighter, shortcuts), and end with a call to action:
   open the panel and try it on a page. A short GIF or screenshot helps.
 - `/<locale>/changelog` — what changed in the current release. The version can
-  be read from `manifest.json`.
+  be read from `manifest.json`. The notes themselves are English in every
+  locale: the prefix exists so that no language gets a 404, not because release
+  notes are translated.
 
 The privacy policy is the other page linked from inside the extension, and it
 follows the same locale scheme.
