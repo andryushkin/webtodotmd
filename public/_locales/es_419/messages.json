@@ -4,7 +4,7 @@
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Seleccioná cualquier parte de una página y convertila en Markdown limpio. Tablas, código y fórmulas se conservan.",
+    "message": "Selecciona cualquier parte de una página y conviértela en Markdown limpio. Tablas, código y fórmulas se conservan.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
