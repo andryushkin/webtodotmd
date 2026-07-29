@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Διαδικτυακός Markdown Web Clipper",
+    "message": "HTML Text to .md — Τοπικό Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Μετατρέψτε HTML ιστοσελίδων σε Markdown. Αποθηκεύστε ως .md, αντιγράψτε ή κατεβάστε — ένα ισχυρό Web Clipper.",
+    "message": "Επιλέξτε οποιοδήποτε μέρος της σελίδας και μετατρέψτε το σε καθαρό Markdown. Πίνακες, κώδικας και τύποι μένουν ίδιοι.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

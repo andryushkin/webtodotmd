@@ -1,12 +1,16 @@
 /**
  * Where the extension points outside itself.
  *
- * Two domains, on purpose and for now. The product's page lives on the new site,
- * `dotmd.tools`, which is one language and has no locale prefixes: measured
- * 2026-07-29, `/html-to-md` answers 200 and `/html-to-md/<locale>` answers 404 for
- * all 52. The install and update pages still live on `2md.site`, where all 52
- * locales of `/welcome` and `/changelog` answer 200 — moving them before the new
- * site has those pages would greet every install with a 404.
+ * One domain now: `dotmd.tools` carries the product's page and, since it grew
+ * them, the localized install and update pages as well — `/<locale>/html-to-md/
+ * welcome` and `/<locale>/html-to-md/changelog`, all 52 answering 200 (measured
+ * 2026-07-29). Every published build up to 1.4.9 asks `2md.site` for those two,
+ * so that site has to keep answering for as long as those installs exist; what
+ * this module decides is only where the next build sends a reader.
+ *
+ * The site's pages are static assets, which have no fallback routing: a locale
+ * missing from the build is a 404 rather than English, so `SITE_LOCALES` below
+ * must stay a subset of `locales.all` in the site's `site.yaml`.
  *
  * The locale mapping is one module because two callers need it — the worker opens
  * those pages, and anything else linking the localized site would otherwise hold
@@ -18,10 +22,9 @@
 export const REPO_URL = 'https://github.com/andryushkin/webtodotmd';
 
 /**
- * The extension's own page. Not locale-prefixed: the new site is English-only,
- * and `/html-to-md/<locale>` is a 404 in every one of the 52 — which is what the
- * options page linked at `2md.site/<locale>/` was, in every language, for the one
- * commit that shipped it.
+ * The extension's own page. Not locale-prefixed: the marketing pages are
+ * English-only, and only the two onboarding pages are localized — which is why
+ * the locale goes in front of `html-to-md` there and nowhere near this one.
  */
 export const EXTENSION_PAGE_URL = 'https://dotmd.tools/html-to-md';
 
@@ -55,10 +58,10 @@ export function siteLocale(lang: string): string {
 }
 
 /**
- * A localized page on the old site: `welcome` and `changelog`, the two the worker
- * opens. There is no localized home page — `2md.site/<locale>/` is a 404 — so
- * `path` is never empty; link `EXTENSION_PAGE_URL` instead.
+ * A localized onboarding page: `welcome` and `changelog`, the two the worker
+ * opens. Nothing else on the site is localized, so `path` is one of those two;
+ * link `EXTENSION_PAGE_URL` for the product's page.
  */
 export function siteUrl(path: string, lang: string): string {
-  return `https://2md.site/${siteLocale(lang)}/${path}`;
+  return `https://dotmd.tools/${siteLocale(lang)}/html-to-md/${path}`;
 }

@@ -37,12 +37,28 @@ describe('siteLocale', () => {
 });
 
 describe('siteUrl', () => {
-  // The two pages the worker opens, and the only two the old site localizes:
-  // `/welcome` and `/changelog` answer 200 in all 52, `/<locale>/` answers 404.
+  // The locale goes in front, and `html-to-md` after it: the site localizes the
+  // extension's onboarding pages and nothing else, so the product's own page —
+  // `dotmd.tools/html-to-md` — is the one address with no locale in it.
   test('the localized pages the worker opens', () => {
-    expect(siteUrl('welcome', 'de')).toBe('https://2md.site/de/welcome');
-    expect(siteUrl('changelog', 'zh_TW')).toBe('https://2md.site/zh-TW/changelog');
-    expect(siteUrl('welcome', 'ru')).toBe('https://2md.site/ru/welcome');
+    expect(siteUrl('welcome', 'de')).toBe('https://dotmd.tools/de/html-to-md/welcome');
+    expect(siteUrl('changelog', 'zh_TW')).toBe('https://dotmd.tools/zh-TW/html-to-md/changelog');
+    expect(siteUrl('welcome', 'ru')).toBe('https://dotmd.tools/ru/html-to-md/welcome');
+  });
+
+  // Static assets have no fallback routing: a locale the site did not build is
+  // a 404, not English. Every locale this function can return has to exist as a
+  // directory in the site's build, which is what `locales.all` there lists.
+  test('every locale it can return is one the site builds', () => {
+    const built = new Set([
+      'en', 'de', 'fr', 'es', 'it', 'nl', 'sv', 'da', 'no', 'fi',
+      'ar', 'he', 'fa', 'id', 'ru', 'pt-PT', 'pt-BR', 'ja', 'fil', 'vi', 'tr', 'th', 'ko',
+      'bg', 'cs', 'hr', 'pl', 'ro', 'sk', 'sl', 'sr', 'uk',
+      'zh-CN', 'zh-TW', 'el', 'hu', 'hi', 'ms', 'es-419',
+      'et', 'lt', 'lv', 'ca', 'bn', 'gu', 'kn', 'ml', 'mr', 'ta', 'te', 'am', 'sw',
+    ]);
+    const asked = ['en-GB', 'pt', 'pt-AO', 'zh', 'zh-HK', 'nb', 'nn-NO', 'is', 'xx-YY', '', 'es_419', 'pt_PT'];
+    for (const lang of asked) expect(built.has(siteLocale(lang))).toBe(true);
   });
 });
 

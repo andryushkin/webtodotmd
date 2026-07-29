@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — 在线 Markdown Web Clipper",
+    "message": "HTML Text to .md — 本地 Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "将网页 HTML 转换为 Markdown。保存为 .md、复制或下载 — 强大的 Web Clipper。",
+    "message": "选择页面上任意部分，转换为干净的 Markdown。表格、代码和公式保持原样，全部在浏览器本地完成。",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

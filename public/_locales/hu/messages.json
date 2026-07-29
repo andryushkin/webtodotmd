@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Online Markdown Web Clipper",
+    "message": "HTML Text to .md — Helyi Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Weblapok HTML tartalmát Markdownná alakítja. Mentse .md-ként, másolja vagy töltse le — erős Web Clipper.",
+    "message": "Jelöld ki az oldal bármely részét, és alakítsd tiszta Markdownná. A táblázatok, a kód és a képletek megmaradnak.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

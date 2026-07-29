@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — ఆన్‌లైన్ Markdown Web Clipper",
+    "message": "HTML Text to .md — లోకల్ Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "వెబ్‌పేజ్ HTML ని Markdown గా మార్చు. .md గా సేవ్ చేయి, కాపీ చేయి లేదా డౌన్‌లోడ్ చేయి — శక్తివంతమైన Web Clipper.",
+    "message": "పేజీలో ఏ భాగాన్నయినా ఎంచుకుని శుభ్రమైన Markdown పొందండి. పట్టికలు, కోడ్, సూత్రాలు అలాగే ఉంటాయి.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

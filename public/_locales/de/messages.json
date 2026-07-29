@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Online Markdown Web Clipper",
+    "message": "HTML Text to .md — Lokaler Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Webpage-HTML in Markdown umwandeln. Als md speichern, kopieren oder Text herunterladen — der leistungsstarke Web Clipper.",
+    "message": "Beliebigen Teil einer Seite auswählen und in sauberes Markdown umwandeln. Tabellen, Code und Formeln bleiben erhalten.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — ኦንላይን Markdown Web Clipper",
+    "message": "HTML Text to .md — አካባቢያዊ Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "የድር ገጽ HTML ወደ Markdown ቀይር። እንደ .md አስቀምጥ፣ ቅዳ ወይም አውርድ — ኃይለኛ Web Clipper።",
+    "message": "ከገጹ ማንኛውንም ክፍል ይምረጡ እና ወደ ንጹህ Markdown ይለውጡት። ሠንጠረዦች፣ ኮድ እና ቀመሮች እንዳሉ ይቆያሉ።",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

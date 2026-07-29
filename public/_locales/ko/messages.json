@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — 온라인 Markdown Web Clipper",
+    "message": "HTML Text to .md — 로컬 Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "웹페이지 HTML을 Markdown으로 변환. md 저장, 복사 또는 텍스트 다운로드가 가능한 강력한 Web Clipper.",
+    "message": "페이지에서 원하는 부분만 선택해 깔끔한 Markdown으로 변환합니다. 표, 코드, 수식이 그대로 유지됩니다.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

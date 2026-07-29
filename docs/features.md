@@ -204,8 +204,8 @@ locale for the rest. Arabic, Hebrew and Persian get a full RTL layout.
 Every on/off setting is a switch rather than a tick box. Below them, an **About**
 section links the product's page — `dotmd.tools/html-to-md`, English-only — and the
 public repository on GitHub. The localized pages the extension opens by itself,
-after an install or an update, are still on `2md.site`; see
-[website-welcome-changelog.md](website-welcome-changelog.md).
+after an install or an update, are on the same site under the reader's locale;
+see [website-welcome-changelog.md](website-welcome-changelog.md).
 
 ## Where it works
 

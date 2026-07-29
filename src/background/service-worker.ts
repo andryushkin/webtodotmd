@@ -13,6 +13,25 @@ function openPage(path: string): void {
   chrome.tabs.create({ url: siteUrl(path, chrome.i18n.getUILanguage()) });
 }
 
+/**
+ * The page Chrome opens in a new tab when the extension is removed.
+ *
+ * It has to be registered *before* the removal, which is why it is set on every
+ * worker start rather than only on install, and re-set when the reader changes
+ * the interface language: the URL carries a locale, and by the time it opens
+ * there is no extension left to ask. Language chosen in settings wins over the
+ * browser's, being the more specific answer; `auto` means there was no choice.
+ */
+async function syncUninstallUrl(): Promise<void> {
+  if (!chrome.runtime.setUninstallURL) return;
+  const { settings } = await chrome.storage.local.get('settings');
+  const chosen = settings?.uiLanguage;
+  const lang = !chosen || chosen === 'auto' ? chrome.i18n.getUILanguage() : chosen;
+  await chrome.runtime.setUninstallURL(siteUrl('uninstall', lang));
+}
+
+syncUninstallUrl().catch(console.error);
+
 // Explicitly disable Chrome's built-in toggle so onClicked fires on every click
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(console.error);
 
@@ -51,6 +70,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     if (newLang !== oldLang) {
       await initI18n(newLang);
       await writeContentTranslations();
+      await syncUninstallUrl();
       chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({
           id: 'capture-and-copy',
@@ -65,6 +85,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   await ensureInstallId();
   createContextMenu();
+  await syncUninstallUrl();
 
   if (details.reason === 'install') {
     trackEvent('install');

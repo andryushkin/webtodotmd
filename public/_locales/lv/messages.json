@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Online Markdown Web Clipper",
+    "message": "HTML Text to .md — Lokāls Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Konvertē tīmekļvietnes HTML uz Markdown. Saglabā kā .md, kopē vai lejupielādē — jaudīgs Web Clipper.",
+    "message": "Atlasiet jebkuru lapas daļu un pārvērtiet to tīrā Markdown. Tabulas, kods un formulas paliek neskartas.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

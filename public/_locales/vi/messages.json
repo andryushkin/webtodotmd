@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Trực tuyến Markdown Web Clipper",
+    "message": "HTML Text to .md — Cục bộ Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Chuyển HTML trang web sang Markdown. Lưu dưới dạng md, sao chép hoặc tải xuống văn bản với Web Clipper mạnh mẽ này.",
+    "message": "Chọn bất kỳ phần nào của trang và chuyển thành Markdown sạch. Bảng, mã và công thức vẫn nguyên vẹn.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

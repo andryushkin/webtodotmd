@@ -4,6 +4,29 @@ Versions are the ones published to the Chrome Web Store, newest first, dated by
 submission and tagged `vX.Y.Z`. What each bump means, and the store's own rules
 about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
 
+## 1.4.10 — 2026-07-29
+
+### The pages it opens
+
+- **Install and update now open dotmd.tools**, at
+  `/<locale>/html-to-md/welcome` and `/…/changelog`, where the pages are
+  actually written and kept up to date. Earlier builds ask 2md.site and always
+  will — the address is compiled in — so that site keeps answering for them.
+- **Removing the extension opens a page that asks one question:** which page
+  did it get wrong. An address can be opened, reproduced and turned into a test
+  case, which is more than a one-star rating can carry. The form is optional,
+  nothing is sent until it is submitted, and nothing is collected from the
+  browser.
+
+### What it calls itself
+
+- **The name says "Local" where it used to say "Online".** Everything the
+  extension does happens inside the browser, and the card said the opposite in
+  the one field a reader sees before clicking. The short description was
+  rewritten with it, in all 52 languages: it now leads with what the extension
+  does — select part of a page, get clean Markdown, tables and code and maths
+  intact — instead of listing the word "Markdown" fifty-two times.
+
 ## 1.4.9 — 2026-07-29
 
 A pass over the panel and the settings page, from the reader's side of them.

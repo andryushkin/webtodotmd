@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — מקוון Markdown Web Clipper",
+    "message": "HTML Text to .md — מקומי Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "המר HTML של דפי אינטרנט ל-Markdown. שמור כ-.md, העתק או הורד — Web Clipper חזק.",
+    "message": "סמנו כל חלק בעמוד והפכו אותו ל‑Markdown נקי. טבלאות, קוד ונוסחאות נשמרים. פועל מקומית ב‑Chrome.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

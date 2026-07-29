@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Mtandaoni Markdown Web Clipper",
+    "message": "HTML Text to .md — Ndani Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Badilisha HTML ya wavuti hadi Markdown. Hifadhi kama .md, nakili au pakua — Web Clipper yenye nguvu.",
+    "message": "Chagua sehemu yoyote ya ukurasa na uibadilishe kuwa Markdown safi. Majedwali, msimbo na fomula hubaki sawa.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

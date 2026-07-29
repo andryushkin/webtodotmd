@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Dalam Talian Markdown Web Clipper",
+    "message": "HTML Text to .md — Setempat Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Tukar HTML halaman web kepada Markdown. Simpan sebagai .md, salin atau muat turun — Web Clipper yang hebat.",
+    "message": "Pilih mana-mana bahagian halaman dan tukarkan kepada Markdown bersih. Jadual, kod dan formula kekal utuh.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

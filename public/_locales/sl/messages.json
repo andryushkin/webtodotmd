@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Online Markdown Web Clipper",
+    "message": "HTML Text to .md — Lokalni Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Pretvorite HTML spletnih strani v Markdown. Shranite kot .md, kopirajte ali prenesite besedilo s tem zmogljivim Web Clipperjem.",
+    "message": "Izberite poljuben del strani in ga pretvorite v čist Markdown. Tabele, koda in formule ostanejo nedotaknjene.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

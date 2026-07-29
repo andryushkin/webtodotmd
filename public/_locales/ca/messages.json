@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — En línia Markdown Web Clipper",
+    "message": "HTML Text to .md — Local Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Converteix l'HTML de pàgines web a Markdown. Desa com a .md, copia o baixa — un potent Web Clipper.",
+    "message": "Selecciona qualsevol part d’una pàgina i converteix-la en Markdown net. Taules, codi i fórmules es mantenen.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

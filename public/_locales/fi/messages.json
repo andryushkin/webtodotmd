@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Verkossa Markdown Web Clipper",
+    "message": "HTML Text to .md — Paikallinen Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "Muunna verkkosivun HTML Markdowniksi. Tallenna md-muodossa, kopioi tai lataa teksti tällä tehokkaalla Web Clipperillä.",
+    "message": "Valitse mikä tahansa osa sivusta ja muunna se siistiksi Markdowniksi. Taulukot, koodi ja kaavat säilyvät.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — ออนไลน์ Markdown Web Clipper",
+    "message": "HTML Text to .md — ในเครื่อง Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "แปลง HTML ของหน้าเว็บเป็น Markdown บันทึกเป็น md คัดลอก หรือดาวน์โหลดข้อความด้วย Web Clipper อันทรงพลัง",
+    "message": "เลือกส่วนใดของหน้าเว็บก็ได้ แล้วแปลงเป็น Markdown ที่สะอาด ตาราง โค้ด และสูตรยังอยู่ครบ ทำงานในเครื่อง",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

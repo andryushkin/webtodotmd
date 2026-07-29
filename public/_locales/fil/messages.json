@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — Online Markdown Web Clipper",
+    "message": "HTML Text to .md — Lokal Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "I-convert ang HTML ng webpage sa Markdown. I-save bilang md, kopyahin, o i-download ang teksto gamit ang Web Clipper.",
+    "message": "Piliin ang alinmang bahagi ng pahina at gawing malinis na Markdown. Buo ang mga talahanayan, code, at pormula.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {

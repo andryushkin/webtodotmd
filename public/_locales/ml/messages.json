@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "HTML Text to .md — ഓൺലൈൻ Markdown Web Clipper",
+    "message": "HTML Text to .md — ലോക്കൽ Markdown Web Clipper",
     "description": "Extension name — brand name, do not translate"
   },
   "appDescription": {
-    "message": "വെബ്‌പേജ് HTML, Markdown ആക്കി മാറ്റൂ. .md ആയി സേവ് ചെയ്യൂ, കോപ്പി ചെയ്യൂ അല്ലെങ്കിൽ ഡൗൺലോഡ് ചെയ്യൂ — ശക്തമായ Web Clipper.",
+    "message": "പേജിന്റെ ഏത് ഭാഗവും തിരഞ്ഞെടുത്ത് വൃത്തിയുള്ള Markdown ആക്കുക. പട്ടികകളും കോഡും സൂത്രവാക്യങ്ങളും അതേപടി നിലനിൽക്കും.",
     "description": "Short description shown in Chrome extensions page"
   },
   "captureSelection": {
