@@ -28,6 +28,7 @@ nothing in the code says so; the sheet is where the reason lives.
 | `public/_locales/` | 52 locales; must stay under `public/` to reach `dist/` | `docs/localization.md` |
 | `tests/fidelity/` | The round-trip oracle, its generator and the gate | — |
 | `tests/real-pages/` | The same question asked of markup nobody here wrote | `tests/real-pages/README.md` |
+| `tests/clippers/` | The same page clipped by another extension, scored against a published list | `tests/clippers/README.md` |
 | `vendor/` | marked, DOMPurify, KaTeX, mathml-to-latex | — |
 
 A `PreToolUse` hook (`.claude/hooks/invariants.sh`, wired in

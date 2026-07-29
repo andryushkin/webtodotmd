@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Two clippers, one page — measured</title>
+    <style>
+      /* Palette taken from the extension's own panel (src/sidepanel/sidepanel.css),
+         so a prototype reviewed here reads as the same product. */
+      :root {
+        color-scheme: light;
+        --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --font-mono: 'Menlo', 'Consolas', monospace;
+        --bg: #ffffff;
+        --bg-secondary: #f5f5f5;
+        --bg-code: #ebebeb;
+        --text: #1a1a1a;
+        --text-muted: #6b6b6b;
+        --border: #e0e0e0;
+        --accent: #0066cc;
+        --ok: #1e8449;
+        --bad: #c0392b;
+        --warn: #9a6700;
+        --radius: 6px;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: var(--font);
+        background: var(--bg-secondary);
+        color: var(--text);
+        line-height: 1.5;
+        padding: 40px 20px 80px;
+      }
+
+      .wrap { max-width: 980px; margin: 0 auto; }
+
+      header { margin-bottom: 28px; }
+      h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 10px; }
+      .sub { color: var(--text-muted); font-size: 15px; max-width: 70ch; }
+      .sub code { font-family: var(--font-mono); font-size: 0.92em; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+
+      .card {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 20px 22px; margin-bottom: 18px;
+      }
+      h2 { font-size: 18px; margin-bottom: 4px; letter-spacing: -0.01em; }
+      .lede { color: var(--text-muted); font-size: 14px; margin-bottom: 14px; max-width: 78ch; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      thead th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      tbody tr:last-child td { border-bottom: 0; }
+      .win { color: var(--ok); font-weight: 600; }
+      .lose { color: var(--bad); font-weight: 600; }
+      .same { color: var(--text-muted); }
+      .note { color: var(--text-muted); font-size: 13px; }
+
+      .figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+      .fig { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 14px; }
+      .fig b { display: block; font-size: 30px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 6px; }
+      .fig span { font-size: 13px; color: var(--text-muted); display: block; }
+      .fig.good b { color: var(--ok); }
+      .fig.bad b { color: var(--bad); }
+
+      pre {
+        background: var(--bg-code); border-radius: var(--radius);
+        padding: 12px 14px; overflow-x: auto;
+        font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+      }
+      .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+      .pair > div > h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 6px; }
+      @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } }
+
+      .caveat { border-left: 3px solid var(--warn); background: #fffaf0; padding: 12px 14px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 14px; }
+      .caveat + .caveat { margin-top: 10px; }
+      footer { color: var(--text-muted); font-size: 13px; margin-top: 24px; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Two clippers, one page — measured</h1>
+        <p class="sub">
+          Both extensions clipped the same document with ⌘A: our conversion
+          specification page, 90 labelled cases in 12 sections, published at
+          <code>docs/test_conversion_spec_page_compact.html</code> and readable by anyone.
+          1651 words on screen. Counted from the two saved files, not from impressions.
+        </p>
+      </header>
+
+      <div class="figures">
+        <div class="fig bad"><b>18</b><span>kinds of text the reader never saw that Obsidian Web Clipper wrote into the note. Ours: none.</span></div>
+        <div class="fig good"><b>19 / 14</b><span>headings kept — theirs loses every <code>role="heading"</code> and the page's <code>h1</code>.</span></div>
+        <div class="fig good"><b>12 / 7</b><span>code blocks that kept their language label.</span></div>
+        <div class="fig good"><b>0 / 3</b><span><code>javascript:</code> and <code>data:text/html</code> URLs carried into the file.</span></div>
+      </div>
+
+      <section class="card">
+        <h2>What the reader never saw</h2>
+        <p class="lede">
+          The page hides eighteen payloads in the ways real pages hide things. A clip is
+          supposed to be what was on screen; anything else is text arriving in your notes
+          that you cannot see to delete.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Hidden by</th><th class="num">Obsidian</th><th class="num">Ours</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>display:none</code>, <code>visibility:hidden</code>, <code>opacity:0</code></td><td class="num lose">kept</td><td class="num win">dropped</td></tr>
+            <tr><td><code>hidden</code> attribute, <code>clip-path</code>, off-screen, <code>text-indent</code></td><td class="num lose">kept</td><td class="num win">dropped</td></tr>
+            <tr><td>screen-reader-only text, standby overlay</td><td class="num lose">kept</td><td class="num win">dropped</td></tr>
+            <tr><td>collapsed <code>&lt;details&gt;</code> body and its list</td><td class="num lose">kept</td><td class="num win">dropped</td></tr>
+            <tr><td><code>&lt;iframe srcdoc&gt;</code>, <code>&lt;object&gt;</code>, <code>&lt;svg&gt;</code> payloads</td><td class="num lose">kept, as raw tags</td><td class="num win">dropped</td></tr>
+            <tr><td>a formula the page hid outright</td><td class="num lose">kept</td><td class="num win">dropped</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Structure that survived the trip</h2>
+        <table>
+          <thead>
+            <tr><th>Signal</th><th class="num">Obsidian</th><th class="num">Ours</th><th>What the difference is</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Headings</td><td class="num">14</td><td class="num win">19</td><td class="note">They lose the page's <code>h1</code> and four headings stated by <code>role="heading"</code>/<code>aria-level</code> — the shape a design system writes instead of <code>&lt;h2&gt;</code>.</td></tr>
+            <tr><td>Shadow DOM content</td><td class="num lose">none</td><td class="num win">kept</td><td class="note">A whole component — heading, paragraph, list — missing from their file.</td></tr>
+            <tr><td>Task lists</td><td class="num lose">0</td><td class="num win">4</td><td class="note">Checkboxes come back as plain bullets in theirs.</td></tr>
+            <tr><td>Code blocks with a language</td><td class="num">7</td><td class="num win">12</td><td class="note">Same number of blocks; five of theirs arrive unlabelled, so no highlighting downstream.</td></tr>
+            <tr><td>MathJax v2 formula</td><td class="num lose">lost</td><td class="num win"><code>$e^{i\pi}+1=0$</code></td><td class="note">Their line ends after the label, with nothing behind it.</td></tr>
+            <tr><td>Relative image paths</td><td class="num lose">10</td><td class="num win">0</td><td class="note">Theirs keeps <code>photo-1600.jpg</code>; in a vault that resolves to nothing. Ours writes absolute URLs.</td></tr>
+            <tr><td>Lazy image</td><td class="num lose">placeholder gif</td><td class="num win">real source</td><td class="note">They take the 1×1 <code>data:</code> stand-in, we take the image that was on screen.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Where we write raw HTML on purpose</h2>
+        <p class="lede">
+          Seven <code>&lt;table&gt;</code> blocks survive as HTML in our file against four in theirs —
+          a worse number that is a better outcome. Markdown has no merged cells and no nested
+          table; the choice is between a table that stays a table and text that stops being one.
+        </p>
+        <div class="pair">
+          <div>
+            <h3>Obsidian — a table inside a cell</h3>
+            <pre>PackageCompatibilityParserBefore nested grid.
+
+| Bun | Node | Deno |
+| --- | --- | --- |</pre>
+          </div>
+          <div>
+            <h3>Ours — the outer table stays a table</h3>
+            <pre>&lt;table&gt;
+  &lt;tr&gt;&lt;th&gt;Package&lt;/th&gt;&lt;th&gt;Compatibility&lt;/th&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;Parser&lt;/td&gt;&lt;td&gt;Before nested grid.
+    &lt;table&gt;…&lt;/table&gt;</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What each of us got wrong</h2>
+        <p class="lede">Case K4: <code>A &lt;mark&gt;marked phrase&lt;/mark&gt; beside literal comparisons x==y and C==C++</code>.</p>
+        <div class="pair">
+          <div>
+            <h3>Obsidian</h3>
+            <pre>A ==marked phrase== beside literal
+comparisons x==y and C==C++.</pre>
+            <p class="note">The highlight is right; the page's own <code>==</code> are not escaped, so a renderer that knows the marker paints “y and C” yellow — a highlight nobody made.</p>
+          </div>
+          <div>
+            <h3>Ours, before this week</h3>
+            <pre>A ====marked phrase==== beside literal
+comparisons x\=\=y and C\=\=C++.</pre>
+            <p class="note">Escaping right, marker doubled: the browser paints <code>&lt;mark&gt;</code>, so the style snapshot reported a fill on the one tag whose rule already writes <code>==</code>. Fixed in <code>b846e8b</code>, with the case in <code>core/tests/inline.test.ts</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>How to read these numbers</h2>
+        <div class="caveat">
+          One page, one run. It is our own specification page, which we wrote — so it asks the
+          questions we already know to ask. It says nothing about pages neither of us has seen.
+        </div>
+        <div class="caveat">
+          Obsidian Web Clipper is built around Readability: it takes the article it detects rather
+          than the selection. On this page that is a different promise, not only a different result,
+          and part of what is counted as “kept” or “lost” follows from it.
+        </div>
+        <div class="caveat">
+          Counted mechanically from the two saved files. “Inline formulas” is left off the tiles
+          because a price like <code>$129.00</code> counts as one on both sides — a metric that
+          measures the counter, not the clipper.
+        </div>
+      </section>
+
+      <footer>
+        Source page: <code>docs/test_conversion_spec_page_compact.html</code> · files compared:
+        <code>inbox/obsidian.md</code>, <code>inbox/webtomd.md</code> · our side produced by the same
+        <code>selectionToMd()</code> the content script calls.
+      </footer>
+    </div>
+  </body>
+</html>

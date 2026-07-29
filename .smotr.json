@@ -1,0 +1,1 @@
+{ "contentDir": "docs", "port": 8010, "skipDirs": ["invariants"], "include": [] }

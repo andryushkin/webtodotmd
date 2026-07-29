@@ -22,3 +22,8 @@ dist/
 # Chrome Web Store material: listing copy, store translations, screenshots and
 # banner sources. Kept out of the repository — it is dashboard input, not code.
 /store/
+
+# smotr review engine (docs/review/run is a wrapper; the engine lives outside)
+*.baseline
+.smotr-queue.json
+.smotr-agent.log

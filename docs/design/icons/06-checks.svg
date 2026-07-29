@@ -1,0 +1,5 @@
+<!-- slide 5, tile 6: more checks passed than the nearest clipper -->
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d9b8f5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/>
+            <path d="M13.6 8.4L16 6l2.4 2.4"/>
+          </svg>
