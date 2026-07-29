@@ -180,6 +180,10 @@
     "message": "Teave",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Teata lehest, mis teisendati valesti",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Veebisait",
     "description": "Link to the extension website, opened in the reader's language"

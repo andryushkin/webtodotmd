@@ -46,6 +46,13 @@ describe('siteUrl', () => {
     expect(siteUrl('welcome', 'ru')).toBe('https://dotmd.tools/ru/html-to-md/welcome');
   });
 
+  // The settings page links this one, and it is a form: a reader who cannot
+  // read it will not fill it in, so it takes the same locale as the rest.
+  test('the report form is localized like the pages the worker opens', () => {
+    expect(siteUrl('report', 'ru')).toBe('https://dotmd.tools/ru/html-to-md/report');
+    expect(siteUrl('uninstall', 'pt_BR')).toBe('https://dotmd.tools/pt-BR/html-to-md/uninstall');
+  });
+
   // Static assets have no fallback routing: a locale the site did not build is
   // a 404, not English. Every locale this function can return has to exist as a
   // directory in the site's build, which is what `locales.all` there lists.

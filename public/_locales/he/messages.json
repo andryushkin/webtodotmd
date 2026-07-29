@@ -180,6 +180,10 @@
     "message": "אודות",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "דיווח על עמוד שהומר בצורה שגויה",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "אתר",
     "description": "Link to the extension website, opened in the reader's language"

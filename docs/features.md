@@ -202,10 +202,12 @@ of them plus "Auto (browser language)", and Chrome falls back to the browser
 locale for the rest. Arabic, Hebrew and Persian get a full RTL layout.
 
 Every on/off setting is a switch rather than a tick box. Below them, an **About**
-section links the product's page — `dotmd.tools/html-to-md`, English-only — and the
-public repository on GitHub. The localized pages the extension opens by itself,
-after an install or an update, are on the same site under the reader's locale;
-see [website-welcome-changelog.md](website-welcome-changelog.md).
+section links three things: a form for reporting a page that converted badly —
+localized, since a form nobody can read collects nothing — the product's page
+(`dotmd.tools/html-to-md`, English-only), and the public repository on GitHub.
+The localized pages the extension opens by itself, after an install, an update
+or a removal, are on the same site under the reader's locale; see
+[website-welcome-changelog.md](website-welcome-changelog.md).
 
 ## Where it works
 

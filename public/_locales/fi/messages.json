@@ -180,6 +180,10 @@
     "message": "Tietoja",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Ilmoita sivusta, joka muuntui väärin",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Verkkosivusto",
     "description": "Link to the extension website, opened in the reader's language"

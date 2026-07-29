@@ -180,6 +180,10 @@
     "message": "O proširenju",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Пријавите страницу која је погрешно претворена",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Veb-sajt",
     "description": "Link to the extension website, opened in the reader's language"

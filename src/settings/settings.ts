@@ -1,7 +1,7 @@
 import { getSettings, saveSettings } from '../shared/settings-store';
 import { initI18n, applyI18n, t } from '../shared/i18n';
 import { getRatingUrl } from '../shared/store-links';
-import { REPO_URL, EXTENSION_PAGE_URL } from '../shared/site-links';
+import { REPO_URL, EXTENSION_PAGE_URL, siteUrl } from '../shared/site-links';
 
 const autoMetadata = document.getElementById('auto-metadata') as HTMLInputElement;
 const showBubble = document.getElementById('show-bubble') as HTMLInputElement;
@@ -14,6 +14,7 @@ const uiLanguage = document.getElementById('ui-language') as HTMLSelectElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const linkWebsite = document.getElementById('link-website') as HTMLAnchorElement;
 const linkRepository = document.getElementById('link-repository') as HTMLAnchorElement;
+const linkReport = document.getElementById('link-report') as HTMLAnchorElement;
 
 let saveTimer: ReturnType<typeof setTimeout>;
 
@@ -93,6 +94,10 @@ async function init() {
   // on the new site, which is English-only — see `site-links.ts`.
   linkWebsite.href = EXTENSION_PAGE_URL;
   linkRepository.href = REPO_URL;
+  // The report form is localized, so it gets the language the reader chose here
+  // rather than the browser's — this page is where that choice is made, and it
+  // is the more specific answer of the two.
+  linkReport.href = siteUrl('report', s.uiLanguage === 'auto' ? chrome.i18n.getUILanguage() : s.uiLanguage);
   load();
   initRatingStars();
 }

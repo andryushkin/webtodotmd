@@ -180,6 +180,10 @@
     "message": "Σχετικά",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Αναφορά σελίδας που μετατράπηκε λάθος",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Ιστότοπος",
     "description": "Link to the extension website, opened in the reader's language"

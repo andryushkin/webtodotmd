@@ -29,6 +29,7 @@ built from the English source, so they are pages rather than errors.
 | First install | `https://dotmd.tools/<locale>/html-to-md/welcome` |
 | Extension update | `https://dotmd.tools/<locale>/html-to-md/changelog` |
 | Removal | `https://dotmd.tools/<locale>/html-to-md/uninstall` |
+| Settings ▸ About link | `https://dotmd.tools/<locale>/html-to-md/report` |
 
 The removal page is registered with `chrome.runtime.setUninstallURL` on every
 worker start and again whenever the interface language changes — it has to be
@@ -86,6 +87,10 @@ should serve the English content rather than fail.
   submitted, and must say plainly that only what was typed is sent. It posts to
   `2md.site/api/feedback`, the same collector the extension's counters use,
   because the new site is static assets with no Worker of its own.
+- `/<locale>/html-to-md/report` — the same form, minus the reasons, for someone
+  who is staying; linked from Settings ▸ About. Both pages render from one
+  template (`templates/report-form.html` on the site) and tag their message with
+  which of the two it came from, so the collector tells them apart.
 
 The privacy policy is the other page linked from inside the extension, and it
 follows the same locale scheme.

@@ -180,6 +180,10 @@
     "message": "विषयी",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "चुकीच्या पद्धतीने रूपांतरित झालेल्या पेजची तक्रार करा",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "वेबसाइट",
     "description": "Link to the extension website, opened in the reader's language"

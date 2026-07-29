@@ -180,6 +180,10 @@
     "message": "درباره",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "گزارش صفحه‌ای که نادرست تبدیل شد",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "وب‌سایت",
     "description": "Link to the extension website, opened in the reader's language"

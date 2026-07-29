@@ -17,6 +17,10 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
   case, which is more than a one-star rating can carry. The form is optional,
   nothing is sent until it is submitted, and nothing is collected from the
   browser.
+- **Settings link the same form**, for anyone who is staying and has just
+  watched a page convert badly — in your language, since a form nobody can read
+  collects nothing. Until now the only route for that was the issue tracker,
+  which asks for a GitHub account.
 
 ### What it calls itself
 

@@ -180,6 +180,10 @@
     "message": "সম্পর্কে",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "ভুলভাবে রূপান্তরিত পেজ রিপোর্ট করুন",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "ওয়েবসাইট",
     "description": "Link to the extension website, opened in the reader's language"

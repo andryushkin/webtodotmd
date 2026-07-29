@@ -180,6 +180,10 @@
     "message": "Acerca",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Comunicar uma página convertida incorretamente",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Site",
     "description": "Link to the extension website, opened in the reader's language"

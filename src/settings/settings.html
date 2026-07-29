@@ -107,8 +107,11 @@
     <section class="group">
       <h2 data-i18n="sectionAbout">About</h2>
       <nav class="links">
-        <!-- Both hrefs are written in settings.ts, from `site-links.ts`: one place
-             holds the URLs the extension points at, and the site has moved once. -->
+        <!-- Every href is written in settings.ts, from `site-links.ts`: one place
+             holds the URLs the extension points at, and the site has moved once.
+             The report link is the localized kind — it opens a form, which is no
+             use to someone who cannot read it. -->
+        <a id="link-report" data-i18n="linkReport" target="_blank" rel="noreferrer">Report a page that came out wrong</a>
         <a id="link-website" data-i18n="linkWebsite" target="_blank" rel="noreferrer">Website</a>
         <a id="link-repository" data-i18n="linkRepository" target="_blank" rel="noreferrer">Source code on GitHub</a>
       </nav>

@@ -180,6 +180,10 @@
     "message": "വിവരങ്ങൾ",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "തെറ്റായി പരിവർത്തനം ചെയ്ത പേജ് റിപ്പോർട്ട് ചെയ്യുക",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "വെബ്‌സൈറ്റ്",
     "description": "Link to the extension website, opened in the reader's language"

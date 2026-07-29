@@ -180,6 +180,10 @@
     "message": "Giới thiệu",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Báo cáo trang bị chuyển đổi sai",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Trang web",
     "description": "Link to the extension website, opened in the reader's language"

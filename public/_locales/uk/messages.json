@@ -180,6 +180,10 @@
     "message": "Про розширення",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Повідомити про сторінку, яку оброблено неправильно",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Сайт",
     "description": "Link to the extension website, opened in the reader's language"

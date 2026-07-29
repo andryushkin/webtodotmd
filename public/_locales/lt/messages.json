@@ -180,6 +180,10 @@
     "message": "Apie",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Pranešti apie blogai konvertuotą puslapį",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Svetainė",
     "description": "Link to the extension website, opened in the reader's language"

@@ -180,6 +180,10 @@
     "message": "O rozšírení",
     "description": "Settings section heading above the links to the site and the repository"
   },
+  "linkReport": {
+    "message": "Nahlásiť stránku, ktorá sa previedla zle",
+    "description": "Settings ▸ About — link to the localized form for reporting a page the converter got wrong"
+  },
   "linkWebsite": {
     "message": "Web",
     "description": "Link to the extension website, opened in the reader's language"
