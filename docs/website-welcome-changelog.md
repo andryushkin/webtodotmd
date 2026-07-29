@@ -4,14 +4,24 @@ The contract between the extension and the site it opens after install and
 update. The extension side is implemented; this file is what the site has to
 honor.
 
-**Two domains, for now.** The product's own page moved to `dotmd.tools`
-(`/html-to-md`, linked from the options page), which is English-only: measured
-2026-07-29, `/html-to-md/<locale>` is a 404 in all 52. These two pages stay on
-`2md.site`, where all 52 locales of `/welcome` and `/changelog` answer 200. They
-move when the new site can answer them — and not before, because the URL is
-compiled into a released extension and a 404 is the first thing a new install
-would see. There is no localized home page on either domain: `2md.site/<locale>/`
-is a 404 in all 52, which is what the options page pointed at for one commit.
+**Two domains, and the extension still points at the older one.** Both pages now
+exist on `dotmd.tools` as well, at `/<locale>/html-to-md/welcome` and
+`/<locale>/html-to-md/changelog` — the locale comes *first*, and all 52 answer
+200 (measured 2026-07-29; the earlier reading of a 404 was of
+`/html-to-md/<locale>`, which is not the pattern that site uses). What the
+extension opens is still `2md.site`, because the URL is compiled into every
+published build: moving it is a release of the extension, not a change to a
+site, and until that release ships the two copies must not disagree. The
+product's own page — `dotmd.tools/html-to-md`, linked from the options page —
+is English-only. There is no localized home page on either domain:
+`2md.site/<locale>/` is a 404 in all 52, which is what the options page pointed
+at for one commit.
+
+Where each copy is authored: `dotmd.tools` renders
+`content/html-to-md/{welcome,changelog}/<locale>.md` in `~/Server/dotmdtools`
+(20 locales translated, the rest served in English by the build's fallback);
+`2md.site` renders `src/pages/{Welcome,Changelog}.tsx` in `~/Server/2mdsite`
+(20 locales, unlisted ones fall back at request time).
 
 ## URLs
 
