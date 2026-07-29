@@ -27,3 +27,9 @@ dist/
 *.baseline
 .smotr-queue.json
 .smotr-agent.log
+
+# smotr review wiring: the engine lives in ~/Server/smotr and the audit counts
+# anything .smotr-shaped as junk, so the project's own config stays untracked.
+.smotr.json
+.smotr.md
+docs/review/

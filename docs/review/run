@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# Thin wrapper: runs the shared smotr engine against this project's root.
-set -euo pipefail
-ENGINE="${SMOTR_HOME:-$HOME/Server/smotr}/serve.py"
-PROJECT="$(cd "$(dirname "$0")/../.." && pwd)"   # docs/review/run → repo root
-exec python3 "$ENGINE" --root "$PROJECT" "$@"

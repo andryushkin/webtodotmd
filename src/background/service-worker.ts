@@ -5,7 +5,7 @@ import { trackEvent } from '../shared/telemetry';
 import { siteUrl } from '../shared/site-links';
 
 // Set to true for releases where changelog page should open on update
-const SHOW_CHANGELOG_ON_UPDATE = false;
+const SHOW_CHANGELOG_ON_UPDATE = true;
 
 function openPage(path: string): void {
   // The locale mapping is shared with the options page's link to the same site;

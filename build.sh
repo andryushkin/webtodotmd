@@ -20,8 +20,11 @@ cp src/settings/settings.css dist/src/settings/settings.css
 # Copy and patch manifest (.ts → .js)
 sed 's/service-worker\.ts/service-worker.js/;s/content-script\.ts/content-script.js/' manifest.json > dist/manifest.json
 
-# Copy public/ contents (icons, _locales)
+# Copy public/ contents (icons, _locales). Finder leaves .DS_Store files behind
+# in any directory it has displayed; they are gitignored, so they survive here
+# unseen and rode into the store archive once.
 cp -r public/* dist/
+find dist -name '.DS_Store' -delete
 
 # Ship the project and third-party license texts with the extension package.
 mkdir -p dist/licenses
