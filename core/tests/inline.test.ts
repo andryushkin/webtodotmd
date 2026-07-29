@@ -66,6 +66,16 @@ describe('highlight', () => {
     expect(toMarkdown('<p>a <mark> text </mark> b</p>')).toBe('a ==text== b\n');
   });
 
+  // The browser paints `<mark>`, so a style snapshot taken off a live page hands
+  // the fill back to the core on the one tag whose rule already writes `==`. Read
+  // as a second mark it wrote `====marked phrase====` — the extension's output on
+  // any ordinary `<mark>`, while the library's own tests, which have no snapshot,
+  // all passed.
+  it('a painted mark is still one mark', () => {
+    expect(toMarkdown('<p>a <mark style="background-color: rgb(253, 230, 138)">hit</mark> b</p>'))
+      .toBe('a ==hit== b\n');
+  });
+
   // Фон не читается ниоткуда, кроме тега: свойство, которое сказало бы о
   // подсветке, — background, а его ядро не смотрит. Поэтому и вес, объявленный
   // на самом теге, марку не отменяет — это не жирность.

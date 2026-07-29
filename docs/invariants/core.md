@@ -46,6 +46,10 @@ container leaves behind; the half that measures is
   whatever it is painted — a card, a callout, a striped row and a code block are backgrounds no
   reader reads as a marked phrase, and `==` round a paragraph is a delimiter that does not close; a
   control, which the browser paints and nobody marked — a form's `Pay now` came back `==Pay now==`;
+  and `<mark>` itself, whose own rule already writes the `==`: the browser paints that tag, so a
+  snapshot taken off a live page reports the fill and the phrase came back `====marked====`, the
+  same mark counted twice. Bold, italic and strike never had this because each compares the style
+  against the base its tag set; `addedMarks()` makes the same comparison for the fill;
   and a fill under monospaced type, which is a *code chip*, the shape a page writes where it means
   `<code>` and reaches for a class instead (K7). Reading that one as a highlight repairs nothing and
   states the wrong thing confidently, so `isMonospaced()` is asked beside the fill on both sides —

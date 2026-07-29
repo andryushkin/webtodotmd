@@ -922,7 +922,14 @@ export function addedMarks(el: Element): StyleMarks {
     // already compared the fill against what is painted behind it, and an inline
     // `style` has nothing to compare against. What is left is the element's own
     // answer, which `isHighlighted` is.
-    highlight: isHighlighted(el),
+    //
+    // Except on `<mark>` itself, which is the one tag whose rule already writes
+    // `==`. The browser paints it, so a snapshot taken off a live page hands the
+    // fill straight back here and the phrase came out `====marked====` — the
+    // same mark counted twice. The three marks above are spared this because
+    // each compares the style against the base its own tag set; this is that
+    // comparison, for the tag a fill cannot be told apart from.
+    highlight: tag === 'mark' ? false : isHighlighted(el),
   };
 }
 
