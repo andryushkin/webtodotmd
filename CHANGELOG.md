@@ -30,6 +30,17 @@ about version numbers, are in [docs/releasing.md](docs/releasing.md#versioning).
   rewritten with it, in all 52 languages: it now leads with what the extension
   does — select part of a page, get clean Markdown, tables and code and maths
   intact — instead of listing the word "Markdown" fifty-two times.
+- **Latin American Spanish addresses you the way its own panel does.** The store
+  card said "Seleccioná", the buttons said "Selecciona"; the card was the odd
+  one out.
+
+### Conversion
+
+- **A highlighted phrase is one highlight again.** Anything wrapped in `<mark>`
+  came out `====like this====`: the browser paints that tag, so the style
+  snapshot reported a fill on the one tag whose own rule already writes `==`,
+  and the mark was counted twice. Every ordinary highlight on every page was
+  affected.
 
 ## 1.4.9 — 2026-07-29
 
